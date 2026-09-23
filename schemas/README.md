@@ -8,7 +8,9 @@ Current foundation schemas include:
 - `project.schema.json`
 - `agent.schema.json`
 - `model.schema.json`
+- `catalog.schema.json`
+- `eval.schema.json`
 
-Additional runtime, routing, and validation schemas should be added only when the corresponding executable contract exists.
+Schemas should describe executable or validated contracts rather than speculative future structure.
 
-<sub>Last updated: 2026-09-23 18:11 UTC</sub>
+<sub>Last updated: 2026-09-23 19:21 UTC</sub>

@@ -11,35 +11,39 @@ EmbrAIon is the upstream source of truth for reusable AI-First engineering behav
 - Put project bootstrap material in `templates/`.
 - Keep product/domain-specific semantics in consuming-project overlays.
 
+## Capability loading
+
+- `core/catalog.yaml` is the canonical discovery index.
+- Prefer conditional capability loading over injecting the entire Core into every task.
+- Every catalog path must resolve to exactly one canonical capability.
+- Skills use one directory per skill with `SKILL.md` as the entry point.
+- Supporting skill files belong beside that skill and must not become global context by accident.
+
 ## Agent naming
 
-Canonical Core agents are named as job-like roles, not activities or document types.
+Canonical Core agents are job-like roles: `lead`, `worker`, `reviewer`, `architect`, `analyst`, `validator`, `researcher`, and `steward`.
 
-Preferred examples: `lead`, `worker`, `reviewer`, `architect`, `analyst`, `validator`, `researcher`, `steward`.
+Do not create generic Core agents named after task nouns when a clear occupational role exists.
 
-Do not create generic Core agents named after a task noun such as `specification`, `test`, or `routing` when a clear occupational role exists.
+## Separation of concerns
+
+Agent role, access profile, model route, and provider are independent dimensions.
+
+A role never implies broader permissions or a more expensive model. Model choice never expands access.
 
 ## File naming
 
 - Use lowercase kebab-case for repository-owned files.
 - Prefer one or two words when practical.
 - Standard ecosystem filenames are exceptions, including `README.md`, `AGENTS.md`, and `SKILL.md`.
-- Do not create long prose-like filenames when a shorter canonical term is sufficient.
 
-## Capability taxonomy
+## Evals
 
-- **Rule** — required, prohibited, or protected behavior.
-- **Agent** — job-like responsibility and ownership.
-- **Skill** — repeatable task procedure.
-- **Workflow** — ordered execution sequence.
-- **Routing** — model/provider/effort/execution selection policy.
-- **Tool** — deterministic operation.
-- **Adapter** — host/provider integration.
-- **Knowledge** — facts and architecture, not commands.
+Use deterministic tests for schemas, code, references, and generated output. Use `evals/` for behavioral properties such as role adherence, permission discipline, routing choices, and completion behavior.
 
 ## Spec Kit
 
-Spec Kit is a recommended external capability for substantial feature, architecture, and specification work. EmbrAIon must integrate with it without copying or redefining upstream Spec Kit internals. Spec Kit artifacts never override Core rules, project architecture, product truth, or validation contracts.
+Spec Kit is a recommended external capability for substantial specification-driven work. It remains independently managed and never overrides EmbrAIon Core or project truth.
 
 ## Brand terminology
 
@@ -52,7 +56,6 @@ Spec Kit is a recommended external capability for substantial feature, architect
 - Every `README*.md` ends with a last-updated timestamp.
 - Any README edit updates its timestamp in the same change.
 - Canonical format: `YYYY-MM-DD HH:mm UTC`.
-- Localized README files may localize the label.
 
 ## Change discipline
 
@@ -60,8 +63,6 @@ Spec Kit is a recommended external capability for substantial feature, architect
 - Preserve compatibility unless a breaking change is explicit.
 - Keep Core independent from any single host, provider, platform, or consuming project.
 - Do not weaken Core hard rules from a project overlay.
-- Add validation with machine-readable contracts.
-- Keep model facts in adapter catalogs and routing policy in Core.
 - Do not silently duplicate canonical policy.
 
 ## Completion reporting

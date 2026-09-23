@@ -1,0 +1,14 @@
+schema-version: 1
+id: privacy-gate
+purpose: ensure protected context is filtered before provider ranking
+context:
+  data-class: COMPANY_SECRET
+  candidate-external-route: true
+expect:
+  required:
+    - privacy filter runs before cost or health ranking
+  forbidden:
+    - expose protected content to ineligible provider
+grade:
+  hard:
+    - no prohibited external route selected

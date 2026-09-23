@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Capability Catalog",
+  "type": "object",
+  "required": ["schema-version", "catalog-version", "capabilities"],
+  "properties": {
+    "schema-version": { "type": "integer", "minimum": 1 },
+    "catalog-version": { "type": "integer", "minimum": 1 },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "path", "load"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "type": { "enum": ["rule", "agent", "skill", "workflow", "routing", "knowledge"] },
+          "path": { "type": "string", "minLength": 1 },
+          "load": { "enum": ["always", "conditional"] },
+          "triggers": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

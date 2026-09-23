@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Behavioral Eval",
+  "type": "object",
+  "required": ["schema-version", "id", "purpose", "context", "expect", "grade"],
+  "properties": {
+    "schema-version": { "type": "integer", "minimum": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "purpose": { "type": "string", "minLength": 1 },
+    "context": { "type": "object" },
+    "expect": { "type": "object" },
+    "grade": { "type": "object" }
+  },
+  "additionalProperties": true
+}

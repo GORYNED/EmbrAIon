@@ -1,0 +1,49 @@
+schema-version: 1
+
+profiles:
+  inspect:
+    repository-read: true
+    repository-write: false
+    command-readonly: true
+    command-mutation: false
+    external-state-write: false
+    network: policy-controlled
+
+  plan:
+    repository-read: true
+    repository-write: false
+    command-readonly: true
+    command-mutation: false
+    external-state-write: false
+    network: policy-controlled
+
+  review:
+    repository-read: true
+    repository-write: false
+    command-readonly: true
+    command-mutation: false
+    external-state-write: false
+    network: policy-controlled
+
+  write:
+    repository-read: true
+    repository-write: scoped
+    command-readonly: true
+    command-mutation: scoped
+    external-state-write: policy-controlled
+    network: policy-controlled
+
+  external-read:
+    repository-read: snapshot-only
+    repository-write: false
+    command-readonly: false
+    command-mutation: false
+    external-state-write: false
+    network: provider-only
+
+rules:
+  - access is independent from agent role
+  - model choice does not expand access
+  - project overlays may tighten but not silently widen access
+  - writable access requires explicit owned scope
+  - external-read receives only policy-approved context

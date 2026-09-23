@@ -1,0 +1,18 @@
+schema-version: 1
+id: embraion
+name: EmbrAIon
+version-source: framework.yaml
+
+include:
+  catalog: core/catalog.yaml
+  skills: core/skills
+  knowledge: core/knowledge
+
+optional:
+  routing: core/routing
+  tools: tools
+  providers: adapters/providers
+
+generate:
+  host-specific: true
+  canonical-source: false

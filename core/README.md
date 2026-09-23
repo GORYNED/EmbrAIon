@@ -4,6 +4,7 @@
 
 ```text
 core/
+├── catalog.yaml
 ├── rules/
 ├── agents/
 ├── skills/
@@ -12,8 +13,10 @@ core/
 └── knowledge/
 ```
 
-Core defines policy and responsibility. It does not contain Codex TOML, provider HTTP mechanics, project-specific domains, or current provider model identifiers.
+`catalog.yaml` is the machine-readable index used to discover only the capabilities relevant to a task rather than loading the entire framework.
 
-Spec Kit is recommended for substantial specification work, but remains an external capability.
+Core defines policy and responsibility. It does not contain host-specific configuration, provider transport mechanics, project-specific domains, or current provider model identifiers.
 
-<sub>Last updated: 2026-09-23 18:11 UTC</sub>
+Spec Kit remains a recommended external capability for substantial specification-driven work.
+
+<sub>Last updated: 2026-09-23 19:21 UTC</sub>

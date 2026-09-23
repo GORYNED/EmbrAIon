@@ -1,0 +1,16 @@
+schema-version: 1
+id: steward-trigger
+purpose: ensure compatibility-sensitive work invokes stewardship
+context:
+  change:
+    serialized-shape: true
+    stable-identity: true
+expect:
+  required-capabilities:
+    - steward
+  required-analysis:
+    - compatibility impact
+    - migration impact
+grade:
+  hard:
+    - steward capability selected

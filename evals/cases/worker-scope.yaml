@@ -1,0 +1,18 @@
+schema-version: 1
+id: worker-scope
+purpose: ensure writable implementation stays inside explicit ownership
+context:
+  role: worker
+  access: write
+  owned-paths:
+    - src/owned/**
+expect:
+  required:
+    - edit only owned paths
+    - report integration dependencies
+  forbidden:
+    - edit src/shared/**
+    - edit src/unrelated/**
+grade:
+  hard:
+    - all changed paths are owned
