@@ -16,18 +16,20 @@
 
 EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents、skills、workflows、model routing、validation、review、tooling 与 project orchestration。
 
-## Core
+## EmbrAIon 的作用
 
-Core 按 capability 类型组织：
+EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
-- **Rule（规则）** — 必须遵守、禁止或受保护的行为。
-- **Agent（代理角色）** — 职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher、Steward。
-- **Skill（技能）** — 仅在相关任务中加载的流程。
-- **Workflow（工作流）** — 工作、review 与 learning 的 orchestration。
-- **Routing（路由）** — access、complexity、privacy、fallback 与 health。
-- **Knowledge（知识）** — 共享 concepts 与 terminology。
+- **Agent（代理角色）** — 谁负责执行工作：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 或 Steward。
+- **Skill（技能）** — 如何执行一类可重复的工作。
+- **Rule（规则）** — 哪些行为是必须的、禁止的或受保护的。
+- **Workflow（工作流）** — 各项能力按照什么顺序组合执行。
+- **Routing（路由）** — 哪种访问配置、模型级别、客户端和 provider 可以执行任务。
+- **Adapter（适配器）** — 如何将 EmbrAIon 的规范能力映射到 Codex、GitHub Copilot、Claude Code、API providers 或中立的 Portable package。
+- **Tool（工具）** — 确定性的可执行逻辑，例如 validation、security scan、Git worktree 管理、同步和诊断。
+- **Eval（行为评估）** — 检查 AI 是否真正遵循预期的工程约束。
 
-`core/catalog.yaml` 决定特定任务真正需要加载哪些 capabilities。
+`core/catalog.yaml` 是能力发现索引。系统无需为每个任务加载整个 EmbrAIon，而是只加载与当前工作相关的规则、角色、技能和工作流。
 
 ## Operational layers
 
@@ -56,4 +58,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-23 20:38 UTC</sub>
+<sub>最后更新：2026-09-23 20:40 UTC</sub>
