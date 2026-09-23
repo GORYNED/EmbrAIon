@@ -34,7 +34,11 @@ class CliIntegrationTests(unittest.TestCase):
     def test_main_help_is_structured_and_descriptive(self) -> None:
         result = self._run("--help")
 
-        self.assertIn(f"EmbrAIon {__version__}", result.stdout)
+        self.assertIn(
+            f"EmbrAIon {__version__} — AI-First Engineering System",
+            result.stdout,
+        )
+        self.assertNotIn("\nAI-First Engineering System\n", result.stdout)
         self.assertIn("Project & setup", result.stdout)
         self.assertIn("Health & runtime", result.stdout)
         self.assertIn("AI execution", result.stdout)

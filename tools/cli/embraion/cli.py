@@ -41,8 +41,7 @@ def _subprocess_error_message(error: subprocess.CalledProcessError) -> str:
 def _print_main_help(file: object | None = None) -> None:
     stream = file or sys.stdout
     lines = [
-        f"EmbrAIon {__version__}",
-        "AI-First Engineering System",
+        f"EmbrAIon {__version__} — AI-First Engineering System",
         "",
         "Usage",
         "  embraion <command> [options]",
