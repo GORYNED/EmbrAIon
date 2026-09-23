@@ -14,7 +14,7 @@ Project overlays may add stricter rules but must not silently weaken Core hard g
 
 ## Automatic version resolution
 
-The current public `v0.1.0` release records a project version but does not resolve it automatically. Current `main` implements the resolver for the next release.
+`v0.2.0` resolves the project version automatically.
 
 For ordinary commands, the global launcher finds the nearest `.embraion/project.yaml`, reads `framework.version`, and compares it with the launcher version. When they differ, EmbrAIon prepares an isolated runtime under `~/.embraion/versions/<version>/` and installs the exact `embraion==<version>` PyPI distribution there.
 

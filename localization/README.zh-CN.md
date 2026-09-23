@@ -46,8 +46,6 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
 ### 每台电脑只安装一次
 
-> **版本说明：** 当前 PyPI 公共版本是 `v0.1.0`。按项目自动选择 EmbrAIon 版本的功能已经在 `main` 中实现，并将在下一版本发布。
-
 EmbrAIon 通过 [PyPI](https://pypi.org/project/embraion/) 分发。正常使用时，在每台 Windows 或 macOS 电脑上通过 `pipx` 安装一次 CLI 即可。无需克隆仓库，也无需执行 `git clone`。
 
 如果您明确自行管理 Python 环境，也可以使用普通的 `pip` 安装；对于 CLI，仍推荐使用 `pipx`。
@@ -189,7 +187,7 @@ embraion install --host portable --destination ./vendor/embraion
 
 ### 自动解析项目版本
 
-当前 `main` 面向 `v0.2.0`，并加入按项目自动解析 EmbrAIon 版本的能力。
+`v0.2.0` 加入按项目自动解析 EmbrAIon 版本的能力。
 
 对于普通命令，全局 `embraion` 会从当前目录向上查找最近的 `.embraion/project.yaml`，读取其中的 `framework.version`。如果项目固定的版本与全局 launcher 不同，EmbrAIon 会从 PyPI 安装准确版本到隔离缓存：
 

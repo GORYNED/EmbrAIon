@@ -31,7 +31,7 @@ embraion install --host portable --destination ./vendor/embraion
 
 The installed Python distribution carries the canonical framework data required to generate these projections. A local EmbrAIon source checkout is not required.
 
-The current public `v0.1.0` release predates automatic runtime resolution. Current `main` implements the next-release behavior:
+`v0.2.0` implements automatic runtime resolution:
 
 - ordinary commands discover the nearest `.embraion/project.yaml`;
 - an exact pinned release is installed on first use into `~/.embraion/versions/<version>/`;

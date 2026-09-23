@@ -61,8 +61,6 @@ El Core permanece independiente de modelos concretos. Las identidades actuales d
 
 ### Instalar una vez por equipo
 
-> **Nota de versión:** la versión pública actual en PyPI es `v0.1.0`. La resolución automática de una versión de EmbrAIon por proyecto ya está implementada en `main` y se publicará en la siguiente versión.
-
 EmbrAIon se distribuye mediante [PyPI](https://pypi.org/project/embraion/). Para el uso normal, instale el CLI una sola vez en cada equipo Windows o macOS con `pipx`. No es necesario clonar el repositorio ni usar `git clone`.
 
 También se admite una instalación normal con `pip` si administra explícitamente el entorno de Python, pero `pipx` es la opción recomendada para el CLI.
@@ -204,7 +202,7 @@ Si el proyecto usa varios clientes, ejecute una vez el comando `install` corresp
 
 ### Resolución automática de la versión del proyecto
 
-El `main` actual está orientado a `v0.2.0` y añade resolución automática de la versión de EmbrAIon para cada proyecto.
+`v0.2.0` añade resolución automática de la versión de EmbrAIon para cada proyecto.
 
 Para los comandos normales, el `embraion` global busca hacia arriba desde el directorio actual hasta encontrar el `.embraion/project.yaml` más cercano y lee `framework.version`. Si la versión fijada por el proyecto es distinta de la versión del launcher global, EmbrAIon instala el paquete exacto desde PyPI en una caché aislada:
 

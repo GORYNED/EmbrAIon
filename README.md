@@ -63,8 +63,6 @@ Core remains model-neutral. Current model identities and host selectors live onl
 
 ### Install once per machine
 
-> **Release note:** the current public PyPI release is `v0.1.0`. Automatic per-project runtime resolution is implemented on `main` for the next release.
-
 EmbrAIon is distributed through [PyPI](https://pypi.org/project/embraion/). For normal use, install the CLI once on each Windows or macOS computer with `pipx`. A source checkout or `git clone` is not required.
 
 A regular `pip` installation is also supported when you intentionally manage the Python environment yourself, but `pipx` is the recommended CLI installation path.
@@ -206,7 +204,7 @@ If a repository uses multiple clients, run the corresponding `install` command o
 
 ### Automatic project runtime resolution
 
-Current `main` targets `v0.2.0` and adds automatic per-project version resolution.
+`v0.2.0` adds automatic per-project version resolution.
 
 For ordinary commands, the global `embraion` launcher walks upward from the current directory until it finds the nearest `.embraion/project.yaml`. It then reads `framework.version`:
 
