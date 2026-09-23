@@ -24,14 +24,14 @@ EmbrAIon — переносимая AI-First Engineering System для орга�
 
 EmbrAIon разделяет инженерную систему на независимые составляющие:
 
-- **Agent (Агент)** — кто отвечает за работу: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher или Steward.
-- **Skill (Навык)** — как выполнять повторяемый тип работы.
-- **Rule (Правило)** — что обязательно, запрещено или защищено.
-- **Workflow (Рабочий процесс)** — в каком порядке объединяются возможности системы.
-- **Routing (Маршрутизация)** — какой профиль доступа, класс модели, клиент и провайдер могут выполнять задачу.
-- **Adapter (Адаптер)** — как канонические возможности EmbrAIon представляются в Codex, GitHub Copilot, Claude Code, у API-провайдеров или в нейтральном пакете Portable.
-- **Tool (Инструмент)** — детерминированная исполняемая логика: валидация, проверка безопасности, управление Git worktree, синхронизация и диагностика.
-- **Eval (Поведенческая проверка)** — проверка того, действительно ли ИИ следует заданному инженерному контракту.
+- **[Agent (Агент)](../core/agents/)** — кто отвечает за работу: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher или Steward.
+- **[Skill (Навык)](../core/skills/)** — как выполнять повторяемый тип работы.
+- **[Rule (Правило)](../core/rules/)** — что обязательно, запрещено или защищено.
+- **[Workflow (Рабочий процесс)](../core/workflows/)** — в каком порядке объединяются возможности системы.
+- **[Routing (Маршрутизация)](../core/routing/)** — какой профиль доступа, класс модели, клиент и провайдер могут выполнять задачу.
+- **[Adapter (Адаптер)](../adapters/)** — как канонические возможности EmbrAIon представляются в Codex, GitHub Copilot, Claude Code, у API-провайдеров или в нейтральном пакете Portable.
+- **[Tool (Инструмент)](../tools/)** — детерминированная исполняемая логика: валидация, проверка безопасности, управление Git worktree, синхронизация и диагностика.
+- **[Eval (Поведенческая проверка)](../evals/)** — проверка того, действительно ли ИИ следует заданному инженерному контракту.
 
 `core/catalog.yaml` — индекс возможностей системы. Вместо загрузки всего EmbrAIon для каждой задачи система может подключать только те правила, роли, навыки и процессы, которые нужны для текущей работы.
 
@@ -51,55 +51,61 @@ EmbrAIon использует три канонических класса да�
 
 Сейчас поддерживаются:
 
-- **Codex** — каталог моделей, сопоставление модели и уровня рассуждения с маршрутами, генерация проектных агентов и конфигурации.
-- **GitHub Copilot** — каталог поддерживаемых моделей, рекомендательные маршруты и генерация пользовательских агентов.
-- **Claude Code** — каталог моделей Claude, маршруты и генерация подчинённых агентов.
-- **Portable** — переносимый пакет возможностей, не привязанный к конкретному AI-клиенту.
-- **Providers** — прямые каталоги API-моделей OpenAI, Anthropic, Google и DeepSeek, а также сведения о способах подключения к ним.
+- **[Codex](https://openai.com/codex/)** — каталог моделей, сопоставление модели и уровня рассуждения с маршрутами, генерация проектных агентов и конфигурации.
+- **[GitHub Copilot](https://github.com/features/copilot)** — каталог поддерживаемых моделей, рекомендательные маршруты и генерация пользовательских агентов.
+- **[Claude Code](https://docs.anthropic.com/ru/docs/claude-code/getting-started)** — каталог моделей Claude, маршруты и генерация подчинённых агентов.
+- **[Portable](../adapters/portable/)** — переносимый пакет возможностей, не привязанный к конкретному AI-клиенту.
+- **[Providers (Провайдеры)](../adapters/providers/)** — прямые каталоги API-моделей [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) и [DeepSeek](https://www.deepseek.com/), а также сведения о способах подключения к ним.
 
 Ядро остаётся независимым от конкретных моделей. Актуальные названия моделей и настройки конкретных клиентов находятся только в `adapters/`.
 
 ## Установка
 
-Локально клонировать репозиторий EmbrAIon **не нужно**.
+EmbrAIon устанавливается **один раз на компьютер**. Клонировать репозиторий не нужно.
 
-### Требования
+### Windows
 
-- Python 3.11+
-- `pipx` рекомендуется для изолированной установки CLI
-- Git нужен только для установки напрямую из GitHub до публикации пакета в PyPI
+Требуется Python 3.11+.
 
-### 1. Установить EmbrAIon
+В PowerShell:
 
-Рекомендуемый вариант:
-
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-Если `pipx` ещё не установлен:
+Закройте и заново откройте PowerShell, затем установите EmbrAIon из [PyPI](https://pypi.org/project/embraion/):
 
-```bash
-python -m pip install --user pipx
-python -m pipx ensurepath
+```powershell
+pipx install embraion
 ```
 
-После этого откройте новый терминал и выполните команду установки выше.
+### macOS
 
+Требуется Python 3.11+.
 
-После публикации EmbrAIon в PyPI обычная установка станет такой:
+Через Homebrew:
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+Без Homebrew:
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Откройте новый терминал и выполните:
 
 ```bash
 pipx install embraion
 ```
 
-Также поддерживается обычный `pip`:
-
-```bash
-python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
-```
-
-### 2. Проверить установку
+### Проверка
 
 ```bash
 embraion --version
@@ -107,11 +113,19 @@ embraion validate
 embraion doctor
 ```
 
-Установленный пакет уже содержит канонические Core, Adapters, схемы, шаблоны, политики, документацию и остальные данные системы, необходимые CLI. После установки EmbrAIon не зависит от локальной копии репозитория.
+### Обновление
+
+```bash
+pipx upgrade embraion
+```
+
+Глобальная установка через `pipx` делает команду `embraion` доступной для всех проектов на этом компьютере. При этом каждый репозиторий подключается к EmbrAIon один раз отдельно, чтобы его проектный слой и настройки AI-клиента были явными и хранились в Git.
 
 ## Подключение EmbrAIon к проекту
 
-Создайте проектный overlay:
+CLI устанавливается один раз на компьютер, но **каждый репозиторий нужно инициализировать один раз**. EmbrAIon намеренно не изменяет автоматически все папки с проектами на компьютере.
+
+Создайте Project Overlay (Проектный слой):
 
 ```bash
 cd /path/to/your/project
@@ -129,19 +143,21 @@ embraion init --name MyProject
 
 ### Установить представление для нужного клиента
 
-Codex:
+Установите представление для того AI-клиента, который используется в этом репозитории. Если проект используется сразу в нескольких клиентах, выполните соответствующую команду для каждого из них.
+
+[Codex](https://openai.com/codex/):
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-GitHub Copilot:
+[GitHub Copilot](https://github.com/features/copilot):
 
 ```bash
 embraion install --host copilot --destination .
 ```
 
-Claude Code:
+[Claude Code](https://docs.anthropic.com/ru/docs/claude-code/getting-started):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -371,4 +387,4 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 21:13 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 22:00 UTC</sub>

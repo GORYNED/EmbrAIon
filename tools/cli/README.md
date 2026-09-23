@@ -1,20 +1,35 @@
 # CLI
 
-Install EmbrAIon without cloning the repository:
+Install EmbrAIon once per computer from [PyPI](https://pypi.org/project/embraion/):
 
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+### Windows
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-After the package is published to PyPI:
+Open a new PowerShell window:
 
-```bash
+```powershell
 pipx install embraion
 ```
 
-The installed distribution includes the framework data required by the CLI, so a checked-out EmbrAIon repository is not required at runtime.
+### macOS
 
-For framework development from a source checkout, `EMBRAION_HOME` may still be used to point the CLI at an explicit framework root.
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+Upgrade later with:
+
+```bash
+pipx upgrade embraion
+```
+
+The global `pipx` installation makes the CLI available from every project on that machine. Each repository still uses an explicit project overlay and host projection.
 
 Main commands:
 
@@ -35,6 +50,8 @@ embraion learning
 embraion eval
 ```
 
+For framework development from a source checkout, `EMBRAION_HOME` may point the CLI at an explicit framework root.
+
 Python source modules use standard `snake_case` naming as an ecosystem-specific exception to the repository's general kebab-case convention.
 
-<sub>Last updated: 2026-09-23 21:13 UTC</sub>
+<sub>Last updated: 2026-09-23 22:00 UTC</sub>

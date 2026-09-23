@@ -22,14 +22,14 @@ EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents
 
 EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
-- **Agent（代理角色）** — 谁负责执行工作：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 或 Steward。
-- **Skill（技能）** — 如何执行一类可重复的工作。
-- **Rule（规则）** — 哪些行为是必须的、禁止的或受保护的。
-- **Workflow（工作流）** — 各项能力按照什么顺序组合执行。
-- **Routing（路由）** — 哪种访问配置、模型级别、客户端和 provider 可以执行任务。
-- **Adapter（适配器）** — 如何将 EmbrAIon 的规范能力映射到 Codex、GitHub Copilot、Claude Code、API providers 或中立的 Portable package。
-- **Tool（工具）** — 确定性的可执行逻辑，例如 validation、security scan、Git worktree 管理、同步和诊断。
-- **Eval（行为评估）** — 检查 AI 是否真正遵循预期的工程约束。
+- **[Agent（代理角色）](../core/agents/)** — 谁负责执行工作：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 或 Steward。
+- **[Skill（技能）](../core/skills/)** — 如何执行一类可重复的工作。
+- **[Rule（规则）](../core/rules/)** — 哪些行为是必须的、禁止的或受保护的。
+- **[Workflow（工作流）](../core/workflows/)** — 各项能力按照什么顺序组合执行。
+- **[Routing（路由）](../core/routing/)** — 哪种访问配置、模型级别、客户端和 provider 可以执行任务。
+- **[Adapter（适配器）](../adapters/)** — 如何将 EmbrAIon 的规范能力映射到 [Codex](https://openai.com/codex/)、[GitHub Copilot](https://github.com/features/copilot)、[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)、API providers 或中立的 Portable package。
+- **[Tool（工具）](../tools/)** — 确定性的可执行逻辑，例如 validation、security scan、Git worktree 管理、同步和诊断。
+- **[Eval（行为评估）](../evals/)** — 检查 AI 是否真正遵循预期的工程约束。
 
 `core/catalog.yaml` 是能力发现索引。系统无需为每个任务加载整个 EmbrAIon，而是只加载与当前工作相关的规则、角色、技能和工作流。
 
@@ -44,29 +44,51 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
 ## 安装
 
-无需在本地克隆 EmbrAIon 仓库。
+EmbrAIon **每台电脑只需安装一次**，无需克隆仓库。
 
-推荐使用 `pipx` 进行隔离安装：
+### Windows
 
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+需要 Python 3.11+。
+
+在 PowerShell 中：
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-如果尚未安装 `pipx`：
+关闭并重新打开 PowerShell，然后从 [PyPI](https://pypi.org/project/embraion/) 安装：
 
-```bash
-python -m pip install --user pipx
-python -m pipx ensurepath
+```powershell
+pipx install embraion
 ```
 
+### macOS
 
-EmbrAIon 发布到 PyPI 后，标准安装命令将变为：
+需要 Python 3.11+。
+
+使用 Homebrew：
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+不使用 Homebrew：
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+重新打开终端，然后执行：
 
 ```bash
 pipx install embraion
 ```
 
-验证安装：
+### 验证
 
 ```bash
 embraion --version
@@ -74,7 +96,44 @@ embraion validate
 embraion doctor
 ```
 
-安装包已经包含 CLI 所需的 Core、Adapters、schemas、templates、policies、documentation 和其他系统数据，因此安装完成后不依赖本地仓库副本。
+### 更新
+
+```bash
+pipx upgrade embraion
+```
+
+通过 `pipx` 的全局安装会让这台电脑上的所有项目都能调用 `embraion` 命令。每个仓库仍需单独初始化一次，以便将 Project Overlay 和 AI 客户端配置明确地保存在该仓库中并进行版本控制。
+
+## 在项目中启用 EmbrAIon
+
+进入项目目录并初始化：
+
+```bash
+cd /path/to/your/project
+embraion init --name MyProject
+```
+
+然后安装该项目使用的 AI 客户端表示：
+
+[Codex](https://openai.com/codex/)：
+
+```bash
+embraion install --host codex --destination .
+```
+
+[GitHub Copilot](https://github.com/features/copilot)：
+
+```bash
+embraion install --host copilot --destination .
+```
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)：
+
+```bash
+embraion install --host claude-code --destination .
+```
+
+如果一个项目同时使用多个客户端，对每个客户端各执行一次对应命令即可。
 
 ## 文档
 
@@ -94,4 +153,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-23 21:13 UTC</sub>
+<sub>最后更新：2026-09-23 22:00 UTC</sub>

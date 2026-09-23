@@ -1,26 +1,29 @@
 # Install
 
-Installation creates host projections from canonical EmbrAIon Core.
-
-Install the EmbrAIon CLI without cloning the repository:
-
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
-```
-
-After a PyPI release:
+EmbrAIon is installed once per computer from [PyPI](https://pypi.org/project/embraion/):
 
 ```bash
 pipx install embraion
 ```
 
-Then, from the consuming project:
+The command is then available to every repository on that computer. Each repository is connected once so its project-specific state stays explicit and version-controlled:
 
 ```bash
-embraion init
+cd /path/to/project
+embraion init --name MyProject
+```
+
+Install the host projection used by that repository:
+
+```bash
 embraion install --host codex --destination .
 embraion install --host copilot --destination .
 embraion install --host claude-code --destination .
+```
+
+For a host-neutral bundle:
+
+```bash
 embraion install --host portable --destination ./vendor/embraion
 ```
 
@@ -28,4 +31,4 @@ The installed Python distribution carries the canonical framework data required 
 
 Existing generated files are protected by default. Use `--force` only for an intentional replacement.
 
-<sub>Last updated: 2026-09-23 21:13 UTC</sub>
+<sub>Last updated: 2026-09-23 22:00 UTC</sub>

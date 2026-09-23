@@ -24,14 +24,14 @@ EmbrAIon एक पोर्टेबल AI-First Engineering System है, ज
 
 EmbrAIon इंजीनियरिंग सिस्टम को स्वतंत्र भागों में विभाजित करता है:
 
-- **Agent (एजेंट)** — काम की ज़िम्मेदारी किसकी है: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher या Steward।
-- **Skill (कौशल)** — किसी दोहराए जाने वाले काम को कैसे किया जाए।
-- **Rule (नियम)** — क्या अनिवार्य, निषिद्ध या संरक्षित है।
-- **Workflow (कार्यप्रवाह)** — क्षमताएँ किस क्रम में मिलकर काम करती हैं।
-- **Routing (रूटिंग)** — कौन-सा पहुँच प्रोफ़ाइल, मॉडल स्तर, क्लाइंट और प्रदाता किसी कार्य को चला सकते हैं।
-- **Adapter (एडाप्टर)** — EmbrAIon की मानक क्षमताओं को Codex, GitHub Copilot, Claude Code, API प्रदाताओं या Portable पैकेज में कैसे प्रस्तुत किया जाए।
-- **Tool (उपकरण)** — निर्धारक निष्पादन तर्क, जैसे सत्यापन, सुरक्षा जाँच, Git कार्य-वृक्ष प्रबंधन, समन्वयन और निदान।
-- **Eval (व्यवहार मूल्यांकन)** — यह जाँचना कि AI अपेक्षित इंजीनियरिंग अनुबंध का वास्तव में पालन करता है या नहीं।
+- **[Agent (एजेंट)](../core/agents/)** — काम की ज़िम्मेदारी किसकी है: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher या Steward।
+- **[Skill (कौशल)](../core/skills/)** — किसी दोहराए जाने वाले काम को कैसे किया जाए।
+- **[Rule (नियम)](../core/rules/)** — क्या अनिवार्य, निषिद्ध या संरक्षित है।
+- **[Workflow (कार्यप्रवाह)](../core/workflows/)** — क्षमताएँ किस क्रम में मिलकर काम करती हैं।
+- **[Routing (रूटिंग)](../core/routing/)** — कौन-सा पहुँच प्रोफ़ाइल, मॉडल स्तर, क्लाइंट और प्रदाता किसी कार्य को चला सकते हैं।
+- **[Adapter (एडाप्टर)](../adapters/)** — EmbrAIon की मानक क्षमताओं को Codex, GitHub Copilot, Claude Code, API प्रदाताओं या Portable पैकेज में कैसे प्रस्तुत किया जाए।
+- **[Tool (उपकरण)](../tools/)** — निर्धारक निष्पादन तर्क, जैसे सत्यापन, सुरक्षा जाँच, Git कार्य-वृक्ष प्रबंधन, समन्वयन और निदान।
+- **[Eval (व्यवहार मूल्यांकन)](../evals/)** — यह जाँचना कि AI अपेक्षित इंजीनियरिंग अनुबंध का वास्तव में पालन करता है या नहीं।
 
 `core/catalog.yaml` क्षमताओं का खोज-सूचकांक है। हर कार्य के लिए पूरा EmbrAIon लोड करने के बजाय केवल वही नियम, भूमिकाएँ, कौशल और कार्यप्रवाह लोड किए जा सकते हैं जो वर्तमान काम से संबंधित हों।
 
@@ -49,55 +49,61 @@ EmbrAIon तीन मानक डेटा वर्ग उपयोग कर
 
 ## समर्थित एडाप्टर
 
-- **Codex** — मॉडल सूची, मॉडल और तर्क स्तर का मार्ग से मिलान, तथा प्रोजेक्ट एजेंट और कॉन्फ़िगरेशन निर्माण।
-- **GitHub Copilot** — समर्थित मॉडल सूची, अनुशंसित मार्ग और कस्टम एजेंट निर्माण।
-- **Claude Code** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
-- **Portable** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
-- **API प्रदाता** — OpenAI, Anthropic, Google और DeepSeek की प्रत्यक्ष मॉडल सूचियाँ तथा कनेक्शन संबंधी जानकारी।
+- **[Codex](https://openai.com/codex/)** — मॉडल सूची, मॉडल और तर्क स्तर का मार्ग से मिलान, तथा प्रोजेक्ट एजेंट और कॉन्फ़िगरेशन निर्माण।
+- **[GitHub Copilot](https://github.com/features/copilot)** — समर्थित मॉडल सूची, अनुशंसित मार्ग और कस्टम एजेंट निर्माण।
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
+- **[Portable](../adapters/portable/)** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
+- **[API प्रदाता](../adapters/providers/)** — [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) और [DeepSeek](https://www.deepseek.com/) की प्रत्यक्ष मॉडल सूचियाँ तथा कनेक्शन संबंधी जानकारी।
 
 Core विशिष्ट मॉडलों से स्वतंत्र रहता है। वर्तमान मॉडल पहचान और क्लाइंट-विशिष्ट चयन केवल `adapters/` में रखे जाते हैं।
 
 ## स्थापना
 
-EmbrAIon रिपॉजिटरी को स्थानीय रूप से क्लोन करना **आवश्यक नहीं है**।
+EmbrAIon को **हर कंप्यूटर पर केवल एक बार** स्थापित करना होता है। रिपॉजिटरी क्लोन करने की आवश्यकता नहीं है।
 
-### आवश्यकताएँ
+### Windows
 
-- Python 3.11+
-- CLI को अलग वातावरण में स्थापित करने के लिए `pipx` अनुशंसित है
-- PyPI प्रकाशन से पहले GitHub से सीधे स्थापना करने के लिए ही Git आवश्यक है
+Python 3.11+ आवश्यक है।
 
-### 1. EmbrAIon स्थापित करें
+PowerShell में:
 
-अनुशंसित तरीका:
-
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-यदि `pipx` अभी स्थापित नहीं है:
+PowerShell बंद करके दोबारा खोलें और [PyPI](https://pypi.org/project/embraion/) से EmbrAIon स्थापित करें:
 
-```bash
-python -m pip install --user pipx
-python -m pipx ensurepath
+```powershell
+pipx install embraion
 ```
 
-इसके बाद नया टर्मिनल खोलें और ऊपर दी गई स्थापना कमांड चलाएँ।
+### macOS
 
+Python 3.11+ आवश्यक है।
 
-EmbrAIon के PyPI पर प्रकाशित होने के बाद सामान्य स्थापना होगी:
+Homebrew के साथ:
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+Homebrew के बिना:
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+नया टर्मिनल खोलें और चलाएँ:
 
 ```bash
 pipx install embraion
 ```
 
-सामान्य `pip` स्थापना भी समर्थित है:
-
-```bash
-python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
-```
-
-### 2. स्थापना जाँचें
+### जाँच
 
 ```bash
 embraion --version
@@ -105,9 +111,17 @@ embraion validate
 embraion doctor
 ```
 
-स्थापित पैकेज में आवश्यक Core, Adapters, स्कीमा, टेम्पलेट, नीतियाँ, दस्तावेज़ और अन्य सिस्टम डेटा पहले से शामिल होते हैं। स्थापना के बाद EmbrAIon किसी स्थानीय रिपॉजिटरी कॉपी पर निर्भर नहीं रहता।
+### अपडेट
+
+```bash
+pipx upgrade embraion
+```
+
+`pipx` से की गई वैश्विक स्थापना उस कंप्यूटर के सभी प्रोजेक्टों में `embraion` कमांड उपलब्ध कराती है। प्रत्येक रिपॉजिटरी को केवल एक बार अलग से जोड़ा जाता है, ताकि उसका Project Overlay और AI-क्लाइंट कॉन्फ़िगरेशन स्पष्ट और Git में संस्करणबद्ध रहें।
 
 ## EmbrAIon को किसी प्रोजेक्ट से जोड़ना
+
+CLI हर कंप्यूटर पर एक बार स्थापित होता है, लेकिन **हर रिपॉजिटरी को एक बार प्रारंभ करना आवश्यक है**। EmbrAIon सिस्टम के सभी रिपॉजिटरी को अपने आप नहीं बदलता।
 
 **Project Overlay (प्रोजेक्ट ओवरले)** बनाएँ:
 
@@ -127,19 +141,21 @@ embraion init --name MyProject
 
 ### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
 
-Codex:
+उस AI क्लाइंट की प्रस्तुति स्थापित करें जिसे यह रिपॉजिटरी उपयोग करती है। यदि प्रोजेक्ट कई क्लाइंट उपयोग करता है, तो हर आवश्यक कमांड एक बार चलाएँ।
+
+[Codex](https://openai.com/codex/):
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-GitHub Copilot:
+[GitHub Copilot](https://github.com/features/copilot):
 
 ```bash
 embraion install --host copilot --destination .
 ```
 
-Claude Code:
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -325,4 +341,4 @@ EmbrAIon अभी **पूर्व-स्थिर** अवस्था मे
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-23 21:13 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-23 22:00 UTC</sub>

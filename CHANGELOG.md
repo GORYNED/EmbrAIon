@@ -17,6 +17,9 @@
 
 ### Changed
 
+- README installation guidance now uses the published PyPI package, with explicit Windows and macOS setup, per-machine installation, per-project activation, and upgrade instructions.
+- Core concept names in the main localized README files now link directly to their canonical capability directories, while supported AI clients link to their official product pages.
+
 - Package version prepared for the first public `v0.1.0` release.
 
 - Framework and Python package metadata now declare MIT licensing.

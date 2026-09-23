@@ -24,14 +24,14 @@ It is designed to sit above individual languages and frameworks. A Unity/C# proj
 
 EmbrAIon separates the engineering system into independent dimensions:
 
-- **Agent** — who is responsible: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, Steward.
-- **Skill** — how a repeatable class of work is performed.
-- **Rule** — what is required, forbidden, or protected.
-- **Workflow** — in what order capabilities are composed.
-- **Routing** — which access profile, model tier, host, and provider may execute the work.
-- **Adapter** — how canonical capabilities are represented in Codex, Copilot, Claude Code, providers, or a host-neutral Portable bundle.
-- **Tool** — deterministic executable behavior such as validation, security scanning, worktree management, synchronization, and diagnostics.
-- **Eval** — whether AI behavior actually follows the intended engineering contract.
+- **[Agent](core/agents/)** — who is responsible: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, Steward.
+- **[Skill](core/skills/)** — how a repeatable class of work is performed.
+- **[Rule](core/rules/)** — what is required, forbidden, or protected.
+- **[Workflow](core/workflows/)** — in what order capabilities are composed.
+- **[Routing](core/routing/)** — which access profile, model tier, host, and provider may execute the work.
+- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, providers, or a host-neutral Portable bundle.
+- **[Tool](tools/)** — deterministic executable behavior such as validation, security scanning, worktree management, synchronization, and diagnostics.
+- **[Eval](evals/)** — whether AI behavior actually follows the intended engineering contract.
 
 `core/catalog.yaml` is the discovery index. Instead of loading the entire framework for every task, EmbrAIon can load only capabilities whose triggers match the current work.
 
@@ -51,55 +51,61 @@ Unknown or ambiguous classification fails closed. Model choice never expands acc
 
 Current adapters:
 
-- **Codex** — native model catalog, model/effort route mapping, generated project agents and config.
-- **GitHub Copilot** — advisory model catalog and generated custom-agent projection.
-- **Claude Code** — Claude model catalog and generated subagent projection.
-- **Portable** — host-neutral installable capability bundle.
-- **Providers** — direct API model catalogs for OpenAI, Anthropic, Google, DeepSeek, plus transport metadata.
+- **[Codex](https://openai.com/codex/)** — native model catalog, model/effort route mapping, generated project agents and config.
+- **[GitHub Copilot](https://github.com/features/copilot)** — advisory model catalog and generated custom-agent projection.
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — Claude model catalog and generated subagent projection.
+- **[Portable](adapters/portable/)** — host-neutral installable capability bundle.
+- **[Providers](adapters/providers/)** — direct API model catalogs for [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/), and [DeepSeek](https://www.deepseek.com/), plus transport metadata.
 
 Core remains model-neutral. Current model identities and host selectors live only in adapters.
 
 ## Installation
 
-A local clone of the EmbrAIon repository is **not required**.
+Install EmbrAIon **once per computer**. A local clone of the repository is not required.
 
-### Requirements
+### Windows
 
-- Python 3.11+
-- `pipx` is recommended for an isolated CLI installation
-- Git is only needed while installing directly from the GitHub repository before the PyPI release
+Requirements: Python 3.11+.
 
-### 1. Install EmbrAIon
+In PowerShell:
 
-Recommended:
-
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-If `pipx` is not installed yet:
+Close and reopen PowerShell, then install EmbrAIon from [PyPI](https://pypi.org/project/embraion/):
 
-```bash
-python -m pip install --user pipx
-python -m pipx ensurepath
+```powershell
+pipx install embraion
 ```
 
-Then open a new terminal and run the install command above.
+### macOS
 
+Requirements: Python 3.11+.
 
-After EmbrAIon is published to PyPI, the normal installation will become:
+With Homebrew:
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+Without Homebrew:
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Open a new terminal, then run:
 
 ```bash
 pipx install embraion
 ```
 
-A regular `pip` installation is also supported:
-
-```bash
-python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
-```
-
-### 2. Verify the installation
+### Verify
 
 ```bash
 embraion --version
@@ -107,9 +113,17 @@ embraion validate
 embraion doctor
 ```
 
-The installed package contains the canonical Core, adapters, schemas, templates, policies, documentation, and other framework data required by the CLI. EmbrAIon does not depend on a checked-out repository after installation.
+### Upgrade
+
+```bash
+pipx upgrade embraion
+```
+
+The global `pipx` installation makes the `embraion` command available to all projects on that computer. Each repository is then connected to EmbrAIon once, so its project-specific overlay and host projection are explicit and version-controlled.
 
 ## Add EmbrAIon to a project
+
+The CLI is installed once per computer, but **each repository should be initialized once**. This intentionally avoids silently changing every repository on the machine.
 
 Create the project overlay:
 
@@ -129,19 +143,21 @@ The project overlay pins the framework version and is where project-specific cap
 
 ### Install a host projection
 
-Codex:
+Install the projection for the AI client used by that repository. If a project uses multiple clients, run the corresponding commands once for each one.
+
+[Codex](https://openai.com/codex/):
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-GitHub Copilot:
+[GitHub Copilot](https://github.com/features/copilot):
 
 ```bash
 embraion install --host copilot --destination .
 ```
 
-Claude Code:
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -370,4 +386,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 21:13 UTC</sub>
+<sub>Last updated: 2026-09-23 22:00 UTC</sub>

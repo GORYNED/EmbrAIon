@@ -24,14 +24,14 @@ No está ligado a un único lenguaje de programación ni a un único entorno. Un
 
 EmbrAIon divide el sistema de ingeniería en componentes independientes:
 
-- **Agent (Agente)** — quién es responsable del trabajo: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher o Steward.
-- **Skill (Habilidad)** — cómo realizar una clase de trabajo repetible.
-- **Rule (Regla)** — qué comportamiento es obligatorio, está prohibido o debe protegerse.
-- **Workflow (Flujo de trabajo)** — en qué orden se combinan las capacidades.
-- **Routing (Enrutamiento)** — qué perfil de acceso, nivel de modelo, cliente y proveedor pueden ejecutar una tarea.
-- **Adapter (Adaptador)** — cómo se representan las capacidades canónicas en Codex, GitHub Copilot, Claude Code, proveedores de API o un paquete Portable.
-- **Tool (Herramienta)** — lógica ejecutable determinista, como validación, análisis de seguridad, gestión de árboles de trabajo Git, sincronización y diagnóstico.
-- **Eval (Evaluación de comportamiento)** — comprobación de que la IA realmente cumple el contrato de ingeniería previsto.
+- **[Agent (Agente)](../core/agents/)** — quién es responsable del trabajo: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher o Steward.
+- **[Skill (Habilidad)](../core/skills/)** — cómo realizar una clase de trabajo repetible.
+- **[Rule (Regla)](../core/rules/)** — qué comportamiento es obligatorio, está prohibido o debe protegerse.
+- **[Workflow (Flujo de trabajo)](../core/workflows/)** — en qué orden se combinan las capacidades.
+- **[Routing (Enrutamiento)](../core/routing/)** — qué perfil de acceso, nivel de modelo, cliente y proveedor pueden ejecutar una tarea.
+- **[Adapter (Adaptador)](../adapters/)** — cómo se representan las capacidades canónicas en Codex, GitHub Copilot, Claude Code, proveedores de API o un paquete Portable.
+- **[Tool (Herramienta)](../tools/)** — lógica ejecutable determinista, como validación, análisis de seguridad, gestión de árboles de trabajo Git, sincronización y diagnóstico.
+- **[Eval (Evaluación de comportamiento)](../evals/)** — comprobación de que la IA realmente cumple el contrato de ingeniería previsto.
 
 `core/catalog.yaml` es el índice de descubrimiento de capacidades. En vez de cargar todo EmbrAIon para cada tarea, el sistema puede cargar únicamente las reglas, roles, habilidades y flujos necesarios para el trabajo actual.
 
@@ -49,55 +49,61 @@ Una clasificación desconocida o ambigua produce una denegación segura. Elegir 
 
 ## Adaptadores compatibles
 
-- **Codex** — catálogo de modelos, correspondencia entre modelo/nivel de razonamiento y rutas, y generación de agentes y configuración del proyecto.
-- **GitHub Copilot** — catálogo de modelos compatibles, rutas recomendadas y generación de agentes personalizados.
-- **Claude Code** — catálogo de modelos Claude, rutas y generación de subagentes.
-- **Portable** — paquete de capacidades portátil e independiente de un cliente de IA concreto.
-- **Proveedores de API** — catálogos directos de OpenAI, Anthropic, Google y DeepSeek, además de información de conexión.
+- **[Codex](https://openai.com/codex/)** — catálogo de modelos, correspondencia entre modelo/nivel de razonamiento y rutas, y generación de agentes y configuración del proyecto.
+- **[GitHub Copilot](https://github.com/features/copilot)** — catálogo de modelos compatibles, rutas recomendadas y generación de agentes personalizados.
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — catálogo de modelos Claude, rutas y generación de subagentes.
+- **[Portable](../adapters/portable/)** — paquete de capacidades portátil e independiente de un cliente de IA concreto.
+- **[Proveedores de API](../adapters/providers/)** — catálogos directos de [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) y [DeepSeek](https://www.deepseek.com/), además de información de conexión.
 
 El Core permanece independiente de modelos concretos. Las identidades actuales de modelos y los selectores específicos de cada cliente viven únicamente en `adapters/`.
 
 ## Instalación
 
-**No es necesario clonar localmente** el repositorio de EmbrAIon.
+EmbrAIon se instala **una sola vez por equipo**. No es necesario clonar el repositorio.
 
-### Requisitos
+### Windows
 
-- Python 3.11+
-- se recomienda `pipx` para instalar el CLI en un entorno aislado
-- Git solo es necesario mientras la instalación se realice directamente desde GitHub antes de la publicación en PyPI
+Se requiere Python 3.11+.
 
-### 1. Instalar EmbrAIon
+En PowerShell:
 
-Opción recomendada:
-
-```bash
-pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
 ```
 
-Si todavía no tiene `pipx`:
+Cierre y vuelva a abrir PowerShell y después instale EmbrAIon desde [PyPI](https://pypi.org/project/embraion/):
 
-```bash
-python -m pip install --user pipx
-python -m pipx ensurepath
+```powershell
+pipx install embraion
 ```
 
-Después abra una nueva terminal y ejecute el comando de instalación anterior.
+### macOS
 
+Se requiere Python 3.11+.
 
-Después de publicar EmbrAIon en PyPI, la instalación normal será:
+Con Homebrew:
+
+```bash
+brew install pipx
+pipx ensurepath
+pipx install embraion
+```
+
+Sin Homebrew:
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+Abra una terminal nueva y ejecute:
 
 ```bash
 pipx install embraion
 ```
 
-También se admite una instalación normal con `pip`:
-
-```bash
-python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
-```
-
-### 2. Verificar la instalación
+### Verificación
 
 ```bash
 embraion --version
@@ -105,9 +111,17 @@ embraion validate
 embraion doctor
 ```
 
-El paquete instalado ya contiene el Core canónico, adaptadores, esquemas, plantillas, políticas, documentación y los demás datos que necesita el CLI. Después de la instalación, EmbrAIon no depende de una copia local del repositorio.
+### Actualización
+
+```bash
+pipx upgrade embraion
+```
+
+La instalación global mediante `pipx` hace que el comando `embraion` esté disponible para todos los proyectos del equipo. Cada repositorio se conecta una sola vez para mantener explícitas y versionadas su capa de proyecto y la configuración del cliente de IA.
 
 ## Añadir EmbrAIon a un proyecto
+
+El CLI se instala una vez por equipo, pero **cada repositorio debe inicializarse una vez**. EmbrAIon no modifica automáticamente todos los repositorios del sistema.
 
 Cree un **Project Overlay (Capa del proyecto)**:
 
@@ -127,19 +141,21 @@ La capa del proyecto fija la versión de EmbrAIon y permite declarar capacidades
 
 ### Instalar la representación para un cliente
 
-Codex:
+Instale la representación del cliente de IA utilizado por el repositorio. Si el proyecto utiliza varios clientes, ejecute una vez el comando correspondiente a cada uno.
+
+[Codex](https://openai.com/codex/):
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-GitHub Copilot:
+[GitHub Copilot](https://github.com/features/copilot):
 
 ```bash
 embraion install --host copilot --destination .
 ```
 
-Claude Code:
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -325,4 +341,4 @@ Antes de la primera versión estable todavía pueden cambiar los catálogos de m
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 21:13 UTC</sub>
+<sub>Última actualización: 2026-09-23 22:00 UTC</sub>
