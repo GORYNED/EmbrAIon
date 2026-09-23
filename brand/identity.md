@@ -14,13 +14,13 @@ The name intentionally combines three ideas:
 - **AI** — intelligence embedded directly into the engineering system.
 - **Embryo** — formation, birth, and growth from an initial idea into a living project.
 
-EmbrAIon is created by **GORYNED**.
+EmbrAIon is created by **[GORYNED](https://goryned.com)**.
 
 ## Primary identity
 
 - Category: **AI-FIRST ENGINEERING SYSTEM**
 - Primary tagline: **Where sparks become AI-built products**
-- Byline: **by GORYNED**
+- Byline: **[by GORYNED](https://goryned.com)**
 
 Headlines, taglines, and labels are written without terminal periods. Full descriptive sentences use normal punctuation.
 

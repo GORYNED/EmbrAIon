@@ -10,7 +10,7 @@
 
 # EmbrAIon
 
-**AI-First Engineering System by GORYNED**
+**AI-First Engineering System [by GORYNED](https://goryned.com)**
 
 > Where sparks become AI-built products
 
@@ -358,6 +358,6 @@ Before the first stable release, model catalogs, generated host projections, val
 
 ---
 
-**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
+**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 20:27 UTC</sub>
+<sub>Last updated: 2026-09-23 20:30 UTC</sub>
