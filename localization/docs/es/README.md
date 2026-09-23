@@ -4,8 +4,8 @@
   <a href="../../../docs/README.md">Inglés</a> ·
   <a href="../ru/README.md">Русский</a> ·
   <a href="../zh-CN/README.md">简体中文</a> ·
-  <a href="../hi/README.md">हिन्दी</a> ·
-  <strong>Español</strong>
+  <strong>Español</strong> ·
+  <a href="../hi/README.md">हिन्दी</a>
 </p>
 
 Empiece aquí:
@@ -23,4 +23,4 @@ Empiece aquí:
 11. [Proceso de releases](release-process.md)
 12. [Licencia](licensing.md)
 
-<sub>Última actualización: 2026-09-23 20:50 UTC</sub>
+<sub>Última actualización: 2026-09-23 20:59 UTC</sub>

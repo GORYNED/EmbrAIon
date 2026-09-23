@@ -4,8 +4,8 @@
   <a href="../../../docs/README.md">अंग्रेज़ी</a> ·
   <a href="../ru/README.md">Русский</a> ·
   <a href="../zh-CN/README.md">简体中文</a> ·
-  <strong>हिन्दी</strong> ·
-  <a href="../es/README.md">Español</a>
+  <a href="../es/README.md">Español</a> ·
+  <strong>हिन्दी</strong>
 </p>
 
 यहाँ से शुरू करें:
@@ -23,4 +23,4 @@
 11. [रिलीज़ प्रक्रिया](release-process.md)
 12. [लाइसेंसिंग](licensing.md)
 
-<sub>अंतिम अपडेट: 2026-09-23 20:50 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-23 20:59 UTC</sub>
