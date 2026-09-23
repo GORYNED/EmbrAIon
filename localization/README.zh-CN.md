@@ -42,6 +42,41 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 - **Worktrees** — isolated workspace lifecycle、safe cleanup 与 salvage。
 - **Evals** — behavioral cases、baselines 与 comparison reports。
 
+## 安装
+
+无需在本地克隆 EmbrAIon 仓库。
+
+推荐使用 `pipx` 进行隔离安装：
+
+```bash
+pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
+```
+
+如果尚未安装 `pipx`：
+
+```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+仓库仍为私有时，Git 必须已经使用有权访问 `GORYNED/EmbrAIon` 的 GitHub 账户完成认证。仓库公开后，同一条命令无需仓库访问认证即可使用。
+
+EmbrAIon 发布到 PyPI 后，标准安装命令将变为：
+
+```bash
+pipx install embraion
+```
+
+验证安装：
+
+```bash
+embraion --version
+embraion validate
+embraion doctor
+```
+
+安装包已经包含 CLI 所需的 Core、Adapters、schemas、templates、policies、documentation 和其他系统数据，因此安装完成后不依赖本地仓库副本。
+
 ## 文档
 
 完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。
@@ -60,4 +95,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-23 20:59 UTC</sub>
+<sub>最后更新：2026-09-23 21:13 UTC</sub>

@@ -61,47 +61,54 @@ EmbrAIon использует три канонических класса да�
 
 ## Установка
 
+Локально клонировать репозиторий EmbrAIon **не нужно**.
+
 ### Требования
 
 - Python 3.11+
-- Git
-- локальная копия репозитория EmbrAIon
+- `pipx` рекомендуется для изолированной установки CLI
+- Git нужен только для установки напрямую из GitHub до публикации пакета в PyPI
 
-Текущая предстабильная версия CLI устанавливается из исходного кода.
+### 1. Установить EmbrAIon
 
-### 1. Клонировать EmbrAIon
-
-```bash
-git clone https://github.com/GORYNED/EmbrAIon.git
-cd EmbrAIon
-```
-
-### 2. Создать виртуальное окружение
-
-Windows PowerShell:
-
-```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
-macOS / Linux:
+Рекомендуемый вариант:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
 ```
 
-### 3. Проверить EmbrAIon
+Если `pipx` ещё не установлен:
 
 ```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+После этого откройте новый терминал и выполните команду установки выше.
+
+Пока репозиторий приватный, Git должен быть уже авторизован в GitHub-аккаунте, у которого есть доступ к `GORYNED/EmbrAIon`. После публикации репозитория эта же команда будет работать без авторизации для доступа к репозиторию.
+
+После публикации EmbrAIon в PyPI обычная установка станет такой:
+
+```bash
+pipx install embraion
+```
+
+Также поддерживается обычный `pip`:
+
+```bash
+python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
+```
+
+### 2. Проверить установку
+
+```bash
+embraion --version
 embraion validate
 embraion doctor
 ```
+
+Установленный пакет уже содержит канонические Core, Adapters, схемы, шаблоны, политики, документацию и остальные данные системы, необходимые CLI. После установки EmbrAIon не зависит от локальной копии репозитория.
 
 ## Подключение EmbrAIon к проекту
 
@@ -365,4 +372,4 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 20:59 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 21:13 UTC</sub>

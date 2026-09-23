@@ -59,47 +59,54 @@ Core विशिष्ट मॉडलों से स्वतंत्र �
 
 ## स्थापना
 
+EmbrAIon रिपॉजिटरी को स्थानीय रूप से क्लोन करना **आवश्यक नहीं है**।
+
 ### आवश्यकताएँ
 
 - Python 3.11+
-- Git
-- EmbrAIon रिपॉजिटरी की स्थानीय प्रति
+- CLI को अलग वातावरण में स्थापित करने के लिए `pipx` अनुशंसित है
+- PyPI प्रकाशन से पहले GitHub से सीधे स्थापना करने के लिए ही Git आवश्यक है
 
-वर्तमान पूर्व-स्थिर CLI स्रोत कोड से स्थापित किया जाता है।
+### 1. EmbrAIon स्थापित करें
 
-### 1. EmbrAIon क्लोन करें
-
-```bash
-git clone https://github.com/GORYNED/EmbrAIon.git
-cd EmbrAIon
-```
-
-### 2. वर्चुअल वातावरण बनाएँ
-
-Windows PowerShell:
-
-```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
-macOS / Linux:
+अनुशंसित तरीका:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
 ```
 
-### 3. EmbrAIon जाँचें
+यदि `pipx` अभी स्थापित नहीं है:
 
 ```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+इसके बाद नया टर्मिनल खोलें और ऊपर दी गई स्थापना कमांड चलाएँ।
+
+जब तक रिपॉजिटरी निजी है, Git को ऐसे GitHub खाते से प्रमाणित होना चाहिए जिसके पास `GORYNED/EmbrAIon` का अधिकार है। रिपॉजिटरी सार्वजनिक होने के बाद यही कमांड रिपॉजिटरी प्रमाणीकरण के बिना काम करेगी।
+
+EmbrAIon के PyPI पर प्रकाशित होने के बाद सामान्य स्थापना होगी:
+
+```bash
+pipx install embraion
+```
+
+सामान्य `pip` स्थापना भी समर्थित है:
+
+```bash
+python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
+```
+
+### 2. स्थापना जाँचें
+
+```bash
+embraion --version
 embraion validate
 embraion doctor
 ```
+
+स्थापित पैकेज में आवश्यक Core, Adapters, स्कीमा, टेम्पलेट, नीतियाँ, दस्तावेज़ और अन्य सिस्टम डेटा पहले से शामिल होते हैं। स्थापना के बाद EmbrAIon किसी स्थानीय रिपॉजिटरी कॉपी पर निर्भर नहीं रहता।
 
 ## EmbrAIon को किसी प्रोजेक्ट से जोड़ना
 
@@ -319,4 +326,4 @@ EmbrAIon अभी **पूर्व-स्थिर** अवस्था मे
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-23 20:59 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-23 21:13 UTC</sub>

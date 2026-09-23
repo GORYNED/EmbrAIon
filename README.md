@@ -61,47 +61,54 @@ Core remains model-neutral. Current model identities and host selectors live onl
 
 ## Installation
 
+A local clone of the EmbrAIon repository is **not required**.
+
 ### Requirements
 
 - Python 3.11+
-- Git
-- A local clone of this repository
+- `pipx` is recommended for an isolated CLI installation
+- Git is only needed while installing directly from the GitHub repository before the PyPI release
 
-The current pre-stable CLI is intentionally installed from source.
+### 1. Install EmbrAIon
 
-### 1. Clone EmbrAIon
-
-```bash
-git clone https://github.com/GORYNED/EmbrAIon.git
-cd EmbrAIon
-```
-
-### 2. Create a virtual environment
-
-Windows PowerShell:
-
-```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
-macOS / Linux:
+Recommended:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
 ```
 
-### 3. Verify the framework
+If `pipx` is not installed yet:
 
 ```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+Then open a new terminal and run the install command above.
+
+While the repository is private, Git must already be authenticated for an account that can access `GORYNED/EmbrAIon`. Once the repository is public, the same command works without repository authentication.
+
+After EmbrAIon is published to PyPI, the normal installation will become:
+
+```bash
+pipx install embraion
+```
+
+A regular `pip` installation is also supported:
+
+```bash
+python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
+```
+
+### 2. Verify the installation
+
+```bash
+embraion --version
 embraion validate
 embraion doctor
 ```
+
+The installed package contains the canonical Core, adapters, schemas, templates, policies, documentation, and other framework data required by the CLI. EmbrAIon does not depend on a checked-out repository after installation.
 
 ## Add EmbrAIon to a project
 
@@ -364,4 +371,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 20:59 UTC</sub>
+<sub>Last updated: 2026-09-23 21:13 UTC</sub>

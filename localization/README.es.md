@@ -59,47 +59,54 @@ El Core permanece independiente de modelos concretos. Las identidades actuales d
 
 ## Instalación
 
+**No es necesario clonar localmente** el repositorio de EmbrAIon.
+
 ### Requisitos
 
 - Python 3.11+
-- Git
-- una copia local del repositorio EmbrAIon
+- se recomienda `pipx` para instalar el CLI en un entorno aislado
+- Git solo es necesario mientras la instalación se realice directamente desde GitHub antes de la publicación en PyPI
 
-La versión actual, todavía previa a la estabilidad, instala el CLI desde el código fuente.
+### 1. Instalar EmbrAIon
 
-### 1. Clonar EmbrAIon
-
-```bash
-git clone https://github.com/GORYNED/EmbrAIon.git
-cd EmbrAIon
-```
-
-### 2. Crear un entorno virtual
-
-Windows PowerShell:
-
-```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
-macOS / Linux:
+Opción recomendada:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+pipx install "git+https://github.com/GORYNED/EmbrAIon.git"
 ```
 
-### 3. Verificar EmbrAIon
+Si todavía no tiene `pipx`:
 
 ```bash
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+Después abra una nueva terminal y ejecute el comando de instalación anterior.
+
+Mientras el repositorio sea privado, Git debe estar autenticado con una cuenta de GitHub que tenga acceso a `GORYNED/EmbrAIon`. Cuando el repositorio sea público, el mismo comando funcionará sin autenticación del repositorio.
+
+Después de publicar EmbrAIon en PyPI, la instalación normal será:
+
+```bash
+pipx install embraion
+```
+
+También se admite una instalación normal con `pip`:
+
+```bash
+python -m pip install "git+https://github.com/GORYNED/EmbrAIon.git"
+```
+
+### 2. Verificar la instalación
+
+```bash
+embraion --version
 embraion validate
 embraion doctor
 ```
+
+El paquete instalado ya contiene el Core canónico, adaptadores, esquemas, plantillas, políticas, documentación y los demás datos que necesita el CLI. Después de la instalación, EmbrAIon no depende de una copia local del repositorio.
 
 ## Añadir EmbrAIon a un proyecto
 
@@ -319,4 +326,4 @@ Antes de la primera versión estable todavía pueden cambiar los catálogos de m
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 20:59 UTC</sub>
+<sub>Última actualización: 2026-09-23 21:13 UTC</sub>
