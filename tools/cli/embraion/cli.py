@@ -422,20 +422,20 @@ def _print_doctor_report(
 
     print("EmbrAIon Doctor")
     print()
-    print(f"✓ Framework {report['framework']}")
+    print(f"[OK] Framework {report['framework']}")
 
     if validation_errors:
         print(
-            f"✗ Framework validation: {validation_errors} error(s), "
+            f"[ERROR] Framework validation: {validation_errors} error(s), "
             f"{validation_warnings} warning(s)"
         )
     elif validation_warnings:
         print(
-            f"! Framework validation passed with "
+            f"[WARN] Framework validation passed with "
             f"{validation_warnings} warning(s)"
         )
     else:
-        print("✓ Framework validation passed")
+        print("[OK] Framework validation passed")
 
     print()
     project = report["project"]
@@ -444,24 +444,24 @@ def _print_doctor_report(
         print("No EmbrAIon project detected.")
         print("Project diagnostics were skipped.")
     else:
-        print(f"✓ Project: {project}")
+        print(f"[OK] Project: {project}")
 
         if security:
             if high_security:
                 print(
-                    f"✗ Security scan: {len(security)} finding(s), "
+                    f"[ERROR] Security scan: {len(security)} finding(s), "
                     f"{high_security} high-severity"
                 )
             else:
-                print(f"! Security scan: {len(security)} finding(s)")
+                print(f"[WARN] Security scan: {len(security)} finding(s)")
         else:
-            print("✓ Security scan passed")
+            print("[OK] Security scan passed")
 
         print(
-            f"✓ MCP configuration checked "
+            f"[OK] MCP configuration checked "
             f"({report['mcp-servers']} server(s))"
         )
-        print(f"✓ Worktrees checked ({report['worktrees']})")
+        print(f"[OK] Worktrees checked ({report['worktrees']})")
 
     print()
     if validation_errors or high_security:

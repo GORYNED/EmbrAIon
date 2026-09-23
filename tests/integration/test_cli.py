@@ -42,8 +42,8 @@ class CliIntegrationTests(unittest.TestCase):
             result = self._run("doctor", cwd=root)
 
             self.assertIn("EmbrAIon Doctor", result.stdout)
-            self.assertIn(f"✓ Framework {__version__}", result.stdout)
-            self.assertIn("✓ Framework validation passed", result.stdout)
+            self.assertIn(f"[OK] Framework {__version__}", result.stdout)
+            self.assertIn("[OK] Framework validation passed", result.stdout)
             self.assertIn("No EmbrAIon project detected.", result.stdout)
             self.assertIn("Project diagnostics were skipped.", result.stdout)
             self.assertIn("Everything looks good.", result.stdout)

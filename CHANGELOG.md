@@ -14,6 +14,7 @@
 - Release tag creation now waits for the cross-platform compatibility matrix before publishing a release.
 - Runtime cache markers are touched when reused so optional age-based pruning can use last-use time.
 - First-use pinned-runtime installation keeps pip output out of command stdout so delegated CLI output remains machine-safe and predictable.
+- Human-readable diagnostic status markers use ASCII labels (`[OK]`, `[WARN]`, `[ERROR]`) for reliable Windows code-page and redirected-output compatibility.
 
 ## 0.2.2 - 2026-09-23
 
