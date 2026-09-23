@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a new EmbrAIon capability or improvement
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or goal
+      description: What user or engineering problem should this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired behavior or interface.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What simpler or existing approaches have you considered?
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: Could this affect CLI behavior, schemas, generated projections, routing, project overlays, or pinned runtimes?
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Area
+      options:
+        - Core rules / workflows
+        - CLI / runtime
+        - Routing / models
+        - Host adapters
+        - Security / privacy
+        - Validation / evals
+        - Documentation
+        - Packaging / release
+        - Other
+    validations:
+      required: true

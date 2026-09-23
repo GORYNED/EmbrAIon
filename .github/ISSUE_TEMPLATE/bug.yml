@@ -1,0 +1,80 @@
+name: Bug report
+description: Report a reproducible EmbrAIon defect
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not include credentials, private keys, tokens, passwords, or sensitive personal data.
+        Security vulnerabilities must be reported privately through GitHub Private Vulnerability Reporting instead of this form.
+
+  - type: input
+    id: version
+    attributes:
+      label: EmbrAIon version
+      description: Run `embraion --version`.
+      placeholder: "0.3.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: Run `python --version` or the equivalent for your environment.
+      placeholder: "Python 3.14.4"
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Relevant diagnostics
+      description: Paste safe output from commands such as `embraion doctor` or `embraion status --json`. Remove secrets and private data first.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I verified this is not a security vulnerability.
+          required: true
+        - label: I removed secrets, credentials, and sensitive personal data from this report.
+          required: true

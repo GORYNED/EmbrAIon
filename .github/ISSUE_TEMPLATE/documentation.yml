@@ -1,0 +1,39 @@
+name: Documentation issue
+description: Report missing, incorrect, or unclear documentation
+title: "[Docs]: "
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Documentation location
+      description: File, section, page, or link.
+      placeholder: "README.md / Installation"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is unclear or incorrect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Optional wording, example, or structure that would make it clearer.
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - English
+        - Russian
+        - Simplified Chinese
+        - Spanish
+        - Hindi
+        - Other
+    validations:
+      required: true

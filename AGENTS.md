@@ -59,7 +59,7 @@ Spec Kit is a recommended external capability for substantial specification-driv
 
 - Use lowercase kebab-case for repository-owned files.
 - Prefer one or two words when practical.
-- Standard ecosystem filenames are exceptions, including `README.md`, `AGENTS.md`, and `SKILL.md`.
+- Standard ecosystem filenames are exceptions, including `README.md`, `AGENTS.md`, `SKILL.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, and `GOVERNANCE.md`.
 - Python modules use standard `snake_case` where required by the Python import system.
 
 ## Brand terminology
