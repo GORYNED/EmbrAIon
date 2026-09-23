@@ -16,9 +16,7 @@
 
 > 本文件是规范英文 README 的翻译。如有差异，以英文版本为准。
 
-EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents、skills、workflows、model routing、validation、review、tools 和 project orchestration。
-
-本仓库是可复用工程系统的 upstream 单一事实来源。具体产品的知识与约束应保留在 project overlays 中，而不是进入 EmbrAIon Core。
+EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents、skills、workflows、model routing、validation、review、tooling 与 project orchestration。
 
 ## Core
 
@@ -26,58 +24,28 @@ Core 按 capability 类型组织：
 
 - **Rules** — 必须遵守、禁止或受保护的行为。
 - **Agents** — 职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher、Steward。
-- **Skills** — 可重复执行的流程。
-- **Workflows** — 有序 orchestration。
-- **Routing** — complexity、privacy、fallback 与 health policy。
-- **Knowledge** — 共享事实、concepts 和 terminology。
+- **Skills** — 仅在相关任务中加载的流程。
+- **Workflows** — 工作、review 与 learning 的 orchestration。
+- **Routing** — access、complexity、privacy、fallback 与 health。
+- **Knowledge** — 共享 concepts 与 terminology。
 
-Agents 保持 model-neutral。具体模型、effort、lifecycle、pricing 与 host selectors 由对应 adapter 的 model catalog 维护。
+`core/catalog.yaml` 决定特定任务真正需要加载哪些 capabilities。
 
-## 架构
+## Operational layers
 
-```text
-EmbrAIon Core
-    +
-Tool / provider adapters
-    +
-Project overlay
-    =
-有效工程上下文
-```
-
-## 仓库结构
-
-```text
-brand/         品牌规范与 README assets
-core/          vendor-neutral rules、agents、skills、workflows、routing、knowledge
-adapters/      Codex、Copilot、provider 与 transport integrations
-tools/         runtime、worktree、CLI、install、doctor、sync、validation
-schemas/       machine-readable contracts
-templates/     project overlay templates
-docs/          architecture 与 engineering documentation
-examples/      reference integrations
-tests/         framework validation
-localization/  README translations
-```
+- **Runtime** — privacy-safe 的统一 session/task state。
+- **Learning** — 重复模式成为经过 review 的 improvement candidates，不会自动修改 Core。
+- **Security** — 对 permissions、credentials、routes、integrations 与 generated configuration 进行 deterministic scan。
+- **MCP inventory** — 统一记录 server state 与 drift，但不保存 secret values。
+- **Worktrees** — isolated workspace lifecycle、safe cleanup 与 salvage。
+- **Evals** — behavioral cases、baselines 与 comparison reports。
 
 ## Spec Kit
 
-Spec Kit 是推荐的外部 companion capability，适用于 substantial features、cross-cutting architecture 与 specification-driven 工作。
-
-它不属于 EmbrAIon Core，也不能替代 Core rules、project architecture、product truth、compatibility contracts 或 validation evidence。
-
-## Project overlays
-
-使用 EmbrAIon 的项目在自己的仓库中维护 domain truth，并通过 `.embraion/project.yaml` 引用固定版本的 EmbrAIon。
-
-Generic reusable behavior 上移到 EmbrAIon；product semantics、compatibility contracts、domain agents 与 application-specific knowledge 仍保留在项目中。
-
-## 状态
-
-EmbrAIon 目前处于 foundation 阶段。初始 model catalogs 来自已验证的 routing registry 和 observed model snapshot，之后由对应 adapters 独立维护。
+Spec Kit 是推荐的独立 companion capability，适用于 substantial specification-driven 工作。它不会替代 Core rules、project truth、compatibility contracts 或 validation evidence。
 
 ---
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>最后更新：2026-09-23 19:04 UTC</sub>
+<sub>最后更新：2026-09-23 19:34 UTC</sub>

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Worktree State",
+  "type": "object",
+  "required": [
+    "schema-version",
+    "id",
+    "state",
+    "branch",
+    "head"
+  ],
+  "properties": {
+    "schema-version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "created",
+        "active",
+        "blocked",
+        "review",
+        "merge-ready",
+        "merged",
+        "stale",
+        "salvage",
+        "closed"
+      ]
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "head": {
+      "type": "string",
+      "minLength": 1
+    },
+    "clean": {
+      "type": "boolean"
+    },
+    "locked": {
+      "type": "boolean"
+    },
+    "integration-proof": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

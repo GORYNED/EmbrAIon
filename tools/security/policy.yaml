@@ -1,0 +1,18 @@
+schema-version: 1
+
+severity: [critical, high, medium, low, info]
+
+checks:
+  secrets: { enabled: true, fail-at: high }
+  permissions: { enabled: true, fail-at: high }
+  commands: { enabled: true, fail-at: high }
+  integrations: { enabled: true, fail-at: high }
+  provider-privacy: { enabled: true, fail-at: critical }
+  generated-drift: { enabled: true, fail-at: high }
+
+rules:
+  unknown-external-integration: fail-closed
+  secret-values-in-inventory: forbidden
+  model-does-not-expand-access: true
+  project-overlay-may-tighten: true
+  project-overlay-may-widen-without-review: false

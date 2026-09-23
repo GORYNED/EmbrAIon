@@ -1,0 +1,25 @@
+schema-version: 1
+
+inventory:
+  secret-values: forbidden
+  environment-variable-values: forbidden
+  absolute-credential-paths: forbidden
+  record-environment-variable-names: true
+  record-command: true
+  record-version-evidence: true
+  record-access: true
+
+states: [expected, observed, missing, unexpected, drifted, unavailable]
+
+drift:
+  command-change: material
+  transport-change: material
+  access-expansion: critical
+  access-reduction: informational
+  version-change: review
+  unexpected-server: high
+  missing-required-server: high
+
+validation:
+  unknown-state-fails-closed: true
+  secret-detection-fails: true

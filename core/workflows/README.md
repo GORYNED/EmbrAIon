@@ -8,7 +8,8 @@ Current foundation workflows:
 - `review.md` — independent review and remediation cycle.
 - `delivery.md` — handoff and human merge gate.
 - `worktree.md` — isolated-task Git workflow.
+- `learning.md` — evidence-driven proposal and reviewed capability promotion.
 
 Spec Kit is a recommended planning/specification companion inside substantial engineering, not a replacement for the workflow.
 
-<sub>Last updated: 2026-09-23 18:11 UTC</sub>
+<sub>Last updated: 2026-09-23 19:34 UTC</sub>

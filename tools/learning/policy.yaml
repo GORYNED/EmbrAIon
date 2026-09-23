@@ -1,0 +1,21 @@
+schema-version: 1
+
+states: [observed, accumulating, proposed, approved, rejected, promoted]
+
+defaults:
+  minimum-independent-evidence: 3
+  minimum-confidence: 0.75
+  automatic-promotion: false
+  require-review: true
+  require-explicit-approval: true
+
+allowed-targets: [rule, skill, workflow, routing, knowledge, eval]
+
+privacy:
+  allow-content: false
+  allowed-evidence: [run-id, eval-id, outcome, category, count, confidence, timestamp, sanitized-summary]
+
+promotion:
+  uses-engineering-workflow: true
+  requires-validation: true
+  requires-eval-when-behavioral: true

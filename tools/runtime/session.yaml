@@ -1,0 +1,14 @@
+schema-version: 1
+
+state-machine:
+  task:
+    states: [queued, active, blocked, review, completed, cancelled, incomplete]
+  worker:
+    states: [queued, active, waiting, completed, failed, cancelled]
+  validation:
+    states: [not-planned, planned, running, passed, failed, limited]
+  review:
+    states: [not-required, pending, running, findings, approved]
+
+privacy:
+  forbidden-content: [prompt, source-excerpt, diff, raw-reasoning, credential-value, secret, absolute-private-path]

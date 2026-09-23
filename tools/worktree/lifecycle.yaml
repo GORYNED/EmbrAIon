@@ -1,0 +1,28 @@
+schema-version: 1
+
+states: [created, active, blocked, review, merge-ready, merged, stale, salvage, closed]
+
+transitions:
+  created: [active, closed]
+  active: [blocked, review, stale, salvage]
+  blocked: [active, stale, salvage, closed]
+  review: [active, merge-ready, blocked, salvage]
+  merge-ready: [active, merged, blocked]
+  merged: [closed]
+  stale: [active, salvage, closed]
+  salvage: [active, review, closed]
+  closed: []
+
+cleanup:
+  require-clean: true
+  require-unlocked: true
+  require-inactive: true
+  require-no-running-operation: true
+  require-integration-proof-or-explicit-abandonment: true
+  preserve-on-ambiguity: true
+  force-removal-default: false
+
+salvage:
+  preserve-commits: true
+  preserve-uncommitted-state: true
+  destructive-automation: false

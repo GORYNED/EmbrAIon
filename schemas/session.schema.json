@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Session State",
+  "type": "object",
+  "required": [
+    "schema-version",
+    "session-id",
+    "task",
+    "agent",
+    "execution",
+    "state"
+  ],
+  "properties": {
+    "schema-version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "session-id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "agent": {
+      "type": "object",
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "effort": {
+          "type": "string"
+        },
+        "access": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "active",
+        "blocked",
+        "review",
+        "completed",
+        "cancelled",
+        "incomplete"
+      ]
+    },
+    "validation": {
+      "type": "string"
+    },
+    "review": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,142 +1,36 @@
 schema-version: 1
-catalog-version: 1
+catalog-version: 2
 
 capabilities:
-  - id: lead
-    type: agent
-    path: agents/lead.yaml
-    load: conditional
-    triggers: [orchestration, substantial-work, protected-decision]
+  - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
+  - { id: worker, type: agent, path: agents/worker.yaml, load: conditional, triggers: [implementation, writable-task] }
+  - { id: reviewer, type: agent, path: agents/reviewer.yaml, load: conditional, triggers: [independent-review, substantial-change] }
+  - { id: architect, type: agent, path: agents/architect.yaml, load: conditional, triggers: [architecture, ownership, dependency-direction] }
+  - { id: analyst, type: agent, path: agents/analyst.yaml, load: conditional, triggers: [ambiguity, requirements, analysis] }
+  - { id: validator, type: agent, path: agents/validator.yaml, load: conditional, triggers: [validation, regression, evidence] }
+  - { id: researcher, type: agent, path: agents/researcher.yaml, load: conditional, triggers: [research, discovery, external-sources] }
+  - { id: steward, type: agent, path: agents/steward.yaml, load: conditional, triggers: [compatibility, persistence, migration, stable-identity] }
 
-  - id: worker
-    type: agent
-    path: agents/worker.yaml
-    load: conditional
-    triggers: [implementation, writable-task]
+  - { id: planning, type: skill, path: skills/planning, load: conditional, triggers: [substantial-work, multi-step-work, ambiguity] }
+  - { id: implementation, type: skill, path: skills/implementation, load: conditional, triggers: [implementation, writable-task] }
+  - { id: research, type: skill, path: skills/research, load: conditional, triggers: [research, discovery] }
+  - { id: review, type: skill, path: skills/review, load: conditional, triggers: [review, substantial-change] }
+  - { id: validation, type: skill, path: skills/validation, load: conditional, triggers: [validation, test, regression] }
+  - { id: debugging, type: skill, path: skills/debugging, load: conditional, triggers: [bug, failure, unexpected-behavior] }
+  - { id: verification, type: skill, path: skills/verification, load: conditional, triggers: [completion, release, handoff] }
 
-  - id: reviewer
-    type: agent
-    path: agents/reviewer.yaml
-    load: conditional
-    triggers: [independent-review, substantial-change]
+  - { id: engineering, type: workflow, path: workflows/engineering.md, load: conditional, triggers: [substantial-work] }
+  - { id: review-cycle, type: workflow, path: workflows/review.md, load: conditional, triggers: [independent-review] }
+  - { id: delivery, type: workflow, path: workflows/delivery.md, load: conditional, triggers: [handoff, pull-request, release] }
+  - { id: worktree, type: workflow, path: workflows/worktree.md, load: conditional, triggers: [isolated-write, parallel-work] }
+  - { id: learning, type: workflow, path: workflows/learning.md, load: conditional, triggers: [repeated-pattern, repeated-failure, capability-improvement] }
 
-  - id: architect
-    type: agent
-    path: agents/architect.yaml
-    load: conditional
-    triggers: [architecture, ownership, dependency-direction]
+  - { id: integration-safety, type: rule, path: rules/integrations.md, load: conditional, triggers: [external-tool, mcp, server, integration] }
+  - { id: security, type: rule, path: rules/security.md, load: conditional, triggers: [security, credential, permission, external-tool, provider] }
+  - { id: learning-gate, type: rule, path: rules/learning.md, load: conditional, triggers: [learning, promotion, repeated-pattern] }
 
-  - id: analyst
-    type: agent
-    path: agents/analyst.yaml
-    load: conditional
-    triggers: [ambiguity, requirements, analysis]
-
-  - id: validator
-    type: agent
-    path: agents/validator.yaml
-    load: conditional
-    triggers: [validation, regression, evidence]
-
-  - id: researcher
-    type: agent
-    path: agents/researcher.yaml
-    load: conditional
-    triggers: [research, discovery, external-sources]
-
-  - id: steward
-    type: agent
-    path: agents/steward.yaml
-    load: conditional
-    triggers: [compatibility, persistence, migration, stable-identity]
-
-  - id: planning
-    type: skill
-    path: skills/planning
-    load: conditional
-    triggers: [substantial-work, multi-step-work, ambiguity]
-
-  - id: implementation
-    type: skill
-    path: skills/implementation
-    load: conditional
-    triggers: [implementation, writable-task]
-
-  - id: research
-    type: skill
-    path: skills/research
-    load: conditional
-    triggers: [research, discovery]
-
-  - id: review
-    type: skill
-    path: skills/review
-    load: conditional
-    triggers: [review, substantial-change]
-
-  - id: validation
-    type: skill
-    path: skills/validation
-    load: conditional
-    triggers: [validation, test, regression]
-
-  - id: debugging
-    type: skill
-    path: skills/debugging
-    load: conditional
-    triggers: [bug, failure, unexpected-behavior]
-
-  - id: verification
-    type: skill
-    path: skills/verification
-    load: conditional
-    triggers: [completion, release, handoff]
-
-  - id: engineering
-    type: workflow
-    path: workflows/engineering.md
-    load: conditional
-    triggers: [substantial-work]
-
-  - id: review-cycle
-    type: workflow
-    path: workflows/review.md
-    load: conditional
-    triggers: [independent-review]
-
-  - id: delivery
-    type: workflow
-    path: workflows/delivery.md
-    load: conditional
-    triggers: [handoff, pull-request, release]
-
-  - id: worktree
-    type: workflow
-    path: workflows/worktree.md
-    load: conditional
-    triggers: [isolated-write, parallel-work]
-
-  - id: access
-    type: routing
-    path: routing/access.yaml
-    load: always
-
-  - id: complexity
-    type: routing
-    path: routing/complexity.yaml
-    load: always
-
-  - id: privacy
-    type: routing
-    path: routing/privacy.yaml
-    load: always
-
-  - id: fallback
-    type: routing
-    path: routing/fallback.yaml
-    load: always
-
-  - id: health
-    type: routing
-    path: routing/health.yaml
-    load: always
+  - { id: access, type: routing, path: routing/access.yaml, load: always }
+  - { id: complexity, type: routing, path: routing/complexity.yaml, load: always }
+  - { id: privacy, type: routing, path: routing/privacy.yaml, load: always }
+  - { id: fallback, type: routing, path: routing/fallback.yaml, load: always }
+  - { id: health, type: routing, path: routing/health.yaml, load: always }

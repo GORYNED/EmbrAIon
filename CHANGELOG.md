@@ -4,15 +4,15 @@
 
 ### Added
 
-- Job-like Core agent roles: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, and Steward.
-- Split Core rules, skills, workflows, and routing policy from a monolithic AI-First workflow.
-- Adapter-owned model catalogs for Codex, Copilot, OpenAI API, Google, Anthropic, and DeepSeek.
-- Runtime and worktree tool ownership boundaries.
-- Agent and model catalog schemas.
-- Spec Kit as a recommended external companion capability.
+- Privacy-safe learning candidates with reviewed promotion gates.
+- AI infrastructure security policy and scanner foundation.
+- Normalized MCP inventory and drift policy.
+- Normalized runtime session-state contract.
+- Worktree lifecycle, salvage, and fail-closed garbage-collection policy.
+- Behavioral eval baselines and comparison-report structure.
+- Learning, session, MCP, worktree, and security schemas.
 
 ### Changed
 
-- Core agent naming now describes roles as occupations rather than task/document names.
-- File naming guidance prefers short lowercase kebab-case names.
-- Bootstrap provenance is framework-generic and contains no consuming-project identity.
+- Core catalog now includes learning, integration-safety, and security capabilities.
+- Doctor and validation responsibilities now include infrastructure integrity and drift.

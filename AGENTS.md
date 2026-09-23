@@ -17,33 +17,45 @@ EmbrAIon is the upstream source of truth for reusable AI-First engineering behav
 - Prefer conditional capability loading over injecting the entire Core into every task.
 - Every catalog path must resolve to exactly one canonical capability.
 - Skills use one directory per skill with `SKILL.md` as the entry point.
-- Supporting skill files belong beside that skill and must not become global context by accident.
 
 ## Agent naming
 
 Canonical Core agents are job-like roles: `lead`, `worker`, `reviewer`, `architect`, `analyst`, `validator`, `researcher`, and `steward`.
 
-Do not create generic Core agents named after task nouns when a clear occupational role exists.
-
 ## Separation of concerns
 
-Agent role, access profile, model route, and provider are independent dimensions.
+Agent role, access profile, model route, provider, and external integration state are independent dimensions.
 
 A role never implies broader permissions or a more expensive model. Model choice never expands access.
+
+## Learning
+
+Learning output is advisory until explicitly promoted. Runtime evidence may create candidates, but no learning tool may directly mutate Core. Promotion uses review, validation, applicable evals, and explicit approval.
+
+## Security and integrations
+
+- External integrations must be inventoried.
+- Inventories store metadata and environment-variable names, never secret values.
+- Unknown integration state, access expansion, provider/privacy mismatch, and embedded credentials fail closed according to policy.
+- Security scanners report findings; they do not weaken policy to pass.
+
+## Worktrees
+
+Worktree cleanup is evidence-driven and fail-closed. Preserve ambiguous, dirty, locked, active, divergent, or unproven state. Salvage recoverable work before destructive cleanup.
+
+## Evals
+
+Use deterministic tests for schemas, code, references, and generated output. Use `evals/` for behavioral properties and baseline comparison.
+
+## Spec Kit
+
+Spec Kit is a recommended external capability for substantial specification-driven work. It remains independently managed and never overrides EmbrAIon Core or project truth.
 
 ## File naming
 
 - Use lowercase kebab-case for repository-owned files.
 - Prefer one or two words when practical.
 - Standard ecosystem filenames are exceptions, including `README.md`, `AGENTS.md`, and `SKILL.md`.
-
-## Evals
-
-Use deterministic tests for schemas, code, references, and generated output. Use `evals/` for behavioral properties such as role adherence, permission discipline, routing choices, and completion behavior.
-
-## Spec Kit
-
-Spec Kit is a recommended external capability for substantial specification-driven work. It remains independently managed and never overrides EmbrAIon Core or project truth.
 
 ## Brand terminology
 

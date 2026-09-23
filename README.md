@@ -23,11 +23,22 @@ The canonical Core is organized by capability type:
 - **Rules** — required, prohibited, or protected behavior.
 - **Agents** — job-like roles: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, and Steward.
 - **Skills** — discoverable procedures loaded only when relevant.
-- **Workflows** — ordered orchestration across roles, skills, validation, and review.
+- **Workflows** — ordered orchestration across roles, skills, validation, review, and learning.
 - **Routing** — access, complexity, privacy, fallback, and health policy.
 - **Knowledge** — shared facts, concepts, and terminology.
 
 `core/catalog.yaml` indexes capabilities and their triggers so an agent can load relevant context instead of the entire framework.
+
+## Operational layers
+
+EmbrAIon also defines reusable operational infrastructure:
+
+- **Runtime** — normalized task/session state and bounded execution coordination.
+- **Learning** — repeated outcome patterns become reviewed improvement candidates, never automatic Core mutations.
+- **Security** — deterministic scanning of permissions, credentials, routes, integrations, and generated configuration.
+- **MCP inventory** — normalized external server state and drift without persisting secret values.
+- **Worktrees** — lifecycle-managed isolated writable workspaces with fail-closed cleanup and salvage.
+- **Evals** — behavioral cases, baselines, and comparison reports.
 
 ## Repository layout
 
@@ -35,23 +46,19 @@ The canonical Core is organized by capability type:
 brand/         Brand specification and README-facing assets
 core/          Canonical rules, agents, skills, workflows, routing, knowledge
 adapters/      Portable package, host, provider, and transport integrations
-tools/         Runtime, worktree, CLI, install, doctor, sync, validation
+tools/         Runtime, learning, security, MCP, worktree, validation, sync, install
 schemas/       Machine-readable contracts
 templates/     Project overlay templates
 docs/          Architecture and engineering documentation
 examples/      Reference integrations
 tests/         Deterministic framework tests
-evals/         Behavioral AI-First evaluations
+evals/         Behavioral cases, baselines, graders, and reports
 localization/  README translations
 ```
 
 ## Skills
 
 Skills live in individual directories with a `SKILL.md` entry point. Current generic skills cover planning, implementation, research, review, validation, debugging, and final verification.
-
-## Behavioral evaluation
-
-Deterministic tests prove contracts and code behavior. `evals/` separately measures whether agents actually follow role, access, routing, privacy, debugging, review, and verification expectations.
 
 ## Recommended companion: Spec Kit
 
@@ -69,4 +76,4 @@ EmbrAIon is in active framework foundation development.
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Last updated: 2026-09-23 19:21 UTC</sub>
+<sub>Last updated: 2026-09-23 19:34 UTC</sub>

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Security Finding",
+  "type": "object",
+  "required": [
+    "schema-version",
+    "id",
+    "severity",
+    "category",
+    "message"
+  ],
+  "properties": {
+    "schema-version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "remediation": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
