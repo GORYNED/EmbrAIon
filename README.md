@@ -53,7 +53,7 @@ Current adapters:
 
 - **[Codex](https://openai.com/codex/)** — native model catalog, model/effort route mapping, generated project agents and config.
 - **[GitHub Copilot](https://github.com/features/copilot)** — advisory model catalog and generated custom-agent projection.
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — Claude model catalog and generated subagent projection.
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — Claude model catalog and generated subagent projection.
 - **[Portable](adapters/portable/)** — host-neutral installable capability bundle.
 - **[Providers](adapters/providers/)** — direct API model catalogs for [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/), and [DeepSeek](https://www.deepseek.com/), plus transport metadata.
 
@@ -61,51 +61,80 @@ Core remains model-neutral. Current model identities and host selectors live onl
 
 ## Installation
 
-Install EmbrAIon **once per computer**. A local clone of the repository is not required.
+### Install once per machine
 
-### Windows
+EmbrAIon is distributed through [PyPI](https://pypi.org/project/embraion/). For normal use, install the CLI once on each Windows or macOS computer with `pipx`. A source checkout or `git clone` is not required.
 
-Requirements: Python 3.11+.
+A regular `pip` installation is also supported when you intentionally manage the Python environment yourself, but `pipx` is the recommended CLI installation path.
 
-In PowerShell:
+#### Windows
+
+EmbrAIon requires Python 3.11 or newer.
+
+1. Check whether Python is already available:
+
+```powershell
+py --version
+```
+
+If `py` is unavailable or reports a version older than 3.11, install a current Python 3 release from the [official Python downloads for Windows](https://www.python.org/downloads/windows/), then reopen PowerShell.
+
+2. Install [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) and add its command directory to `PATH`:
 
 ```powershell
 py -m pip install --user pipx
 py -m pipx ensurepath
 ```
 
-Close and reopen PowerShell, then install EmbrAIon from [PyPI](https://pypi.org/project/embraion/):
+3. Close and reopen PowerShell so the updated `PATH` is loaded, then install EmbrAIon:
 
 ```powershell
 pipx install embraion
 ```
 
-### macOS
+If you deliberately use a managed Python environment instead of `pipx`, this is also supported:
 
-Requirements: Python 3.11+.
+```powershell
+py -m pip install embraion
+```
 
-With Homebrew:
+#### macOS
+
+If [Homebrew](https://brew.sh/) is already installed, the simplest path is:
 
 ```bash
 brew install pipx
 pipx ensurepath
+```
+
+Open a new Terminal window, then install EmbrAIon:
+
+```bash
 pipx install embraion
 ```
 
-Without Homebrew:
+Without Homebrew, first check Python:
+
+```bash
+python3 --version
+```
+
+If Python is missing or older than 3.11, install a current Python 3 release from the [official Python downloads for macOS](https://www.python.org/downloads/macos/). Then install `pipx`:
 
 ```bash
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 ```
 
-Open a new terminal, then run:
+Open a new Terminal window and run:
 
 ```bash
 pipx install embraion
 ```
 
-### Verify
+A regular `python3 -m pip install embraion` is also supported when you manage the Python environment yourself.
+
+#### Verify
 
 ```bash
 embraion --version
@@ -113,24 +142,26 @@ embraion validate
 embraion doctor
 ```
 
-### Upgrade
+`embraion validate` validates the framework data bundled with the active EmbrAIon installation. `embraion doctor` also inspects the current project/worktree context, so run it from the repository you want to diagnose or from an empty test directory for an installation smoke check.
+
+#### Upgrade
 
 ```bash
 pipx upgrade embraion
 ```
 
-The global `pipx` installation makes the `embraion` command available to all projects on that computer. Each repository is then connected to EmbrAIon once, so its project-specific overlay and host projection are explicit and version-controlled.
+The global `pipx` installation makes the `embraion` command available from any project on that computer. It does **not** automatically enable EmbrAIon in every repository or modify repositories in the background.
 
-## Add EmbrAIon to a project
+## Add EmbrAIon to each project
 
-The CLI is installed once per computer, but **each repository should be initialized once**. This intentionally avoids silently changing every repository on the machine.
-
-Create the project overlay:
+Each repository opts in explicitly. From the project root:
 
 ```bash
 cd /path/to/your/project
-embraion init --name MyProject
+embraion init
 ```
+
+By default, `init` uses the directory name as the project name. Use `--name MyProject` only when you want to override it.
 
 This creates:
 
@@ -139,11 +170,11 @@ This creates:
 └── project.yaml
 ```
 
-The project overlay pins the framework version and is where project-specific capabilities can be declared without modifying Core.
+The Project Overlay records the EmbrAIon repository/version declaration and project-specific configuration in version control.
 
 ### Install a host projection
 
-Install the projection for the AI client used by that repository. If a project uses multiple clients, run the corresponding commands once for each one.
+Install the projection for each AI client used by the repository.
 
 [Codex](https://openai.com/codex/):
 
@@ -157,7 +188,7 @@ embraion install --host codex --destination .
 embraion install --host copilot --destination .
 ```
 
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
+[Claude Code](https://code.claude.com/docs/en/overview):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -169,7 +200,19 @@ Portable bundle:
 embraion install --host portable --destination ./vendor/embraion
 ```
 
-Use `--force` only when intentionally replacing an existing generated projection.
+If a repository uses multiple clients, run the corresponding `install` command once for each one. Existing generated files are protected by default; use `--force` only when intentionally replacing them.
+
+### What `init`, `install`, and `sync` do today
+
+- `embraion init` creates the repository-local `.embraion/project.yaml` overlay.
+- `embraion install` generates one host projection from the framework data available to the **currently running CLI** and copies it into the requested destination.
+- `embraion sync` generates disposable projections into an output directory; it does not discover, initialize, or attach every project on the machine automatically.
+
+### Project version pinning in v0.1.x
+
+`.embraion/project.yaml` records a framework version, but the current `v0.1.x` CLI does **not** automatically resolve and launch that recorded version. `install` and `sync` use the framework data bundled with the EmbrAIon executable that is currently running.
+
+For exact reproducibility, run the CLI/framework distribution that matches the version recorded by the project. In `v0.1.x`, the project version field is therefore a compatibility declaration and update boundary, not yet an automatic per-project runtime resolver.
 
 ## How a task flows through EmbrAIon
 
@@ -197,7 +240,7 @@ Verification
 Delivery / human merge gate
 ```
 
-For substantial specification-driven work, Spec Kit is recommended as an independent companion. It refines planning and specification but does not replace Core rules, project truth, compatibility contracts, or validation evidence.
+For substantial specification-driven work, [Spec Kit](https://github.com/github/spec-kit) is recommended as an independent companion. It refines planning and specification but does not replace Core rules, project truth, compatibility contracts, or validation evidence.
 
 ## CLI
 

@@ -51,7 +51,7 @@ Una clasificación desconocida o ambigua produce una denegación segura. Elegir 
 
 - **[Codex](https://openai.com/codex/)** — catálogo de modelos, correspondencia entre modelo/nivel de razonamiento y rutas, y generación de agentes y configuración del proyecto.
 - **[GitHub Copilot](https://github.com/features/copilot)** — catálogo de modelos compatibles, rutas recomendadas y generación de agentes personalizados.
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — catálogo de modelos Claude, rutas y generación de subagentes.
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — catálogo de modelos Claude, rutas y generación de subagentes.
 - **[Portable](../adapters/portable/)** — paquete de capacidades portátil e independiente de un cliente de IA concreto.
 - **[Proveedores de API](../adapters/providers/)** — catálogos directos de [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) y [DeepSeek](https://www.deepseek.com/), además de información de conexión.
 
@@ -59,51 +59,80 @@ El Core permanece independiente de modelos concretos. Las identidades actuales d
 
 ## Instalación
 
-EmbrAIon se instala **una sola vez por equipo**. No es necesario clonar el repositorio.
+### Instalar una vez por equipo
 
-### Windows
+EmbrAIon se distribuye mediante [PyPI](https://pypi.org/project/embraion/). Para el uso normal, instale el CLI una sola vez en cada equipo Windows o macOS con `pipx`. No es necesario clonar el repositorio ni usar `git clone`.
 
-Se requiere Python 3.11+.
+También se admite una instalación normal con `pip` si administra explícitamente el entorno de Python, pero `pipx` es la opción recomendada para el CLI.
 
-En PowerShell:
+#### Windows
+
+EmbrAIon requiere Python 3.11 o posterior.
+
+1. Compruebe Python:
+
+```powershell
+py --version
+```
+
+Si `py` no está disponible o la versión es anterior a 3.11, instale una versión actual de Python 3 desde las [descargas oficiales de Python para Windows](https://www.python.org/downloads/windows/) y vuelva a abrir PowerShell.
+
+2. Instale [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) y añada su directorio de comandos a `PATH`:
 
 ```powershell
 py -m pip install --user pipx
 py -m pipx ensurepath
 ```
 
-Cierre y vuelva a abrir PowerShell y después instale EmbrAIon desde [PyPI](https://pypi.org/project/embraion/):
+3. Cierre y vuelva a abrir PowerShell y, después, instale EmbrAIon:
 
 ```powershell
 pipx install embraion
 ```
 
-### macOS
+Si utiliza deliberadamente un entorno Python administrado por usted en lugar de `pipx`, también se admite:
 
-Se requiere Python 3.11+.
+```powershell
+py -m pip install embraion
+```
 
-Con Homebrew:
+#### macOS
+
+Si ya utiliza [Homebrew](https://brew.sh/), la ruta más sencilla es:
 
 ```bash
 brew install pipx
 pipx ensurepath
+```
+
+Abra una nueva ventana de Terminal e instale EmbrAIon:
+
+```bash
 pipx install embraion
 ```
 
-Sin Homebrew:
+Sin Homebrew, compruebe primero Python:
+
+```bash
+python3 --version
+```
+
+Si falta Python o la versión es anterior a 3.11, instale una versión actual de Python 3 desde las [descargas oficiales de Python para macOS](https://www.python.org/downloads/macos/). Después instale `pipx`:
 
 ```bash
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 ```
 
-Abra una terminal nueva y ejecute:
+Abra una nueva ventana de Terminal y ejecute:
 
 ```bash
 pipx install embraion
 ```
 
-### Verificación
+También se admite `python3 -m pip install embraion` si administra explícitamente el entorno de Python.
+
+#### Verificación
 
 ```bash
 embraion --version
@@ -111,37 +140,39 @@ embraion validate
 embraion doctor
 ```
 
-### Actualización
+`embraion validate` comprueba los datos del sistema incluidos en la instalación activa de EmbrAIon. `embraion doctor` también analiza el contexto del proyecto o árbol de trabajo actual, por lo que conviene ejecutarlo dentro del repositorio que quiera diagnosticar o desde una carpeta de prueba vacía.
+
+#### Actualización
 
 ```bash
 pipx upgrade embraion
 ```
 
-La instalación global mediante `pipx` hace que el comando `embraion` esté disponible para todos los proyectos del equipo. Cada repositorio se conecta una sola vez para mantener explícitas y versionadas su capa de proyecto y la configuración del cliente de IA.
+La instalación global con `pipx` hace que el comando `embraion` esté disponible desde cualquier proyecto del equipo. **No activa EmbrAIon automáticamente en todos los repositorios** ni los modifica en segundo plano.
 
-## Añadir EmbrAIon a un proyecto
+## Añadir EmbrAIon a cada proyecto
 
-El CLI se instala una vez por equipo, pero **cada repositorio debe inicializarse una vez**. EmbrAIon no modifica automáticamente todos los repositorios del sistema.
-
-Cree un **Project Overlay (Capa del proyecto)**:
+Cada repositorio se incorpora de forma explícita. Desde la raíz del proyecto:
 
 ```bash
 cd /path/to/your/project
-embraion init --name MyProject
+embraion init
 ```
 
-Esto crea:
+De forma predeterminada, `init` usa el nombre de la carpeta como nombre del proyecto. Utilice `--name MyProject` solo si quiere sobrescribirlo.
+
+Se crea:
 
 ```text
 .embraion/
 └── project.yaml
 ```
 
-La capa del proyecto fija la versión de EmbrAIon y permite declarar capacidades específicas sin modificar el Core.
+El Project Overlay (Capa del proyecto) conserva en Git la versión declarada de EmbrAIon y la configuración específica del proyecto.
 
 ### Instalar la representación para un cliente
 
-Instale la representación del cliente de IA utilizado por el repositorio. Si el proyecto utiliza varios clientes, ejecute una vez el comando correspondiente a cada uno.
+Instale una representación para cada cliente de IA utilizado por el repositorio.
 
 [Codex](https://openai.com/codex/):
 
@@ -155,7 +186,7 @@ embraion install --host codex --destination .
 embraion install --host copilot --destination .
 ```
 
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
+[Claude Code](https://code.claude.com/docs/en/overview):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -167,7 +198,19 @@ Paquete Portable:
 embraion install --host portable --destination ./vendor/embraion
 ```
 
-Utilice `--force` únicamente cuando quiera sustituir deliberadamente una representación generada existente.
+Si el proyecto usa varios clientes, ejecute una vez el comando `install` correspondiente a cada uno. Los archivos generados existentes están protegidos contra sobrescritura de forma predeterminada; use `--force` solo de manera intencionada.
+
+### Qué hacen actualmente `init`, `install` y `sync`
+
+- `embraion init` crea la capa local del repositorio `.embraion/project.yaml`.
+- `embraion install` genera una representación de cliente usando los datos del sistema disponibles para el **CLI que se está ejecutando** y la copia en el destino solicitado.
+- `embraion sync` genera representaciones desechables en un directorio de salida; no descubre, inicializa ni conecta automáticamente todos los proyectos del equipo.
+
+### Fijación de versión del proyecto en v0.1.x
+
+`.embraion/project.yaml` registra una versión del sistema, pero el CLI actual `v0.1.x` **no resuelve ni ejecuta automáticamente esa versión**. `install` y `sync` usan los datos del sistema incluidos en el ejecutable EmbrAIon que esté activo.
+
+Para una reproducibilidad exacta, utilice la distribución del CLI/sistema que coincida con la versión registrada por el proyecto. En `v0.1.x`, el campo de versión es una declaración de compatibilidad y un límite de actualización, no todavía un resolvedor automático de versión por proyecto.
 
 ## Cómo fluye una tarea por EmbrAIon
 
@@ -193,7 +236,7 @@ Verificación final
 Entrega / merge humano
 ```
 
-Para trabajo importante que se beneficie de una especificación formal, se recomienda Spec Kit como complemento independiente. Ayuda con especificación y planificación, pero no sustituye las reglas del Core, la verdad del proyecto, los contratos de compatibilidad ni la evidencia de validación.
+Para trabajo importante que se beneficie de una especificación formal, se recomienda [Spec Kit](https://github.com/github/spec-kit) como complemento independiente. Ayuda con especificación y planificación, pero no sustituye las reglas del Core, la verdad del proyecto, los contratos de compatibilidad ni la evidencia de validación.
 
 ## CLI
 

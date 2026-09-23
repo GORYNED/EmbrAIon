@@ -1,8 +1,16 @@
 # CLI
 
-Install EmbrAIon once per computer from [PyPI](https://pypi.org/project/embraion/):
+Install EmbrAIon once per computer from [PyPI](https://pypi.org/project/embraion/). A source checkout is not required for normal use.
 
 ### Windows
+
+Check Python 3.11+ first:
+
+```powershell
+py --version
+```
+
+If needed, install Python from the [official Windows downloads](https://www.python.org/downloads/windows/). Then install [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html):
 
 ```powershell
 py -m pip install --user pipx
@@ -17,10 +25,27 @@ pipx install embraion
 
 ### macOS
 
+With [Homebrew](https://brew.sh/):
+
 ```bash
 brew install pipx
 pipx ensurepath
+```
+
+Open a new Terminal window:
+
+```bash
 pipx install embraion
+```
+
+Without Homebrew, use Python 3.11+ and the official [pipx installation guidance](https://pipx.pypa.io/latest/how-to/install-pipx.html).
+
+Verify:
+
+```bash
+embraion --version
+embraion validate
+embraion doctor
 ```
 
 Upgrade later with:
@@ -29,7 +54,7 @@ Upgrade later with:
 pipx upgrade embraion
 ```
 
-The global `pipx` installation makes the CLI available from every project on that machine. Each repository still uses an explicit project overlay and host projection.
+The global `pipx` installation makes the CLI available from every project on that machine, but repositories opt in explicitly with `embraion init`. It does not auto-discover or modify all repositories.
 
 Main commands:
 
@@ -49,6 +74,8 @@ embraion worktree
 embraion learning
 embraion eval
 ```
+
+In `v0.1.x`, the version recorded in `.embraion/project.yaml` is not an automatic runtime resolver. `install` and `sync` use the framework data bundled with the currently running CLI.
 
 For framework development from a source checkout, `EMBRAION_HOME` may point the CLI at an explicit framework root.
 

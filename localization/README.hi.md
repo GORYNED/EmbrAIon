@@ -51,7 +51,7 @@ EmbrAIon तीन मानक डेटा वर्ग उपयोग कर
 
 - **[Codex](https://openai.com/codex/)** — मॉडल सूची, मॉडल और तर्क स्तर का मार्ग से मिलान, तथा प्रोजेक्ट एजेंट और कॉन्फ़िगरेशन निर्माण।
 - **[GitHub Copilot](https://github.com/features/copilot)** — समर्थित मॉडल सूची, अनुशंसित मार्ग और कस्टम एजेंट निर्माण।
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started)** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
 - **[Portable](../adapters/portable/)** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
 - **[API प्रदाता](../adapters/providers/)** — [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) और [DeepSeek](https://www.deepseek.com/) की प्रत्यक्ष मॉडल सूचियाँ तथा कनेक्शन संबंधी जानकारी।
 
@@ -59,51 +59,80 @@ Core विशिष्ट मॉडलों से स्वतंत्र �
 
 ## स्थापना
 
-EmbrAIon को **हर कंप्यूटर पर केवल एक बार** स्थापित करना होता है। रिपॉजिटरी क्लोन करने की आवश्यकता नहीं है।
+### हर मशीन पर एक बार स्थापित करें
 
-### Windows
+EmbrAIon [PyPI](https://pypi.org/project/embraion/) के माध्यम से वितरित होता है। सामान्य उपयोग के लिए Windows या macOS मशीन पर CLI को `pipx` से केवल एक बार स्थापित करें। रिपॉजिटरी क्लोन करने या `git clone` चलाने की आवश्यकता नहीं है।
 
-Python 3.11+ आवश्यक है।
+यदि आप Python वातावरण स्वयं प्रबंधित करते हैं तो सामान्य `pip` स्थापना भी समर्थित है, लेकिन CLI के लिए `pipx` अनुशंसित तरीका है।
 
-PowerShell में:
+#### Windows
+
+EmbrAIon के लिए Python 3.11 या नया संस्करण आवश्यक है।
+
+1. Python जाँचें:
+
+```powershell
+py --version
+```
+
+यदि `py` उपलब्ध नहीं है या संस्करण 3.11 से पुराना है, तो [Windows के लिए आधिकारिक Python डाउनलोड](https://www.python.org/downloads/windows/) से वर्तमान Python 3 स्थापित करें और PowerShell दोबारा खोलें।
+
+2. [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) स्थापित करें और उसके कमांड पथ को `PATH` में जोड़ें:
 
 ```powershell
 py -m pip install --user pipx
 py -m pipx ensurepath
 ```
 
-PowerShell बंद करके दोबारा खोलें और [PyPI](https://pypi.org/project/embraion/) से EmbrAIon स्थापित करें:
+3. PowerShell बंद करके दोबारा खोलें और EmbrAIon स्थापित करें:
 
 ```powershell
 pipx install embraion
 ```
 
-### macOS
+यदि आप जानबूझकर अपना प्रबंधित Python वातावरण उपयोग करते हैं, तो यह भी समर्थित है:
 
-Python 3.11+ आवश्यक है।
+```powershell
+py -m pip install embraion
+```
 
-Homebrew के साथ:
+#### macOS
+
+यदि [Homebrew](https://brew.sh/) पहले से स्थापित है, तो सबसे सरल तरीका है:
 
 ```bash
 brew install pipx
 pipx ensurepath
+```
+
+नई Terminal विंडो खोलें और EmbrAIon स्थापित करें:
+
+```bash
 pipx install embraion
 ```
 
-Homebrew के बिना:
+Homebrew के बिना पहले Python जाँचें:
+
+```bash
+python3 --version
+```
+
+यदि Python उपलब्ध नहीं है या संस्करण 3.11 से पुराना है, तो [macOS के लिए आधिकारिक Python डाउनलोड](https://www.python.org/downloads/macos/) से वर्तमान Python 3 स्थापित करें। फिर `pipx` स्थापित करें:
 
 ```bash
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 ```
 
-नया टर्मिनल खोलें और चलाएँ:
+नई Terminal विंडो खोलें और चलाएँ:
 
 ```bash
 pipx install embraion
 ```
 
-### जाँच
+यदि आप Python वातावरण स्वयं प्रबंधित करते हैं तो `python3 -m pip install embraion` भी समर्थित है।
+
+#### जाँच
 
 ```bash
 embraion --version
@@ -111,37 +140,39 @@ embraion validate
 embraion doctor
 ```
 
-### अपडेट
+`embraion validate` सक्रिय EmbrAIon स्थापना के साथ आए सिस्टम डेटा की जाँच करता है। `embraion doctor` वर्तमान प्रोजेक्ट या Git worktree संदर्भ भी जाँचता है, इसलिए इसे उस रिपॉजिटरी से चलाएँ जिसे आप जाँचना चाहते हैं या स्थापना परीक्षण के लिए किसी खाली परीक्षण फ़ोल्डर से चलाएँ।
+
+#### अपडेट
 
 ```bash
 pipx upgrade embraion
 ```
 
-`pipx` से की गई वैश्विक स्थापना उस कंप्यूटर के सभी प्रोजेक्टों में `embraion` कमांड उपलब्ध कराती है। प्रत्येक रिपॉजिटरी को केवल एक बार अलग से जोड़ा जाता है, ताकि उसका Project Overlay और AI-क्लाइंट कॉन्फ़िगरेशन स्पष्ट और Git में संस्करणबद्ध रहें।
+`pipx` की वैश्विक स्थापना उस मशीन के किसी भी प्रोजेक्ट से `embraion` कमांड उपलब्ध कराती है। यह **हर रिपॉजिटरी में EmbrAIon को अपने आप सक्रिय नहीं करती** और न ही उन्हें पृष्ठभूमि में बदलती है।
 
-## EmbrAIon को किसी प्रोजेक्ट से जोड़ना
+## EmbrAIon को हर प्रोजेक्ट में जोड़ना
 
-CLI हर कंप्यूटर पर एक बार स्थापित होता है, लेकिन **हर रिपॉजिटरी को एक बार प्रारंभ करना आवश्यक है**। EmbrAIon सिस्टम के सभी रिपॉजिटरी को अपने आप नहीं बदलता।
-
-**Project Overlay (प्रोजेक्ट ओवरले)** बनाएँ:
+हर रिपॉजिटरी स्पष्ट रूप से EmbrAIon से जुड़ती है। प्रोजेक्ट की जड़ से चलाएँ:
 
 ```bash
 cd /path/to/your/project
-embraion init --name MyProject
+embraion init
 ```
 
-इससे बनेगा:
+सामान्य रूप से `init` फ़ोल्डर के नाम को प्रोजेक्ट नाम मानता है। केवल अलग नाम चाहिए तो `--name MyProject` उपयोग करें।
+
+यह बनाता है:
 
 ```text
 .embraion/
 └── project.yaml
 ```
 
-प्रोजेक्ट ओवरले EmbrAIon का उपयोग किया जा रहा संस्करण तय करता है और Core बदले बिना प्रोजेक्ट-विशिष्ट क्षमताएँ घोषित करने देता है।
+Project Overlay (प्रोजेक्ट ओवरले) Git में घोषित EmbrAIon संस्करण और प्रोजेक्ट-विशिष्ट कॉन्फ़िगरेशन दर्ज करता है।
 
 ### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
 
-उस AI क्लाइंट की प्रस्तुति स्थापित करें जिसे यह रिपॉजिटरी उपयोग करती है। यदि प्रोजेक्ट कई क्लाइंट उपयोग करता है, तो हर आवश्यक कमांड एक बार चलाएँ।
+रिपॉजिटरी द्वारा उपयोग किए जाने वाले हर AI क्लाइंट के लिए प्रस्तुति स्थापित करें।
 
 [Codex](https://openai.com/codex/):
 
@@ -155,7 +186,7 @@ embraion install --host codex --destination .
 embraion install --host copilot --destination .
 ```
 
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code/getting-started):
+[Claude Code](https://code.claude.com/docs/en/overview):
 
 ```bash
 embraion install --host claude-code --destination .
@@ -167,7 +198,19 @@ Portable पैकेज:
 embraion install --host portable --destination ./vendor/embraion
 ```
 
-`--force` का उपयोग केवल तब करें जब आप जानबूझकर मौजूदा जनित प्रस्तुति को बदलना चाहते हों।
+यदि प्रोजेक्ट कई क्लाइंट उपयोग करता है, तो हर क्लाइंट के लिए संबंधित `install` कमांड एक बार चलाएँ। मौजूदा जनित फ़ाइलें सामान्य रूप से ओवरराइट से सुरक्षित रहती हैं; `--force` केवल जानबूझकर बदलने के लिए उपयोग करें।
+
+### अभी `init`, `install` और `sync` क्या करते हैं
+
+- `embraion init` रिपॉजिटरी-स्थानीय `.embraion/project.yaml` ओवरले बनाता है।
+- `embraion install` **वर्तमान में चल रहे CLI** को उपलब्ध सिस्टम डेटा से एक क्लाइंट प्रस्तुति बनाकर चुने हुए स्थान में कॉपी करता है।
+- `embraion sync` आउटपुट निर्देशिका में दोबारा बनाए जा सकने वाले प्रस्तुतिकरण बनाता है; यह मशीन के सभी प्रोजेक्टों को अपने आप खोजता, प्रारंभ या जोड़ता नहीं है।
+
+### v0.1.x में प्रोजेक्ट संस्करण निर्धारण
+
+`.embraion/project.yaml` सिस्टम संस्करण दर्ज करता है, लेकिन वर्तमान `v0.1.x` CLI उस दर्ज संस्करण को **अपने आप चुनकर नहीं चलाता**। `install` और `sync` वर्तमान में चल रहे EmbrAIon executable के साथ आए सिस्टम डेटा का उपयोग करते हैं।
+
+सटीक पुनरुत्पादन के लिए वही CLI/सिस्टम वितरण चलाएँ जो प्रोजेक्ट में दर्ज संस्करण से मेल खाता हो। इसलिए `v0.1.x` में संस्करण फ़ील्ड संगतता और अपडेट सीमा की घोषणा है, अभी स्वचालित प्रति-प्रोजेक्ट runtime संस्करण resolver नहीं है।
 
 ## कार्य EmbrAIon से कैसे गुजरता है
 
@@ -193,7 +236,7 @@ Project Overlay + Core सूची
 परिणाम सौंपना / मानव द्वारा merge
 ```
 
-जहाँ औपचारिक विनिर्देशन उपयोगी हो, वहाँ Spec Kit को स्वतंत्र सहायक के रूप में उपयोग करने की सलाह दी जाती है। यह योजना और विनिर्देशन को बेहतर बनाता है, लेकिन Core के नियम, प्रोजेक्ट की तथ्य-स्रोत सामग्री, संगतता अनुबंध या सत्यापन प्रमाण को नहीं बदलता।
+जहाँ औपचारिक विनिर्देशन उपयोगी हो, वहाँ [Spec Kit](https://github.com/github/spec-kit) को स्वतंत्र सहायक के रूप में उपयोग करने की सलाह दी जाती है। यह योजना और विनिर्देशन को बेहतर बनाता है, लेकिन Core के नियम, प्रोजेक्ट की तथ्य-स्रोत सामग्री, संगतता अनुबंध या सत्यापन प्रमाण को नहीं बदलता।
 
 ## CLI
 
