@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Runtime Telemetry Event",
+  "type": "object",
+  "required": ["schema-version", "timestamp-utc", "event"],
+  "properties": {
+    "schema-version": { "type": "integer", "minimum": 1 },
+    "timestamp-utc": { "type": "string", "minLength": 1 },
+    "event": { "type": "string", "minLength": 1 },
+    "session-id": { "type": "string" },
+    "dispatch-id": { "type": "string" },
+    "role": { "type": "string" },
+    "host": { "type": "string" },
+    "model": { "type": ["string", "null"] },
+    "effort": { "type": ["string", "null"] },
+    "data-class": { "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"] },
+    "access": { "type": "string" },
+    "owned-path-count": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": true
+}
