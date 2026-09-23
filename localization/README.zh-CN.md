@@ -238,6 +238,23 @@ embraion cache prune --older-than 90 --apply
 
 当前 launcher 版本和当前项目需要的 runtime 不会因时间条件被删除。
 
+### 命令帮助
+
+查看分类后的完整命令目录：
+
+```bash
+embraion help
+```
+
+查看某条命令或嵌套命令的详细帮助：
+
+```bash
+embraion help status
+embraion help cache prune
+```
+
+也可以继续使用标准形式 `embraion <command> --help`。
+
 ## 文档
 
 完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。

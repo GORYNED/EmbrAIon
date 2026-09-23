@@ -38,6 +38,107 @@ def _subprocess_error_message(error: subprocess.CalledProcessError) -> str:
     return str(error)
 
 
+def _print_main_help(file: object | None = None) -> None:
+    stream = file or sys.stdout
+    lines = [
+        f"EmbrAIon {__version__}",
+        "AI-First Engineering System",
+        "",
+        "Usage",
+        "  embraion <command> [options]",
+        "  embraion help [command]",
+        "",
+        "Project & setup",
+        "  init       Add EmbrAIon to a project and create .embraion/project.yaml",
+        "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
+        "  update     Change the current project's pinned EmbrAIon version",
+        "  sync       Generate disposable host projections without installing them",
+        "",
+        "Health & runtime",
+        "  doctor     Run framework and project diagnostics",
+        "  status     Show launcher, project pin, active runtime, cache, and host projections",
+        "  validate   Validate the framework, schemas, catalog, and localization",
+        "  cache      Inspect or clean cached project-pinned EmbrAIon runtimes",
+        "",
+        "AI execution",
+        "  route      Resolve the model/provider route for a host, route class, and data class",
+        "  dispatch   Create a bounded execution plan with access and owned-path constraints",
+        "  session    Create, inspect, or update normalized task/session state",
+        "",
+        "Engineering controls",
+        "  security   Scan a path for secrets and policy drift",
+        "  mcp        Inspect and record privacy-safe MCP configuration",
+        "  worktree   List, create, clean, or salvage Git worktrees",
+        "  learning   Record evidence and manage gated learning candidates",
+        "  eval       Run behavioral evals and compare baselines",
+        "",
+        "Help",
+        "  help       Show this command catalog or detailed help for one command",
+        "",
+        "Examples",
+        "  embraion init",
+        "  embraion doctor",
+        "  embraion status",
+        "  embraion install --host codex --destination .",
+        "  embraion help status",
+        "  embraion cache prune --older-than 90",
+        "",
+        "More",
+        "  embraion help <command>       Detailed help for a command",
+        "  embraion <command> --help     Same command-specific help",
+        "  embraion --version            Show the active runtime version",
+    ]
+    print("\n".join(lines), file=stream)
+
+
+class EmbrAIonArgumentParser(argparse.ArgumentParser):
+    def print_help(self, file: object | None = None) -> None:
+        if self.prog == "embraion":
+            _print_main_help(file)
+            return
+        super().print_help(file)
+
+
+def _find_subparser(
+    parser: argparse.ArgumentParser,
+    command_path: list[str],
+) -> argparse.ArgumentParser | None:
+    current = parser
+
+    for command in command_path:
+        action = next(
+            (
+                item
+                for item in current._actions
+                if isinstance(item, argparse._SubParsersAction)
+            ),
+            None,
+        )
+        if action is None or command not in action.choices:
+            return None
+        current = action.choices[command]
+
+    return current
+
+
+def _cmd_help(args: argparse.Namespace) -> int:
+    root_parser = args.root_parser
+    topics = list(args.topic or [])
+
+    if not topics:
+        root_parser.print_help()
+        return 0
+
+    target = _find_subparser(root_parser, topics)
+    if target is None:
+        print(f"Unknown help topic: {' '.join(topics)}", file=sys.stderr)
+        print("Run 'embraion help' to see available commands.", file=sys.stderr)
+        return 2
+
+    target.print_help()
+    return 0
+
+
 def _cmd_validate(args: argparse.Namespace) -> int:
     root = framework_root(Path(args.root) if args.root else None)
     issues = collect_issues(root)
@@ -524,7 +625,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = EmbrAIonArgumentParser(
         prog="embraion",
         description="EmbrAIon AI-First Engineering System CLI",
     )
@@ -533,20 +634,40 @@ def build_parser() -> argparse.ArgumentParser:
         action="version",
         version=__version__,
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    sub = parser.add_subparsers(
+        dest="command",
+        required=True,
+        metavar="COMMAND",
+    )
 
-    validate = sub.add_parser("validate")
+    help_parser = sub.add_parser(
+        "help",
+        help="Show the command catalog or detailed command help",
+        description="Show the EmbrAIon command catalog or detailed help for one command path.",
+    )
+    help_parser.add_argument(
+        "topic",
+        nargs="*",
+        help="Optional command path, for example: status or cache prune",
+    )
+    help_parser.set_defaults(func=_cmd_help, root_parser=parser)
+
+    validate = sub.add_parser(
+        "validate",
+        help="Validate the canonical EmbrAIon framework",
+        description="Validate framework schemas, catalog, localization, and canonical data.",
+    )
     validate.add_argument("--root")
     validate.add_argument("--json", action="store_true")
     validate.set_defaults(func=_cmd_validate)
 
-    init = sub.add_parser("init")
+    init = sub.add_parser("init", help="Add EmbrAIon to a project", description="Create a project-local .embraion/project.yaml overlay.")
     init.add_argument("path", nargs="?")
     init.add_argument("--name")
     init.add_argument("--force", action="store_true")
     init.set_defaults(func=_cmd_init)
 
-    install_parser = sub.add_parser("install")
+    install_parser = sub.add_parser("install", help="Install a host projection", description="Generate and install a Codex, Copilot, Claude Code, or Portable projection.")
     install_parser.add_argument(
         "--host",
         required=True,
@@ -556,12 +677,12 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument("--force", action="store_true")
     install_parser.set_defaults(func=_cmd_install)
 
-    update = sub.add_parser("update")
+    update = sub.add_parser("update", help="Change the project version pin", description="Update the EmbrAIon version recorded by the current project.")
     update.add_argument("path", nargs="?")
     update.add_argument("--framework-version")
     update.set_defaults(func=_cmd_update)
 
-    sync_parser = sub.add_parser("sync")
+    sync_parser = sub.add_parser("sync", help="Generate disposable host projections", description="Generate one or all supported host projections into an output directory.")
     sync_parser.add_argument(
         "--host",
         default="all",
@@ -571,7 +692,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.add_argument("--force", action="store_true")
     sync_parser.set_defaults(func=_cmd_sync)
 
-    route_parser = sub.add_parser("route")
+    route_parser = sub.add_parser("route", help="Resolve a model/provider route", description="Resolve a configured model/provider route for a host, route class, and data class.")
     route_parser.add_argument(
         "--host",
         required=True,
@@ -596,7 +717,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     route_parser.set_defaults(func=_cmd_route)
 
-    dispatch = sub.add_parser("dispatch")
+    dispatch = sub.add_parser("dispatch", help="Create a bounded execution plan", description="Create a privacy-aware execution plan with explicit access and owned-path constraints.")
     dispatch.add_argument("--task", required=True)
     dispatch.add_argument("--role", default="worker")
     dispatch.add_argument(
@@ -629,37 +750,37 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--owned-path", action="append")
     dispatch.set_defaults(func=_cmd_dispatch)
 
-    doctor = sub.add_parser("doctor")
+    doctor = sub.add_parser("doctor", help="Run diagnostics", description="Check framework health and, inside a project, project security, MCP, and worktree state.")
     doctor.add_argument("--json", action="store_true")
     doctor.set_defaults(func=_cmd_doctor)
 
-    status = sub.add_parser("status")
+    status = sub.add_parser("status", help="Show project/runtime status", description="Show launcher version, project pin, resolved runtime, runtime cache, and detected host projections.")
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=_cmd_status)
 
-    cache = sub.add_parser("cache")
+    cache = sub.add_parser("cache", help="Inspect or clean runtime cache", description="Inspect and safely clean cached project-pinned EmbrAIon runtimes.")
     cache_sub = cache.add_subparsers(
         dest="cache-command",
         required=True,
     )
 
-    cache_list = cache_sub.add_parser("list")
+    cache_list = cache_sub.add_parser("list", help="List cached runtimes", description="List cached project-pinned EmbrAIon runtimes and their last-use timestamps.")
     cache_list.add_argument("--json", action="store_true")
     cache_list.set_defaults(func=_cmd_cache_list)
 
-    cache_prune = cache_sub.add_parser("prune")
+    cache_prune = cache_sub.add_parser("prune", help="Find or remove cache entries", description="Dry-run or apply conservative cleanup of invalid, stale, or explicitly old cached runtimes.")
     cache_prune.add_argument("--older-than", type=int)
     cache_prune.add_argument("--apply", action="store_true")
     cache_prune.add_argument("--json", action="store_true")
     cache_prune.set_defaults(func=_cmd_cache_prune)
 
-    session = sub.add_parser("session")
+    session = sub.add_parser("session", help="Manage normalized session state", description="Create, inspect, or update EmbrAIon task/session state.")
     session_sub = session.add_subparsers(
         dest="session-command",
         required=True,
     )
 
-    session_start = session_sub.add_parser("start")
+    session_start = session_sub.add_parser("start", help="Start session state", description="Create normalized EmbrAIon session/task state.")
     session_start.add_argument("--session-id", required=True)
     session_start.add_argument("--task", required=True)
     session_start.add_argument("--role", default="lead")
@@ -669,22 +790,22 @@ def build_parser() -> argparse.ArgumentParser:
     session_start.add_argument("--access", default="plan")
     session_start.set_defaults(func=_cmd_session_start)
 
-    session_show = session_sub.add_parser("show")
+    session_show = session_sub.add_parser("show", help="Show session state", description="Show the current normalized EmbrAIon session/task state.")
     session_show.set_defaults(func=_cmd_session_show)
 
-    session_set = session_sub.add_parser("set")
+    session_set = session_sub.add_parser("set", help="Update session state", description="Update selected fields in the current normalized session/task state.")
     session_set.add_argument("--state")
     session_set.add_argument("--validation")
     session_set.add_argument("--review")
     session_set.set_defaults(func=_cmd_session_set)
 
-    security = sub.add_parser("security")
+    security = sub.add_parser("security", help="Run security checks", description="Scan files for likely secrets and policy drift.")
     security_sub = security.add_subparsers(
         dest="security-command",
         required=True,
     )
 
-    scan = security_sub.add_parser("scan")
+    scan = security_sub.add_parser("scan", help="Scan a path", description="Scan text/configuration files for likely secrets and policy drift.")
     scan.add_argument("--path")
     scan.add_argument(
         "--fail-on",
@@ -694,49 +815,49 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--json", action="store_true")
     scan.set_defaults(func=_cmd_security_scan)
 
-    mcp = sub.add_parser("mcp")
+    mcp = sub.add_parser("mcp", help="Inspect MCP configuration", description="Create a privacy-safe inventory of project MCP configuration.")
     mcp_sub = mcp.add_subparsers(
         dest="mcp-command",
         required=True,
     )
 
-    inventory = mcp_sub.add_parser("inventory")
+    inventory = mcp_sub.add_parser("inventory", help="Write MCP inventory", description="Create a privacy-safe inventory of detected MCP servers and configuration.")
     inventory.add_argument("--path")
     inventory.add_argument("--output")
     inventory.set_defaults(func=_cmd_mcp_inventory)
 
-    worktree = sub.add_parser("worktree")
+    worktree = sub.add_parser("worktree", help="Manage Git worktrees", description="List, create, safely clean, or salvage Git worktrees.")
     worktree_sub = worktree.add_subparsers(
         dest="worktree-command",
         required=True,
     )
 
-    worktree_list = worktree_sub.add_parser("list")
+    worktree_list = worktree_sub.add_parser("list", help="List worktrees", description="List Git worktrees for the current repository.")
     worktree_list.set_defaults(func=_cmd_worktree_list)
 
-    worktree_create = worktree_sub.add_parser("create")
+    worktree_create = worktree_sub.add_parser("create", help="Create a worktree", description="Create an isolated Git worktree for a branch.")
     worktree_create.add_argument("branch")
     worktree_create.add_argument("--path")
     worktree_create.add_argument("--base")
     worktree_create.set_defaults(func=_cmd_worktree_create)
 
-    worktree_gc = worktree_sub.add_parser("gc")
+    worktree_gc = worktree_sub.add_parser("gc", help="Find safe cleanup candidates", description="Find safely removable worktrees; use --apply to remove them.")
     worktree_gc.add_argument("--base", default="origin/main")
     worktree_gc.add_argument("--apply", action="store_true")
     worktree_gc.set_defaults(func=_cmd_worktree_gc)
 
-    worktree_salvage = worktree_sub.add_parser("salvage")
+    worktree_salvage = worktree_sub.add_parser("salvage", help="Salvage worktree evidence", description="Copy useful evidence from a worktree before cleanup.")
     worktree_salvage.add_argument("path")
     worktree_salvage.add_argument("--output")
     worktree_salvage.set_defaults(func=_cmd_worktree_salvage)
 
-    learning = sub.add_parser("learning")
+    learning = sub.add_parser("learning", help="Manage learning evidence", description="Record evidence and move learning candidates through gated lifecycle states.")
     learning_sub = learning.add_subparsers(
         dest="learning-command",
         required=True,
     )
 
-    learning_observe = learning_sub.add_parser("observe")
+    learning_observe = learning_sub.add_parser("observe", help="Record learning evidence", description="Record repeated evidence that may become a reviewed framework improvement.")
     learning_observe.add_argument("--id", required=True)
     learning_observe.add_argument("--kind", required=True)
     learning_observe.add_argument(
@@ -750,32 +871,38 @@ def build_parser() -> argparse.ArgumentParser:
     learning_observe.add_argument("--eval-id")
     learning_observe.set_defaults(func=_cmd_learning_observe)
 
+    learning_help = {
+        "propose": "Move evidence into proposed state",
+        "approve": "Approve a proposed learning candidate",
+        "reject": "Reject a learning candidate",
+        "promote": "Mark an approved candidate ready for implementation",
+    }
     for action in ("propose", "approve", "reject", "promote"):
-        item = learning_sub.add_parser(action)
+        item = learning_sub.add_parser(action, help=learning_help[action])
         item.add_argument("id")
         item.set_defaults(
             func=_cmd_learning_transition,
             action=action,
         )
 
-    eval_parser = sub.add_parser("eval")
+    eval_parser = sub.add_parser("eval", help="Run behavioral evaluations", description="Run behavioral eval cases, build baselines, and compare reports.")
     eval_sub = eval_parser.add_subparsers(
         dest="eval-command",
         required=True,
     )
 
-    eval_run = eval_sub.add_parser("run")
+    eval_run = eval_sub.add_parser("run", help="Run one eval case", description="Evaluate an execution record against a behavioral eval case.")
     eval_run.add_argument("--case", required=True)
     eval_run.add_argument("--record", required=True)
     eval_run.add_argument("--output")
     eval_run.set_defaults(func=_cmd_eval_run)
 
-    eval_baseline = eval_sub.add_parser("baseline")
+    eval_baseline = eval_sub.add_parser("baseline", help="Create an eval baseline", description="Create a baseline summary from evaluation reports.")
     eval_baseline.add_argument("--reports", required=True)
     eval_baseline.add_argument("--output", required=True)
     eval_baseline.set_defaults(func=_cmd_eval_baseline)
 
-    eval_compare = eval_sub.add_parser("compare")
+    eval_compare = eval_sub.add_parser("compare", help="Compare eval reports", description="Compare evaluation reports against a saved baseline.")
     eval_compare.add_argument("--baseline", required=True)
     eval_compare.add_argument("--reports", required=True)
     eval_compare.set_defaults(func=_cmd_eval_compare)

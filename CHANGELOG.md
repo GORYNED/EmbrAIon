@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.3.1 - 2026-09-23
+
+### Added
+
+- `embraion help` as a launcher-owned alias for the top-level command catalog.
+- `embraion help <command>` and nested forms such as `embraion help cache prune` for command-specific help.
+
+### Changed
+
+- Top-level help is now organized into Project & setup, Health & runtime, AI execution, Engineering controls, Help, Examples, and More sections.
+- Every top-level command and nested command now exposes a concise description of what it does and what it provides.
+- Top-level `-h` / `--help` is launcher-owned, so the latest help catalog remains available inside projects pinned to older EmbrAIon runtimes.
+
 ## 0.3.0 - 2026-09-23
 
 ### Added

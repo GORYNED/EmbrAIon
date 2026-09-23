@@ -294,7 +294,10 @@ embraion update
 embraion sync
 embraion validate
 embraion doctor
+embraion help
 ```
+
+Для полного каталога команд используйте `embraion help`. Для подробной справки по конкретной команде используйте `embraion help <command>` или `embraion <command> --help`.
 
 ### Маршрутизация и состояние выполнения
 

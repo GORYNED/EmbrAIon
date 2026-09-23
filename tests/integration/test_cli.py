@@ -31,6 +31,58 @@ class CliIntegrationTests(unittest.TestCase):
         result = self._run("--version")
         self.assertEqual(__version__, result.stdout.strip())
 
+    def test_main_help_is_structured_and_descriptive(self) -> None:
+        result = self._run("--help")
+
+        self.assertIn(f"EmbrAIon {__version__}", result.stdout)
+        self.assertIn("Project & setup", result.stdout)
+        self.assertIn("Health & runtime", result.stdout)
+        self.assertIn("AI execution", result.stdout)
+        self.assertIn("Engineering controls", result.stdout)
+        self.assertIn("status     Show launcher, project pin", result.stdout)
+        self.assertIn("cache      Inspect or clean cached project-pinned", result.stdout)
+        self.assertIn("help       Show this command catalog", result.stdout)
+
+    def test_help_command_matches_top_level_catalog(self) -> None:
+        direct = self._run("--help")
+        alias = self._run("help")
+        self.assertEqual(direct.stdout, alias.stdout)
+
+    def test_help_command_supports_nested_topics(self) -> None:
+        result = self._run("help", "cache", "prune")
+        self.assertIn("usage: embraion cache prune", result.stdout)
+        self.assertIn("--older-than", result.stdout)
+        self.assertIn("--apply", result.stdout)
+
+    def test_help_is_launcher_owned_inside_older_pinned_project(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            cache = root / "cache"
+            project = root / "project"
+            manifest = project / ".embraion" / "project.yaml"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text(
+                "framework:\n"
+                "  repository: GORYNED/EmbrAIon\n"
+                "  version: 0.3.0\n"
+                "project:\n"
+                "  name: HelpAlias\n",
+                encoding="utf-8",
+            )
+
+            environment = os.environ.copy()
+            environment["EMBRAION_CACHE_HOME"] = str(cache)
+            environment.pop("EMBRAION_HOME", None)
+            environment.pop("EMBRAION_VERSION_RESOLVED", None)
+            environment.pop("EMBRAION_DISABLE_VERSION_RESOLUTION", None)
+
+            alias = self._run("help", cwd=project, env=environment)
+            standard = self._run("--help", cwd=project, env=environment)
+
+            self.assertIn(f"EmbrAIon {__version__}", alias.stdout)
+            self.assertEqual(alias.stdout, standard.stdout)
+            self.assertFalse((cache / "versions" / "0.3.0").exists())
+
     def test_doctor_outside_project_is_human_readable_and_skips_project_scan(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

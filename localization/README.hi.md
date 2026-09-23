@@ -290,7 +290,10 @@ embraion update
 embraion sync
 embraion validate
 embraion doctor
+embraion help
 ```
+
+पूरी कमांड सूची के लिए `embraion help` उपयोग करें। किसी खास कमांड की विस्तृत सहायता के लिए `embraion help <command>` या `embraion <command> --help` चलाएँ।
 
 ### Routing (रूटिंग)
 

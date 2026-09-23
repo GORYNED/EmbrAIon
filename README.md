@@ -140,6 +140,7 @@ A regular `python3 -m pip install embraion` is also supported when you manage th
 embraion --version
 embraion validate
 embraion doctor
+embraion help
 embraion status
 embraion cache list
 ```
@@ -307,6 +308,8 @@ embraion sync
 embraion validate
 embraion doctor
 ```
+
+Use `embraion help` for the categorized command catalog. Use `embraion help <command>` (including nested paths such as `embraion help cache prune`) or `embraion <command> --help` for detailed command-specific help.
 
 ### Routing and runtime state
 

@@ -290,7 +290,10 @@ embraion update
 embraion sync
 embraion validate
 embraion doctor
+embraion help
 ```
+
+Use `embraion help` para ver el catálogo completo de comandos. Para ayuda detallada use `embraion help <command>` o `embraion <command> --help`.
 
 ### Routing (Enrutamiento)
 

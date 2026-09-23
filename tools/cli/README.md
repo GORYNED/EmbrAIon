@@ -60,6 +60,8 @@ The global `pipx` installation makes the CLI available from every project on tha
 
 Main commands:
 
+`embraion help` shows a categorized command catalog. `embraion help <command>` and `embraion <command> --help` show detailed command-specific help.
+
 ```text
 embraion init
 embraion install
@@ -67,6 +69,7 @@ embraion update
 embraion sync
 embraion validate
 embraion doctor
+embraion help
 embraion status
 embraion cache list
 embraion cache prune

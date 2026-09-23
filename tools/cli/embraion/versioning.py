@@ -23,7 +23,7 @@ RESOLUTION_GUARD_ENV = "EMBRAION_VERSION_RESOLVED"
 RESOLVED_VERSION_ENV = "EMBRAION_RESOLVED_VERSION"
 RESOLVED_PROJECT_ENV = "EMBRAION_RESOLVED_PROJECT"
 
-_BYPASS_COMMANDS = {"init", "update", "status", "cache"}
+_BYPASS_COMMANDS = {"init", "update", "status", "cache", "help"}
 _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
 _LEGACY_DEV_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 
@@ -288,7 +288,12 @@ def _resolution_disabled(argv: Sequence[str]) -> bool:
         return True
     if os.getenv("EMBRAION_HOME"):
         return True
-    return _command_name(argv) in _BYPASS_COMMANDS
+
+    command = _command_name(argv)
+    if command in _BYPASS_COMMANDS:
+        return True
+
+    return command is None and any(token in {"-h", "--help"} for token in argv)
 
 
 def resolve_project_runtime(
