@@ -84,7 +84,6 @@ python -m pipx ensurepath
 
 Después abra una nueva terminal y ejecute el comando de instalación anterior.
 
-Mientras el repositorio sea privado, Git debe estar autenticado con una cuenta de GitHub que tenga acceso a `GORYNED/EmbrAIon`. Cuando el repositorio sea público, el mismo comando funcionará sin autenticación del repositorio.
 
 Después de publicar EmbrAIon en PyPI, la instalación normal será:
 

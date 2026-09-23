@@ -59,7 +59,6 @@ python -m pip install --user pipx
 python -m pipx ensurepath
 ```
 
-仓库仍为私有时，Git 必须已经使用有权访问 `GORYNED/EmbrAIon` 的 GitHub 账户完成认证。仓库公开后，同一条命令无需仓库访问认证即可使用。
 
 EmbrAIon 发布到 PyPI 后，标准安装命令将变为：
 
