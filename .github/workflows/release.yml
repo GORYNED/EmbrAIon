@@ -14,7 +14,7 @@ permissions:
 jobs:
   prepare-release:
     name: Validate and prepare release tag
-    if: github.event_name == 'push' && github.ref_name == 'main' && startsWith(github.event.head_commit.message, 'release: v')
+    if: "github.event_name == 'push' && github.ref_name == 'main' && startsWith(github.event.head_commit.message, 'release: v')"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
