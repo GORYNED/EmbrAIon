@@ -1,15 +1,15 @@
-# Project Overlay
+# Project Overlay (Проектный слой)
 
 Подключаемый репозиторий соединяется с EmbrAIon через `.embraion/project.yaml`.
 
-Overlay определяет:
+Проектный слой определяет:
 
 - зафиксированную версию EmbrAIon;
-- identity проекта;
-- расположение project knowledge;
-- project-specific agents;
-- external capabilities.
+- идентичность проекта;
+- расположение проектных знаний;
+- специфичных для проекта агентов;
+- внешние возможности.
 
-Project overlays могут добавлять более строгие правила, но не должны скрытно ослаблять hard gates Core.
+Проектный слой может добавлять более строгие правила, но не должен скрытно ослаблять жёсткие ограничения ядра.
 
-Сам project repository остаётся canonical source для product specification, architecture, compatibility contracts, validation evidence и domain semantics.
+Сам репозиторий проекта остаётся каноническим источником продуктовой спецификации, архитектуры, контрактов совместимости, результатов валидации и предметных знаний.

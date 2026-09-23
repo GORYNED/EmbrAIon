@@ -1,16 +1,16 @@
 # Spec Kit
 
-Spec Kit рекомендуется как внешний companion для EmbrAIon.
+Spec Kit рекомендуется как внешний дополнительный инструмент для EmbrAIon.
 
-Используйте его, когда substantial feature work выигрывает от явной specification, clarification, planning, task decomposition, checklists или implementation tracking.
+Используйте его, когда существенная работа над новой возможностью выигрывает от явной спецификации, уточнения требований, планирования, разбиения на задачи, контрольных списков или отслеживания реализации.
 
-Не копируйте внутренности upstream Spec Kit в EmbrAIon Core. Он должен обновляться независимо и подключаться через documented workflows или host adapters.
+Не копируйте внутренние файлы Spec Kit в ядро EmbrAIon. Spec Kit должен обновляться независимо и подключаться через задокументированные рабочие процессы или адаптеры клиентов.
 
-Artifacts Spec Kit уточняют работу, но не переопределяют:
+Материалы Spec Kit могут уточнять работу, но не переопределяют:
 
-- EmbrAIon Core rules;
-- project architecture;
-- product truth;
-- compatibility contracts;
-- validation evidence;
-- human merge gates.
+- правила ядра EmbrAIon;
+- архитектуру проекта;
+- продуктовую истину;
+- контракты совместимости;
+- результаты валидации;
+- требование ручного слияния, если оно включено.

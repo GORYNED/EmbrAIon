@@ -1,9 +1,9 @@
-# Learning
+# Learning（学习）
 
-EmbrAIon 的 learning 由 evidence 驱动，并受 governance gate 控制。
+EmbrAIon 的学习机制以证据为基础，并受到系统治理规则约束。
 
-系统可以从 runtime、validation、review 与 eval outcomes 中收集 privacy-safe observations。重复 evidence 可以成为 reusable rule、skill、workflow、routing adjustment、knowledge entry 或 eval 的 candidate。
+系统可以从运行过程、验证、评审和行为评估中收集不包含敏感内容的观察结果。重复出现的证据可以形成新的或改进后的能力候选项，例如规则、技能、工作流、路由调整、知识条目或评估场景。
 
-任何 candidate 都不会自动成为 canonical。
+任何候选项都不会自动成为 EmbrAIon 的规范组成部分。
 
-Promotion 遵循 Core Learning workflow 与普通 engineering controls：review、validation、适当的 eval coverage 与 explicit approval。
+候选项的推进必须经过学习工作流和普通工程控制，包括评审、验证、合适的行为评估覆盖以及明确批准。

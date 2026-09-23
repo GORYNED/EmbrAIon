@@ -1,18 +1,18 @@
-# Validation
+# Validation（验证）
 
-Validation 是 framework change 保持预期 contracts 的 evidence。
+验证用于证明 EmbrAIon 的变更仍然保持预期契约。
 
-Validation system 分层发展：
+验证系统按层次发展：
 
-- schema validation；
-- capability-reference validation；
-- adapter/projection parity；
-- routing-policy validation；
-- installation 与 doctor checks；
-- security 与 integration inventory checks；
-- integration tests；
-- behavioral eval 与适用 baseline 的对比。
+- 模式验证；
+- 能力之间的引用验证；
+- 适配器与生成表示的一致性验证；
+- 路由规则验证；
+- 安装与诊断检查；
+- 安全检查和集成清单检查；
+- 集成测试；
+- 将行为评估结果与适用的基准结果进行比较。
 
-PASS 应明确说明实际检查了什么，而不只是返回 generic success。
+状态 `PASS` 必须说明实际检查了哪些内容，而不能只返回一个笼统的成功标志。
 
-Behavioral improvement 与 deterministic correctness 分开评估。更好的 aggregate eval score 永远不能覆盖 security、privacy、permission、compatibility 或 mutation 的 hard failure。
+AI 行为的改进与确定性正确性分开评估。更高的总体行为评估结果永远不能覆盖安全、隐私、权限、兼容性或修改权方面的严重失败。

@@ -1,15 +1,15 @@
-# Framework 提取计划
+# 系统提取计划
 
-应以非破坏方式从现有项目中分离 framework。
+**Framework（系统框架）** 应以非破坏方式从现有项目中分离。
 
 ## 顺序
 
-1. 审计现有 reusable 与 project-specific 内容。
-2. 建立 EmbrAIon canonical structure。
-3. 向 upstream 提取 reusable capabilities。
-4. 在可行时，在 parity validation 期间同时保持旧路径与新路径可用。
-5. 验证 behavior、routing、review 与 tooling parity。
-6. 将 consuming projects 切换到 versioned framework。
-7. 只有在 parity 被证明后才删除 duplicated legacy definitions。
+1. 审计可复用内容和仅属于具体项目的内容。
+2. 确立 EmbrAIon 的规范结构。
+3. 将可复用能力提取到独立的上层仓库中。
+4. 在实际可行时，在等价性验证完成前同时保留旧路径和新路径。
+5. 验证行为、路由、评审和工具是否保持等价。
+6. 将使用方项目切换到带版本管理的 EmbrAIon。
+7. 只有在等价性得到证明后，才删除旧的重复定义。
 
-目标是在 ownership boundary 被证明之前避免破坏性迁移。
+目标是在责任边界尚未证明之前，避免进行破坏性迁移。

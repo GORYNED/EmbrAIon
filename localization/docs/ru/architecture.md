@@ -2,31 +2,31 @@
 
 ## Слои
 
-1. **Core** — vendor-neutral rules, agents, skills, workflows, routing и knowledge.
-2. **Adapters** — конкретные hosts, модели, providers, transports и package projections.
-3. **Tools** — детерминированные runtime, learning, security, MCP inventory, worktree, validation, sync, install, doctor и CLI.
-4. **Project overlay** — project-specific agents, domains, source classes, compatibility rules и product knowledge.
-5. **External capabilities** — рекомендуемые или опциональные companion systems и domain-specific integrations.
-6. **Evidence** — deterministic tests, behavioral evals, baselines и reports.
+1. **Core (Ядро)** — независимые от конкретного поставщика правила, агенты, навыки, рабочие процессы, маршрутизация и знания.
+2. **Adapters (Адаптеры)** — представления для конкретных клиентов, моделей, провайдеров, способов подключения и переносимых пакетов.
+3. **Tools (Инструменты)** — детерминированная исполняемая логика: среда выполнения, обучение, безопасность, инвентаризация MCP, управление Git worktree, валидация, синхронизация, установка, диагностика и CLI.
+4. **Project Overlay (Проектный слой)** — специфичные для подключаемого проекта агенты, предметные области, классы исходных данных, правила совместимости и продуктовые знания.
+5. **External Capabilities (Внешние возможности)** — рекомендуемые или необязательные дополнительные системы и предметные интеграции.
+6. **Evidence (Доказательства)** — детерминированные тесты, поведенческие проверки, эталонные результаты и отчёты.
 
 ## Модель агентов
 
-Core-агенты называются как роли-должности: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher и Steward.
+Агенты ядра называются как роли-должности: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher и Steward.
 
-Project-specific специалисты остаются в подключаемом проекте и не превращаются в generic Core roles.
+Специалисты, относящиеся к конкретной предметной области, остаются в подключаемом проекте и не превращаются в универсальные роли ядра.
 
-## State и learning
+## State (Состояние) и Learning (Обучение)
 
-Runtime state нормализуется в privacy-safe session records. Повторяющиеся результаты могут создавать learning candidates, но promotion в canonical capability всегда проходит review и approval.
+Состояние выполнения нормализуется в записи сессий, которые не содержат защищённого содержимого. Повторяющиеся результаты могут создавать кандидатов на улучшение, но добавление новой канонической возможности всегда требует ревью и явного одобрения.
 
-## Integrations
+## Integrations (Интеграции)
 
-Конфигурация внешних servers/tools инвентаризируется отдельно от Core policy. Inventory хранит metadata и drift, но никогда secret values.
+Конфигурация внешних серверов и инструментов инвентаризируется отдельно от правил ядра. Инвентаризация хранит метаданные и сведения о расхождениях, но не значения секретов.
 
-## Ownership моделей
+## Владение сведениями о моделях
 
-Core routing выбирает provider-neutral route classes. Adapter catalogs владеют актуальными model identities, effort, pricing, lifecycle и host selectors.
+Маршрутизация ядра выбирает абстрактный класс маршрута. Каталоги адаптеров содержат актуальные идентификаторы моделей, уровни рассуждения, цены, состояние жизненного цикла и параметры выбора в конкретном клиенте.
 
 ## Spec Kit
 
-Spec Kit подключается как внешняя capability. EmbrAIon рекомендует его для substantial specification work, но не включает его skills, templates или runtime внутрь Core.
+Spec Kit подключается как внешняя возможность. EmbrAIon рекомендует его для существенной работы со спецификациями, но не включает его навыки, шаблоны или среду выполнения внутрь ядра.

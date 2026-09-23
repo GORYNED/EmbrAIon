@@ -2,31 +2,31 @@
 
 ## 层次
 
-1. **Core** — vendor-neutral rules、agents、skills、workflows、routing 和 knowledge。
-2. **Adapters** — 具体 hosts、models、providers、transports 与 package projections。
-3. **Tools** — deterministic runtime、learning、security、MCP inventory、worktree、validation、sync、install、doctor 与 CLI。
-4. **Project overlay** — consuming project 的 agents、domains、source classes、compatibility rules 与 product knowledge。
-5. **External capabilities** — 推荐或可选的 companion systems 与 domain-specific integrations。
-6. **Evidence** — deterministic tests、behavioral evals、baselines 与 reports。
+1. **Core（核心）** — 与具体供应商无关的规则、代理角色、技能、工作流、路由和知识。
+2. **Adapters（适配器）** — 面向具体客户端、模型、供应商、连接方式和可移植软件包的表示层。
+3. **Tools（工具）** — 确定性的可执行逻辑，包括运行状态、学习、安全、MCP 清单、Git worktree 管理、验证、同步、安装、诊断和 CLI。
+4. **Project Overlay（项目叠加层）** — 属于具体项目的代理角色、业务领域、来源类别、兼容性规则和产品知识。
+5. **External Capabilities（外部能力）** — 推荐或可选的附加系统以及领域集成。
+6. **Evidence（证据）** — 确定性测试、行为评估、基准结果和报告。
 
-## Agent 模型
+## 代理模型
 
-Core agents 使用职位式名称：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher、Steward。
+核心代理使用职位式名称：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 和 Steward。
 
-Project-specific domain specialists 留在 consuming project 中，而不是成为 generic Core roles。
+只属于某个具体业务领域的专家角色应保留在使用 EmbrAIon 的项目中，而不应变成通用核心角色。
 
-## State 与 learning
+## State（状态）与 Learning（学习）
 
-Runtime state 被标准化为 privacy-safe session records。重复结果可以形成 learning candidates，但 canonical capability promotion 始终需要 review 与 approval。
+运行状态会被标准化为不包含受保护内容的会话记录。重复出现的结果可以形成改进候选项，但任何新能力进入规范核心之前，都必须经过评审和明确批准。
 
-## Integrations
+## Integrations（集成）
 
-外部 server/tool 配置独立于 Core policy 进行 inventory。Inventory 保存 metadata 与 drift，不保存 secret values。
+外部服务器和工具的配置独立于核心规则进行清单化管理。清单只保存元数据和差异信息，不保存任何秘密值。
 
-## 模型 ownership
+## 模型信息的归属
 
-Core routing 选择 provider-neutral route classes。Adapter catalogs 管理当前 model identities、effort、pricing、lifecycle 与 host selectors。
+核心路由只选择抽象的路由类别。适配器目录负责保存当前模型标识、推理级别、价格、生命周期状态以及具体客户端中的选择参数。
 
 ## Spec Kit
 
-Spec Kit 作为外部 capability 组合使用。EmbrAIon 推荐它用于 substantial specification work，但不会把其 skills、templates 或 runtime 内置到 Core。
+Spec Kit 作为外部能力接入。EmbrAIon 推荐在重要的规格驱动工作中使用它，但不会把它的技能、模板或运行逻辑内置进核心。

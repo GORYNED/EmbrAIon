@@ -1,9 +1,9 @@
 # 概览
 
-EmbrAIon 是一个可复用的 AI-First Engineering System。
+EmbrAIon 是一个可复用的 **AI-First Engineering System（AI 优先工程系统）**。
 
-Core 使用职位式 agents、按 capability 类型划分的 policy、provider-neutral routing 和 deterministic tooling。具体 host/model 信息被隔离在 adapters 中，因此 framework 可以演进，而不与 Codex、Copilot、Claude Code 或某一个 provider 绑定。
+**Core（核心）** 使用职位式代理角色、按能力类型划分的规则、与供应商无关的路由以及确定性工具。具体客户端和模型信息被隔离在 **Adapters（适配器）** 中，因此 EmbrAIon 可以持续演进，而不与 Codex、GitHub Copilot、Claude Code 或某一个具体供应商绑定。
 
-Spec Kit 是 substantial specification-driven 工作的推荐外部 companion capability。
+Spec Kit 是重要规格驱动工作的推荐外部辅助工具。
 
-使用 EmbrAIon 的仓库通过 project overlay 提供自己的 domain truth。
+使用 EmbrAIon 的仓库通过 **Project Overlay（项目叠加层）** 提供自身的领域知识和约束。

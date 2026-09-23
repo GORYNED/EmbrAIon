@@ -1,13 +1,13 @@
 # 发布流程
 
-EmbrAIon 使用 versioned framework releases。
+EmbrAIon 使用带版本管理的系统发布方式。
 
-预期合同：
+预期约定如下：
 
-- GitHub 是 source of truth。
-- Framework releases 使用 tags 并配套文档。
-- 新项目从 released version bootstrap。
-- 现有项目 pin 一个 framework version。
-- Updates 通过 release notes 与 validation 有意执行。
+- GitHub 是事实来源。
+- EmbrAIon 发布版本使用 Git 标签并配套文档。
+- 新项目从已经发布的版本开始使用。
+- 现有项目固定使用某个明确的 EmbrAIon 版本。
+- 升级必须有意进行，并附带变更说明和验证。
 
-当前 repository 仍处于 pre-stable 阶段；在第一个 stable version 前会继续强化 release process。
+当前仓库仍处于稳定版之前的阶段。在发布第一个稳定版本之前，发布流程还会继续加强。

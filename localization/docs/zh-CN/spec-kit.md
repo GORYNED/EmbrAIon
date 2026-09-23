@@ -1,16 +1,16 @@
 # Spec Kit
 
-Spec Kit 是 EmbrAIon 推荐的外部 companion。
+Spec Kit 是 EmbrAIon 推荐的外部辅助工具。
 
-当 substantial feature work 需要明确 specification、clarification、planning、task decomposition、checklists 或 implementation tracking 时使用它。
+当重要功能开发需要明确规格、澄清需求、制定计划、拆分任务、使用检查清单或跟踪实现进度时，可以使用 Spec Kit。
 
-不要把 upstream Spec Kit internals 复制进 EmbrAIon Core。保持其独立可更新，并通过 documented workflows 或 host adapters 集成。
+不要把 Spec Kit 的内部文件复制进 EmbrAIon 核心。Spec Kit 应保持独立更新，并通过已记录的工作流或客户端适配器接入。
 
-Spec Kit artifacts 可以细化工作，但不能覆盖：
+Spec Kit 产生的材料可以细化工作，但不能覆盖：
 
-- EmbrAIon Core rules；
-- project architecture；
-- product truth；
-- compatibility contracts；
-- validation evidence；
-- human merge gates。
+- EmbrAIon 核心规则；
+- 项目架构；
+- 产品事实来源；
+- 兼容性契约；
+- 验证证据；
+- 已启用的人工合并要求。

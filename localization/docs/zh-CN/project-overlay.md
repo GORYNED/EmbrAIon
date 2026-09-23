@@ -1,15 +1,15 @@
-# Project Overlay
+# Project Overlay（项目叠加层）
 
-Consuming repository 通过 `.embraion/project.yaml` 连接到 EmbrAIon。
+使用 EmbrAIon 的仓库通过 `.embraion/project.yaml` 与系统连接。
 
-Overlay 标识：
+项目叠加层定义：
 
-- pinned EmbrAIon version；
-- project identity；
-- project knowledge locations；
-- project-specific agents；
-- external capabilities。
+- 固定使用的 EmbrAIon 版本；
+- 项目标识；
+- 项目知识所在位置；
+- 仅属于该项目的代理角色；
+- 外部能力。
 
-Project overlays 可以增加更严格的规则，但不能静默削弱 Core hard gates。
+项目叠加层可以增加更严格的规则，但不得暗中削弱核心的强制限制。
 
-Project repository 仍然是其 product specification、architecture、compatibility contracts、validation evidence 与 domain semantics 的 canonical source。
+项目仓库本身仍然是产品规格、架构、兼容性契约、验证证据和领域知识的规范来源。

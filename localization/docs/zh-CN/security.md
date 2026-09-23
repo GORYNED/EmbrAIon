@@ -1,16 +1,16 @@
-# Security
+# Security（安全）
 
-EmbrAIon 将 execution permissions、data classification、provider eligibility、external integrations、generated configuration、credentials 与 mutation rights 视为可强制执行的 engineering constraints。
+EmbrAIon 将执行权限、数据分类、供应商可用范围、外部集成、生成配置、凭据以及修改权限视为必须执行的工程约束。
 
-Security policy 属于 Core rules 与 routing。Host/provider adapters 实现 mechanics。`tools/security/` 执行 deterministic inspection，`tools/mcp/` 负责标准化 external server inventory 与 drift。
+安全规则位于核心的规则和路由中。具体客户端和供应商的适配器负责实现相应机制。`tools/security/` 执行确定性检查，`tools/mcp/` 负责标准化外部服务器清单并检测差异。
 
-Framework 应在以下情况下 fail closed：
+**Fail Closed（安全拒绝）** 适用于以下情况：
 
-- task 无法安全分类；
-- provider 不允许处理相关数据；
-- integration 的 access 未知或意外扩大；
-- secret 出现在 persisted configuration；
-- generated configuration 与 approved source 发生 drift；
-- writable action 超出其 access profile。
+- 任务无法被安全分类；
+- 某个供应商不允许处理相应数据类别；
+- 外部集成的访问权限未知或意外扩大；
+- 秘密信息进入了持久化配置；
+- 生成配置与批准的来源发生不一致；
+- 可写操作超出自身访问配置的范围。
 
-Security findings 是 evidence，不是削弱 controlling policy 的许可。
+安全检查结果是问题证据，而不是削弱控制规则的许可。

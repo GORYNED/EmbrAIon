@@ -1,16 +1,18 @@
-# Capability 模型
+# 能力模型
 
-EmbrAIon 使用明确的 capability 类型，避免混合 policy、responsibility、procedure、orchestration 与 facts。
+**Capability（能力）** 是 EmbrAIon 中职责明确的独立组成部分。
 
-| 类型 | 目的 |
+EmbrAIon 使用明确的能力类型，避免把规则、责任、操作过程、执行顺序和事实知识混在一起。
+
+| 类型 | 用途 |
 | --- | --- |
-| Rule | 必须 / 禁止 / 受保护的行为 |
-| Agent | Responsibility 与 ownership |
-| Skill | 可重复 procedure |
-| Workflow | 有序 orchestration |
-| Routing | Model/provider/effort/execution 选择 |
-| Tool | Deterministic operation |
-| Adapter | Host/provider integration |
-| Knowledge | Facts 与 architecture |
+| **Rule（规则）** | 必须遵守、禁止或受保护的行为 |
+| **Agent（代理角色）** | 责任和管辖范围 |
+| **Skill（技能）** | 可重复执行的操作流程 |
+| **Workflow（工作流）** | 有序的执行步骤 |
+| **Routing（路由）** | 选择模型、供应商、推理级别和执行方式 |
+| **Tool（工具）** | 确定性的操作 |
+| **Adapter（适配器）** | 与具体客户端或供应商集成 |
+| **Knowledge（知识）** | 事实和架构信息 |
 
-Canonical capability 应只有一个主要类型。优先通过 cross-reference 连接能力，而不是在多个类型中复制同一内容。
+每个规范能力应只有一个主要类型。如果多个能力之间存在关联，应优先使用交叉引用，而不是在不同位置重复同一内容。

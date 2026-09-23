@@ -1,9 +1,9 @@
-# 模型路由
+# Routing（模型路由）
 
-Routing 是 EmbrAIon 的一级 capability。
+路由是 EmbrAIon 的一级能力。
 
-Canonical routing policy 决定 task characteristics 如何映射到 model/provider 选择、reasoning effort、execution permissions、escalation 与 review requirements。
+规范路由规则决定如何根据任务特征选择模型和供应商、推理级别、执行权限、升级路径以及评审要求。
 
-Provider adapters 负责 invocation mechanics，但不拥有 canonical decision policy。
+供应商适配器只负责实现模型调用机制，并不拥有规范的决策规则。
 
-更详细的 routing contracts 会随着 framework 的演进被独立版本化。
+随着 EmbrAIon 演进，更详细的路由契约会独立进行版本管理。
