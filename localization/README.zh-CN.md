@@ -207,6 +207,37 @@ embraion install --host portable --destination ./vendor/embraion
 
 开发 EmbrAIon 本身时，`EMBRAION_HOME` 仍表示明确使用指定的 framework 源码目录。也可以通过 `EMBRAION_DISABLE_VERSION_RESOLUTION=1` 显式关闭自动解析。
 
+### 查看状态和缓存
+
+查看全局 launcher 版本、当前项目、固定版本、解析后的 runtime、缓存状态以及检测到的客户端表示：
+
+```bash
+embraion status
+```
+
+机器可读输出使用 `embraion status --json`。
+
+查看缓存的 runtime：
+
+```bash
+embraion cache list
+```
+
+先以预览方式检查可清理内容：
+
+```bash
+embraion cache prune
+```
+
+只有添加 `--apply` 才会真正删除。还可以包含长时间未使用的 runtime：
+
+```bash
+embraion cache prune --older-than 90
+embraion cache prune --older-than 90 --apply
+```
+
+当前 launcher 版本和当前项目需要的 runtime 不会因时间条件被删除。
+
 ## 文档
 
 完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。

@@ -222,6 +222,37 @@ embraion install --host portable --destination ./vendor/embraion
 
 EmbrAIon के विकास के लिए `EMBRAION_HOME` किसी चुने हुए framework checkout का स्पष्ट override बना रहता है। `EMBRAION_DISABLE_VERSION_RESOLUTION=1` से स्वचालित resolver को भी स्पष्ट रूप से बंद किया जा सकता है।
 
+### स्थिति और cache देखें
+
+वैश्विक launcher संस्करण, वर्तमान प्रोजेक्ट, निश्चित संस्करण, चुना गया runtime, cache स्थिति और पहचाने गए क्लाइंट प्रस्तुतिकरण देखें:
+
+```bash
+embraion status
+```
+
+मशीन-पठनीय आउटपुट के लिए `embraion status --json` उपयोग करें।
+
+कैश किए गए runtime देखें:
+
+```bash
+embraion cache list
+```
+
+पहले सुरक्षित dry run करें:
+
+```bash
+embraion cache prune
+```
+
+वास्तविक हटाने के लिए `--apply` जोड़ें। लंबे समय से उपयोग न किए गए runtime को शामिल करने के लिए:
+
+```bash
+embraion cache prune --older-than 90
+embraion cache prune --older-than 90 --apply
+```
+
+वर्तमान launcher संस्करण और वर्तमान प्रोजेक्ट का runtime आयु-आधारित सफाई से सुरक्षित रहते हैं।
+
 ## कार्य EmbrAIon से कैसे गुजरता है
 
 ```text
@@ -368,7 +399,7 @@ examples/      एकीकरण उदाहरण
 
 ## सत्यापन और CI
 
-हर push और pull request में योजनाबद्ध रूप से स्कीमा व सूची सत्यापन, स्थानीयकरण पूर्णता, इकाई/एकीकरण परीक्षण, सुरक्षा जाँच, सभी क्लाइंट प्रस्तुतियों का निर्माण और मूल व्यवहार मूल्यांकन चलाए जाते हैं।
+हर push और pull request में योजनाबद्ध रूप से स्कीमा व सूची सत्यापन, स्थानीयकरण पूर्णता, इकाई/एकीकरण परीक्षण, Linux/Windows/macOS पर Python 3.11 और 3.14 संगतता, project-pinned runtime की E2E जाँच, सुरक्षा जाँच, सभी क्लाइंट प्रस्तुतियों का निर्माण और मूल व्यवहार मूल्यांकन चलाए जाते हैं।
 
 Git tag वाले रिलीज़ स्रोत, Codex, Copilot, Claude Code और Portable संग्रह बनाते हैं।
 

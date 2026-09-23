@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 - 2026-09-23
+
 ### Added
 
 - Cross-platform compatibility CI across Linux, Windows, and macOS on Python 3.11 and 3.14.

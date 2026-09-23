@@ -222,6 +222,37 @@ Los Project Overlay (Capas del proyecto) creados por `v0.1.0` pueden contener `0
 
 Para desarrollar EmbrAIon, `EMBRAION_HOME` sigue siendo una selección explícita del checkout del framework. También se puede desactivar la resolución automática con `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
 
+### Consultar estado y caché
+
+Muestre la versión del launcher global, el proyecto actual, la versión fijada, el runtime resuelto, el estado de la caché y las representaciones de clientes detectadas:
+
+```bash
+embraion status
+```
+
+Para salida estructurada use `embraion status --json`.
+
+Consulte los runtime almacenados:
+
+```bash
+embraion cache list
+```
+
+Revise primero qué elementos podrían eliminarse:
+
+```bash
+embraion cache prune
+```
+
+Añada `--apply` para eliminar. También puede incluir runtime no utilizados durante un número determinado de días:
+
+```bash
+embraion cache prune --older-than 90
+embraion cache prune --older-than 90 --apply
+```
+
+La versión actual del launcher y el runtime del proyecto actual están protegidos frente a la limpieza por antigüedad.
+
 ## Cómo fluye una tarea por EmbrAIon
 
 ```text
@@ -368,7 +399,7 @@ examples/      ejemplos de integración
 
 ## Validación y CI
 
-Cada push y pull request ejecuta validación de esquemas y catálogo, comprobación de localizaciones, pruebas unitarias y de integración, análisis de seguridad, generación de todas las representaciones de clientes y evaluaciones básicas de comportamiento.
+Cada push y pull request ejecuta validación de esquemas y catálogo, comprobación de localizaciones, pruebas unitarias y de integración, compatibilidad en Linux, Windows y macOS con Python 3.11 y 3.14, una prueba E2E del runtime fijado por proyecto, análisis de seguridad, generación de todas las representaciones de clientes y evaluaciones básicas de comportamiento.
 
 Los releases con Git tag generan archivos de código fuente, Codex, Copilot, Claude Code y Portable.
 
