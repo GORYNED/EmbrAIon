@@ -90,7 +90,11 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         shell: bash
         run: |
-          EXISTING_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null || true)"
+          if EXISTING_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.sha' 2>/dev/null)"; then
+            :
+          else
+            EXISTING_SHA=""
+          fi
 
           if [ -n "$EXISTING_SHA" ] && [ "$EXISTING_SHA" != "$TARGET_SHA" ]; then
             echo "Tag $TAG already exists at $EXISTING_SHA, expected $TARGET_SHA"
