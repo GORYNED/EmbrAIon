@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-23
+
 ### Added
 
 - Complete Minimal, Python, and Unity/C# reference projects under `examples/`.

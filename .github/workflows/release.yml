@@ -118,6 +118,13 @@ jobs:
           cd /tmp
           embraion validate
 
+      - name: Run packaged reference projects outside checkout
+        shell: bash
+        run: |
+          TEST_FILE="$GITHUB_WORKSPACE/tests/integration/test_reference_projects.py"
+          cd /tmp
+          python "$TEST_FILE"
+
       - name: Validate source and tests
         run: |
           embraion validate
@@ -206,6 +213,13 @@ jobs:
         run: |
           cd /tmp
           embraion validate
+
+      - name: Run packaged reference projects outside checkout
+        shell: bash
+        run: |
+          TEST_FILE="$GITHUB_WORKSPACE/tests/integration/test_reference_projects.py"
+          cd /tmp
+          python "$TEST_FILE"
 
       - name: Validate source and tests
         run: |
