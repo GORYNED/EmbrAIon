@@ -10,7 +10,7 @@ from jsonschema import Draft202012Validator
 from .common import iter_text_files, read_json, read_yaml
 
 README_TIMESTAMP = re.compile(
-    r"<sub>(?:Last updated|Последнее обновление|最后更新)[^<]*UTC</sub>\s*$",
+    r"<sub>(?:Last updated|Последнее обновление|最后更新|अंतिम अपडेट|Última actualización)[^<]*UTC</sub>\s*$",
     re.IGNORECASE,
 )
 
