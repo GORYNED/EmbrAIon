@@ -196,6 +196,21 @@ Resolve a route:
 embraion route --host codex --route-class strong --data PRIVATE
 ```
 
+Create a bounded dispatch plan:
+
+```bash
+embraion dispatch \
+  --task "Implement feature" \
+  --role worker \
+  --host codex \
+  --route-class economy-write \
+  --data PRIVATE \
+  --access write \
+  --owned-path "src/**"
+```
+
+Writable dispatch planning requires explicit owned paths and refuses the stable `main`/`master` branch. The plan and privacy-safe routing telemetry are written under `.embraion/state/`.
+
 Start normalized session state:
 
 ```bash
@@ -214,7 +229,7 @@ embraion session show
 embraion session set --state review --validation passed
 ```
 
-The host adapter performs actual AI execution; EmbrAIon owns the canonical routing, generated agent definitions, access policy, and normalized state.
+The host adapter performs actual AI execution; EmbrAIon owns canonical routing, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry.
 
 ### Security
 
@@ -339,4 +354,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Last updated: 2026-09-23 20:05 UTC</sub>
+<sub>Last updated: 2026-09-23 20:20 UTC</sub>

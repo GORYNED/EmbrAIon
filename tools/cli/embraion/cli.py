@@ -11,7 +11,7 @@ from .common import framework_root, project_root
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .project import init_project, install, sync, update_project
-from .runtime import read_session, route, start_session, update_session
+from .runtime import create_dispatch, read_session, route, start_session, update_session
 from .security import SEVERITY_ORDER, collect_findings, save_mcp_inventory
 from .validation import collect_issues
 from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_worktree
@@ -82,6 +82,21 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 def _cmd_route(args: argparse.Namespace) -> int:
     _print_json(route(args.host, args.route_class, args.data))
+    return 0
+
+
+def _cmd_dispatch(args: argparse.Namespace) -> int:
+    _print_json(
+        create_dispatch(
+            args.task,
+            args.role,
+            args.host,
+            args.route_class,
+            args.data,
+            args.access,
+            args.owned_path or [],
+        )
+    )
     return 0
 
 
@@ -362,6 +377,39 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
     )
     route_parser.set_defaults(func=_cmd_route)
+
+    dispatch = sub.add_parser("dispatch")
+    dispatch.add_argument("--task", required=True)
+    dispatch.add_argument("--role", default="worker")
+    dispatch.add_argument(
+        "--host",
+        required=True,
+        choices=["codex", "copilot", "claude-code"],
+    )
+    dispatch.add_argument(
+        "--route-class",
+        required=True,
+        choices=[
+            "economy-read",
+            "economy-write",
+            "economy",
+            "strong",
+            "strong-high",
+            "critical",
+        ],
+    )
+    dispatch.add_argument(
+        "--data",
+        default="PRIVATE",
+        choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
+    )
+    dispatch.add_argument(
+        "--access",
+        default="inspect",
+        choices=["inspect", "plan", "review", "write", "external-read"],
+    )
+    dispatch.add_argument("--owned-path", action="append")
+    dispatch.set_defaults(func=_cmd_dispatch)
 
     doctor = sub.add_parser("doctor")
     doctor.set_defaults(func=_cmd_doctor)
