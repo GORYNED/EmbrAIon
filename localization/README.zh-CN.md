@@ -12,9 +12,7 @@
 
 **[GORYNED](https://goryned.com) 的 AI-First Engineering System**
 
-> Where sparks become AI-built products
-
-> 本文件是规范英文 README 的翻译。如有差异，以英文版本为准。
+> Where sparks become AI-built products（让火花化为 AI 构建的产品）
 
 EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents、skills、workflows、model routing、validation、review、tooling 与 project orchestration。
 
@@ -22,12 +20,12 @@ EmbrAIon 是一个可复用的 AI-First Engineering System，用于组织 agents
 
 Core 按 capability 类型组织：
 
-- **Rules** — 必须遵守、禁止或受保护的行为。
-- **Agents** — 职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher、Steward。
-- **Skills** — 仅在相关任务中加载的流程。
-- **Workflows** — 工作、review 与 learning 的 orchestration。
-- **Routing** — access、complexity、privacy、fallback 与 health。
-- **Knowledge** — 共享 concepts 与 terminology。
+- **Rule（规则）** — 必须遵守、禁止或受保护的行为。
+- **Agent（代理角色）** — 职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher、Steward。
+- **Skill（技能）** — 仅在相关任务中加载的流程。
+- **Workflow（工作流）** — 工作、review 与 learning 的 orchestration。
+- **Routing（路由）** — access、complexity、privacy、fallback 与 health。
+- **Knowledge（知识）** — 共享 concepts 与 terminology。
 
 `core/catalog.yaml` 决定特定任务真正需要加载哪些 capabilities。
 
@@ -58,4 +56,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-23 20:30 UTC</sub>
+<sub>最后更新：2026-09-23 20:38 UTC</sub>
