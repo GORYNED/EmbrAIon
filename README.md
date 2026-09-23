@@ -140,6 +140,8 @@ A regular `python3 -m pip install embraion` is also supported when you manage th
 embraion --version
 embraion validate
 embraion doctor
+embraion status
+embraion cache list
 ```
 
 `embraion validate` validates the framework data bundled with the active EmbrAIon installation. `embraion doctor` prints a human-readable diagnostic report by default and automatically detects whether the current directory is inside a Git or EmbrAIon project. Outside a project it performs installation/framework diagnostics only; it does not recursively scan your home directory or another arbitrary folder. Use `embraion doctor --json` when structured machine-readable output is required.
@@ -235,6 +237,35 @@ Legacy project overlays created by `v0.1.0` may contain `0.1.0-dev`; the new res
 - `embraion update --framework-version X.Y.Z` explicitly pins a chosen release; the next ordinary command resolves it automatically.
 
 For framework development, setting `EMBRAION_HOME` keeps using the explicitly selected framework checkout. Automatic resolution can also be disabled explicitly with `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
+
+### Inspect launcher, project pin, and runtime cache
+
+```bash
+embraion status
+```
+
+The status report shows the globally installed launcher version, nearest project, project pin, resolved runtime, whether the pinned runtime is already cached, the cache location, and detected host projections. Use `embraion status --json` for automation.
+
+Inspect cached project runtimes:
+
+```bash
+embraion cache list
+```
+
+Clean invalid or stale cache entries with a dry run first:
+
+```bash
+embraion cache prune
+```
+
+Optionally include valid runtimes not used for a chosen number of days:
+
+```bash
+embraion cache prune --older-than 90
+embraion cache prune --older-than 90 --apply
+```
+
+The current launcher version and the current project's resolved version are protected from age-based pruning.
 
 ## How a task flows through EmbrAIon
 
@@ -418,6 +449,8 @@ Every push and pull request is intended to run:
 - schema and catalog validation;
 - localization parity;
 - unit and integration tests;
+- Linux, Windows, and macOS compatibility on Python 3.11 and 3.14;
+- project-version resolver E2E checks on each operating system;
 - security scanning;
 - generation of all host projections;
 - behavioral eval smoke tests.

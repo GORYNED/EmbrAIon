@@ -1,6 +1,6 @@
 schema-version: 1
 name: EmbrAIon
-version: 0.2.2
+version: 0.3.0.dev0
 status: foundation
 license: MIT
 brand-policy: TRADEMARKS.md

@@ -67,6 +67,9 @@ embraion update
 embraion sync
 embraion validate
 embraion doctor
+embraion status
+embraion cache list
+embraion cache prune
 embraion route
 embraion dispatch
 embraion session
@@ -77,7 +80,9 @@ embraion learning
 embraion eval
 ```
 
-`v0.2.0` resolves project pins automatically: ordinary commands find the nearest `.embraion/project.yaml`, install an exact pinned release into `~/.embraion/versions/<version>/` when necessary, and delegate to that cached runtime. `init` and `update` intentionally stay on the global launcher so a project can opt in or move to a newer pin.
+`v0.2.0` resolves project pins automatically: ordinary commands find the nearest `.embraion/project.yaml`, install an exact pinned release into `~/.embraion/versions/<version>/` when necessary, and delegate to that cached runtime. `init`, `update`, `status`, and `cache` intentionally stay on the global launcher.
+
+Use `embraion status` to inspect the launcher, project pin, resolved runtime, and detected host projections. Use `embraion cache list` to inspect cached runtimes and `embraion cache prune` for a safe dry-run cleanup; add `--apply` to remove candidates.
 
 For framework development from a source checkout, `EMBRAION_HOME` may point the CLI at an explicit framework root.
 

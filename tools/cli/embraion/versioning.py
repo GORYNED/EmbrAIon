@@ -23,7 +23,7 @@ RESOLUTION_GUARD_ENV = "EMBRAION_VERSION_RESOLVED"
 RESOLVED_VERSION_ENV = "EMBRAION_RESOLVED_VERSION"
 RESOLVED_PROJECT_ENV = "EMBRAION_RESOLVED_PROJECT"
 
-_BYPASS_COMMANDS = {"init", "update"}
+_BYPASS_COMMANDS = {"init", "update", "status", "cache"}
 _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
 _LEGACY_DEV_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 
@@ -101,7 +101,12 @@ def _runtime_marker(environment: Path) -> Path:
     return environment / ".embraion-runtime.json"
 
 
-def _load_cached_runtime(environment: Path, package_version: str) -> CachedRuntime | None:
+def _load_cached_runtime(
+    environment: Path,
+    package_version: str,
+    *,
+    touch: bool = False,
+) -> CachedRuntime | None:
     python = _runtime_python(environment)
     marker = _runtime_marker(environment)
 
@@ -120,6 +125,12 @@ def _load_cached_runtime(environment: Path, package_version: str) -> CachedRunti
         return None
     if not (framework / "core" / "catalog.yaml").is_file():
         return None
+
+    if touch:
+        try:
+            marker.touch()
+        except OSError:
+            pass
 
     return CachedRuntime(python=python, framework_root=framework)
 
@@ -168,7 +179,7 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
     versions.mkdir(parents=True, exist_ok=True)
 
     environment = versions / package_version
-    cached = _load_cached_runtime(environment, package_version)
+    cached = _load_cached_runtime(environment, package_version, touch=True)
     if cached is not None:
         return cached
 
@@ -180,7 +191,7 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
             lock.mkdir()
             break
         except FileExistsError:
-            cached = _load_cached_runtime(environment, package_version)
+            cached = _load_cached_runtime(environment, package_version, touch=True)
             if cached is not None:
                 return cached
 
@@ -194,7 +205,7 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
             time.sleep(0.2)
 
     try:
-        cached = _load_cached_runtime(environment, package_version)
+        cached = _load_cached_runtime(environment, package_version, touch=True)
         if cached is not None:
             return cached
 
@@ -310,3 +321,186 @@ def resolve_project_runtime(
         env=environment,
     )
     return int(result.returncode)
+
+
+def cached_runtime_path(version: str) -> Path:
+    return cache_home() / "versions" / package_version_for_pin(version)
+
+
+def cached_runtime_ready(version: str) -> bool:
+    package_version = package_version_for_pin(version)
+    environment = cached_runtime_path(package_version)
+    return _load_cached_runtime(environment, package_version, touch=False) is not None
+
+
+def list_cached_runtimes() -> list[dict[str, object]]:
+    versions = cache_home() / "versions"
+    if not versions.is_dir():
+        return []
+
+    entries: list[dict[str, object]] = []
+    for environment in sorted(versions.iterdir(), key=lambda item: item.name):
+        if not environment.is_dir() or environment.name.startswith("."):
+            continue
+
+        version = environment.name
+        marker = _runtime_marker(environment)
+        ready = _load_cached_runtime(environment, version, touch=False) is not None
+
+        last_used: str | None = None
+        if marker.exists():
+            try:
+                last_used = time.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ",
+                    time.gmtime(marker.stat().st_mtime),
+                )
+            except OSError:
+                pass
+
+        entries.append(
+            {
+                "version": version,
+                "path": str(environment),
+                "state": "ready" if ready else "invalid",
+                "last-used-utc": last_used,
+            }
+        )
+
+    return entries
+
+
+def project_runtime_status(
+    current_version: str,
+    *,
+    start: Path | None = None,
+) -> dict[str, object]:
+    manifest = find_project_manifest(start)
+    root = cache_home()
+
+    if manifest is None:
+        return {
+            "launcher-version": current_version,
+            "project": None,
+            "manifest": None,
+            "project-pin": None,
+            "resolved-version": current_version,
+            "runtime-source": "launcher",
+            "runtime-cache": None,
+            "runtime-cached": False,
+            "cache-root": str(root),
+            "cached-versions": len(list_cached_runtimes()),
+        }
+
+    pin = read_project_pin(manifest)
+    resolved = package_version_for_pin(pin)
+    active = package_version_for_pin(current_version)
+    project = manifest.parent.parent
+
+    if resolved == active:
+        source = "launcher"
+        runtime_cache: str | None = None
+        ready = False
+    else:
+        path = cached_runtime_path(resolved)
+        ready = cached_runtime_ready(resolved)
+        source = "cache" if ready else "download-on-demand"
+        runtime_cache = str(path)
+
+    return {
+        "launcher-version": current_version,
+        "project": str(project),
+        "manifest": str(manifest),
+        "project-pin": pin,
+        "resolved-version": resolved,
+        "runtime-source": source,
+        "runtime-cache": runtime_cache,
+        "runtime-cached": ready,
+        "cache-root": str(root),
+        "cached-versions": len(list_cached_runtimes()),
+    }
+
+
+def cache_prune_candidates(
+    *,
+    older_than_days: int | None = None,
+    protected_versions: Sequence[str] = (),
+) -> list[dict[str, object]]:
+    if older_than_days is not None and older_than_days < 0:
+        raise RuntimeError("--older-than must be zero or greater.")
+
+    versions = cache_home() / "versions"
+    if not versions.is_dir():
+        return []
+
+    protected = {package_version_for_pin(value) for value in protected_versions}
+    now = time.time()
+    candidates: list[dict[str, object]] = []
+
+    for path in sorted(versions.iterdir(), key=lambda item: item.name):
+        if path.name.startswith(".") and path.name.endswith(".lock") and path.is_dir():
+            try:
+                age_seconds = now - path.stat().st_mtime
+            except OSError:
+                continue
+            if age_seconds > _STALE_LOCK_SECONDS:
+                candidates.append(
+                    {
+                        "version": None,
+                        "path": str(path),
+                        "reason": "stale-lock",
+                    }
+                )
+            continue
+
+        if not path.is_dir() or path.name.startswith("."):
+            continue
+
+        version = path.name
+        runtime = _load_cached_runtime(path, version, touch=False)
+        if runtime is None:
+            candidates.append(
+                {
+                    "version": version,
+                    "path": str(path),
+                    "reason": "invalid-runtime",
+                }
+            )
+            continue
+
+        if older_than_days is None or version in protected:
+            continue
+
+        marker = _runtime_marker(path)
+        try:
+            age_days = (now - marker.stat().st_mtime) / 86400
+        except OSError:
+            continue
+
+        if age_days >= older_than_days:
+            candidates.append(
+                {
+                    "version": version,
+                    "path": str(path),
+                    "reason": f"unused-{older_than_days}-days",
+                }
+            )
+
+    return candidates
+
+
+def prune_cache(
+    *,
+    apply: bool = False,
+    older_than_days: int | None = None,
+    protected_versions: Sequence[str] = (),
+) -> list[dict[str, object]]:
+    candidates = cache_prune_candidates(
+        older_than_days=older_than_days,
+        protected_versions=protected_versions,
+    )
+
+    if apply:
+        for item in candidates:
+            shutil.rmtree(Path(str(item["path"])), ignore_errors=True)
+
+    return candidates

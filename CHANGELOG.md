@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Cross-platform compatibility CI across Linux, Windows, and macOS on Python 3.11 and 3.14.
+- Network-backed end-to-end validation that a newer global launcher installs, delegates to, and reuses an exact older project-pinned EmbrAIon release.
+- `embraion status` with both human-readable and `--json` output for launcher version, project pin, resolved runtime, runtime cache, and detected host projections.
+- `embraion cache list` and conservative `embraion cache prune` commands for inspecting and cleaning invalid, stale, or explicitly old cached runtimes.
+
+### Changed
+
+- Release tag creation now waits for the cross-platform compatibility matrix before publishing a release.
+- Runtime cache markers are touched when reused so optional age-based pruning can use last-use time.
+
 ## 0.2.2 - 2026-09-23
 
 ### Changed

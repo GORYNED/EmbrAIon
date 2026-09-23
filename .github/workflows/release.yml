@@ -12,9 +12,61 @@ permissions:
   contents: read
 
 jobs:
+  release-platform-smoke:
+    name: Release compatibility / ${{ matrix.os }} / Python ${{ matrix.python }}
+    if: "github.event_name == 'push' && github.ref_name == 'main' && startsWith(github.event.head_commit.message, 'release: v')"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        python:
+          - "3.11"
+          - "3.14"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Build and install wheel
+        shell: python
+        run: |
+          import pathlib
+          import subprocess
+          import sys
+
+          subprocess.check_call([sys.executable, "-m", "pip", "install", "build"])
+          subprocess.check_call([sys.executable, "-m", "build"])
+          wheel = next(pathlib.Path("dist").glob("*.whl"))
+          subprocess.check_call(
+              [sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheel)]
+          )
+
+      - name: Compatibility tests
+        run: |
+          embraion validate
+          python -m unittest discover -s tests/unit -p "test_*.py"
+          python -m unittest discover -s tests/integration -p "test_*.py"
+
+      - name: Project resolver E2E
+        if: matrix.python == '3.14'
+        env:
+          EMBRAION_RUN_NETWORK_E2E: "1"
+        run: python -m unittest discover -s tests/integration -p "test_resolver_e2e.py"
+
   prepare-release:
     name: Validate and prepare release tag
-    if: "github.event_name == 'push' && github.ref_name == 'main' && startsWith(github.event.head_commit.message, 'release: v')"
+    needs: release-platform-smoke
+    if: "always() && needs.release-platform-smoke.result == 'success' && github.event_name == 'push' && github.ref_name == 'main' && startsWith(github.event.head_commit.message, 'release: v')"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

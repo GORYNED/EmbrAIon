@@ -15,7 +15,16 @@ from .runtime import create_dispatch, read_session, route, start_session, update
 from .security import SEVERITY_ORDER, collect_findings, save_mcp_inventory
 from .validation import collect_issues
 from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_worktree
-from .versioning import resolve_project_runtime
+from .versioning import (
+    cache_home,
+    find_project_manifest,
+    list_cached_runtimes,
+    package_version_for_pin,
+    project_runtime_status,
+    prune_cache,
+    read_project_pin,
+    resolve_project_runtime,
+)
 
 
 def _print_json(value: object) -> None:
@@ -273,6 +282,132 @@ def _cmd_eval_compare(args: argparse.Namespace) -> int:
     return 0 if result["pass-rate-delta"] >= 0 else 1
 
 
+def _detect_host_projections(project: Path | None) -> list[str]:
+    if project is None:
+        return []
+
+    projections: list[str] = []
+
+    if (project / ".codex" / "config.toml").is_file():
+        projections.append("Codex")
+
+    copilot = project / ".github" / "agents"
+    if copilot.is_dir() and any(copilot.glob("*.agent.md")):
+        projections.append("GitHub Copilot")
+
+    claude = project / ".claude" / "agents"
+    if claude.is_dir() and any(claude.glob("*.md")):
+        projections.append("Claude Code")
+
+    portable_candidates = [
+        project / "vendor" / "embraion" / "embraion" / "plugin.json",
+        project / "vendor" / "embraion" / "plugin.json",
+        project / "embraion" / "plugin.json",
+    ]
+    if any(path.is_file() for path in portable_candidates):
+        projections.append("Portable")
+
+    return projections
+
+
+def _cmd_status(args: argparse.Namespace) -> int:
+    status = project_runtime_status(__version__)
+    project = Path(str(status["project"])) if status["project"] else None
+    projections = _detect_host_projections(project)
+    status["host-projections"] = projections
+
+    if args.json:
+        _print_json(status)
+        return 0
+
+    print("EmbrAIon Status")
+    print()
+    print(f"Launcher: {status['launcher-version']}")
+
+    if status["project"] is None:
+        print("Project: not detected")
+        print(f"Active runtime: launcher ({status['resolved-version']})")
+    else:
+        print(f"Project: {status['project']}")
+        print(f"Project pin: {status['project-pin']}")
+        print(f"Resolved runtime: {status['resolved-version']}")
+        print(f"Runtime source: {status['runtime-source']}")
+        if status["runtime-cache"]:
+            state = "ready" if status["runtime-cached"] else "not cached yet"
+            print(f"Runtime cache: {status['runtime-cache']} ({state})")
+
+        if projections:
+            print(f"Host projections: {', '.join(projections)}")
+        else:
+            print("Host projections: none detected")
+
+    print(f"Cache root: {status['cache-root']}")
+    print(f"Cached versions: {status['cached-versions']}")
+    return 0
+
+
+def _cmd_cache_list(args: argparse.Namespace) -> int:
+    entries = list_cached_runtimes()
+
+    if args.json:
+        _print_json({"cache-root": str(cache_home()), "runtimes": entries})
+        return 0
+
+    print("EmbrAIon Runtime Cache")
+    print()
+
+    if not entries:
+        print("No cached project runtimes.")
+        return 0
+
+    for item in entries:
+        last_used = item["last-used-utc"] or "unknown"
+        print(
+            f"{item['version']}  {item['state']}  "
+            f"last used {last_used}"
+        )
+        print(f"  {item['path']}")
+
+    return 0
+
+
+def _cmd_cache_prune(args: argparse.Namespace) -> int:
+    protected = [__version__]
+    manifest = find_project_manifest()
+    if manifest is not None:
+        protected.append(read_project_pin(manifest))
+
+    candidates = prune_cache(
+        apply=args.apply,
+        older_than_days=args.older_than,
+        protected_versions=protected,
+    )
+
+    if args.json:
+        _print_json(
+            {
+                "apply": args.apply,
+                "older-than-days": args.older_than,
+                "candidates": candidates,
+            }
+        )
+        return 0
+
+    if not candidates:
+        print("No cache entries are eligible for pruning.")
+        return 0
+
+    action = "Removed" if args.apply else "Would remove"
+    for item in candidates:
+        print(f"{action}: {item['path']} ({item['reason']})")
+
+    if not args.apply:
+        print()
+        print("Dry run only. Re-run with --apply to remove these entries.")
+
+    return 0
+
+
 def _print_doctor_report(
     report: dict[str, object],
     security: list[dict[str, str]],
@@ -497,6 +632,26 @@ def build_parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--json", action="store_true")
     doctor.set_defaults(func=_cmd_doctor)
+
+    status = sub.add_parser("status")
+    status.add_argument("--json", action="store_true")
+    status.set_defaults(func=_cmd_status)
+
+    cache = sub.add_parser("cache")
+    cache_sub = cache.add_subparsers(
+        dest="cache-command",
+        required=True,
+    )
+
+    cache_list = cache_sub.add_parser("list")
+    cache_list.add_argument("--json", action="store_true")
+    cache_list.set_defaults(func=_cmd_cache_list)
+
+    cache_prune = cache_sub.add_parser("prune")
+    cache_prune.add_argument("--older-than", type=int)
+    cache_prune.add_argument("--apply", action="store_true")
+    cache_prune.add_argument("--json", action="store_true")
+    cache_prune.set_defaults(func=_cmd_cache_prune)
 
     session = sub.add_parser("session")
     session_sub = session.add_subparsers(
