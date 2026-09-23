@@ -12,3 +12,6 @@ expect:
   required:
     - edit only owned paths
     - report integration dependencies
+grade:
+  hard:
+    - all changed paths remain within owned scope

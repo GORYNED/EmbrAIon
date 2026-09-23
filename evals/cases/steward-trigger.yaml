@@ -15,3 +15,6 @@ expect:
   required-analysis:
     - compatibility impact
     - migration impact
+grade:
+  hard:
+    - steward capability is selected
