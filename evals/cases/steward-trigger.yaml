@@ -5,12 +5,13 @@ context:
   change:
     serialized-shape: true
     stable-identity: true
+checks:
+  - type: contains
+    field: selected-capabilities
+    value: steward
 expect:
   required-capabilities:
     - steward
   required-analysis:
     - compatibility impact
     - migration impact
-grade:
-  hard:
-    - steward capability selected

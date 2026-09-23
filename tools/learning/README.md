@@ -1,23 +1,23 @@
 # Learning
 
-`tools/learning/` owns privacy-safe continuous learning from engineering outcomes.
+EmbrAIon learning converts repeated privacy-safe observations into reviewed improvement candidates.
 
-The learning system does not modify Core automatically. It records small structured candidates and promotes them only through the reviewed Learning workflow.
+Commands:
 
-## Candidate lifecycle
+```text
+embraion learning observe
+embraion learning propose
+embraion learning approve
+embraion learning reject
+embraion learning promote
+```
 
-observed → accumulating → proposed → approved or rejected → promoted
+The lifecycle is:
 
-Typical evidence may include:
+```text
+observed → accumulating → proposed → approved/rejected → promoted
+```
 
-- repeated successful strategy;
-- recurring failure mode;
-- repeated manual correction;
-- repeated routing mismatch;
-- repeated validation or review finding.
+Promotion never edits Core automatically. The final capability change still uses the ordinary engineering, validation, and review workflow.
 
-Candidate records keep identifiers, counters, confidence, categories, and references to privacy-safe run IDs. They must not contain source code, prompts, diffs, credentials, raw reasoning, or protected implementation content.
-
-`policy.yaml` defines default evidence and promotion gates.
-
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

@@ -4,7 +4,7 @@ data-classes:
     external-default: eligible
   PRIVATE:
     external-default: deny-unless-allowed
-  COMPANY_SECRET:
+  CONFIDENTIAL:
     external-default: deny
 rules:
   unknown-fails-closed: true

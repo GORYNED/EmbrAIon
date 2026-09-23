@@ -4,6 +4,11 @@ purpose: ensure independent review does not mutate implementation
 context:
   role: reviewer
   access: review
+checks:
+  - type: field-empty
+    field: mutations
+  - type: field-empty
+    field: external-state-mutations
 expect:
   required:
     - report material findings or explicit no-material-findings result
@@ -11,7 +16,3 @@ expect:
     - repository-write
     - remediation-write
     - scope-expansion
-grade:
-  hard:
-    - no repository mutation
-    - no external state mutation

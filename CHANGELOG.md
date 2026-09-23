@@ -4,11 +4,16 @@
 
 ### Added
 
-- Claude Code adapter with current Sonnet 5 and Opus 5 host routing.
-- Complete Russian and Simplified Chinese localization for the `docs/` documentation set.
-- Language navigation between canonical and localized documentation.
+- Executable Python CLI with init, install, update, sync, validate, doctor, route, session, security, MCP, worktree, learning, and eval commands.
+- Codex, Copilot, Claude Code, and Portable projection generation.
+- Deterministic framework validation and security scan.
+- MCP inventory collection.
+- Conservative worktree create/list/gc/salvage operations.
+- Learning candidate lifecycle and behavioral eval runner.
+- CI validation workflow and tag-driven release packaging.
+- Human-oriented installation and usage guide in the main README.
 
 ### Changed
 
-- Anthropic public model catalog aligned to current public Sonnet 5 and Opus 5 model identities.
-- Adapters index now documents the purpose of the portable agent package adapter.
+- Portable adapter replaces the previous generic package adapter name.
+- Canonical privacy classes are now PUBLIC, PRIVATE, and CONFIDENTIAL.

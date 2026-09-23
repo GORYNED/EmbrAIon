@@ -7,12 +7,8 @@ include:
   catalog: core/catalog.yaml
   skills: core/skills
   knowledge: core/knowledge
-
-optional:
   routing: core/routing
-  tools: tools
-  providers: adapters/providers
 
 generate:
-  host-specific: true
+  host-neutral: true
   canonical-source: false

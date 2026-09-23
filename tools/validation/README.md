@@ -1,18 +1,22 @@
 # Validation
 
-Deterministic framework validators belong here.
+The executable validation command is:
 
-Validation should cover:
+```bash
+embraion validate
+```
 
-- schema validity;
-- capability catalog references;
-- duplicate or missing capability IDs;
-- broken relative paths;
-- skill directory / `SKILL.md` consistency;
-- adapter route references to known models;
-- generated projection drift;
-- project-overlay compatibility.
+It checks:
 
-Behavioral adherence that cannot be proven deterministically belongs in `evals/`, not here.
+- JSON/YAML syntax;
+- framework, catalog, agent, model, and eval schemas;
+- capability catalog paths and duplicate IDs;
+- skill directory and `SKILL.md` consistency;
+- adapter routes referencing known models;
+- English/Russian/Chinese documentation parity;
+- required README timestamps;
+- migration guards such as obsolete privacy or adapter names.
 
-<sub>Last updated: 2026-09-23 19:21 UTC</sub>
+Behavioral adherence that cannot be proven deterministically belongs in `evals/`.
+
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

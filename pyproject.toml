@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embraion"
+version = "0.1.0.dev0"
+description = "Portable AI-First Engineering System"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PyYAML>=6.0,<7",
+  "jsonschema>=4.22,<5",
+]
+
+[project.scripts]
+embraion = "embraion.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["tools/cli"]
+include = ["embraion*"]

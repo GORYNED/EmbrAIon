@@ -10,6 +10,11 @@ checks:
   provider-privacy: { enabled: true, fail-at: critical }
   generated-drift: { enabled: true, fail-at: high }
 
+data-classes:
+  confidential:
+    external-default: deny
+    provider-allowlist: [openai]
+
 rules:
   unknown-external-integration: fail-closed
   secret-values-in-inventory: forbidden

@@ -1,7 +1,16 @@
 # Install
 
-Installation and update mechanics belong here.
+Installation creates host projections from canonical EmbrAIon Core.
 
-The intended model is a versioned EmbrAIon installation per machine, with consuming projects pinning a framework version through their project overlay.
+Current CLI:
 
-<sub>Last updated: 2026-09-23 17:28 UTC</sub>
+```bash
+embraion install --host codex --destination .
+embraion install --host copilot --destination .
+embraion install --host claude-code --destination .
+embraion install --host portable --destination ./vendor/embraion
+```
+
+Existing generated files are protected by default. Use `--force` only for an intentional replacement.
+
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

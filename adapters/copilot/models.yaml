@@ -13,20 +13,25 @@ options:
     lifecycle: active
     selector: Auto / Balance
     note: client-side routing; no fixed underlying model identity is asserted
+    data: [PUBLIC, PRIVATE]
   - id: gpt-6-sol
     lifecycle: active
     selector: gpt-6-sol
     efforts: [medium, high]
+    data: [PUBLIC, PRIVATE]
   - id: gpt-6-astra
     lifecycle: active
     selector: gpt-6-astra
     efforts: [high]
+    data: [PUBLIC, PRIVATE]
   - id: claude-sonnet-5
     lifecycle: active
     selector: claude-sonnet-5
     efforts: [medium]
     premium-request-multiplier: 1
+    data: [PUBLIC, PRIVATE]
   - id: claude-opus-5.5
     lifecycle: active
     selector: claude-opus-5.5
     efforts: [medium, high]
+    data: [PUBLIC, PRIVATE]

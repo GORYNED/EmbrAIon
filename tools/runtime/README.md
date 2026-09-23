@@ -1,19 +1,18 @@
 # Runtime
 
-This directory owns provider-neutral runtime orchestration and normalized session state.
+Runtime owns provider-neutral routing decisions and normalized session state.
 
-Reusable runtime responsibilities include:
+Current executable capabilities:
 
-- context construction;
-- diagnostic redaction;
-- routing-registry access;
-- bounded worker invocation;
-- telemetry reconciliation;
-- writer-safety coordination;
-- normalized task/session state.
+```bash
+embraion route --host codex --route-class strong --data PRIVATE
+embraion session start ...
+embraion session show
+embraion session set ...
+```
 
-A session record can describe the active task, agent role, host, model, effort, access profile, workspace identity, lifecycle state, validation state, and review state without persisting prompt content or raw reasoning.
+EmbrAIon resolves policy and produces host-specific agent projections. Actual model execution occurs through the selected host/client rather than through a second hidden orchestration service.
 
-Provider-specific transport belongs in `adapters/providers/`. Project-specific credentials, data classes, report roots, and source identities stay in project overlays.
+Session records intentionally exclude prompt content, source excerpts, raw reasoning, and credential values.
 
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

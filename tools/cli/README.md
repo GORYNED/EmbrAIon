@@ -1,7 +1,31 @@
 # CLI
 
-Command-line entry points and user-facing commands belong here.
+The EmbrAIon CLI is installed from the repository package:
 
-The CLI should compose canonical EmbrAIon capabilities rather than own their definitions.
+```bash
+python -m pip install -e .
+```
 
-<sub>Last updated: 2026-09-23 17:28 UTC</sub>
+Main commands:
+
+```text
+embraion init
+embraion install
+embraion update
+embraion sync
+embraion validate
+embraion doctor
+embraion route
+embraion session
+embraion security
+embraion mcp
+embraion worktree
+embraion learning
+embraion eval
+```
+
+The current pre-stable package is intended for source/editable installation. Release packaging will produce portable generated bundles for supported hosts.
+
+Python source modules use standard `snake_case` naming as an ecosystem-specific exception to the repository's general kebab-case convention.
+
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

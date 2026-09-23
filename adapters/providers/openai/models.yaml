@@ -13,7 +13,7 @@ models:
     transport: litellm-loopback
     upstream-model: openai/gpt-6-luna
     access: [read-only]
-    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    data: [PUBLIC, PRIVATE, CONFIDENTIAL]
     roles: [analysis]
     context-policy: sufficient-task-scoped-read-only
     pricing:

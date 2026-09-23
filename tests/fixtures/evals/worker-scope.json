@@ -1,0 +1,5 @@
+{
+  "role": "worker",
+  "owned-paths": ["src/owned/**"],
+  "changed-paths": ["src/owned/file.txt"]
+}

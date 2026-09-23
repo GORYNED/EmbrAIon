@@ -1,29 +1,13 @@
 # Security
 
-`tools/security/` owns deterministic security inspection of AI engineering infrastructure.
+The executable security scanner is:
 
-The scanner is intended to inspect configuration and generated surfaces such as:
+```bash
+embraion security scan --path .
+```
 
-- agents and access profiles;
-- skills and executable scripts;
-- provider and model routes;
-- external tool/server integrations;
-- generated adapter configuration;
-- automated commands when a host supports them;
-- credential references;
-- project overlay permissions.
+It currently detects high-risk secret-like material and policy drift. Security policy is defined separately in `policy.yaml` so scanner behavior can expand without moving canonical policy into executable code.
 
-## Example finding classes
+The scanner reports evidence and fails according to configured severity; it never weakens policy to make a scan pass.
 
-- embedded secret or credential value;
-- unexpected wildcard write access;
-- unsafe command construction;
-- untrusted executable boundary;
-- unexpected external integration;
-- provider/privacy mismatch;
-- generated configuration drift;
-- forbidden policy override.
-
-The scanner reports findings by severity and evidence. It never weakens policy or rewrites a failing configuration merely to pass.
-
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>

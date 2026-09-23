@@ -28,6 +28,10 @@ Agent role, access profile, model route, provider, and external integration stat
 
 A role never implies broader permissions or a more expensive model. Model choice never expands access.
 
+## Data classes
+
+Use exactly three canonical data classes: `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`. Unknown classification fails closed.
+
 ## Learning
 
 Learning output is advisory until explicitly promoted. Runtime evidence may create candidates, but no learning tool may directly mutate Core. Promotion uses review, validation, applicable evals, and explicit approval.
@@ -56,6 +60,7 @@ Spec Kit is a recommended external capability for substantial specification-driv
 - Use lowercase kebab-case for repository-owned files.
 - Prefer one or two words when practical.
 - Standard ecosystem filenames are exceptions, including `README.md`, `AGENTS.md`, and `SKILL.md`.
+- Python modules use standard `snake_case` where required by the Python import system.
 
 ## Brand terminology
 

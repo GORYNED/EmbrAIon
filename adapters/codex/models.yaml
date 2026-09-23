@@ -16,7 +16,7 @@ models:
     observed-efforts: [low, medium, high, xhigh, max]
     enabled-efforts: [low, medium]
     access: [read-only, workspace-write]
-    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    data: [PUBLIC, PRIVATE, CONFIDENTIAL]
     roles: [research, implementation, analysis, test, independent-review, quality-escalation, diagnostic]
     context-policy: sufficient-task-scoped
   - id: gpt-6-sol
@@ -25,7 +25,7 @@ models:
     observed-efforts: [low, medium, high, xhigh, max, ultra]
     enabled-efforts: [medium, high]
     access: [read-only, workspace-write]
-    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    data: [PUBLIC, PRIVATE, CONFIDENTIAL]
     roles: [research, implementation, analysis, test, independent-review, quality-escalation, diagnostic]
     context-policy: sufficient-task-scoped
   - id: gpt-6-astra
@@ -34,7 +34,7 @@ models:
     observed-efforts: [low, medium, high, xhigh, max, ultra]
     enabled-efforts: [high]
     access: [read-only, workspace-write]
-    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    data: [PUBLIC, PRIVATE, CONFIDENTIAL]
     roles: [research, implementation, analysis, test, independent-review, quality-escalation, diagnostic]
     context-policy: sufficient-task-scoped
   - id: gpt-5.6-terra
@@ -44,7 +44,7 @@ models:
     enabled-efforts: [low]
     use: bounded-fallback
     access: [read-only, workspace-write]
-    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    data: [PUBLIC, PRIVATE, CONFIDENTIAL]
     context-policy: sufficient-task-scoped
   - id: gpt-5.6-luna
     lifecycle: deprecated

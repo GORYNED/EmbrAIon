@@ -1,30 +1,13 @@
 # MCP
 
-`tools/mcp/` owns normalized inventory and drift inspection for MCP server configuration across supported hosts.
+Create a normalized MCP inventory with:
 
-The inventory is descriptive, not a credential store.
+```bash
+embraion mcp inventory
+```
 
-Each observed server may record:
+The current collector reads common project-level configuration surfaces for Codex, Claude Code, VS Code, and generic MCP configuration.
 
-- stable server ID;
-- host/client surface;
-- configuration source;
-- command or transport boundary;
-- declared access category;
-- expected or observed state;
-- executable/version evidence when available;
-- environment-variable names without their values.
+The inventory records metadata such as server ID, host, command/transport, access label, source, and environment-variable names. It intentionally does not persist environment-variable values.
 
-## Drift examples
-
-- expected server is missing;
-- unexpected server exists;
-- command or endpoint changed;
-- access became broader;
-- executable identity changed;
-- one host differs from another;
-- credential value appears directly in configuration.
-
-The inventory must redact or reject secret values.
-
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 20:05 UTC</sub>
