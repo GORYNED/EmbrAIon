@@ -18,9 +18,11 @@ EmbrAIon is created by **[GORYNED](https://goryned.com)**.
 
 ## Primary identity
 
-- Category: **AI-FIRST ENGINEERING SYSTEM**
+- Category: **AI-First Engineering System**
 - Primary tagline: **Where sparks become AI-built products**
 - Byline: **[by GORYNED](https://goryned.com)**
+
+Use **AI-First Engineering System** in prose, metadata, headings, labels, and repository text. The all-caps form **AI-FIRST ENGINEERING SYSTEM** is reserved for graphical banners and brand artwork only.
 
 Headlines, taglines, and labels are written without terminal periods. Full descriptive sentences use normal punctuation.
 

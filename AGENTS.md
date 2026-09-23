@@ -64,8 +64,8 @@ Spec Kit is a recommended external capability for substantial specification-driv
 
 ## Brand terminology
 
-- Use **AI-First Engineering System** in normal prose and title case.
-- Use **AI-FIRST ENGINEERING SYSTEM** for the canonical all-caps brand category.
+- Use **AI-First Engineering System** in normal prose, metadata, headings, labels, and repository text.
+- Reserve **AI-FIRST ENGINEERING SYSTEM** exclusively for graphical banners and brand artwork.
 - The lowercase-F spelling is forbidden.
 
 ## README timestamps

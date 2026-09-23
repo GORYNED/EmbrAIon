@@ -474,6 +474,6 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 ---
 
-**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
+**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 22:00 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 23:05 UTC</sub>

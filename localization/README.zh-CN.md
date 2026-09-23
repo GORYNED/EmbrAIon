@@ -271,6 +271,6 @@ embraion help cache prune
 
 ---
 
-**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
+**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
 <sub>最后更新：2026-09-23 22:00 UTC</sub>

@@ -426,6 +426,6 @@ Antes de la primera versión estable todavía pueden cambiar los catálogos de m
 
 ---
 
-**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
+**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 22:00 UTC</sub>
+<sub>Última actualización: 2026-09-23 23:05 UTC</sub>

@@ -485,6 +485,6 @@ Before the first stable release, model catalogs, generated host projections, val
 
 ---
 
-**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
+**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 22:00 UTC</sub>
+<sub>Last updated: 2026-09-23 23:05 UTC</sub>
