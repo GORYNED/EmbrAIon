@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embraion-reference-python"
+version = "0.1.0"
+description = "Generic Python reference project for EmbrAIon"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]

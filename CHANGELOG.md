@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Complete Minimal, Python, and Unity/C# reference projects under `examples/`.
+- Deterministic consuming-project lifecycle E2E covering project status, diagnostics, all host projections, overwrite protection, forced regeneration, and clean `init` bootstrap.
+- A dedicated wheel-backed Reference Projects E2E CI job that runs outside the source checkout.
+- Validation for project-overlay schema, canonical repository/version alignment, and reference-project knowledge paths.
+
+### Changed
+
+- The canonical project-overlay template now tracks the active EmbrAIon framework version.
+- Reference project manifests are version-locked to the active EmbrAIon framework and release validation fails on drift.
+
 ## 0.3.2 - 2026-09-23
 
 ### Changed

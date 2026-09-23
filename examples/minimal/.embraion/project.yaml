@@ -1,0 +1,15 @@
+framework:
+  repository: GORYNED/EmbrAIon
+  version: 0.4.0.dev0
+
+project:
+  name: MinimalReference
+
+knowledge:
+  project: knowledge/project.md
+
+agents: []
+
+capabilities:
+  reference:
+    kind: minimal

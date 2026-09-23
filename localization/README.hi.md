@@ -384,6 +384,10 @@ embraion sync --host all --output build/generated --force
 
 जनित फ़ाइलें व्युत्पन्न प्रस्तुतियाँ हैं और किसी भी समय दोबारा बनाई जा सकती हैं। मानक नियम हमेशा `core/` में रहते हैं।
 
+## Reference projects (संदर्भ प्रोजेक्ट)
+
+रिपॉजिटरी में तीन सार्वजनिक संदर्भ प्रोजेक्ट हैं: [Minimal](../examples/minimal/README.md), [Python](../examples/python/README.md) और [Unity/C#](../examples/unity/README.md)। CI हर उदाहरण को अस्थायी निर्देशिका में कॉपी करके EmbrAIon का वास्तविक प्रोजेक्ट lifecycle चलाता है, जिसमें diagnostics, host projections और accidental overwrite protection शामिल हैं।
+
 ## रिपॉजिटरी संरचना
 
 ```text
@@ -428,4 +432,4 @@ EmbrAIon अभी **पूर्व-स्थिर** अवस्था मे
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-23 23:05 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-23 23:55 UTC</sub>

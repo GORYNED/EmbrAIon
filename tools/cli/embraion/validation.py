@@ -70,6 +70,65 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         except Exception as error:
             add("schema", str(instance_path.relative_to(root)), str(error))
 
+    project_schema = root / "schemas/project.schema.json"
+    framework_data = read_yaml(root / "framework.yaml") or {}
+    current_framework_version = str(framework_data.get("version", ""))
+
+    project_manifests = [
+        root / "templates/project-overlay/.embraion/project.yaml",
+        *sorted((root / "examples").glob("*/.embraion/project.yaml")),
+    ]
+    for manifest in project_manifests:
+        if not manifest.exists():
+            continue
+
+        try:
+            project_data = read_yaml(manifest) or {}
+            if project_schema.exists():
+                for message in _schema_errors(project_data, project_schema):
+                    add(
+                        "project-schema",
+                        str(manifest.relative_to(root)),
+                        message,
+                    )
+
+            framework = project_data.get("framework") or {}
+            declared_repository = str(framework.get("repository", ""))
+            declared_version = str(framework.get("version", ""))
+
+            if declared_repository != "GORYNED/EmbrAIon":
+                add(
+                    "project-repository",
+                    str(manifest.relative_to(root)),
+                    "framework.repository must be GORYNED/EmbrAIon",
+                )
+
+            if declared_version != current_framework_version:
+                add(
+                    "project-version",
+                    str(manifest.relative_to(root)),
+                    (
+                        f"framework.version must match current EmbrAIon "
+                        f"version {current_framework_version}; got {declared_version}"
+                    ),
+                )
+
+            project_root = manifest.parent.parent
+            for knowledge_id, relative in (project_data.get("knowledge") or {}).items():
+                target = project_root / str(relative)
+                if not target.is_file():
+                    add(
+                        "project-knowledge",
+                        str(manifest.relative_to(root)),
+                        f"knowledge '{knowledge_id}' does not resolve to {relative}",
+                    )
+        except Exception as error:
+            add(
+                "project-schema",
+                str(manifest.relative_to(root)),
+                str(error),
+            )
+
     agent_schema = root / "schemas/agent.schema.json"
     if agent_schema.exists():
         for path in sorted((root / "core/agents").glob("*.yaml")):

@@ -1,7 +1,22 @@
-# Minimal Example
+# Minimal Reference Project
 
-This directory will contain the smallest end-to-end consuming-project example once installation and composition contracts are implemented.
+This is the smallest complete consuming-project example.
 
-The example should demonstrate a pinned EmbrAIon version and a minimal `.embraion/project.yaml`.
+It contains:
 
-<sub>Last updated: 2026-09-23 17:28 UTC</sub>
+- a pinned `.embraion/project.yaml`;
+- one project knowledge document;
+- no product-specific code;
+- no committed generated host projections.
+
+From this directory:
+
+```bash
+embraion status
+embraion doctor
+embraion install --host codex --destination .
+```
+
+Generated host files are disposable. CI recreates them in a temporary copy and verifies overwrite protection and forced regeneration.
+
+<sub>Last updated: 2026-09-23 23:55 UTC</sub>

@@ -417,6 +417,10 @@ embraion sync --host all --output build/generated --force
 
 Сгенерированные файлы являются производными и могут быть пересозданы в любой момент. Каноническая политика всегда остаётся в `core/`.
 
+## Reference projects (Эталонные проекты)
+
+В репозитории есть три публичных эталонных проекта: [Minimal](../examples/minimal/README.md), [Python](../examples/python/README.md) и [Unity/C#](../examples/unity/README.md). CI копирует каждый пример во временную директорию и реально проверяет жизненный цикл EmbrAIon, включая диагностику, host projections и защиту от случайной перезаписи.
+
 ## Структура репозитория
 
 ```text
@@ -476,4 +480,4 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 23:05 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 23:55 UTC</sub>

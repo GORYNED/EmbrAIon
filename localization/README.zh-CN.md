@@ -255,6 +255,10 @@ embraion help cache prune
 
 也可以继续使用标准形式 `embraion <command> --help`。
 
+## Reference projects（参考项目）
+
+仓库包含三个公开参考项目：[Minimal](../examples/minimal/README.md)、[Python](../examples/python/README.md) 和 [Unity/C#](../examples/unity/README.md)。CI 会把每个项目复制到临时目录，并真实执行 EmbrAIon 的项目生命周期，包括诊断、host projection 生成以及覆盖保护。
+
 ## 文档
 
 完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。

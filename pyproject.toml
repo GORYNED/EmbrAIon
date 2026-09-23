@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "embraion"
-version = "0.3.2"
+version = "0.4.0.dev0"
 description = "Portable AI-First Engineering System"
 readme = "README.md"
 license = "MIT"

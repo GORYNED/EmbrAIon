@@ -29,6 +29,26 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(__version__, str(framework["version"]))
         self.assertEqual(__version__, str(package["project"]["version"]))
 
+    def test_project_templates_track_framework_version(self) -> None:
+        root = framework_root()
+        framework = read_yaml(root / "framework.yaml") or {}
+        expected = str(framework["version"])
+
+        manifests = [
+            root / "templates/project-overlay/.embraion/project.yaml",
+            *sorted((root / "examples").glob("*/.embraion/project.yaml")),
+        ]
+
+        self.assertGreaterEqual(len(manifests), 4)
+        for manifest in manifests:
+            with self.subTest(manifest=manifest):
+                data = read_yaml(manifest) or {}
+                self.assertEqual(
+                    "GORYNED/EmbrAIon",
+                    data["framework"]["repository"],
+                )
+                self.assertEqual(expected, str(data["framework"]["version"]))
+
     def test_codex_confidential_route_is_explicit(self) -> None:
         result = route("codex", "strong", "CONFIDENTIAL")
         self.assertEqual("gpt-6-sol", result["model"])

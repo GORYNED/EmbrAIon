@@ -429,6 +429,16 @@ embraion sync --host all --output build/generated --force
 
 Generated outputs are disposable projections. Canonical policy always remains in `core/`.
 
+## Reference projects
+
+EmbrAIon includes three executable reference shapes:
+
+- [Minimal](examples/minimal/README.md) — the smallest complete project overlay.
+- [Python](examples/python/README.md) — a normal Python package with its own unit tests.
+- [Unity/C#](examples/unity/README.md) — a generic Unity 6 project with an assembly definition, pure state logic, a Unity-facing controller, and project architecture knowledge.
+
+CI copies each reference project into a temporary directory and exercises the real consuming-project lifecycle. Generated Codex, Copilot, Claude Code, and Portable projections are recreated rather than stored as canonical example source.
+
 ## Repository layout
 
 ```text
@@ -454,6 +464,7 @@ Every push and pull request is intended to run:
 - unit and integration tests;
 - Linux, Windows, and macOS compatibility on Python 3.11 and 3.14;
 - project-version resolver E2E checks on each operating system;
+- consuming-project E2E for Minimal, Python, and Unity/C# reference projects;
 - security scanning;
 - generation of all host projections;
 - behavioral eval smoke tests.
@@ -487,4 +498,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 23:05 UTC</sub>
+<sub>Last updated: 2026-09-23 23:55 UTC</sub>

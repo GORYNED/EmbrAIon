@@ -384,6 +384,10 @@ embraion sync --host all --output build/generated --force
 
 Los archivos generados son representaciones derivadas y pueden recrearse en cualquier momento. La política canónica permanece en `core/`.
 
+## Reference projects (Proyectos de referencia)
+
+El repositorio incluye tres proyectos públicos de referencia: [Minimal](../examples/minimal/README.md), [Python](../examples/python/README.md) y [Unity/C#](../examples/unity/README.md). CI copia cada ejemplo a un directorio temporal y ejecuta el ciclo real de EmbrAIon, incluidos diagnósticos, host projections y protección frente a sobrescrituras accidentales.
+
 ## Estructura del repositorio
 
 ```text
@@ -428,4 +432,4 @@ Antes de la primera versión estable todavía pueden cambiar los catálogos de m
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 23:05 UTC</sub>
+<sub>Última actualización: 2026-09-23 23:55 UTC</sub>

@@ -1,0 +1,16 @@
+framework:
+  repository: GORYNED/EmbrAIon
+  version: 0.4.0.dev0
+
+project:
+  name: PythonReference
+
+knowledge:
+  project: knowledge/project.md
+  architecture: knowledge/architecture.md
+
+agents: []
+
+capabilities:
+  validation:
+    command: python -m unittest discover -s tests -p test_*.py
