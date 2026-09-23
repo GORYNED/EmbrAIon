@@ -19,5 +19,6 @@ Start with:
 9. [Security](security.md)
 10. [Extraction plan](extraction-plan.md)
 11. [Release process](release-process.md)
+12. [Licensing](licensing.md)
 
-<sub>Last updated: 2026-09-23 19:58 UTC</sub>
+<sub>Last updated: 2026-09-23 20:27 UTC</sub>

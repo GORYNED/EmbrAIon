@@ -44,6 +44,12 @@ Core 按 capability 类型组织：
 
 完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。
 
+## 许可证与品牌
+
+除非某个文件或目录另有明确说明，EmbrAIon 的源代码与文档采用 [MIT License](../LICENSE)。
+
+**EmbrAIon** 与 **GORYNED** 名称、logos、wordmarks、visual marks 以及 `brand/assets/` 中的文件**不属于 MIT 授权范围**。MIT License 不授予 trademark 或 brand identity 权利。规范政策见 [TRADEMARKS.md](../TRADEMARKS.md)。
+
 ## Spec Kit
 
 Spec Kit 是推荐的独立 companion capability，适用于 substantial specification-driven 工作。它不会替代 Core rules、project truth、compatibility contracts 或 validation evidence。
@@ -52,4 +58,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>最后更新：2026-09-23 19:58 UTC</sub>
+<sub>最后更新：2026-09-23 20:27 UTC</sub>

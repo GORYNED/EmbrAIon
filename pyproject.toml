@@ -7,6 +7,7 @@ name = "embraion"
 version = "0.1.0.dev0"
 description = "Portable AI-First Engineering System"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
   "PyYAML>=6.0,<7",

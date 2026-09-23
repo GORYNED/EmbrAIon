@@ -19,4 +19,10 @@ Git is the canonical source of truth for versioned brand copy and usage rules. F
 
 Production exports for social, presentation, or product use remain in the design workspace unless a concrete repository use case requires them.
 
-<sub>Last updated: 2026-09-23 17:28 UTC</sub>
+## Licensing and trademarks
+
+Repository source code and documentation are generally licensed under MIT, but the visual brand assets are intentionally excluded.
+
+The names **EmbrAIon** and **GORYNED**, logos, wordmarks, visual marks, and files under `brand/assets/` are not granted under the MIT License. See [`TRADEMARKS.md`](../TRADEMARKS.md) for the canonical policy.
+
+<sub>Last updated: 2026-09-23 20:27 UTC</sub>

@@ -44,6 +44,12 @@ Core разделён по типам capabilities:
 
 Полная русская документация: [localization/docs/ru](docs/ru/README.md).
 
+## Лицензия и бренд
+
+Исходный код и документация EmbrAIon распространяются по [MIT License](../LICENSE), если для конкретного файла или каталога явно не указано иное.
+
+Названия **EmbrAIon** и **GORYNED**, логотипы, wordmarks, визуальные знаки и файлы в `brand/assets/` **не предоставляются по MIT**. MIT License не предоставляет права на trademarks или brand identity. Каноническая политика: [TRADEMARKS.md](../TRADEMARKS.md).
+
 ## Spec Kit
 
 Spec Kit рекомендуется как независимая дополнительная capability для substantial specification-driven работы. Он не заменяет Core rules, project truth, compatibility contracts или validation evidence.
@@ -52,4 +58,4 @@ Spec Kit рекомендуется как независимая дополни
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Последнее обновление: 2026-09-23 19:58 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 20:27 UTC</sub>

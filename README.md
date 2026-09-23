@@ -344,6 +344,12 @@ Translations:
 - [Русский](localization/docs/ru/README.md)
 - [简体中文](localization/docs/zh-CN/README.md)
 
+## License and brand
+
+EmbrAIon source code and documentation are licensed under the [MIT License](LICENSE), except where a file or directory explicitly states otherwise.
+
+The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and the files under `brand/assets/` are **not licensed under MIT**. The MIT License does not grant trademark or brand-identity rights. See [TRADEMARKS.md](TRADEMARKS.md) for the canonical policy.
+
 ## Current status
 
 EmbrAIon is **pre-stable**. The architecture and first executable CLI are in place, but the public compatibility contract is not frozen yet.
@@ -354,4 +360,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Last updated: 2026-09-23 20:20 UTC</sub>
+<sub>Last updated: 2026-09-23 20:27 UTC</sub>

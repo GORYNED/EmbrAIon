@@ -2,6 +2,8 @@ schema-version: 1
 name: EmbrAIon
 version: 0.1.0-dev
 status: foundation
+license: MIT
+brand-policy: TRADEMARKS.md
 
 source:
   repository: GORYNED/EmbrAIon

@@ -21,5 +21,6 @@
 9. [Безопасность](security.md)
 10. [План выделения framework](extraction-plan.md)
 11. [Процесс релизов](release-process.md)
+12. [Лицензирование](licensing.md)
 
-<sub>Последнее обновление: 2026-09-23 19:58 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 20:27 UTC</sub>

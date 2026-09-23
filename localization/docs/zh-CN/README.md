@@ -21,5 +21,6 @@
 9. [Security](security.md)
 10. [Framework 提取计划](extraction-plan.md)
 11. [发布流程](release-process.md)
+12. [许可证与品牌](licensing.md)
 
-<sub>最后更新：2026-09-23 19:58 UTC</sub>
+<sub>最后更新：2026-09-23 20:27 UTC</sub>
