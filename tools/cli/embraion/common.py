@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
+import sysconfig
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -40,12 +42,26 @@ def framework_root(start: Path | None = None) -> Path:
         if (candidate / "framework.yaml").is_file() and (candidate / "core" / "catalog.yaml").is_file():
             return candidate
 
-    module_candidate = Path(__file__).resolve().parents[3]
-    if (module_candidate / "framework.yaml").is_file():
-        return module_candidate
+    source_candidate = Path(__file__).resolve().parents[3]
+    if (
+        (source_candidate / "framework.yaml").is_file()
+        and (source_candidate / "core" / "catalog.yaml").is_file()
+    ):
+        return source_candidate
+
+    packaged_candidates = [
+        Path(sysconfig.get_path("data")) / "share" / "embraion",
+        Path(sys.prefix) / "share" / "embraion",
+    ]
+    for candidate in packaged_candidates:
+        if (
+            (candidate / "framework.yaml").is_file()
+            and (candidate / "core" / "catalog.yaml").is_file()
+        ):
+            return candidate.resolve()
 
     raise RuntimeError(
-        "Could not locate EmbrAIon framework root. Set EMBRAION_HOME or run from the repository."
+        "Could not locate the EmbrAIon framework data. Reinstall EmbrAIon or set EMBRAION_HOME."
     )
 
 
