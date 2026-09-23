@@ -38,7 +38,7 @@ class VersioningTests(unittest.TestCase):
             nested = root / "src" / "feature"
             nested.mkdir(parents=True)
 
-            self.assertEqual(manifest, find_project_manifest(nested))
+            self.assertEqual(manifest.resolve(), find_project_manifest(nested))
 
     def test_legacy_release_pin_maps_to_published_package(self) -> None:
         self.assertEqual("0.1.0", package_version_for_pin("0.1.0-dev"))
@@ -117,7 +117,10 @@ class VersioningTests(unittest.TestCase):
             )
             self.assertEqual("1", environment["EMBRAION_VERSION_RESOLVED"])
             self.assertEqual("0.1.0", environment["EMBRAION_RESOLVED_VERSION"])
-            self.assertEqual(str(manifest), environment["EMBRAION_RESOLVED_PROJECT"])
+            self.assertEqual(
+                str(manifest.resolve()),
+                environment["EMBRAION_RESOLVED_PROJECT"],
+            )
             self.assertEqual(str(framework), environment["EMBRAION_HOME"])
 
 

@@ -229,6 +229,9 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
                 "--no-input",
                 f"embraion=={package_version}",
             ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             check=True,
         )
 
