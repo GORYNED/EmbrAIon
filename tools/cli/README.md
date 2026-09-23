@@ -48,6 +48,8 @@ embraion validate
 embraion doctor
 ```
 
+`doctor` only runs project-level security, MCP, and worktree diagnostics when it detects a Git repository or an explicit `.embraion/project.yaml`. From a home directory or other non-project folder, those recursive diagnostics are skipped.
+
 Upgrade later with:
 
 ```bash

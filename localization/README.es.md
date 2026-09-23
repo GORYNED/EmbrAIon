@@ -140,7 +140,7 @@ embraion validate
 embraion doctor
 ```
 
-`embraion validate` comprueba los datos del sistema incluidos en la instalación activa de EmbrAIon. `embraion doctor` también analiza el contexto del proyecto o árbol de trabajo actual, por lo que conviene ejecutarlo dentro del repositorio que quiera diagnosticar o desde una carpeta de prueba vacía.
+`embraion validate` comprueba los datos del sistema incluidos en la instalación activa de EmbrAIon. `embraion doctor` detecta automáticamente si el directorio actual pertenece a un repositorio Git o a un proyecto EmbrAIon. Fuera de un proyecto solo ejecuta diagnósticos de instalación y del sistema; no recorre de forma recursiva la carpeta personal ni otro directorio cualquiera.
 
 #### Actualización
 

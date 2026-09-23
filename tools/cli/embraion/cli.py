@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .common import framework_root, project_root
+from .common import find_project_root, framework_root, project_root
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .project import init_project, install, sync, update_project
@@ -275,24 +275,31 @@ def _cmd_eval_compare(args: argparse.Namespace) -> int:
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
     root = framework_root()
-    project = project_root()
+    project = find_project_root()
 
     validation = collect_issues(root)
-    security = collect_findings(project)
+    security: list[dict[str, str]] = []
+    mcp_count = 0
+    worktree_count = 0
 
-    try:
-        mcp = save_mcp_inventory(project)
-        mcp_count = len(mcp.get("servers", []))
-    except Exception:
-        mcp_count = 0
+    if project is not None:
+        security = collect_findings(project)
 
-    try:
-        worktree_count = len(list_worktrees())
-    except Exception:
-        worktree_count = 0
+        try:
+            mcp = save_mcp_inventory(project)
+            mcp_count = len(mcp.get("servers", []))
+        except Exception:
+            mcp_count = 0
+
+        try:
+            worktree_count = len(list_worktrees())
+        except Exception:
+            worktree_count = 0
 
     report = {
         "framework": __version__,
+        "project": str(project) if project is not None else None,
+        "project-diagnostics": "enabled" if project is not None else "skipped-no-project",
         "validation-errors": sum(
             1 for item in validation if item["severity"] == "error"
         ),

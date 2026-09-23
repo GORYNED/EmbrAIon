@@ -142,7 +142,7 @@ embraion validate
 embraion doctor
 ```
 
-`embraion validate` validates the framework data bundled with the active EmbrAIon installation. `embraion doctor` also inspects the current project/worktree context, so run it from the repository you want to diagnose or from an empty test directory for an installation smoke check.
+`embraion validate` validates the framework data bundled with the active EmbrAIon installation. `embraion doctor` automatically detects whether the current directory is inside a Git or EmbrAIon project. Outside a project it performs installation/framework diagnostics only; it does not recursively scan your home directory or another arbitrary folder.
 
 #### Upgrade
 

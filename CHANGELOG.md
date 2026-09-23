@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.2.1 - 2026-09-23
+
+### Fixed
+
+- `embraion doctor` no longer treats an arbitrary non-project working directory as a project root.
+- Running `doctor` from a home directory or other ordinary folder now performs framework/installation diagnostics only and skips recursive security scanning, MCP inventory writes, and worktree inspection.
+- Project-level diagnostics still run when the current directory is inside a Git repository or an explicit EmbrAIon project containing `.embraion/project.yaml`.
+
 ## 0.2.0 - 2026-09-23
 
 ### Added

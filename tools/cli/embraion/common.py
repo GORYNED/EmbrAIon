@@ -65,13 +65,25 @@ def framework_root(start: Path | None = None) -> Path:
     )
 
 
-def project_root(start: Path | None = None) -> Path:
+def find_project_root(start: Path | None = None) -> Path | None:
     current = (start or Path.cwd()).resolve()
+
     try:
         result = run(["git", "-C", str(current), "rev-parse", "--show-toplevel"])
         return Path(result.stdout.strip()).resolve()
     except Exception:
-        return current
+        pass
+
+    for candidate in (current, *current.parents):
+        if (candidate / ".embraion" / "project.yaml").is_file():
+            return candidate
+
+    return None
+
+
+def project_root(start: Path | None = None) -> Path:
+    current = (start or Path.cwd()).resolve()
+    return find_project_root(current) or current
 
 
 def read_yaml(path: Path) -> Any:
