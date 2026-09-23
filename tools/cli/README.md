@@ -48,7 +48,7 @@ embraion validate
 embraion doctor
 ```
 
-`doctor` only runs project-level security, MCP, and worktree diagnostics when it detects a Git repository or an explicit `.embraion/project.yaml`. From a home directory or other non-project folder, those recursive diagnostics are skipped.
+`doctor` prints a human-readable report by default and only runs project-level security, MCP, and worktree diagnostics when it detects a Git repository or an explicit `.embraion/project.yaml`. From a home directory or other non-project folder, those recursive diagnostics are skipped. Use `embraion doctor --json` for structured automation output.
 
 Upgrade later with:
 

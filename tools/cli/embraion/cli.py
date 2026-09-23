@@ -273,6 +273,70 @@ def _cmd_eval_compare(args: argparse.Namespace) -> int:
     return 0 if result["pass-rate-delta"] >= 0 else 1
 
 
+def _print_doctor_report(
+    report: dict[str, object],
+    security: list[dict[str, str]],
+) -> None:
+    validation_errors = int(report["validation-errors"])
+    validation_warnings = int(report["validation-warnings"])
+    high_security = sum(
+        1
+        for item in security
+        if SEVERITY_ORDER[item["severity"]] >= SEVERITY_ORDER["high"]
+    )
+
+    print("EmbrAIon Doctor")
+    print()
+    print(f"✓ Framework {report['framework']}")
+
+    if validation_errors:
+        print(
+            f"✗ Framework validation: {validation_errors} error(s), "
+            f"{validation_warnings} warning(s)"
+        )
+    elif validation_warnings:
+        print(
+            f"! Framework validation passed with "
+            f"{validation_warnings} warning(s)"
+        )
+    else:
+        print("✓ Framework validation passed")
+
+    print()
+    project = report["project"]
+
+    if project is None:
+        print("No EmbrAIon project detected.")
+        print("Project diagnostics were skipped.")
+    else:
+        print(f"✓ Project: {project}")
+
+        if security:
+            if high_security:
+                print(
+                    f"✗ Security scan: {len(security)} finding(s), "
+                    f"{high_security} high-severity"
+                )
+            else:
+                print(f"! Security scan: {len(security)} finding(s)")
+        else:
+            print("✓ Security scan passed")
+
+        print(
+            f"✓ MCP configuration checked "
+            f"({report['mcp-servers']} server(s))"
+        )
+        print(f"✓ Worktrees checked ({report['worktrees']})")
+
+    print()
+    if validation_errors or high_security:
+        print("Doctor found issues that need attention.")
+    elif validation_warnings or security:
+        print("Doctor completed with warnings.")
+    else:
+        print("Everything looks good.")
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     root = framework_root()
     project = find_project_root()
@@ -310,7 +374,11 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         "mcp-servers": mcp_count,
         "worktrees": worktree_count,
     }
-    _print_json(report)
+
+    if args.json:
+        _print_json(report)
+    else:
+        _print_doctor_report(report, security)
 
     has_high_security = any(
         SEVERITY_ORDER[item["severity"]] >= SEVERITY_ORDER["high"]
@@ -427,6 +495,7 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.set_defaults(func=_cmd_dispatch)
 
     doctor = sub.add_parser("doctor")
+    doctor.add_argument("--json", action="store_true")
     doctor.set_defaults(func=_cmd_doctor)
 
     session = sub.add_parser("session")

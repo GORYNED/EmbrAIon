@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.2.2 - 2026-09-23
+
+### Changed
+
+- `embraion doctor` now prints a concise human-readable diagnostic report by default.
+- Machine-readable structured output remains available through `embraion doctor --json`.
+- The doctor exit-code contract is unchanged, so CI and automation can continue to use it safely.
+
 ## 0.2.1 - 2026-09-23
 
 ### Fixed

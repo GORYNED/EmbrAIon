@@ -125,7 +125,7 @@ embraion validate
 embraion doctor
 ```
 
-`embraion validate` 检查当前 EmbrAIon 安装所携带的系统数据。`embraion doctor` 会自动判断当前目录是否位于 Git 仓库或 EmbrAIon 项目中。在项目之外，它只执行安装和系统诊断，不会递归扫描用户主目录或其他普通文件夹。
+`embraion validate` 检查当前 EmbrAIon 安装所携带的系统数据。`embraion doctor` 默认输出适合人阅读的诊断报告，并会自动判断当前目录是否位于 Git 仓库或 EmbrAIon 项目中。在项目之外，它只执行安装和系统诊断，不会递归扫描用户主目录或其他普通文件夹。需要机器可读的结构化输出时，请使用 `embraion doctor --json`。
 
 #### 更新
 
