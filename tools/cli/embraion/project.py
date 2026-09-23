@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .common import framework_root, framework_version, read_yaml, write_json, write_yaml
 
 
@@ -15,11 +16,10 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     if manifest.exists() and not force:
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
 
-    root = framework_root()
     data = {
         "framework": {
             "repository": "GORYNED/EmbrAIon",
-            "version": framework_version(root),
+            "version": __version__,
         },
         "project": {"name": name or destination.name},
         "knowledge": {},
@@ -37,12 +37,11 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
     if not manifest.exists():
         raise RuntimeError(f"Missing {manifest}; run 'embraion init' first.")
 
-    root = framework_root()
     data = read_yaml(manifest) or {}
     data.setdefault("framework", {})
 
     previous = data["framework"].get("version")
-    current = version or framework_version(root)
+    current = version or __version__
 
     data["framework"]["repository"] = "GORYNED/EmbrAIon"
     data["framework"]["version"] = current

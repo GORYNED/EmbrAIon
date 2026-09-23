@@ -13,7 +13,7 @@ class CliIntegrationTests(unittest.TestCase):
             capture_output=True,
             check=True,
         )
-        self.assertIn("0.1.0-dev", result.stdout)
+        self.assertIn("0.2.0.dev0", result.stdout)
 
 
 if __name__ == "__main__":

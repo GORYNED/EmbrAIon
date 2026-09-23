@@ -46,6 +46,8 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
 ### 每台电脑只安装一次
 
+> **版本说明：** 当前 PyPI 公共版本是 `v0.1.0`。按项目自动选择 EmbrAIon 版本的功能已经在 `main` 中实现，并将在下一版本发布。
+
 EmbrAIon 通过 [PyPI](https://pypi.org/project/embraion/) 分发。正常使用时，在每台 Windows 或 macOS 电脑上通过 `pipx` 安装一次 CLI 即可。无需克隆仓库，也无需执行 `git clone`。
 
 如果您明确自行管理 Python 环境，也可以使用普通的 `pip` 安装；对于 CLI，仍推荐使用 `pipx`。
@@ -185,17 +187,27 @@ embraion install --host portable --destination ./vendor/embraion
 
 如果一个项目同时使用多个客户端，请为每个客户端分别执行一次对应的 `install` 命令。已有的生成文件默认不会被覆盖；只有明确需要替换时才使用 `--force`。
 
-### 当前 `init`、`install` 和 `sync` 的行为
+### 自动解析项目版本
 
-- `embraion init` 创建仓库本地的 `.embraion/project.yaml` 叠加层。
-- `embraion install` 使用**当前正在运行的 CLI** 可访问的系统数据生成一个客户端表示，并把它复制到指定目录。
-- `embraion sync` 在输出目录中生成可重新创建的表示；它不会自动发现、初始化或接入这台电脑上的所有项目。
+当前 `main` 面向 `v0.2.0`，并加入按项目自动解析 EmbrAIon 版本的能力。
 
-### v0.1.x 中的项目版本固定
+对于普通命令，全局 `embraion` 会从当前目录向上查找最近的 `.embraion/project.yaml`，读取其中的 `framework.version`。如果项目固定的版本与全局 launcher 不同，EmbrAIon 会从 PyPI 安装准确版本到隔离缓存：
 
-`.embraion/project.yaml` 会记录系统版本，但当前 `v0.1.x` CLI **不会自动解析并运行该记录版本**。`install` 和 `sync` 使用当前正在运行的 EmbrAIon 可执行程序所携带的系统数据。
+```text
+~/.embraion/versions/<version>/
+```
 
-如果需要严格可复现，请运行与项目记录版本一致的 CLI/系统发行版本。因此在 `v0.1.x` 中，项目版本字段是兼容性声明和更新边界，还不是自动选择每个项目 runtime 版本的解析器。
+某个版本第一次使用时可能需要从 PyPI 下载；之后会直接复用缓存。因此，同一台 Windows PC 或 Mac 只需一个全局 CLI，不同仓库仍可使用不同的 EmbrAIon 版本。
+
+由 `v0.1.0` 创建的旧 Project Overlay（项目叠加层）可能包含 `0.1.0-dev`。新的 resolver 会把这个旧版本标记自动映射到已发布的 `0.1.0` 包。
+
+`embraion init` 和 `embraion update` 会刻意由全局 launcher 执行，而不会委派给项目中的旧版本：
+
+- `embraion init` 使用当前全局 launcher 版本初始化新仓库；
+- 执行 `pipx upgrade embraion` 后，`embraion update` 只更新当前项目；
+- `embraion update --framework-version X.Y.Z` 可以明确固定某个发布版本，下一条普通命令会自动解析它。
+
+开发 EmbrAIon 本身时，`EMBRAION_HOME` 仍表示明确使用指定的 framework 源码目录。也可以通过 `EMBRAION_DISABLE_VERSION_RESOLUTION=1` 显式关闭自动解析。
 
 ## 文档
 

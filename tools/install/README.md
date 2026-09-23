@@ -31,12 +31,14 @@ embraion install --host portable --destination ./vendor/embraion
 
 The installed Python distribution carries the canonical framework data required to generate these projections. A local EmbrAIon source checkout is not required.
 
-Current `v0.1.x` behavior:
+The current public `v0.1.0` release predates automatic runtime resolution. Current `main` implements the next-release behavior:
 
-- `install` generates from the framework data available to the currently running CLI.
-- `sync` generates disposable projections into an output directory and does not discover or initialize all projects automatically.
-- `.embraion/project.yaml` records a framework version, but that value is not yet an automatic per-project runtime resolver.
-- exact reproduction therefore requires running the CLI/framework distribution that matches the project's recorded version.
+- ordinary commands discover the nearest `.embraion/project.yaml`;
+- an exact pinned release is installed on first use into `~/.embraion/versions/<version>/`;
+- later commands reuse that isolated cached runtime;
+- different repositories can therefore stay on different EmbrAIon versions;
+- `init` and `update` bypass delegation so the global launcher can create or intentionally change a project pin;
+- legacy `0.1.0-dev` pins resolve to the published `0.1.0` package.
 
 Existing generated files are protected by default. Use `--force` only for an intentional replacement.
 

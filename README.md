@@ -63,6 +63,8 @@ Core remains model-neutral. Current model identities and host selectors live onl
 
 ### Install once per machine
 
+> **Release note:** the current public PyPI release is `v0.1.0`. Automatic per-project runtime resolution is implemented on `main` for the next release.
+
 EmbrAIon is distributed through [PyPI](https://pypi.org/project/embraion/). For normal use, install the CLI once on each Windows or macOS computer with `pipx`. A source checkout or `git clone` is not required.
 
 A regular `pip` installation is also supported when you intentionally manage the Python environment yourself, but `pipx` is the recommended CLI installation path.
@@ -202,17 +204,39 @@ embraion install --host portable --destination ./vendor/embraion
 
 If a repository uses multiple clients, run the corresponding `install` command once for each one. Existing generated files are protected by default; use `--force` only when intentionally replacing them.
 
-### What `init`, `install`, and `sync` do today
+### Automatic project runtime resolution
 
-- `embraion init` creates the repository-local `.embraion/project.yaml` overlay.
-- `embraion install` generates one host projection from the framework data available to the **currently running CLI** and copies it into the requested destination.
-- `embraion sync` generates disposable projections into an output directory; it does not discover, initialize, or attach every project on the machine automatically.
+Current `main` targets `v0.2.0` and adds automatic per-project version resolution.
 
-### Project version pinning in v0.1.x
+For ordinary commands, the global `embraion` launcher walks upward from the current directory until it finds the nearest `.embraion/project.yaml`. It then reads `framework.version`:
 
-`.embraion/project.yaml` records a framework version, but the current `v0.1.x` CLI does **not** automatically resolve and launch that recorded version. `install` and `sync` use the framework data bundled with the EmbrAIon executable that is currently running.
+```text
+global embraion launcher
+        ↓
+nearest .embraion/project.yaml
+        ↓
+framework.version
+        ↓
+exact cached runtime for that project
+```
 
-For exact reproducibility, run the CLI/framework distribution that matches the version recorded by the project. In `v0.1.x`, the project version field is therefore a compatibility declaration and update boundary, not yet an automatic per-project runtime resolver.
+If the pinned version differs from the launcher version, EmbrAIon installs the exact PyPI distribution into an isolated cache under:
+
+```text
+~/.embraion/versions/<version>/
+```
+
+The first command for a version may download it from PyPI. Later commands reuse the cached runtime. Projects can therefore use different EmbrAIon releases on the same Windows PC or Mac without separate global installations.
+
+Legacy project overlays created by `v0.1.0` may contain `0.1.0-dev`; the new resolver treats that legacy pin as the published `0.1.0` distribution.
+
+`embraion init` and `embraion update` intentionally run in the globally installed launcher instead of delegating to the old project runtime:
+
+- `embraion init` opts a repository into the current launcher version.
+- after `pipx upgrade embraion`, `embraion update` moves only the current project to the new launcher version.
+- `embraion update --framework-version X.Y.Z` explicitly pins a chosen release; the next ordinary command resolves it automatically.
+
+For framework development, setting `EMBRAION_HOME` keeps using the explicitly selected framework checkout. Automatic resolution can also be disabled explicitly with `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
 
 ## How a task flows through EmbrAIon
 

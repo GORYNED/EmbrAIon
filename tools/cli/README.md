@@ -75,7 +75,7 @@ embraion learning
 embraion eval
 ```
 
-In `v0.1.x`, the version recorded in `.embraion/project.yaml` is not an automatic runtime resolver. `install` and `sync` use the framework data bundled with the currently running CLI.
+The current public `v0.1.0` release still uses one active runtime. Current `main` adds the next-release resolver: ordinary commands find the nearest `.embraion/project.yaml`, install an exact pinned release into `~/.embraion/versions/<version>/` when necessary, and delegate to that cached runtime. `init` and `update` intentionally stay on the global launcher so a project can opt in or move to a newer pin.
 
 For framework development from a source checkout, `EMBRAION_HOME` may point the CLI at an explicit framework root.
 

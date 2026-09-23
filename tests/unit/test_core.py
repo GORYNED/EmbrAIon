@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
-from embraion.common import framework_root
+from embraion import __version__
+from embraion.common import framework_root, read_yaml
 from embraion.evals import evaluate_case
 from embraion.project import sync
 from embraion.runtime import route
@@ -17,6 +19,15 @@ class CoreTests(unittest.TestCase):
         issues = collect_issues(framework_root())
         errors = [item for item in issues if item["severity"] == "error"]
         self.assertEqual([], errors)
+
+    def test_version_contract_is_aligned(self) -> None:
+        root = framework_root()
+        framework = read_yaml(root / "framework.yaml") or {}
+        with (root / "pyproject.toml").open("rb") as handle:
+            package = tomllib.load(handle)
+
+        self.assertEqual(__version__, str(framework["version"]))
+        self.assertEqual(__version__, str(package["project"]["version"]))
 
     def test_codex_confidential_route_is_explicit(self) -> None:
         result = route("codex", "strong", "CONFIDENTIAL")

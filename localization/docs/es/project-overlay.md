@@ -12,12 +12,22 @@ La capa del proyecto registra:
 
 La capa del proyecto puede añadir reglas más estrictas, pero no puede debilitar silenciosamente las restricciones obligatorias del Core.
 
-## Comportamiento actual de versiones en v0.1.x
+## Resolución automática de versiones
 
-`embraion init` escribe en `.embraion/project.yaml` la versión del sistema expuesta por la instalación de EmbrAIon que se está ejecutando.
+La versión pública `v0.1.0` registra una versión del proyecto, pero todavía no la resuelve automáticamente. El `main` actual implementa el resolver para la siguiente versión.
 
-La implementación actual `v0.1.x` no resuelve automáticamente esa versión registrada al ejecutar después `install` o `sync`. Esos comandos generan representaciones con los datos del sistema disponibles para el CLI que se está ejecutando. Por tanto, el campo de versión es actualmente una declaración de compatibilidad y un límite explícito de actualización, no todavía un resolvedor automático de runtime por proyecto.
+Para los comandos normales, el launcher global encuentra el `.embraion/project.yaml` más cercano, lee `framework.version` y lo compara con su propia versión. Si son diferentes, EmbrAIon prepara un runtime aislado en `~/.embraion/versions/<version>/` e instala allí la distribución exacta `embraion==<version>` desde PyPI.
 
-Para una reproducibilidad exacta, utilice la distribución del CLI/sistema que coincida con la versión registrada por el proyecto.
+A continuación, el comando se ejecuta con esa versión almacenada en caché. Así, una sola máquina puede tener un launcher global y distintos repositorios pueden permanecer en diferentes versiones de EmbrAIon.
+
+`embraion init` y `embraion update` omiten intencionadamente la delegación al runtime del proyecto:
+
+- `init` escribe la versión del launcher global en un nuevo Project Overlay;
+- `update` cambia únicamente el pin del repositorio actual;
+- `--framework-version` permite seleccionar explícitamente una versión publicada concreta.
+
+El pin heredado `0.1.0-dev` escrito por la primera versión se normaliza automáticamente a la distribución publicada `0.1.0`.
+
+`EMBRAION_HOME` es un override explícito para desarrollo y desactiva la delegación automática de versión en ese proceso.
 
 El propio repositorio del proyecto sigue siendo la fuente canónica de la especificación del producto, la arquitectura, los contratos de compatibilidad, la evidencia de validación y el conocimiento del dominio.

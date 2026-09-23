@@ -15,10 +15,18 @@ from .runtime import create_dispatch, read_session, route, start_session, update
 from .security import SEVERITY_ORDER, collect_findings, save_mcp_inventory
 from .validation import collect_issues
 from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_worktree
+from .versioning import resolve_project_runtime
 
 
 def _print_json(value: object) -> None:
     print(json.dumps(value, indent=2, ensure_ascii=False))
+
+
+def _subprocess_error_message(error: subprocess.CalledProcessError) -> str:
+    for value in (error.stderr, error.stdout):
+        if value and value.strip():
+            return value.strip()
+    return str(error)
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
@@ -545,8 +553,21 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    actual_argv = list(argv if argv is not None else sys.argv[1:])
+
+    try:
+        delegated = resolve_project_runtime(actual_argv, __version__)
+        if delegated is not None:
+            return delegated
+    except RuntimeError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 2
+    except subprocess.CalledProcessError as error:
+        print(f"ERROR: {_subprocess_error_message(error)}", file=sys.stderr)
+        return error.returncode or 2
+
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args = parser.parse_args(actual_argv)
 
     try:
         return int(args.func(args))
@@ -554,8 +575,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
     except subprocess.CalledProcessError as error:
-        message = error.stderr.strip() or error.stdout.strip() or str(error)
-        print(f"ERROR: {message}", file=sys.stderr)
+        print(f"ERROR: {_subprocess_error_message(error)}", file=sys.stderr)
         return error.returncode or 2
 
 

@@ -61,6 +61,8 @@ El Core permanece independiente de modelos concretos. Las identidades actuales d
 
 ### Instalar una vez por equipo
 
+> **Nota de versión:** la versión pública actual en PyPI es `v0.1.0`. La resolución automática de una versión de EmbrAIon por proyecto ya está implementada en `main` y se publicará en la siguiente versión.
+
 EmbrAIon se distribuye mediante [PyPI](https://pypi.org/project/embraion/). Para el uso normal, instale el CLI una sola vez en cada equipo Windows o macOS con `pipx`. No es necesario clonar el repositorio ni usar `git clone`.
 
 También se admite una instalación normal con `pip` si administra explícitamente el entorno de Python, pero `pipx` es la opción recomendada para el CLI.
@@ -200,17 +202,27 @@ embraion install --host portable --destination ./vendor/embraion
 
 Si el proyecto usa varios clientes, ejecute una vez el comando `install` correspondiente a cada uno. Los archivos generados existentes están protegidos contra sobrescritura de forma predeterminada; use `--force` solo de manera intencionada.
 
-### Qué hacen actualmente `init`, `install` y `sync`
+### Resolución automática de la versión del proyecto
 
-- `embraion init` crea la capa local del repositorio `.embraion/project.yaml`.
-- `embraion install` genera una representación de cliente usando los datos del sistema disponibles para el **CLI que se está ejecutando** y la copia en el destino solicitado.
-- `embraion sync` genera representaciones desechables en un directorio de salida; no descubre, inicializa ni conecta automáticamente todos los proyectos del equipo.
+El `main` actual está orientado a `v0.2.0` y añade resolución automática de la versión de EmbrAIon para cada proyecto.
 
-### Fijación de versión del proyecto en v0.1.x
+Para los comandos normales, el `embraion` global busca hacia arriba desde el directorio actual hasta encontrar el `.embraion/project.yaml` más cercano y lee `framework.version`. Si la versión fijada por el proyecto es distinta de la versión del launcher global, EmbrAIon instala el paquete exacto desde PyPI en una caché aislada:
 
-`.embraion/project.yaml` registra una versión del sistema, pero el CLI actual `v0.1.x` **no resuelve ni ejecuta automáticamente esa versión**. `install` y `sync` usan los datos del sistema incluidos en el ejecutable EmbrAIon que esté activo.
+```text
+~/.embraion/versions/<version>/
+```
 
-Para una reproducibilidad exacta, utilice la distribución del CLI/sistema que coincida con la versión registrada por el proyecto. En `v0.1.x`, el campo de versión es una declaración de compatibilidad y un límite de actualización, no todavía un resolvedor automático de versión por proyecto.
+El primer uso de una versión puede necesitar descargarla desde PyPI. Los usos posteriores reutilizan la caché. Así, distintos proyectos en el mismo PC con Windows o Mac pueden utilizar diferentes versiones de EmbrAIon con una sola instalación global del CLI.
+
+Los Project Overlay (Capas del proyecto) creados por `v0.1.0` pueden contener `0.1.0-dev`. El nuevo resolver interpreta ese pin heredado como la distribución publicada `0.1.0`.
+
+`embraion init` y `embraion update` se ejecutan intencionadamente en el launcher global y no se delegan a la versión antigua del proyecto:
+
+- `embraion init` incorpora un repositorio nuevo a la versión del launcher global;
+- después de `pipx upgrade embraion`, `embraion update` mueve únicamente el proyecto actual;
+- `embraion update --framework-version X.Y.Z` fija explícitamente una versión publicada, que el siguiente comando normal resolverá automáticamente.
+
+Para desarrollar EmbrAIon, `EMBRAION_HOME` sigue siendo una selección explícita del checkout del framework. También se puede desactivar la resolución automática con `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
 
 ## Cómo fluye una tarea por EmbrAIon
 
