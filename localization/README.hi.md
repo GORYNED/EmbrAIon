@@ -6,8 +6,8 @@
   <a href="../README.md">अंग्रेज़ी</a> ·
   <a href="README.ru.md">Русский</a> ·
   <a href="README.zh-CN.md">简体中文</a> ·
-  <strong>हिन्दी</strong> ·
-  <a href="README.es.md">Español</a>
+  <a href="README.es.md">Español</a> ·
+  <strong>हिन्दी</strong>
 </p>
 
 # EmbrAIon
@@ -319,4 +319,4 @@ EmbrAIon अभी **पूर्व-स्थिर** अवस्था मे
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-23 20:50 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-23 20:59 UTC</sub>

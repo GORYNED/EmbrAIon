@@ -6,8 +6,8 @@
   <a href="../README.md">Inglés</a> ·
   <a href="README.ru.md">Русский</a> ·
   <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.hi.md">हिन्दी</a> ·
-  <strong>Español</strong>
+  <strong>Español</strong> ·
+  <a href="README.hi.md">हिन्दी</a>
 </p>
 
 # EmbrAIon
@@ -319,4 +319,4 @@ Antes de la primera versión estable todavía pueden cambiar los catálogos de m
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 20:50 UTC</sub>
+<sub>Última actualización: 2026-09-23 20:59 UTC</sub>

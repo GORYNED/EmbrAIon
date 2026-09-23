@@ -6,8 +6,8 @@
   <strong>English</strong> ·
   <a href="localization/README.ru.md">Русский</a> ·
   <a href="localization/README.zh-CN.md">简体中文</a> ·
-  <a href="localization/README.hi.md">हिन्दी</a> ·
-  <a href="localization/README.es.md">Español</a>
+  <a href="localization/README.es.md">Español</a> ·
+  <a href="localization/README.hi.md">हिन्दी</a>
 </p>
 
 # EmbrAIon
@@ -345,8 +345,8 @@ Translations:
 
 - [Русский](localization/docs/ru/README.md)
 - [简体中文](localization/docs/zh-CN/README.md)
-- [हिन्दी](localization/docs/hi/README.md)
 - [Español](localization/docs/es/README.md)
+- [हिन्दी](localization/docs/hi/README.md)
 
 ## License and brand
 
@@ -364,4 +364,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 20:50 UTC</sub>
+<sub>Last updated: 2026-09-23 20:59 UTC</sub>

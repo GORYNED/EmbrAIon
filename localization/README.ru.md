@@ -6,8 +6,8 @@
   <a href="../README.md">Английский</a> ·
   <strong>Русский</strong> ·
   <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.hi.md">हिन्दी</a> ·
-  <a href="README.es.md">Español</a>
+  <a href="README.es.md">Español</a> ·
+  <a href="README.hi.md">हिन्दी</a>
 </p>
 
 # EmbrAIon
@@ -365,4 +365,4 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 20:50 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 20:59 UTC</sub>
