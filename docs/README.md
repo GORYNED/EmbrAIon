@@ -1,5 +1,11 @@
 # Documentation
 
+<p align="center">
+  <strong>English</strong> ·
+  <a href="../localization/docs/ru/README.md">Русский</a> ·
+  <a href="../localization/docs/zh-CN/README.md">简体中文</a>
+</p>
+
 Start with:
 
 1. [Overview](overview.md)
@@ -11,5 +17,7 @@ Start with:
 7. [Learning](learning.md)
 8. [Validation](validation.md)
 9. [Security](security.md)
+10. [Extraction plan](extraction-plan.md)
+11. [Release process](release-process.md)
 
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 19:58 UTC</sub>

@@ -1,54 +1,45 @@
 schema-version: 1
-catalog-version: 2026-09-22.2
+catalog-version: 2026-09-23
 provider: anthropic
 source:
-  registry-version: 2026-09-22.2
+  verified-utc: 2026-09-23T19:58:00Z
+  model-status: https://docs.anthropic.com/en/docs/about-claude/model-deprecations
+  migration-guide: https://docs.anthropic.com/en/docs/about-claude/models/migrating-to-claude-4
 models:
   - id: claude-sonnet-5
-    deployment-id: claude-sonnet-api
     lifecycle: active
     alias: claude-sonnet-5
     billing: api
-    efforts: [low]
-    transport: litellm-loopback
-    upstream-model: anthropic/claude-sonnet-5
+    thinking: adaptive-default
+    default-effort: high
+    context-window: 1000000
+    max-output-tokens: 128000
     access: [read-only]
     data: [PUBLIC, PRIVATE]
-    roles: [independent-review]
+    roles: [independent-review, analysis]
     context-policy: sufficient-review-context
     pricing:
       currency: USD
       unit-tokens: 1000000
-      verified-utc: 2026-09-21T00:00:00Z
-      official-source: https://docs.anthropic.com/en/docs/about-claude/pricing
+      verified-utc: 2026-09-23T19:58:00Z
       input: 2
-      cached-input: 0.2
       output: 10
-      reasoning: 10
-    evidence:
-      actual-model-required: true
-      actual-model-pattern: '^claude-sonnet-5-[0-9]{8}$'
-  - id: claude-opus-5.5
-    deployment-id: claude-opus-api
+  - id: claude-opus-5
     lifecycle: active
-    alias: claude-opus-5-5
+    alias: claude-opus-5
     billing: api
-    efforts: [low]
-    transport: litellm-loopback
-    upstream-model: anthropic/claude-opus-5-5
+    thinking: adaptive-default
+    default-effort: high
+    context-window: 1000000
+    max-output-tokens: 128000
     access: [read-only]
     data: [PUBLIC, PRIVATE]
-    roles: [independent-review]
+    roles: [independent-review, quality-escalation]
     task-classes: [difficult-review]
     context-policy: sufficient-review-context
     pricing:
       currency: USD
       unit-tokens: 1000000
-      verified-utc: 2026-09-22T00:00:00Z
-      official-source: https://www.anthropic.com/claude/opus
-      input: 4
-      cached-input: 0.2
-      output: 20
-      reasoning: 20
-    evidence:
-      actual-model-required: true
+      verified-utc: 2026-09-23T19:58:00Z
+      input: 5
+      output: 25

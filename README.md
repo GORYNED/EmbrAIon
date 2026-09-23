@@ -56,6 +56,10 @@ evals/         Behavioral cases, baselines, graders, and reports
 localization/  README translations
 ```
 
+## Documentation
+
+Full documentation: [docs/](docs/README.md).
+
 ## Skills
 
 Skills live in individual directories with a `SKILL.md` entry point. Current generic skills cover planning, implementation, research, review, validation, debugging, and final verification.
@@ -76,4 +80,4 @@ EmbrAIon is in active framework foundation development.
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-09-23 19:58 UTC</sub>

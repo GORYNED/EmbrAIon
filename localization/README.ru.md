@@ -40,6 +40,10 @@ Core разделён по типам capabilities:
 - **Worktrees** — lifecycle isolated workspaces, safe cleanup и salvage.
 - **Evals** — behavioral cases, baselines и comparison reports.
 
+## Документация
+
+Полная русская документация: [localization/docs/ru](docs/ru/README.md).
+
 ## Spec Kit
 
 Spec Kit рекомендуется как независимая дополнительная capability для substantial specification-driven работы. Он не заменяет Core rules, project truth, compatibility contracts или validation evidence.
@@ -48,4 +52,4 @@ Spec Kit рекомендуется как независимая дополни
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>Последнее обновление: 2026-09-23 19:34 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 19:58 UTC</sub>

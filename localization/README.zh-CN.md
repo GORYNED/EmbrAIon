@@ -40,6 +40,10 @@ Core 按 capability 类型组织：
 - **Worktrees** — isolated workspace lifecycle、safe cleanup 与 salvage。
 - **Evals** — behavioral cases、baselines 与 comparison reports。
 
+## 文档
+
+完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。
+
 ## Spec Kit
 
 Spec Kit 是推荐的独立 companion capability，适用于 substantial specification-driven 工作。它不会替代 Core rules、project truth、compatibility contracts 或 validation evidence。
@@ -48,4 +52,4 @@ Spec Kit 是推荐的独立 companion capability，适用于 substantial specifi
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **by GORYNED**
 
-<sub>最后更新：2026-09-23 19:34 UTC</sub>
+<sub>最后更新：2026-09-23 19:58 UTC</sub>
