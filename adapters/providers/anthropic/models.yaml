@@ -1,0 +1,54 @@
+schema-version: 1
+catalog-version: 2026-09-22.2
+provider: anthropic
+source:
+  registry-version: 2026-09-22.2
+models:
+  - id: claude-sonnet-5
+    deployment-id: claude-sonnet-api
+    lifecycle: active
+    alias: claude-sonnet-5
+    billing: api
+    efforts: [low]
+    transport: litellm-loopback
+    upstream-model: anthropic/claude-sonnet-5
+    access: [read-only]
+    data: [PUBLIC, PRIVATE]
+    roles: [independent-review]
+    context-policy: sufficient-review-context
+    pricing:
+      currency: USD
+      unit-tokens: 1000000
+      verified-utc: 2026-09-21T00:00:00Z
+      official-source: https://docs.anthropic.com/en/docs/about-claude/pricing
+      input: 2
+      cached-input: 0.2
+      output: 10
+      reasoning: 10
+    evidence:
+      actual-model-required: true
+      actual-model-pattern: '^claude-sonnet-5-[0-9]{8}$'
+  - id: claude-opus-5.5
+    deployment-id: claude-opus-api
+    lifecycle: active
+    alias: claude-opus-5-5
+    billing: api
+    efforts: [low]
+    transport: litellm-loopback
+    upstream-model: anthropic/claude-opus-5-5
+    access: [read-only]
+    data: [PUBLIC, PRIVATE]
+    roles: [independent-review]
+    task-classes: [difficult-review]
+    context-policy: sufficient-review-context
+    pricing:
+      currency: USD
+      unit-tokens: 1000000
+      verified-utc: 2026-09-22T00:00:00Z
+      official-source: https://www.anthropic.com/claude/opus
+      input: 4
+      cached-input: 0.2
+      output: 20
+      reasoning: 20
+    evidence:
+      actual-model-required: true

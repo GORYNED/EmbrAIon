@@ -1,0 +1,24 @@
+schema-version: 1
+classes:
+  bounded-read:
+    route-class: economy-read
+    description: narrow read-only discovery or research
+  bounded-write:
+    route-class: economy-write
+    description: mechanical or tightly bounded writable work
+  ordinary:
+    route-class: economy
+    description: limited ordinary engineering
+  substantial:
+    route-class: strong
+    description: substantial engineering and standard review
+  complex:
+    route-class: strong-high
+    description: cross-domain, lifecycle, concurrency, or difficult review
+  critical:
+    route-class: critical
+    description: exceptional protected-decision risk
+principles:
+  role-model-separation: true
+  explicit-route-per-dispatch: true
+  critical-requires-justification: true

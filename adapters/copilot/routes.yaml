@@ -1,0 +1,20 @@
+schema-version: 1
+advisory: true
+routes:
+  default:
+    selection: auto-balance
+  substantial:
+    model: gpt-6-sol
+    effort: medium
+  complex:
+    model: gpt-6-sol
+    effort: high
+  standard-review:
+    model: claude-sonnet-5
+    effort: medium
+  difficult-review:
+    model: claude-opus-5.5
+    effort: high
+  critical:
+    model: gpt-6-astra
+    effort: high

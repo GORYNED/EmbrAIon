@@ -1,0 +1,12 @@
+schema-version: 1
+defaults:
+  states:
+    - healthy
+    - degraded
+    - unavailable
+  evaluation-window-minutes: 30
+  degraded-failures: 2
+  unavailable-failures: 3
+  cooldown-minutes: 15
+  recheck-after-cooldown: true
+  validation-failure-affects-global-health: false

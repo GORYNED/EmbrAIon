@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/framework.schema.json",
+  "title": "EmbrAIon Framework Manifest",
+  "type": "object",
+  "required": ["schema-version", "name", "version", "source", "capabilities", "project-overlay"],
+  "properties": {
+    "schema-version": { "type": "integer", "minimum": 1 },
+    "name": { "const": "EmbrAIon" },
+    "version": { "type": "string", "minLength": 1 },
+    "status": { "type": "string" },
+    "source": {
+      "type": "object",
+      "required": ["repository"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "project-overlay": {
+      "type": "object",
+      "required": ["manifest", "schema"],
+      "properties": {
+        "manifest": { "type": "string", "minLength": 1 },
+        "schema": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

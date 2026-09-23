@@ -1,0 +1,14 @@
+schema-version: 1
+data-classes:
+  PUBLIC:
+    external-default: eligible
+  PRIVATE:
+    external-default: deny-unless-allowed
+  COMPANY_SECRET:
+    external-default: deny
+rules:
+  unknown-fails-closed: true
+  taint-propagates: true
+  automatic-downgrade: false
+  privacy-before-ranking: true
+  project-may-tighten: true

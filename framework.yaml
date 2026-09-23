@@ -1,0 +1,37 @@
+schema-version: 1
+name: EmbrAIon
+version: 0.1.0-dev
+status: foundation
+
+source:
+  repository: GORYNED/EmbrAIon
+
+capabilities:
+  - rules
+  - agents
+  - skills
+  - workflows
+  - routing
+  - tools
+  - adapters
+  - knowledge
+
+conventions:
+  filenames: kebab-case
+  preferred-words: 2
+  standard-exceptions:
+    - README.md
+    - AGENTS.md
+    - SKILL.md
+
+external:
+  recommended:
+    - id: spec-kit
+      name: Spec Kit
+      required: false
+      bundled: false
+      purpose: specification-driven substantial work
+
+project-overlay:
+  manifest: .embraion/project.yaml
+  schema: schemas/project.schema.json

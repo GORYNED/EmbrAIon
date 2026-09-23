@@ -1,0 +1,8 @@
+schema-version: 1
+rules:
+  - apply privacy, access, role, and capability filters before fallback
+  - do not reintroduce an ineligible provider through cost or health ranking
+  - operational failure may move to the next eligible route
+  - validation failure is a quality signal, not provider outage
+  - external unavailability alone does not justify critical escalation
+  - unresolved writer or mutation state blocks writable fallback

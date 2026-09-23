@@ -1,0 +1,30 @@
+schema-version: 1
+catalog-version: 2026-09-22.2
+provider: openai
+source:
+  registry-version: 2026-09-22.2
+models:
+  - id: gpt-6-luna
+    deployment-id: openai-luna-api
+    lifecycle: active
+    alias: gpt-6-luna
+    billing: api
+    efforts: [low]
+    transport: litellm-loopback
+    upstream-model: openai/gpt-6-luna
+    access: [read-only]
+    data: [PUBLIC, PRIVATE, COMPANY_SECRET]
+    roles: [analysis]
+    context-policy: sufficient-task-scoped-read-only
+    pricing:
+      currency: USD
+      unit-tokens: 1000000
+      verified-utc: 2026-09-22T00:00:00Z
+      official-source: https://openai.com/index/introducing-gpt-6-sol-and-luna/
+      input: 0.10
+      cached-input: 0.01
+      output: 0.50
+      reasoning: 0.50
+    evidence:
+      actual-model-required: true
+      actual-model-pattern: '^gpt-6-luna-[0-9]{4}-[0-9]{2}-[0-9]{2}$'

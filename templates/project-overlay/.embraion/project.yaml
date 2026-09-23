@@ -1,0 +1,12 @@
+framework:
+  repository: GORYNED/EmbrAIon
+  version: 0.1.0-dev
+
+project:
+  name: ExampleProject
+
+knowledge: {}
+
+agents: []
+
+capabilities: {}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/project.schema.json",
+  "title": "EmbrAIon Project Overlay",
+  "type": "object",
+  "required": ["framework", "project"],
+  "properties": {
+    "framework": {
+      "type": "object",
+      "required": ["repository", "version"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "project": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "knowledge": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

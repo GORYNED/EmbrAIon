@@ -1,0 +1,32 @@
+schema-version: 1
+catalog-version: 2026-09-22.2
+source:
+  registry-version: 2026-09-22.2
+  origin: bootstrap-migration
+surface:
+  id: github-copilot-max-windows
+  billing: credit
+  enforcement: advisory
+options:
+  - id: auto-balance
+    type: client-routing
+    lifecycle: active
+    selector: Auto / Balance
+    note: client-side routing; no fixed underlying model identity is asserted
+  - id: gpt-6-sol
+    lifecycle: active
+    selector: gpt-6-sol
+    efforts: [medium, high]
+  - id: gpt-6-astra
+    lifecycle: active
+    selector: gpt-6-astra
+    efforts: [high]
+  - id: claude-sonnet-5
+    lifecycle: active
+    selector: claude-sonnet-5
+    efforts: [medium]
+    premium-request-multiplier: 1
+  - id: claude-opus-5.5
+    lifecycle: active
+    selector: claude-opus-5.5
+    efforts: [medium, high]
