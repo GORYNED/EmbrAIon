@@ -3,7 +3,9 @@
 <p align="center">
   <strong>English</strong> ·
   <a href="../localization/docs/ru/README.md">Русский</a> ·
-  <a href="../localization/docs/zh-CN/README.md">简体中文</a>
+  <a href="../localization/docs/zh-CN/README.md">简体中文</a> ·
+  <a href="../localization/docs/hi/README.md">हिन्दी</a> ·
+  <a href="../localization/docs/es/README.md">Español</a>
 </p>
 
 Start with:
@@ -21,4 +23,4 @@ Start with:
 11. [Release process](release-process.md)
 12. [Licensing](licensing.md)
 
-<sub>Last updated: 2026-09-23 20:27 UTC</sub>
+<sub>Last updated: 2026-09-23 20:50 UTC</sub>

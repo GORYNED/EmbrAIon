@@ -156,7 +156,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 add("route-model", str(route_path.relative_to(root)), f"Unknown model id: {model}")
 
     docs = {path.name for path in (root / "docs").glob("*.md")}
-    for locale in ("ru", "zh-CN"):
+    for locale in ("ru", "zh-CN", "hi", "es"):
         local = root / "localization" / "docs" / locale
         names = {path.name for path in local.glob("*.md")} if local.exists() else set()
 
@@ -170,6 +170,21 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 f"Extra localized document {name}",
                 "warning",
             )
+
+    required_localized_readmes = {
+        "ru": root / "localization" / "README.ru.md",
+        "zh-CN": root / "localization" / "README.zh-CN.md",
+        "hi": root / "localization" / "README.hi.md",
+        "es": root / "localization" / "README.es.md",
+    }
+    for locale, path in required_localized_readmes.items():
+        if not path.exists():
+            add("localization", f"localization/{locale}", "Missing localized root README")
+
+    for locale in ("ru", "zh-CN", "hi", "es"):
+        legal = root / "localization" / "legal" / locale / "trademarks.md"
+        if not legal.exists():
+            add("localization", f"localization/legal/{locale}", "Missing trademark localization")
 
     for path in root.rglob("README*.md"):
         if ".git" in path.parts:

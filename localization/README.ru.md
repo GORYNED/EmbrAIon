@@ -3,9 +3,11 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">English</a> ·
+  <a href="../README.md">Английский</a> ·
   <strong>Русский</strong> ·
-  <a href="README.zh-CN.md">简体中文</a>
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="README.hi.md">हिन्दी</a> ·
+  <a href="README.es.md">Español</a>
 </p>
 
 # EmbrAIon
@@ -343,6 +345,10 @@ examples/      примеры интеграции
 
 Китайская документация: [localization/docs/zh-CN/](docs/zh-CN/README.md)
 
+Документация на хинди: [localization/docs/hi/](docs/hi/README.md)
+
+Испанская документация: [localization/docs/es/](docs/es/README.md)
+
 ## Лицензия и бренд
 
 Исходный код и документация EmbrAIon распространяются по [MIT License](../LICENSE), если для конкретного файла или каталога явно не указано иное.
@@ -359,4 +365,4 @@ EmbrAIon находится в **предстабильной** стадии. А
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Последнее обновление: 2026-09-23 20:38 UTC</sub>
+<sub>Последнее обновление: 2026-09-23 20:50 UTC</sub>

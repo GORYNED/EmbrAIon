@@ -5,7 +5,9 @@
 <p align="center">
   <strong>English</strong> ·
   <a href="localization/README.ru.md">Русский</a> ·
-  <a href="localization/README.zh-CN.md">简体中文</a>
+  <a href="localization/README.zh-CN.md">简体中文</a> ·
+  <a href="localization/README.hi.md">हिन्दी</a> ·
+  <a href="localization/README.es.md">Español</a>
 </p>
 
 # EmbrAIon
@@ -316,7 +318,7 @@ tools/         CLI, runtime, learning, security, MCP, worktree, validation, sync
 schemas/       Machine-readable contracts
 templates/     Project overlay templates
 docs/          Canonical English documentation
-localization/  Russian and Simplified Chinese translations
+localization/  Russian, Simplified Chinese, Hindi, and Spanish translations
 tests/         Deterministic unit/integration tests
 evals/         Behavioral cases, baselines, graders, fixtures, reports
 examples/      Reference integrations
@@ -343,6 +345,8 @@ Translations:
 
 - [Русский](localization/docs/ru/README.md)
 - [简体中文](localization/docs/zh-CN/README.md)
+- [हिन्दी](localization/docs/hi/README.md)
+- [Español](localization/docs/es/README.md)
 
 ## License and brand
 
@@ -360,4 +364,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 20:30 UTC</sub>
+<sub>Last updated: 2026-09-23 20:50 UTC</sub>

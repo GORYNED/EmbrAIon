@@ -1,0 +1,322 @@
+<p align="center">
+  <img src="../brand/assets/readme/hero-dark.png" alt="EmbrAIon — GORYNED का AI-First Engineering System" width="100%">
+</p>
+
+<p align="center">
+  <a href="../README.md">अंग्रेज़ी</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <strong>हिन्दी</strong> ·
+  <a href="README.es.md">Español</a>
+</p>
+
+# EmbrAIon
+
+**AI-First Engineering System [by GORYNED](https://goryned.com)**
+
+> Where sparks become AI-built products *(जहाँ चिंगारियाँ AI द्वारा बनाए गए उत्पादों में बदलती हैं)*
+
+EmbrAIon एक पोर्टेबल AI-First Engineering System है, जो AI-सहायित सॉफ़्टवेयर इंजीनियरिंग को स्पष्ट भूमिकाओं, पुन: उपयोग योग्य कौशलों, कार्यप्रवाहों, मॉडल रूटिंग, पहुँच नियंत्रण, सत्यापन, स्वतंत्र समीक्षा, सुरक्षा, सिस्टम सीखने और प्रोजेक्ट-विशिष्ट परतों के आधार पर व्यवस्थित करता है।
+
+यह किसी एक प्रोग्रामिंग भाषा या सिस्टम ढाँचे से बँधा नहीं है। Unity/C# प्रोजेक्ट, Python सेवा, वेब अनुप्रयोग या कोई अन्य सॉफ़्टवेयर रिपॉजिटरी एक ही EmbrAIon Core का उपयोग कर सकती है और केवल अपने प्रोजेक्ट-विशिष्ट ज्ञान व नियम जोड़ सकती है।
+
+## EmbrAIon क्या करता है
+
+EmbrAIon इंजीनियरिंग सिस्टम को स्वतंत्र भागों में विभाजित करता है:
+
+- **Agent (एजेंट)** — काम की ज़िम्मेदारी किसकी है: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher या Steward।
+- **Skill (कौशल)** — किसी दोहराए जाने वाले काम को कैसे किया जाए।
+- **Rule (नियम)** — क्या अनिवार्य, निषिद्ध या संरक्षित है।
+- **Workflow (कार्यप्रवाह)** — क्षमताएँ किस क्रम में मिलकर काम करती हैं।
+- **Routing (रूटिंग)** — कौन-सा पहुँच प्रोफ़ाइल, मॉडल स्तर, क्लाइंट और प्रदाता किसी कार्य को चला सकते हैं।
+- **Adapter (एडाप्टर)** — EmbrAIon की मानक क्षमताओं को Codex, GitHub Copilot, Claude Code, API प्रदाताओं या Portable पैकेज में कैसे प्रस्तुत किया जाए।
+- **Tool (उपकरण)** — निर्धारक निष्पादन तर्क, जैसे सत्यापन, सुरक्षा जाँच, Git कार्य-वृक्ष प्रबंधन, समन्वयन और निदान।
+- **Eval (व्यवहार मूल्यांकन)** — यह जाँचना कि AI अपेक्षित इंजीनियरिंग अनुबंध का वास्तव में पालन करता है या नहीं।
+
+`core/catalog.yaml` क्षमताओं का खोज-सूचकांक है। हर कार्य के लिए पूरा EmbrAIon लोड करने के बजाय केवल वही नियम, भूमिकाएँ, कौशल और कार्यप्रवाह लोड किए जा सकते हैं जो वर्तमान काम से संबंधित हों।
+
+## डेटा वर्ग
+
+EmbrAIon तीन मानक डेटा वर्ग उपयोग करता है:
+
+| वर्ग | अर्थ |
+| --- | --- |
+| `PUBLIC` | सार्वजनिक जानकारी, जिसे अनुमत बाहरी सिस्टमों को भेजा जा सकता है |
+| `PRIVATE` | आंतरिक या स्वामित्व वाली प्रोजेक्ट जानकारी; बाहरी उपयोग के लिए स्पष्ट रूप से अनुमत मार्ग आवश्यक है |
+| `CONFIDENTIAL` | सबसे अधिक संरक्षित स्तर; बाहरी भेजना तब तक निषिद्ध है जब तक कोई मार्ग इसे स्पष्ट रूप से अनुमति न दे |
+
+अज्ञात या अस्पष्ट वर्गीकरण सुरक्षित अस्वीकृति पर समाप्त होता है। अधिक शक्तिशाली मॉडल चुनना कभी भी डेटा पहुँच या गोपनीयता अनुमति नहीं बढ़ाता।
+
+## समर्थित एडाप्टर
+
+- **Codex** — मॉडल सूची, मॉडल और तर्क स्तर का मार्ग से मिलान, तथा प्रोजेक्ट एजेंट और कॉन्फ़िगरेशन निर्माण।
+- **GitHub Copilot** — समर्थित मॉडल सूची, अनुशंसित मार्ग और कस्टम एजेंट निर्माण।
+- **Claude Code** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
+- **Portable** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
+- **API प्रदाता** — OpenAI, Anthropic, Google और DeepSeek की प्रत्यक्ष मॉडल सूचियाँ तथा कनेक्शन संबंधी जानकारी।
+
+Core विशिष्ट मॉडलों से स्वतंत्र रहता है। वर्तमान मॉडल पहचान और क्लाइंट-विशिष्ट चयन केवल `adapters/` में रखे जाते हैं।
+
+## स्थापना
+
+### आवश्यकताएँ
+
+- Python 3.11+
+- Git
+- EmbrAIon रिपॉजिटरी की स्थानीय प्रति
+
+वर्तमान पूर्व-स्थिर CLI स्रोत कोड से स्थापित किया जाता है।
+
+### 1. EmbrAIon क्लोन करें
+
+```bash
+git clone https://github.com/GORYNED/EmbrAIon.git
+cd EmbrAIon
+```
+
+### 2. वर्चुअल वातावरण बनाएँ
+
+Windows PowerShell:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+macOS / Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+### 3. EmbrAIon जाँचें
+
+```bash
+embraion validate
+embraion doctor
+```
+
+## EmbrAIon को किसी प्रोजेक्ट से जोड़ना
+
+**Project Overlay (प्रोजेक्ट ओवरले)** बनाएँ:
+
+```bash
+cd /path/to/your/project
+embraion init --name MyProject
+```
+
+इससे बनेगा:
+
+```text
+.embraion/
+└── project.yaml
+```
+
+प्रोजेक्ट ओवरले EmbrAIon का उपयोग किया जा रहा संस्करण तय करता है और Core बदले बिना प्रोजेक्ट-विशिष्ट क्षमताएँ घोषित करने देता है।
+
+### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
+
+Codex:
+
+```bash
+embraion install --host codex --destination .
+```
+
+GitHub Copilot:
+
+```bash
+embraion install --host copilot --destination .
+```
+
+Claude Code:
+
+```bash
+embraion install --host claude-code --destination .
+```
+
+Portable पैकेज:
+
+```bash
+embraion install --host portable --destination ./vendor/embraion
+```
+
+`--force` का उपयोग केवल तब करें जब आप जानबूझकर मौजूदा जनित प्रस्तुति को बदलना चाहते हों।
+
+## कार्य EmbrAIon से कैसे गुजरता है
+
+```text
+उपयोगकर्ता का लक्ष्य
+  ↓
+Project Overlay + Core सूची
+  ↓
+आवश्यक नियम / एजेंट / कौशल / कार्यप्रवाह
+  ↓
+डेटा वर्ग + पहुँच प्रोफ़ाइल + जटिलता
+  ↓
+क्लाइंट एडाप्टर + मॉडल मार्ग
+  ↓
+कार्यान्वयन
+  ↓
+सत्यापन
+  ↓
+स्वतंत्र समीक्षा
+  ↓
+अंतिम जाँच
+  ↓
+परिणाम सौंपना / मानव द्वारा merge
+```
+
+जहाँ औपचारिक विनिर्देशन उपयोगी हो, वहाँ Spec Kit को स्वतंत्र सहायक के रूप में उपयोग करने की सलाह दी जाती है। यह योजना और विनिर्देशन को बेहतर बनाता है, लेकिन Core के नियम, प्रोजेक्ट की तथ्य-स्रोत सामग्री, संगतता अनुबंध या सत्यापन प्रमाण को नहीं बदलता।
+
+## CLI
+
+मुख्य कमांड:
+
+```text
+embraion init
+embraion install
+embraion update
+embraion sync
+embraion validate
+embraion doctor
+```
+
+### Routing (रूटिंग)
+
+```bash
+embraion route --host codex --route-class strong --data PRIVATE
+```
+
+### सीमित निष्पादन योजना
+
+```bash
+embraion dispatch \
+  --task "Implement feature" \
+  --role worker \
+  --host codex \
+  --route-class economy-write \
+  --data PRIVATE \
+  --access write \
+  --owned-path "src/**"
+```
+
+लिखने की अनुमति वाली योजना के लिए `--owned-path` देना आवश्यक है और इसे स्थिर `main`/`master` शाखा से नहीं चलाया जा सकता।
+
+### Session (सत्र)
+
+```bash
+embraion session start --session-id task-001 --task "Implement feature" --role lead --host codex --access plan
+embraion session show
+embraion session set --state review --validation passed
+```
+
+### Security (सुरक्षा)
+
+```bash
+embraion security scan --path .
+```
+
+### MCP सूची
+
+```bash
+embraion mcp inventory
+```
+
+सूची `.embraion/state/` में सुरक्षित रूप से रखी जाती है। पर्यावरण चर के नाम रखे जा सकते हैं, लेकिन गुप्त मान जानबूझकर नहीं लिखे जाते।
+
+### Git कार्य-वृक्ष
+
+```bash
+embraion worktree list
+embraion worktree create ai/my-task
+embraion worktree gc
+embraion worktree salvage /path/to/worktree
+```
+
+`gc` सामान्य रूप से केवल पूर्वावलोकन करता है। वास्तविक हटाने के लिए `--apply` देना आवश्यक है।
+
+### Learning (सिस्टम सीखना)
+
+```bash
+embraion learning observe \
+  --id repeated-review-gap \
+  --kind repeated-failure \
+  --target-type skill \
+  --target-id review \
+  --summary "Repeated review gap"
+```
+
+नई जानकारी का प्रवाह:
+
+```text
+अवलोकन → प्रमाण संचय → प्रस्ताव → स्वीकृति → उन्नयन
+```
+
+उन्नयन Core को अपने आप नहीं बदलता। अंतिम परिवर्तन फिर भी सामान्य इंजीनियरिंग, समीक्षा और सत्यापन प्रक्रिया से गुजरता है।
+
+### Eval (व्यवहार मूल्यांकन)
+
+```bash
+embraion eval run --case reviewer-readonly --record path/to/execution-record.json
+embraion eval baseline --reports build/evals --output baseline.json
+embraion eval compare --baseline baseline.json --reports build/evals
+```
+
+## एडाप्टर प्रस्तुतियाँ बनाना
+
+```bash
+embraion sync --host all --output build/generated --force
+```
+
+जनित फ़ाइलें व्युत्पन्न प्रस्तुतियाँ हैं और किसी भी समय दोबारा बनाई जा सकती हैं। मानक नियम हमेशा `core/` में रहते हैं।
+
+## रिपॉजिटरी संरचना
+
+```text
+brand/         ब्रांड और README सामग्री
+core/          मानक नियम, एजेंट, कौशल, कार्यप्रवाह, रूटिंग और ज्ञान
+adapters/      Codex, Copilot, Claude Code, Portable और API प्रदाता एकीकरण
+tools/         CLI, निष्पादन, सीखना, सुरक्षा, MCP, कार्य-वृक्ष, सत्यापन और समन्वयन
+schemas/       मशीन-पठनीय अनुबंध
+templates/     Project Overlay टेम्पलेट
+docs/          मानक अंग्रेज़ी दस्तावेज़
+localization/  स्थानीयकृत दस्तावेज़
+tests/         निर्धारक इकाई और एकीकरण परीक्षण
+evals/         व्यवहार परिदृश्य, आधार परिणाम, मूल्यांकनकर्ता, नमूने और रिपोर्ट
+examples/      एकीकरण उदाहरण
+```
+
+## सत्यापन और CI
+
+हर push और pull request में योजनाबद्ध रूप से स्कीमा व सूची सत्यापन, स्थानीयकरण पूर्णता, इकाई/एकीकरण परीक्षण, सुरक्षा जाँच, सभी क्लाइंट प्रस्तुतियों का निर्माण और मूल व्यवहार मूल्यांकन चलाए जाते हैं।
+
+Git tag वाले रिलीज़ स्रोत, Codex, Copilot, Claude Code और Portable संग्रह बनाते हैं।
+
+## दस्तावेज़
+
+मानक अंग्रेज़ी दस्तावेज़: [docs/](../docs/README.md)
+
+हिन्दी दस्तावेज़: [localization/docs/hi/](docs/hi/README.md)
+
+## लाइसेंस और ब्रांड
+
+EmbrAIon का स्रोत कोड और दस्तावेज़ [MIT License](../LICENSE) के अंतर्गत हैं, जब तक किसी फ़ाइल या निर्देशिका में अलग से न कहा गया हो।
+
+**EmbrAIon** और **GORYNED** नाम, लोगो, शब्द-चिह्न, दृश्य-चिह्न और `brand/assets/` की फ़ाइलें MIT के अंतर्गत लाइसेंस नहीं हैं। मानक नीति: [TRADEMARKS.md](../TRADEMARKS.md)।
+
+## वर्तमान स्थिति
+
+EmbrAIon अभी **पूर्व-स्थिर** अवस्था में है। वास्तुकला और पहला निष्पादन योग्य CLI उपलब्ध हैं, लेकिन सार्वजनिक संगतता अनुबंध अभी स्थिर नहीं किया गया है।
+
+पहले स्थिर रिलीज़ से पहले मॉडल सूचियाँ, जनित क्लाइंट प्रस्तुतियाँ, सत्यापन कवरेज, सुरक्षा नियम, स्थापना और रिलीज़ पैकेजिंग बदल सकती हैं।
+
+---
+
+**EmbrAIon** · **AI-FIRST ENGINEERING SYSTEM** · **[by GORYNED](https://goryned.com)**
+
+<sub>अंतिम अपडेट: 2026-09-23 20:50 UTC</sub>
