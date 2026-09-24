@@ -24,7 +24,7 @@ To try it in Unity:
 3. Press Play.
 4. Use **Increment** and **Reset** while watching the displayed value.
 
-The sample UI uses Unity IMGUI intentionally so the reference project stays dependency-free. EmbrAIon CI validates the scene/script links structurally and exercises the consuming-project lifecycle; the Unity Editor itself is not launched in CI at this stage.
+The sample UI uses Unity's built-in IMGUI module. The required `com.unity.modules.imgui` module is declared explicitly in `Packages/manifest.json`, so the project compiles without asking the user to enable IMGUI manually. No third-party UI package is required. EmbrAIon CI validates the scene/script/package links structurally and exercises the consuming-project lifecycle; the Unity Editor itself is not launched in CI at this stage.
 
 From this directory:
 
@@ -34,4 +34,4 @@ embraion doctor
 embraion install --host codex --destination .
 ```
 
-<sub>Last updated: 2026-09-24 00:10 UTC</sub>
+<sub>Last updated: 2026-09-24 00:20 UTC</sub>

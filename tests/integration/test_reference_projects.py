@@ -239,7 +239,14 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
         scripts = root / "Assets" / "Scripts"
         scenes = root / "Assets" / "Scenes"
 
-        self.assertTrue((root / "Packages" / "manifest.json").is_file())
+        package_manifest = root / "Packages" / "manifest.json"
+        self.assertTrue(package_manifest.is_file())
+        package_data = json.loads(package_manifest.read_text(encoding="utf-8"))
+        self.assertEqual(
+            "1.0.0",
+            package_data["dependencies"]["com.unity.modules.imgui"],
+        )
+
         self.assertTrue((root / "ProjectSettings" / "ProjectVersion.txt").is_file())
         self.assertTrue(
             (root / "ProjectSettings" / "EditorBuildSettings.asset").is_file()

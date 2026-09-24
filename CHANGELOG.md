@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.4.3 - 2026-09-24
+
+### Fixed
+
+- The Unity reference project now explicitly enables the built-in `com.unity.modules.imgui` module required by `CounterSampleView`.
+- Reference-project E2E now verifies that the IMGUI module dependency is present, preventing the sample UI from compiling against a disabled Unity module.
+
+### Changed
+
+- Unity reference documentation now states that IMGUI is a built-in Unity module rather than describing the sample as dependency-free.
+
 ## 0.4.2 - 2026-09-24
 
 ### Added
