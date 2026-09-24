@@ -80,6 +80,8 @@ embraion update
 embraion update --framework-version 0.9.0
 ```
 
+Safe configuration normalization currently targets the installed EmbrAIon launcher version only. To move a project to another published version, install or upgrade/downgrade the launcher to that version first, then run `embraion update`; this prevents the current launcher from writing configuration for a release contract it does not own.
+
 Before writing, EmbrAIon builds and validates the target configuration for all canonical `.embraion/` files. It adds only missing defaults, preserves existing project values, and leaves generated host projections and projection state untouched. Incompatible values or an incomplete legacy layout fail before any configuration file is rewritten.
 
 ### `embraion sync`

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Fixed
+
+- Protected-source enforcement now covers deletions, rename sources, and dot-prefixed paths instead of allowing those changes to escape path checks.
+- Runtime project configuration readers now validate canonical `.embraion/*.yaml` files against their schemas and fail closed on malformed user configuration.
+- `embraion update` now refuses a target version that differs from the installed launcher and rejects non-mapping configuration instead of silently normalizing it.
+- Generated Copilot and Claude Code agent frontmatter now safely quotes custom agent titles containing YAML-significant characters.
+
 ## 0.9.0 - 2026-09-24
 
 ### Added

@@ -5,6 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
+from embraion import __version__
 from embraion.common import read_json, read_yaml, write_json, write_yaml
 from embraion.policy import effective_policy
 from embraion.project import (
@@ -103,9 +106,9 @@ class ProjectionPolicyTests(unittest.TestCase):
             project_data["framework"]["version"] = "0.8.1"
             write_yaml(manifest, project_data)
 
-            previous, current = update_project(project, version="0.9.0")
+            previous, current = update_project(project, version=__version__)
             self.assertEqual("0.8.1", str(previous))
-            self.assertEqual("0.9.0", current)
+            self.assertEqual(__version__, current)
 
             updated_policy = read_yaml(policy_path)
             self.assertEqual(
@@ -137,7 +140,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 ]["model"],
             )
             self.assertEqual(
-                "0.9.0",
+                __version__,
                 str(read_yaml(manifest)["framework"]["version"]),
             )
 
@@ -170,7 +173,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 RuntimeError,
                 "Cannot safely update",
             ):
-                update_project(project, version="0.9.0")
+                update_project(project, version=__version__)
 
             self.assertEqual(manifest_before, manifest.read_bytes())
             self.assertEqual(policy_before, policy_path.read_bytes())
@@ -186,7 +189,34 @@ class ProjectionPolicyTests(unittest.TestCase):
                 RuntimeError,
                 "incomplete or legacy layout",
             ):
-                normalize_project_config(project, version="0.9.0")
+                normalize_project_config(project, version=__version__)
+
+    def test_update_refuses_non_launcher_target_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="Consumer")
+            before = manifest.read_bytes()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "installed EmbrAIon launcher version",
+            ):
+                update_project(project, version="not-a-release")
+
+            self.assertEqual(before, manifest.read_bytes())
+
+    def test_update_rejects_non_mapping_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy_path.write_text("[]\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Invalid project configuration mapping",
+            ):
+                normalize_project_config(project, version=__version__)
 
     def test_init_preserves_existing_local_ignore(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -273,6 +303,16 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertIn(
                 "Review project-specific domain behavior.",
                 claude.read_text(encoding="utf-8"),
+            )
+
+            agents = read_yaml(agents_path)
+            agents["agents"][0]["title"] = "Domain: Specialist"
+            write_yaml(agents_path, agents)
+            install("copilot", project, force=True)
+            frontmatter = copilot.read_text(encoding="utf-8").split("---", 2)[1]
+            self.assertEqual(
+                "Domain: Specialist",
+                yaml.safe_load(frontmatter)["name"],
             )
 
     def test_project_agent_cannot_shadow_or_widen_core_role(self) -> None:

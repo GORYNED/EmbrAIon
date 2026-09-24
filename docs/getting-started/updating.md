@@ -27,6 +27,8 @@ Or choose an explicit published version:
 embraion update --framework-version 0.9.0
 ```
 
+Safe configuration normalization currently targets the installed EmbrAIon launcher version only. To move a project to another published version, install or upgrade/downgrade the launcher to that version first, then run `embraion update`; this prevents the current launcher from writing configuration for a release contract it does not own.
+
 Then verify:
 
 ```bash

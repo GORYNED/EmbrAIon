@@ -6,7 +6,7 @@ from typing import Any
 
 from .common import project_root, read_json, run, state_root, write_json
 from .context import read_context
-from .policy import effective_policy, path_matches
+from .policy import effective_policy, normalize_project_path, path_matches
 from .runtime import _append_event, route
 from .security import redact_value
 
@@ -170,7 +170,7 @@ def complete_run(
 ) -> dict[str, Any]:
     root = project_root(project)
     record = read_run(run_id, root)
-    normalized = [path.replace("\\", "/").lstrip("./") for path in changed_paths]
+    normalized = [normalize_project_path(path) for path in changed_paths]
 
     if record.get("access") == "write":
         owned = list(record.get("owned-paths") or [])

@@ -8,7 +8,12 @@ from typing import Any
 
 from .common import project_root, read_yaml, run, state_root, write_json, write_yaml
 from .evidence import read_run
-from .policy import effective_policy, path_matches, read_policy_config
+from .policy import (
+    effective_policy,
+    normalize_project_path,
+    path_matches,
+    read_policy_config,
+)
 from .project_validation import run_validation_profile
 from .runtime import _append_event
 from .security import redact_value
@@ -26,7 +31,7 @@ def _git_changed_paths(project: Path, base_ref: str) -> list[str]:
             str(project),
             "diff",
             "--name-only",
-            "--diff-filter=ACMR",
+            "--no-renames",
             f"{base_ref}...HEAD",
         ],
         check=False,
@@ -44,7 +49,7 @@ def _git_changed_paths(project: Path, base_ref: str) -> list[str]:
             str(project),
             "diff",
             "--name-only",
-            "--diff-filter=ACMR",
+            "--no-renames",
             "HEAD",
         ],
         check=False,
@@ -75,7 +80,7 @@ def _git_changed_paths(project: Path, base_ref: str) -> list[str]:
     )
     return sorted(
         {
-            line.replace("\\", "/").lstrip("./")
+            normalize_project_path(line)
             for line in values
             if line.strip()
         }
