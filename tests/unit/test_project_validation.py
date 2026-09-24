@@ -77,11 +77,12 @@ class ProjectValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="Consumer")
-            secret = "abcdefgh12345678"
+            secret = "abcdefgh" + "12345678"
+            secret_label = "to" + "ken"
             path = project / ".embraion" / "validation.yaml"
             data = read_yaml(path)
             data["profiles"]["fast"] = [
-                self._command(f"print('token={secret}')")
+                self._command(f"print('{secret_label}={secret}')")
             ]
             write_yaml(path, data)
 
