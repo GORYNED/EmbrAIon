@@ -1,7 +1,7 @@
 site_name: EmbrAIon
 site_description: Portable AI-First Engineering System for structured, reviewable AI-assisted software engineering.
 site_author: GORYNED
-site_url: https://goryned.github.io/EmbrAIon/
+site_url: https://embraion.goryned.com/
 repo_url: https://github.com/GORYNED/EmbrAIon
 repo_name: GORYNED/EmbrAIon
 edit_uri: edit/main/docs/
@@ -9,8 +9,8 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   language: en
-  logo: assets/icon-dark-1024.png
-  favicon: assets/icon-dark-1024.png
+  logo: assets/brand-mark.svg
+  favicon: assets/favicon-brand-mark.png
   icon:
     repo: fontawesome/brands/github
   palette:
