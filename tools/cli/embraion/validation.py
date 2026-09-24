@@ -24,17 +24,36 @@ MODEL_AGNOSTIC_FORBIDDEN_GLOBS = (
     "adapters/**/model-catalog.yaml",
     "adapters/**/model-catalog.yml",
     "adapters/**/model-catalog.json",
-    "adapters/**/routes.yaml",
-    "adapters/**/routes.yml",
-    "adapters/**/routes.json",
     "schemas/model.schema.json",
 )
+
+
+def _contains_model_selector(value: Any) -> bool:
+    if isinstance(value, dict):
+        if "model" in value:
+            return True
+        return any(_contains_model_selector(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_model_selector(item) for item in value)
+    return False
 
 
 def find_model_agnostic_violations(root: Path) -> list[Path]:
     matches: set[Path] = set()
     for pattern in MODEL_AGNOSTIC_FORBIDDEN_GLOBS:
         matches.update(path for path in root.glob(pattern) if path.is_file())
+
+    for suffix in ("yaml", "yml", "json"):
+        for path in root.glob(f"adapters/**/routes.{suffix}"):
+            if not path.is_file():
+                continue
+            try:
+                data = read_json(path) if suffix == "json" else read_yaml(path)
+            except Exception:
+                continue
+            if _contains_model_selector(data):
+                matches.add(path)
+
     return sorted(matches)
 
 

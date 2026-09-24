@@ -105,14 +105,24 @@ class CoreTests(unittest.TestCase):
     def test_model_agnostic_invariant_rejects_framework_model_registries(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            forbidden = [
-                root / "adapters/codex/models.yaml",
-                root / "adapters/providers/example/routes.json",
-                root / "schemas/model.schema.json",
-            ]
-            for path in forbidden:
+            model_catalog = root / "adapters/codex/models.yaml"
+            route_map = root / "adapters/providers/example/routes.json"
+            harmless_routes = root / "adapters/portable/routes.yaml"
+            model_schema = root / "schemas/model.schema.json"
+
+            for path in (model_catalog, route_map, harmless_routes, model_schema):
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text("placeholder\n", encoding="utf-8")
+
+            model_catalog.write_text("models: []\n", encoding="utf-8")
+            route_map.write_text(
+                '{"routes":{"complex":{"model":"hardcoded-model"}}}\n',
+                encoding="utf-8",
+            )
+            harmless_routes.write_text(
+                "routes:\n  complex:\n    transport: host-default\n",
+                encoding="utf-8",
+            )
+            model_schema.write_text("{}\n", encoding="utf-8")
 
             violations = {
                 path.relative_to(root).as_posix()
