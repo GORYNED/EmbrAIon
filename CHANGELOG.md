@@ -4,6 +4,12 @@
 
 ### Added
 
+- First-class executable project validation profiles through `embraion validation list` and `embraion validation run <profile>`.
+- Redacted per-command validation evidence persisted under `.embraion/state/validation/`, with optional `--run-id` attachment to active execution evidence.
+- Explicit skipped, failed, timeout, fail-fast, and machine-readable JSON behavior for project validation runs.
+
+### Added
+
 - Project-specific agent definitions in `.embraion/agents.yaml` with optional inheritance from non-Lead Core roles and native Codex, GitHub Copilot, and Claude Code projection.
 - Project-agent safety checks that prevent Core agent ID shadowing, Lead inheritance, and access widening across inherited roles.
 

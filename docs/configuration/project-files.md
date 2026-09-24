@@ -175,7 +175,20 @@ embraion policy show
 embraion policy show --json
 ```
 
-Keep commands deterministic and repository-local where possible.
+Profiles are executable first-class project configuration:
+
+```bash
+embraion validation list
+embraion validation run fast
+embraion validation run affected --json
+embraion validation run full --run-id task-001
+```
+
+Commands run sequentially from the project root. Each invocation writes redacted structured evidence under `.embraion/state/validation/`. A failed command makes the profile fail; by default remaining commands still run so the result captures complete evidence. Use `--fail-fast` when later commands would be meaningless after the first failure.
+
+An empty profile is reported as `skipped`, never as a false pass. `--timeout` can apply a per-command timeout. When `--run-id` names an active EmbrAIon execution run, the validation result is attached to that run by evidence ID.
+
+Keep commands deterministic and repository-local where possible. Project validation commands are executable project code and run only when `embraion validation run` is explicitly invoked.
 
 ## `.embraion/agents.yaml`
 

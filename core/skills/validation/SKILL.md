@@ -9,10 +9,11 @@ description: Plan and execute proportional validation while distinguishing fresh
 
 1. Classify the change impact.
 2. Select the smallest checks that can falsify the intended behavior.
-3. Run focused checks during implementation.
-4. Expand validation only when impact justifies it.
-5. Record exact fresh results, expected skips, and infrastructure limits.
-6. Preserve failing evidence until the cause is understood.
+3. Prefer a configured project profile from `.embraion/validation.yaml` when it matches the needed evidence.
+4. Run it through `embraion validation run <profile>`; use `--run-id` when execution evidence should receive the result automatically.
+5. Expand validation only when impact justifies it.
+6. Record exact fresh results, expected skips, and infrastructure limits.
+7. Preserve failing evidence until the cause is understood.
 
 ## Guardrails
 

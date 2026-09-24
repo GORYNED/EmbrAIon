@@ -15,6 +15,7 @@ from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy
 from .project import init_project, install, projection_plan, sync, update_project
+from .project_validation import run_validation_profile, validation_profiles
 from .runtime import create_dispatch, read_session, route, start_session, update_session
 from .security import (
     SEVERITY_ORDER,
@@ -78,6 +79,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  session    Create, inspect, or update normalized task/session state",
         "",
         "Engineering controls",
+        "  validation Run project validation profiles and record evidence",
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
@@ -387,6 +389,77 @@ def _cmd_session_set(args: argparse.Namespace) -> int:
         )
     )
     return 0
+
+
+def _cmd_validation_list(args: argparse.Namespace) -> int:
+    profiles = validation_profiles()
+    if args.json:
+        _print_json(
+            {
+                "profiles": {
+                    name: {
+                        "commands": commands,
+                        "command-count": len(commands),
+                    }
+                    for name, commands in profiles.items()
+                }
+            }
+        )
+        return 0
+
+    print("EmbrAIon Project Validation Profiles")
+    print()
+    if not profiles:
+        print("No validation profiles configured.")
+        return 0
+
+    for name, commands in profiles.items():
+        print(f"{name}: {len(commands)} command(s)")
+        for command in commands:
+            print(f"  {command}")
+    return 0
+
+
+def _cmd_validation_run(args: argparse.Namespace) -> int:
+    record = run_validation_profile(
+        args.profile,
+        run_id=args.run_id,
+        fail_fast=args.fail_fast,
+        timeout=args.timeout,
+    )
+
+    if args.json:
+        _print_json(record)
+    else:
+        print(f"Validation profile: {record['profile']}")
+        print(f"Status: {record['status']}")
+        if record["status"] == "skipped":
+            print("No commands are configured for this profile.")
+        for item in record["commands"]:
+            label = {
+                "passed": "PASS",
+                "failed": "FAIL",
+                "timed-out": "TIMEOUT",
+            }[item["status"]]
+            exit_code = (
+                "-"
+                if item["exit-code"] is None
+                else str(item["exit-code"])
+            )
+            print(
+                f"[{label}] {item['index']}/{record['command-count']} "
+                f"exit={exit_code} {item['duration-ms']}ms"
+            )
+            print(f"  {item['command']}")
+            if item["stdout"]:
+                print(item["stdout"].rstrip())
+            if item["stderr"]:
+                print(item["stderr"].rstrip(), file=sys.stderr)
+        print(f"Evidence: {record['evidence-path']}")
+        if record.get("run-id"):
+            print(f"Attached run: {record['run-id']}")
+
+    return 1 if record["status"] == "failed" else 0
 
 
 def _cmd_security_scan(args: argparse.Namespace) -> int:
@@ -871,6 +944,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     projection_diff.add_argument("--json", action="store_true")
     projection_diff.set_defaults(func=_cmd_projection_diff)
+
+    validation = sub.add_parser(
+        "validation",
+        help="Run project validation profiles",
+        description=(
+            "List or execute project validation profiles from "
+            ".embraion/validation.yaml and record structured evidence."
+        ),
+    )
+    validation_sub = validation.add_subparsers(
+        dest="validation-command",
+        required=True,
+    )
+    validation_list = validation_sub.add_parser(
+        "list",
+        help="List configured validation profiles",
+        description="List project validation profiles and their commands.",
+    )
+    validation_list.add_argument("--json", action="store_true")
+    validation_list.set_defaults(func=_cmd_validation_list)
+
+    validation_run = validation_sub.add_parser(
+        "run",
+        help="Execute one validation profile",
+        description=(
+            "Execute a project validation profile from the project root and "
+            "persist redacted structured evidence."
+        ),
+    )
+    validation_run.add_argument("profile")
+    validation_run.add_argument("--run-id")
+    validation_run.add_argument("--fail-fast", action="store_true")
+    validation_run.add_argument("--timeout", type=float)
+    validation_run.add_argument("--json", action="store_true")
+    validation_run.set_defaults(func=_cmd_validation_run)
 
     policy = sub.add_parser(
         "policy",
