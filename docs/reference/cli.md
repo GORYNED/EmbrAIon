@@ -145,6 +145,49 @@ embraion dispatch \
   --owned-path "src/**"
 ```
 
+### `embraion context`
+
+Select project knowledge by task, role, privacy class, and character budget:
+
+```bash
+embraion context build \
+  --task "Review architecture boundaries" \
+  --role architect \
+  --data PRIVATE \
+  --max-chars 20000
+```
+
+The saved record stores provenance metadata and hashes, not duplicated knowledge contents.
+
+```bash
+embraion context show CONTEXT_ID
+```
+
+### `embraion run`
+
+Record execution evidence:
+
+```bash
+embraion run start \
+  --run-id task-001 \
+  --task "Implement feature" \
+  --role worker \
+  --host codex \
+  --route-class strong \
+  --data PRIVATE \
+  --access write \
+  --owned-path "src/**" \
+  --substantial
+
+embraion run complete task-001 \
+  --changed-path src/example.py \
+  --validation fast=passed \
+  --review passed \
+  --outcome completed
+```
+
+Completed writable runs enforce owned scope, protected project paths, and substantial-review policy.
+
 ### `embraion session`
 
 Manage normalized task/session state.
@@ -164,6 +207,23 @@ Scan for likely secrets and policy drift.
 ```bash
 embraion security scan --path . --fail-on high
 ```
+
+Redact likely credentials from diagnostic text:
+
+```bash
+embraion security redact --text "token=..."
+```
+
+### `embraion harness`
+
+Audit host agent/skill projection surfaces and report native hook capability metadata:
+
+```bash
+embraion harness audit --host codex
+embraion harness audit --host all
+```
+
+EmbrAIon reports hook availability but does not silently install executable project hooks.
 
 ### `embraion mcp`
 

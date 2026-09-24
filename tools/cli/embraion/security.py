@@ -148,3 +148,41 @@ def save_mcp_inventory(project: Path, output: Path | None = None) -> dict[str, A
     destination = output or (state_root(project) / "mcp.json")
     write_json(destination, inventory)
     return inventory
+
+
+_PRIVATE_KEY_BLOCK = re.compile(
+    r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----.*?"
+    r"-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
+    re.DOTALL,
+)
+_KEY_VALUE_SECRET = re.compile(
+    r"(?i)\b(api[_-]?key|secret|token|password)\b"
+    r"(\s*[:=]\s*)"
+    r"([\"']?)(?!\$\{|<|REDACTED|CHANGEME)"
+    r"[A-Za-z0-9_\-/.+=]{8,}\3"
+)
+_BEARER_SECRET = re.compile(
+    r"(?i)\bBearer\s+[A-Za-z0-9_\-/.+=]{8,}"
+)
+
+
+def redact_text(value: str) -> str:
+    value = _PRIVATE_KEY_BLOCK.sub("<REDACTED:private-key>", value)
+    value = _BEARER_SECRET.sub("Bearer <REDACTED>", value)
+
+    def replace_secret(match: re.Match[str]) -> str:
+        return f"{match.group(1)}{match.group(2)}<REDACTED>"
+
+    return _KEY_VALUE_SECRET.sub(replace_secret, value)
+
+
+def redact_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return redact_text(value)
+    if isinstance(value, dict):
+        return {str(key): redact_value(child) for key, child in value.items()}
+    if isinstance(value, list):
+        return [redact_value(child) for child in value]
+    if isinstance(value, tuple):
+        return [redact_value(child) for child in value]
+    return value

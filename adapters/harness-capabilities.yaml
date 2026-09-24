@@ -1,0 +1,23 @@
+schema-version: 1
+hosts:
+  codex:
+    agents: .codex/agents
+    skills: .agents/skills
+    hooks:
+      mode: native-available
+      location: hooks.json
+      projected: false
+  copilot:
+    agents: .github/agents
+    skills: .github/skills
+    hooks:
+      mode: native-available
+      location: .github/hooks
+      projected: false
+  claude-code:
+    agents: .claude/agents
+    skills: .claude/skills
+    hooks:
+      mode: host-specific
+      location: null
+      projected: false

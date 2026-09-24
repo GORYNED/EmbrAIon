@@ -8,12 +8,20 @@ from pathlib import Path
 
 from . import __version__
 from .common import find_project_root, framework_root, project_root
+from .context import build_context, read_context
+from .evidence import complete_run, read_run, start_run
+from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy
 from .project import init_project, install, projection_plan, sync, update_project
 from .runtime import create_dispatch, read_session, route, start_session, update_session
-from .security import SEVERITY_ORDER, collect_findings, save_mcp_inventory
+from .security import (
+    SEVERITY_ORDER,
+    collect_findings,
+    redact_text,
+    save_mcp_inventory,
+)
 from .validation import collect_issues
 from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_worktree
 from .versioning import (
@@ -65,11 +73,14 @@ def _print_main_help(file: object | None = None) -> None:
         "AI execution",
         "  route      Resolve the model/provider route for a host, route class, and data class",
         "  dispatch   Create a bounded execution plan with access and owned-path constraints",
+        "  context    Select project knowledge with provenance and privacy metadata",
+        "  run        Record structured execution evidence for an engineering run",
         "  session    Create, inspect, or update normalized task/session state",
         "",
         "Engineering controls",
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
+        "  harness    Audit host agents, skills, and native enforcement surfaces",
         "  worktree   List, create, clean, or salvage Git worktrees",
         "  learning   Record evidence and manage gated learning candidates",
         "  eval       Run behavioral evals and compare baselines",
@@ -276,6 +287,70 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_context_build(args: argparse.Namespace) -> int:
+    _print_json(
+        build_context(
+            args.task,
+            args.role,
+            args.data,
+            max_chars=args.max_chars,
+        )
+    )
+    return 0
+
+
+def _cmd_context_show(args: argparse.Namespace) -> int:
+    _print_json(read_context(args.context_id))
+    return 0
+
+
+def _cmd_run_start(args: argparse.Namespace) -> int:
+    _print_json(
+        start_run(
+            args.run_id,
+            args.task,
+            args.role,
+            args.host,
+            args.route_class,
+            args.data,
+            args.access,
+            args.owned_path or [],
+            context_id=args.context_id,
+            substantial=args.substantial,
+        )
+    )
+    return 0
+
+
+def _validation_entries(values: list[str] | None) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for value in values or []:
+        if "=" not in value:
+            raise RuntimeError("--validation must use PROFILE=STATUS.")
+        profile, status = value.split("=", 1)
+        rows.append({"profile": profile.strip(), "status": status.strip()})
+    return rows
+
+
+def _cmd_run_complete(args: argparse.Namespace) -> int:
+    _print_json(
+        complete_run(
+            args.run_id,
+            changed_paths=args.changed_path or [],
+            validation=_validation_entries(args.validation),
+            review=args.review,
+            outcome=args.outcome,
+            residual_risks=args.residual_risk or [],
+        )
+    )
+    return 0
+
+
+def _cmd_run_show(args: argparse.Namespace) -> int:
+    _print_json(read_run(args.run_id))
+    return 0
+
+
 def _cmd_session_start(args: argparse.Namespace) -> int:
     _print_json(
         start_session(
@@ -332,6 +407,17 @@ def _cmd_security_scan(args: argparse.Namespace) -> int:
         )
         else 0
     )
+
+
+def _cmd_security_redact(args: argparse.Namespace) -> int:
+    print(redact_text(args.text))
+    return 0
+
+
+def _cmd_harness_audit(args: argparse.Namespace) -> int:
+    report = audit_harness(args.host)
+    _print_json(report)
+    return 0 if all(item["ready"] for item in report["hosts"]) else 1
 
 
 def _cmd_mcp_inventory(args: argparse.Namespace) -> int:
@@ -844,6 +930,91 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--owned-path", action="append")
     dispatch.set_defaults(func=_cmd_dispatch)
 
+    context = sub.add_parser(
+        "context",
+        help="Build selective project context",
+        description="Select eligible project knowledge with provenance and privacy metadata.",
+    )
+    context_sub = context.add_subparsers(dest="context-command", required=True)
+    context_build = context_sub.add_parser("build", help="Build a context selection record")
+    context_build.add_argument("--task", required=True)
+    context_build.add_argument("--role", default="lead")
+    context_build.add_argument(
+        "--data",
+        default="PRIVATE",
+        choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
+    )
+    context_build.add_argument("--max-chars", type=int, default=20000)
+    context_build.set_defaults(func=_cmd_context_build)
+
+    context_show = context_sub.add_parser("show", help="Show a context selection record")
+    context_show.add_argument("context_id")
+    context_show.set_defaults(func=_cmd_context_show)
+
+    run_parser = sub.add_parser(
+        "run",
+        help="Record execution evidence",
+        description="Create and complete privacy-safe engineering run evidence.",
+    )
+    run_sub = run_parser.add_subparsers(dest="run-command", required=True)
+
+    run_start = run_sub.add_parser("start", help="Start an execution evidence record")
+    run_start.add_argument("--run-id", required=True)
+    run_start.add_argument("--task", required=True)
+    run_start.add_argument("--role", default="worker")
+    run_start.add_argument(
+        "--host",
+        required=True,
+        choices=["codex", "copilot", "claude-code"],
+    )
+    run_start.add_argument(
+        "--route-class",
+        required=True,
+        choices=[
+            "economy-read",
+            "economy-write",
+            "economy",
+            "strong",
+            "strong-high",
+            "critical",
+        ],
+    )
+    run_start.add_argument(
+        "--data",
+        default="PRIVATE",
+        choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
+    )
+    run_start.add_argument(
+        "--access",
+        default="inspect",
+        choices=["inspect", "plan", "review", "write", "external-read"],
+    )
+    run_start.add_argument("--owned-path", action="append")
+    run_start.add_argument("--context-id")
+    run_start.add_argument("--substantial", action="store_true")
+    run_start.set_defaults(func=_cmd_run_start)
+
+    run_complete = run_sub.add_parser("complete", help="Complete an execution evidence record")
+    run_complete.add_argument("run_id")
+    run_complete.add_argument("--changed-path", action="append")
+    run_complete.add_argument("--validation", action="append")
+    run_complete.add_argument(
+        "--review",
+        default="not-required",
+        choices=["not-required", "passed", "failed", "skipped"],
+    )
+    run_complete.add_argument(
+        "--outcome",
+        default="completed",
+        choices=["completed", "blocked", "failed", "cancelled"],
+    )
+    run_complete.add_argument("--residual-risk", action="append")
+    run_complete.set_defaults(func=_cmd_run_complete)
+
+    run_show = run_sub.add_parser("show", help="Show an execution evidence record")
+    run_show.add_argument("run_id")
+    run_show.set_defaults(func=_cmd_run_show)
+
     doctor = sub.add_parser("doctor", help="Run diagnostics", description="Check framework health and, inside a project, project security, MCP, and worktree state.")
     doctor.add_argument("--json", action="store_true")
     doctor.set_defaults(func=_cmd_doctor)
@@ -908,6 +1079,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan.add_argument("--json", action="store_true")
     scan.set_defaults(func=_cmd_security_scan)
+
+    redact = security_sub.add_parser(
+        "redact",
+        help="Redact likely credentials from text",
+        description="Remove likely credentials before persisting or forwarding diagnostic text.",
+    )
+    redact.add_argument("--text", required=True)
+    redact.set_defaults(func=_cmd_security_redact)
+
+    harness = sub.add_parser(
+        "harness",
+        help="Audit host enforcement surfaces",
+        description="Audit generated agents/skills and report native hook capability metadata.",
+    )
+    harness_sub = harness.add_subparsers(dest="harness-command", required=True)
+    harness_audit = harness_sub.add_parser("audit", help="Audit host projection surfaces")
+    harness_audit.add_argument(
+        "--host",
+        default="all",
+        choices=["all", "codex", "copilot", "claude-code"],
+    )
+    harness_audit.set_defaults(func=_cmd_harness_audit)
 
     mcp = sub.add_parser("mcp", help="Inspect MCP configuration", description="Create a privacy-safe inventory of project MCP configuration.")
     mcp_sub = mcp.add_subparsers(

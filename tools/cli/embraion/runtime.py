@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .security import redact_value
+
 from .common import (
     framework_root,
     project_root,
@@ -29,11 +31,18 @@ def _append_event(project: Path, event: dict[str, Any]) -> None:
         "timestamp-utc": datetime.now(timezone.utc).isoformat(),
         **event,
     }
+    event = redact_value(event)
     with path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
-def route(host: str, route_class: str, data_class: str) -> dict[str, Any]:
+def route(
+    host: str,
+    route_class: str,
+    data_class: str,
+    *,
+    project: Path | None = None,
+) -> dict[str, Any]:
     root = framework_root()
     models, routes = _catalog(root, host)
 
@@ -72,7 +81,7 @@ def route(host: str, route_class: str, data_class: str) -> dict[str, Any]:
     }
 
     _append_event(
-        project_root(),
+        project_root(project),
         {
             "event": "route-selected",
             "host": host,
@@ -136,6 +145,7 @@ def create_dispatch(
         "created-utc": datetime.now(timezone.utc).isoformat(),
     }
 
+    record = redact_value(record)
     destination = state_root(project) / "dispatch" / f"{dispatch_id}.json"
     write_json(destination, record)
 
@@ -186,6 +196,7 @@ def start_session(
         "updated-utc": datetime.now(timezone.utc).isoformat(),
     }
 
+    record = redact_value(record)
     write_json(state_root(project) / "session.json", record)
     _append_event(
         project,

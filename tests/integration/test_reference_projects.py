@@ -193,6 +193,34 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
 
+            context = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "context",
+                    "build",
+                    "--task",
+                    "Review project architecture",
+                    "--role",
+                    "architect",
+                    "--data",
+                    "PRIVATE",
+                ).stdout
+            )
+            self.assertIn("selected", context)
+
+            harness = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "harness",
+                    "audit",
+                    "--host",
+                    "codex",
+                ).stdout
+            )
+            self.assertTrue(harness["hosts"][0]["ready"])
+
     def test_reference_projects_complete_consuming_lifecycle(self) -> None:
         for name in REFERENCE_PROJECTS:
             with self.subTest(reference=name):

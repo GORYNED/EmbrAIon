@@ -7,6 +7,10 @@
 - Host-native project Skills projection for Codex, GitHub Copilot, and Claude Code using reusable `SKILL.md` directories.
 - Project Overlay v2 contracts for canonical/protected/generated/external source classes, validation profiles, substantial-review policy, and default privacy classification.
 - Ownership-aware projection planning with dry-run/diff, generated-file hashes, conflict detection, safe updates, and conservative obsolete-file pruning.
+- Selective project-context records with data classification, role/task eligibility, trust/provenance, content hashes, and explicit character budgets without duplicating knowledge contents into state.
+- Structured execution evidence records for route choice, access, owned paths, context identity, changed paths, validation, review, outcomes, and residual risk.
+- Runtime credential redaction across persisted telemetry and execution state.
+- Harness capability audit for generated agents/skills and native hook/enforcement surfaces.
 
 ### Changed
 

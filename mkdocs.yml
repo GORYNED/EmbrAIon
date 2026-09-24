@@ -83,6 +83,7 @@ nav:
       - Project knowledge: concepts/knowledge.md
       - Project overlay: project-overlay.md
       - Model routing: model-routing.md
+      - Pre-adoption hardening: concepts/pre-adoption-hardening.md
   - Hosts:
       - Overview: hosts/index.md
       - Codex: hosts/codex.md
