@@ -52,3 +52,34 @@
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+
+.embraion-architecture-diagram {
+  margin: 1.4rem 0 1.8rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.2rem;
+  background: var(--md-code-bg-color);
+  overflow-x: auto;
+}
+
+.embraion-architecture-diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 34rem;
+  height: auto;
+  margin: 0 auto;
+  color: var(--md-code-fg-color);
+}
+
+.embraion-architecture-diagram .diagram-lines {
+  opacity: 0.78;
+}
+
+.embraion-architecture-diagram .diagram-labels {
+  font-family: var(--md-code-font-family);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.embraion-architecture-diagram .diagram-arrows {
+  opacity: 0.9;
+}

@@ -58,21 +58,47 @@ Application / Library / Game
 
 EmbrAIon adds an engineering layer around that repository:
 
-```text
-                 EmbrAIon Core
-                      │
-        ┌─────────────┼─────────────┐
-        ↓             ↓             ↓
-      Codex        Copilot      Claude Code
-        │             │             │
-        └─────────────┼─────────────┘
-                      │
-                      ↓
-               Consuming project
-                      │
-                      ↓
-                Product runtime
-```
+<div class="embraion-architecture-diagram">
+<svg viewBox="0 0 760 430" role="img" aria-labelledby="architecture-title architecture-desc">
+  <title id="architecture-title">EmbrAIon engineering layer architecture</title>
+  <desc id="architecture-desc">EmbrAIon Core projects into Codex, Copilot, and Claude Code. Those hosts operate on a consuming project, which produces the product runtime.</desc>
+
+  <g class="diagram-lines" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M380 58 V95" />
+    <path d="M170 95 H590" />
+    <path d="M170 95 V130" />
+    <path d="M380 95 V130" />
+    <path d="M590 95 V130" />
+
+    <path d="M170 205 V245" />
+    <path d="M380 205 V245" />
+    <path d="M590 205 V245" />
+    <path d="M170 245 H590" />
+    <path d="M380 245 V285" />
+
+    <path d="M380 335 V375" />
+  </g>
+
+  <g class="diagram-arrows" fill="currentColor">
+    <path d="M170 130 l-7 -10 h14 z" />
+    <path d="M380 130 l-7 -10 h14 z" />
+    <path d="M590 130 l-7 -10 h14 z" />
+    <path d="M380 285 l-7 -10 h14 z" />
+    <path d="M380 375 l-7 -10 h14 z" />
+  </g>
+
+  <g class="diagram-labels" fill="currentColor" text-anchor="middle">
+    <text x="380" y="42">EmbrAIon Core</text>
+
+    <text x="170" y="175">Codex</text>
+    <text x="380" y="175">Copilot</text>
+    <text x="590" y="175">Claude Code</text>
+
+    <text x="380" y="325">Consuming project</text>
+    <text x="380" y="420">Product runtime</text>
+  </g>
+</svg>
+</div>
 
 The final application does not need an EmbrAIon runtime dependency. EmbrAIon is used to organize how humans and AI agents engineer the project.
 
