@@ -115,6 +115,21 @@ class ProjectValidationTests(unittest.TestCase):
                 run["validation"][0]["evidence-id"],
             )
 
+    def test_invalid_validation_config_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            validation_path = project / ".embraion" / "validation.yaml"
+            validation = read_yaml(validation_path)
+            validation["profiles"]["affected"] = "python -m unittest"
+            write_yaml(validation_path, validation)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Invalid .embraion/validation.yaml",
+            ):
+                run_validation_profile("affected", project=project)
+
     def test_unknown_profile_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
