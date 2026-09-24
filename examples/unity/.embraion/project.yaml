@@ -9,15 +9,6 @@ knowledge:
   project: knowledge/project.md
   architecture: knowledge/architecture.md
 
-sources:
-  canonical:
-    - Assets/**
-    - Packages/**
-    - ProjectSettings/**
-    - knowledge/**
-  protected: []
-  generated: []
-  external: []
 
 validation:
   profiles:
