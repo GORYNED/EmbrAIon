@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 - 2026-09-24
+
 ### Added
 
 - Selective host projection adoption through repeatable `--component` flags on `install` and `projection diff`, allowing mature repositories to adopt skills or agents without replacing existing host-owned configuration.
