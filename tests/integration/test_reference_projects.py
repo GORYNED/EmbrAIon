@@ -234,23 +234,53 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
             self.assertIn("OK", result.stderr)
 
-    def test_unity_reference_structure_is_public_and_generic(self) -> None:
+    def test_unity_reference_scene_and_scripts_are_linked(self) -> None:
         root = framework_root() / "examples" / "unity"
+        scripts = root / "Assets" / "Scripts"
+        scenes = root / "Assets" / "Scenes"
 
         self.assertTrue((root / "Packages" / "manifest.json").is_file())
         self.assertTrue((root / "ProjectSettings" / "ProjectVersion.txt").is_file())
         self.assertTrue(
-            (
-                root
-                / "Assets"
-                / "Scripts"
-                / "EmbrAIon.Reference.Unity.asmdef"
-            ).is_file()
+            (root / "ProjectSettings" / "EditorBuildSettings.asset").is_file()
         )
-        self.assertTrue((root / "Assets" / "Scripts" / "CounterState.cs").is_file())
-        self.assertTrue(
-            (root / "Assets" / "Scripts" / "CounterController.cs").is_file()
-        )
+
+        self.assertTrue((scripts / "EmbrAIon.Reference.Unity.asmdef").is_file())
+        self.assertTrue((scripts / "CounterState.cs").is_file())
+        self.assertTrue((scripts / "CounterController.cs").is_file())
+        self.assertTrue((scripts / "CounterSampleView.cs").is_file())
+
+        scene = scenes / "SampleScene.unity"
+        scene_meta = scenes / "SampleScene.unity.meta"
+        controller_meta = scripts / "CounterController.cs.meta"
+        view_meta = scripts / "CounterSampleView.cs.meta"
+
+        self.assertTrue(scene.is_file())
+        self.assertTrue(scene_meta.is_file())
+        self.assertTrue(controller_meta.is_file())
+        self.assertTrue(view_meta.is_file())
+
+        def guid(path: Path) -> str:
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.startswith("guid: "):
+                    return line.removeprefix("guid: ").strip()
+            self.fail(f"Missing guid in {path}")
+
+        scene_text = scene.read_text(encoding="utf-8")
+        controller_guid = guid(controller_meta)
+        view_guid = guid(view_meta)
+        scene_guid = guid(scene_meta)
+
+        self.assertIn(f"guid: {controller_guid}, type: 3", scene_text)
+        self.assertIn(f"guid: {view_guid}, type: 3", scene_text)
+        self.assertIn("counter: {fileID: 1002}", scene_text)
+        self.assertIn("m_Name: Counter Sample", scene_text)
+
+        build_settings = (
+            root / "ProjectSettings" / "EditorBuildSettings.asset"
+        ).read_text(encoding="utf-8")
+        self.assertIn("path: Assets/Scenes/SampleScene.unity", build_settings)
+        self.assertIn(f"guid: {scene_guid}", build_settings)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.4.2 - 2026-09-24
+
+### Added
+
+- A runnable Unity reference `SampleScene.unity` with a live value display and Increment / Reset controls.
+- Stable Unity `.meta` GUIDs and build settings that link the sample scene to its controller and view scripts.
+- Structural E2E checks for Unity scene/script/build-settings linkage.
+
+### Changed
+
+- The Unity reference keeps presentation in `CounterSampleView`, lifecycle/state coordination in `CounterController`, and deterministic state in pure C# `CounterState`.
+- The sample UI uses built-in Unity IMGUI to stay dependency-free.
+
 ## 0.4.1 - 2026-09-23
 
 ### Changed
