@@ -182,11 +182,12 @@ This creates:
 ```text
 .embraion/
 ├── project.yaml
+├── knowledge.yaml
 ├── policy.yaml
 └── routing.yaml
 ```
 
-The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional model/effort/options overrides.
+The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity plus validation/agents/capabilities, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional model/effort/options overrides.
 
 ### Install a host projection
 
@@ -511,4 +512,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 15:45 UTC</sub>
+<sub>Last updated: 2026-09-24 16:00 UTC</sub>
