@@ -93,6 +93,64 @@ class EnforcementTests(unittest.TestCase):
             )
             self.assertEqual("failed", protected["status"])
 
+    def test_protected_detection_covers_delete_rename_and_dotpaths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            self._repo(project)
+            self._enable(project)
+
+            hidden = project / ".github" / "guard.txt"
+            hidden.parent.mkdir(parents=True, exist_ok=True)
+            hidden.write_text("stable\n", encoding="utf-8")
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy = read_yaml(policy_path)
+            policy["sources"]["protected"] = ["protected/**", ".github/**"]
+            write_yaml(policy_path, policy)
+            self._git(project, "add", ".")
+            self._git(project, "commit", "-m", "enable enforcement")
+            base = self._git(project, "rev-parse", "HEAD")
+
+            self._git(project, "rm", "protected/contract.txt")
+            deleted = check_enforcement(base_ref=base, project=project)
+            deleted_check = next(
+                item for item in deleted["checks"] if item["id"] == "protected-sources"
+            )
+            self.assertFalse(deleted["passed"])
+            self.assertIn("protected/contract.txt", deleted_check["changed-paths"])
+            self._git(project, "reset", "--hard", "HEAD")
+
+            self._git(project, "mv", "protected/contract.txt", "src/contract.txt")
+            renamed = check_enforcement(base_ref=base, project=project)
+            renamed_check = next(
+                item for item in renamed["checks"] if item["id"] == "protected-sources"
+            )
+            self.assertFalse(renamed["passed"])
+            self.assertIn("protected/contract.txt", renamed_check["changed-paths"])
+            self._git(project, "reset", "--hard", "HEAD")
+
+            hidden.write_text("changed\n", encoding="utf-8")
+            dotpath = check_enforcement(base_ref=base, project=project)
+            dotpath_check = next(
+                item for item in dotpath["checks"] if item["id"] == "protected-sources"
+            )
+            self.assertFalse(dotpath["passed"])
+            self.assertIn(".github/guard.txt", dotpath_check["changed-paths"])
+
+    def test_invalid_policy_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            self._repo(project)
+            self._enable(project)
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy = read_yaml(policy_path)
+            policy["sources"]["protected"] = "protected/contract.txt"
+            write_yaml(policy_path, policy)
+
+            with self.assertRaisesRegex(RuntimeError, "Invalid .embraion/policy.yaml"):
+                check_enforcement(base_ref="HEAD", project=project)
+
     def test_missing_validation_and_review_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
