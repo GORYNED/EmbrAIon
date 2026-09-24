@@ -67,7 +67,7 @@ Resolution precedence is:
 
 A role override is merged over the route override, so a role can replace only the fields it needs.
 
-## AI-first configuration
+## AI-First configuration
 
 A user does not need to edit YAML manually. They can ask the AI client already working in the repository to inspect the models/settings available in that client and update the project's EmbrAIon routing overrides.
 
