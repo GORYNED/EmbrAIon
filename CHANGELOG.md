@@ -6,6 +6,7 @@
 
 - Dedicated `.embraion/routing.yaml` project configuration with its own schema, keeping model/effort/options overrides separate from project identity and policy.
 - Dedicated `.embraion/policy.yaml` project configuration with its own schema for source classes, substantial-review policy, and default privacy.
+- Dedicated `.embraion/knowledge.yaml` project configuration with its own schema for knowledge paths and context-selection metadata.
 - Model-agnostic project routing overrides by host, route class, and role. Overrides accept opaque host-owned model selectors, effort strings, and options without requiring an EmbrAIon model catalog.
 - A projected `routing-configuration` skill that teaches AI clients to write optional model overrides only to `.embraion/routing.yaml` while preserving host-default behavior and Core safety policy.
 - A validation invariant that rejects framework-owned model catalogs and adapter route-to-model maps if they are reintroduced.
