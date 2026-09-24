@@ -18,7 +18,7 @@ It sits around your engineering process — not inside your product runtime — 
 
     ---
 
-    Understand the mental model, install the launcher, and add it to a repository.
+    See how EmbrAIon fits into a project, install the launcher, and add it to a repository.
 
     [Start here](getting-started/what-is-embraion.md)
 
@@ -64,31 +64,47 @@ Use `copilot` or `claude-code` when that is your AI client.
 
 Then continue with [Your First AI Task](getting-started/first-ai-task.md).
 
-## The mental model
+## How EmbrAIon fits into your project
 
 ```text
-Your application / library / game
-              ↑
-        ordinary source code
-              ↑
-        consuming repository
-              ↑
- project knowledge + .embraion/
-              ↑
-          EmbrAIon Core
-              ↓
- Codex / Copilot / Claude Code
-              ↓
- AI-assisted engineering work
-              ↓
- validation → review → evidence
+Installed EmbrAIon
+Core + CLI + schemas + tools
+          │
+          │ combines with project-specific configuration
+          ▼
+Your repository
+application code + knowledge + .embraion/
+          │
+          │ projects engineering instructions into
+          ▼
+Codex / Copilot / Claude Code
+          │
+          ▼
+AI works on your repository
+          │
+          ▼
+Validation → Review → Evidence
 ```
 
-The final product does not need an EmbrAIon runtime dependency. EmbrAIon organizes **how the project is engineered**.
+EmbrAIon does **not** sit between your application and its runtime. It is used while the repository is being engineered. Your finished application, library, or game remains an ordinary product.
 
-## What lives in your project
+## What lives where
 
-`embraion init` creates a small, explicit configuration surface:
+```text
+INSTALLED EMBRAION                 YOUR REPOSITORY
+------------------                 ------------------------------
+Core roles and skills              application source code
+CLI                                tests and project files
+schemas and tools                  knowledge/
+                                   .embraion/       canonical config
+                                   .codex/          generated for Codex
+                                   .github/         Copilot / optional CI
+                                   .claude/         generated for Claude Code
+```
+
+EmbrAIon reads the project-owned `.embraion/` configuration and project knowledge, combines them with the reusable Core, and generates the host-specific files your AI client understands.
+
+`embraion init` creates the canonical project configuration:
 
 ```text
 .embraion/
