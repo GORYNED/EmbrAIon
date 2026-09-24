@@ -86,18 +86,18 @@ nav:
       - Project agents: configuration/agents.md
       - Model routing: model-routing.md
       - Configure with your AI client: configuration/ai-hosts.md
-  - Use & Automate:
-      - Daily workflow: guides/daily-workflow.md
-      - Validation & evidence: validation.md
-      - Runs & review: guides/runs-review.md
-      - Enforcement: guides/enforcement.md
-      - Updating safely: getting-started/updating.md
   - AI Clients:
       - Overview: hosts/index.md
       - Codex: hosts/codex.md
       - GitHub Copilot: hosts/copilot.md
       - Claude Code: hosts/claude-code.md
       - Portable: hosts/portable.md
+  - Use & Automate:
+      - Daily workflow: guides/daily-workflow.md
+      - Validation & evidence: validation.md
+      - Runs & review: guides/runs-review.md
+      - Enforcement: guides/enforcement.md
+      - Updating safely: getting-started/updating.md
   - Guides & Examples:
       - Troubleshooting: guides/troubleshooting.md
       - Examples overview: examples/index.md
@@ -112,6 +112,7 @@ nav:
       - Architecture: architecture.md
       - Capability model: capability-model.md
   - Maintainers & Project:
+      - Overview: oss/index.md
       - Contributing: oss/contributing.md
       - Support: oss/support.md
       - Security reporting: oss/security-reporting.md

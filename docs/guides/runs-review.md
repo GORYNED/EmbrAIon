@@ -4,6 +4,22 @@ Structured run evidence is useful when a project needs more than conversational 
 
 It is optional for ordinary lightweight tasks.
 
+## What a run records
+
+A structured run can record:
+
+- task and role;
+- selected host and route class;
+- data class and access mode;
+- owned paths;
+- selected context identity;
+- changed paths;
+- attached validation evidence;
+- review result;
+- outcome and residual risk.
+
+Knowledge content is not copied into the run record. Context and validation are attached through their persisted identities/evidence rather than being re-entered as unverified claims.
+
 ## Start a run
 
 ```bash
@@ -41,7 +57,7 @@ embraion run complete task-001 \
   --outcome completed
 ```
 
-Writable completion checks owned scope and project-protected path policy.
+Writable completion checks changed paths against owned scope and project-protected path policy. Substantial writable work also has to satisfy the applicable review contract.
 
 ## What review should mean
 

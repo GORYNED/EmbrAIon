@@ -31,6 +31,12 @@ The easiest way to understand it is by **question**, not by schema:
 
 Runtime state may later appear under `.embraion/state/` and `.embraion/cache/`. Those directories are intentionally ignored by `.embraion/.gitignore`.
 
+## Ownership rule
+
+The consuming repository owns its `.embraion/` configuration and project/domain knowledge. Generated Codex, Copilot, Claude Code, and Portable files are projections of that canonical contract rather than a second place to express policy.
+
+Project configuration may make local rules stricter, but it must not silently weaken reusable Core hard gates.
+
 ## Recommended order
 
 Do not configure everything at once. A normal project usually benefits from this order:
