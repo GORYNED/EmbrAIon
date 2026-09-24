@@ -72,7 +72,7 @@ class DocumentationTests(unittest.TestCase):
                 self.assertTrue((DOCS / target).is_file())
 
     def test_internal_markdown_links_resolve(self) -> None:
-        link_pattern = re.compile(r"!?[[^]]*](([^)]+))")
+        link_pattern = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
         for path in DOCS.rglob("*.md"):
             text = path.read_text(encoding="utf-8")
