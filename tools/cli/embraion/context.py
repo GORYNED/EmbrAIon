@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .common import project_root, read_json, state_root, write_json
-from .policy import effective_policy, read_project_overlay
+from .policy import effective_policy, read_knowledge_config
 from .security import redact_value
 
 
@@ -73,7 +73,7 @@ def build_context(
         raise RuntimeError("--max-chars must be zero or greater.")
 
     root = project_root(project)
-    overlay = read_project_overlay(root)
+    knowledge = read_knowledge_config(root)
     policy = effective_policy(root)
     default_data = str(policy["privacy"]["default-class"])
     task_lower = task.lower()
@@ -82,7 +82,7 @@ def build_context(
     excluded: list[dict[str, str]] = []
     total_chars = 0
 
-    for knowledge_id, raw in (overlay.get("knowledge") or {}).items():
+    for knowledge_id, raw in knowledge.items():
         item = _normalize_entry(str(knowledge_id), raw, default_data)
         item_data = item["data-class"]
 
