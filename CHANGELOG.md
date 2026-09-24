@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 - 2026-09-24
+
 ### Added
 
 - A full MkDocs Material documentation site with branded navigation, search, dark/light modes, and GitHub Pages deployment.
@@ -17,7 +19,7 @@
 ### Changed
 
 - Package metadata and the repository README now point to the public documentation site while preserving Markdown sources in `docs/`.
-- Stage C development aligns framework/project pins at `0.5.0.dev0`.
+- Framework, package, template, and reference-project pins are aligned at `0.5.0`.
 
 
 ## 0.4.3 - 2026-09-24
