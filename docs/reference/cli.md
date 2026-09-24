@@ -67,7 +67,7 @@ Change the current project's framework pin.
 
 ```bash
 embraion update
-embraion update --framework-version 0.4.3
+embraion update --framework-version 0.6.0
 ```
 
 ### `embraion sync`

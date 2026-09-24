@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-24
+
 ### Added
 
 - Host-native project Skills projection for Codex, GitHub Copilot, and Claude Code using reusable `SKILL.md` directories.
