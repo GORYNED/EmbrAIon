@@ -1,0 +1,136 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Safe update flow</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">Upgrade the launcher first, then normalize project configuration intentionally</tspan></text>
+<rect x="340.75" y="145.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="145.75" width="598.5" height="70.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip0_37_166)">
+<circle cx="379.5" cy="181" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M375.75 178.75L378 181L375.75 183.25M379.5 183.25H383.25M373.5 175.75H385.5V186.25H373.5V175.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="177.773">Install target launcher</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="200.091">pipx upgrade/install EmbrAIon</tspan></text>
+</g>
+<rect x="340.75" y="241.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="241.75" width="598.5" height="70.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip2_37_166)">
+<circle cx="379.5" cy="277" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M385.5 273.25V270.25L383.25 272.5C382.322 271.574 381.115 270.977 379.815 270.801C378.515 270.625 377.194 270.881 376.053 271.527C374.912 272.174 374.014 273.177 373.497 274.383C372.98 275.588 372.873 276.93 373.191 278.202C373.509 279.475 374.235 280.608 375.259 281.428C376.282 282.249 377.546 282.711 378.857 282.745C380.168 282.779 381.455 282.382 382.519 281.615C383.583 280.849 384.367 279.754 384.75 278.5M373.5 280.75V283.75L375.75 281.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="273.773">embraion update</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="296.091">normalize project config</tspan></text>
+</g>
+<rect x="340.75" y="337.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="337.75" width="598.5" height="70.5" rx="17.25" stroke="#FF6B7A" stroke-width="1.5"/>
+<g clip-path="url(#clip4_37_166)">
+<circle cx="379.5" cy="373" r="17" fill="#FF6B7A" fill-opacity="0.16" stroke="#FF6B7A" stroke-width="2"/>
+<path d="M377.25 373L378.75 374.5L381.75 371.5M379.5 366.25L384.75 368.5V372.25C384.75 375.625 382.65 378.1 379.5 379.75C376.35 378.1 374.25 375.625 374.25 372.25V368.5L379.5 366.25Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="369.773">Validate config</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="392.091">schemas + fail-closed checks</tspan></text>
+</g>
+<rect x="340.75" y="433.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="433.75" width="598.5" height="70.5" rx="17.25" stroke="#43C7E8" stroke-width="1.5"/>
+<g clip-path="url(#clip6_37_166)">
+<circle cx="379.5" cy="469" r="17" fill="#43C7E8" fill-opacity="0.16" stroke="#43C7E8" stroke-width="2"/>
+<path d="M376.5 469L378.375 470.875L382.5 466.75M379.5 475.75C380.386 475.75 381.264 475.575 382.083 475.236C382.902 474.897 383.646 474.4 384.273 473.773C384.9 473.146 385.397 472.402 385.736 471.583C386.075 470.764 386.25 469.886 386.25 469C386.25 468.114 386.075 467.236 385.736 466.417C385.397 465.598 384.9 464.854 384.273 464.227C383.646 463.6 382.902 463.103 382.083 462.764C381.264 462.425 380.386 462.25 379.5 462.25C377.71 462.25 375.993 462.961 374.727 464.227C373.461 465.493 372.75 467.21 372.75 469C372.75 470.79 373.461 472.507 374.727 473.773C375.993 475.039 377.71 475.75 379.5 475.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="465.773">embraion doctor</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="488.091">check health and consistency</tspan></text>
+</g>
+<rect x="340.75" y="529.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="529.75" width="598.5" height="70.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip8_37_166)">
+<circle cx="379.5" cy="565" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M372 565C372 565 374.625 560.5 379.5 560.5C384.375 560.5 387 565 387 565C387 565 384.375 569.5 379.5 569.5C374.625 569.5 372 565 372 565Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M379.5 566.875C380.536 566.875 381.375 566.036 381.375 565C381.375 563.964 380.536 563.125 379.5 563.125C378.464 563.125 377.625 563.964 377.625 565C377.625 566.036 378.464 566.875 379.5 566.875Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="561.773">Projection diff</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="584.091">review generated host changes</tspan></text>
+</g>
+<rect x="340.75" y="625.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="625.75" width="598.5" height="70.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip10_37_166)">
+<circle cx="379.5" cy="661" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M379.5 658L378 656.5H373.5V665.5H385.5V658H379.5ZM379.5 658V664M376.5 661H382.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip11_37_166)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="657.773">Install / sync</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="680.091">apply approved host projections</tspan></text>
+</g>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" font-weight="600" letter-spacing="0em"><tspan x="335" y="728.455">If target configuration is invalid, update fails before mutation.</tspan></text>
+<g clip-path="url(#clip12_37_166)">
+<path d="M640 217V240M646 234L640 240L634 234" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip13_37_166)">
+<path d="M640 313V336M646 330L640 336L634 330" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip14_37_166)">
+<path d="M640 409V432M646 426L640 432L634 426" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip15_37_166)">
+<path d="M640 505V528M646 522L640 528L634 522" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip16_37_166)">
+<path d="M640 601V624M646 618L640 624L634 618" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 163)"/>
+</clipPath>
+<clipPath id="clip1_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 158.5)"/>
+</clipPath>
+<clipPath id="clip2_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 259)"/>
+</clipPath>
+<clipPath id="clip3_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 254.5)"/>
+</clipPath>
+<clipPath id="clip4_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 355)"/>
+</clipPath>
+<clipPath id="clip5_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 350.5)"/>
+</clipPath>
+<clipPath id="clip6_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 451)"/>
+</clipPath>
+<clipPath id="clip7_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 446.5)"/>
+</clipPath>
+<clipPath id="clip8_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 547)"/>
+</clipPath>
+<clipPath id="clip9_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 542.5)"/>
+</clipPath>
+<clipPath id="clip10_37_166">
+<rect width="36" height="36" fill="white" transform="translate(361.5 643)"/>
+</clipPath>
+<clipPath id="clip11_37_166">
+<rect width="505" height="45" fill="white" transform="translate(413.5 638.5)"/>
+</clipPath>
+<clipPath id="clip12_37_166">
+<rect width="16" height="24" fill="white" transform="translate(632 217)"/>
+</clipPath>
+<clipPath id="clip13_37_166">
+<rect width="16" height="24" fill="white" transform="translate(632 313)"/>
+</clipPath>
+<clipPath id="clip14_37_166">
+<rect width="16" height="24" fill="white" transform="translate(632 409)"/>
+</clipPath>
+<clipPath id="clip15_37_166">
+<rect width="16" height="24" fill="white" transform="translate(632 505)"/>
+</clipPath>
+<clipPath id="clip16_37_166">
+<rect width="16" height="24" fill="white" transform="translate(632 601)"/>
+</clipPath>
+</defs>
+</svg>

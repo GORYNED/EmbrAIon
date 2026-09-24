@@ -18,15 +18,7 @@ framework:
 
 Ordinary commands locate the nearest project and resolve its pin:
 
-```text
-global embraion launcher
-        ↓
-nearest .embraion/project.yaml
-        ↓
-framework.version
-        ↓
-matching project runtime
-```
+![Runtime and version resolution](../assets/diagrams/en/07-runtime-version-resolution.svg){ loading=lazy }
 
 If the pin differs from the launcher version, EmbrAIon can install the exact published distribution into an isolated cache:
 

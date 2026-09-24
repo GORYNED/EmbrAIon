@@ -8,10 +8,7 @@ EmbrAIon keeps the project configuration host-neutral where possible, then proje
 
 The important ownership rule is:
 
-```text
-.embraion/*   = project-owned canonical configuration
-host files    = generated projection for a specific AI client
-```
+![Canonical configuration to AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
 You can use one host or several in the same repository.
 

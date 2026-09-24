@@ -2,6 +2,8 @@
 
 `.embraion/policy.yaml` contains project-owned safety policy.
 
+![Source ownership and protection model](../assets/diagrams/en/13-source-ownership-protection.svg){ loading=lazy }
+
 A typical configuration:
 
 ```yaml

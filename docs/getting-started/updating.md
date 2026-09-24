@@ -7,6 +7,8 @@ EmbrAIon has two versions to think about:
 
 Project updates are intentionally explicit.
 
+![Safe update flow](../assets/diagrams/en/11-safe-update.svg){ loading=lazy }
+
 ## Normal update flow
 
 Upgrade the launcher:

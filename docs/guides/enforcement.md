@@ -4,6 +4,8 @@ EmbrAIon separates **project policy** from **merge-time enforcement**.
 
 Policy can exist without installing executable CI. Enforcement is explicit and opt-in.
 
+![Validation and enforcement](../assets/diagrams/en/06-enforcement.svg){ loading=lazy }
+
 ## Before enabling enforcement
 
 First make sure these are trustworthy:

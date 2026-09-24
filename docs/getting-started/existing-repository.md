@@ -100,23 +100,7 @@ See [Enforcement](../guides/enforcement.md) before making that status check requ
 
 ## Recommended adoption order
 
-```text
-init
- ↓
-project knowledge
- ↓
-policy / protected paths
- ↓
-validation profiles
- ↓
-projection diff
- ↓
-selective host install
- ↓
-daily use
- ↓
-optional enforcement
-```
+![Adopt an existing repository](../assets/diagrams/en/03-adopt-existing-repository.svg){ loading=lazy }
 
 ## Next
 

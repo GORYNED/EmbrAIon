@@ -4,6 +4,8 @@ EmbrAIon should make ordinary AI-assisted engineering more disciplined, not more
 
 A typical day can stay simple.
 
+![Daily AI-First workflow](../assets/diagrams/en/05-daily-workflow.svg){ loading=lazy }
+
 ## Before work
 
 ```bash

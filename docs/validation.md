@@ -2,6 +2,8 @@
 
 EmbrAIon has two related but different validation concepts.
 
+![Validation, evidence, runs, and review](assets/diagrams/en/09-validation-evidence-run-review.svg){ loading=lazy }
+
 ## Framework validation
 
 ```bash

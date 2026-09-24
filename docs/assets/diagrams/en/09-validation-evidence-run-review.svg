@@ -1,0 +1,114 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Validation, evidence, runs, and review</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">Evidence records what happened; review decides whether the change is acceptable</tspan></text>
+<rect x="330.75" y="170.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="170.75" width="618.5" height="80.5" rx="17.25" stroke="#43C7E8" stroke-width="1.5"/>
+<g clip-path="url(#clip0_37_60)">
+<circle cx="369.5" cy="211" r="17" fill="#43C7E8" fill-opacity="0.16" stroke="#43C7E8" stroke-width="2"/>
+<path d="M366.5 211L368.375 212.875L372.5 208.75M369.5 217.75C370.386 217.75 371.264 217.575 372.083 217.236C372.902 216.897 373.646 216.4 374.273 215.773C374.9 215.146 375.397 214.402 375.736 213.583C376.075 212.764 376.25 211.886 376.25 211C376.25 210.114 376.075 209.236 375.736 208.417C375.397 207.598 374.9 206.854 374.273 206.227C373.646 205.6 372.902 205.103 372.083 204.764C371.264 204.425 370.386 204.25 369.5 204.25C367.71 204.25 365.993 204.961 364.727 206.227C363.461 207.493 362.75 209.21 362.75 211C362.75 212.79 363.461 214.507 364.727 215.773C365.993 217.039 367.71 217.75 369.5 217.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_37_60)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="207.773">Validation profile</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="230.091">execute project checks</tspan></text>
+</g>
+<rect x="330.75" y="280.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="280.75" width="618.5" height="80.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip2_37_60)">
+<circle cx="369.5" cy="321" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M371 314.25H365V327.75H374V317.25L371 314.25ZM371 314.25V318H374.75M367.25 321H371.75M367.25 324H370.25" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_37_60)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="317.773">Evidence</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="340.091">record command + result</tspan></text>
+</g>
+<rect x="330.75" y="390.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="390.75" width="618.5" height="80.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip4_37_60)">
+<circle cx="369.5" cy="431" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M364.25 425.75H374.75V436.25H364.25V425.75ZM367.25 428L371.75 431L367.25 434V428Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_37_60)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="427.773">Structured run</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="450.091">attach evidence to work</tspan></text>
+</g>
+<rect x="330.75" y="500.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="500.75" width="618.5" height="80.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip6_37_60)">
+<circle cx="369.5" cy="541" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M362 541C362 541 364.625 536.5 369.5 536.5C374.375 536.5 377 541 377 541C377 541 374.375 545.5 369.5 545.5C364.625 545.5 362 541 362 541Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M369.5 542.875C370.536 542.875 371.375 542.036 371.375 541C371.375 539.964 370.536 539.125 369.5 539.125C368.464 539.125 367.625 539.964 367.625 541C367.625 542.036 368.464 542.875 369.5 542.875Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_37_60)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="537.773">Independent review</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="560.091">assess change + evidence</tspan></text>
+</g>
+<rect x="330.75" y="610.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="610.75" width="618.5" height="80.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip8_37_60)">
+<circle cx="369.5" cy="651" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M366.5 651L368.375 652.875L372.5 648.75M369.5 657.75C370.386 657.75 371.264 657.575 372.083 657.236C372.902 656.897 373.646 656.4 374.273 655.773C374.9 655.146 375.397 654.402 375.736 653.583C376.075 652.764 376.25 651.886 376.25 651C376.25 650.114 376.075 649.236 375.736 648.417C375.397 647.598 374.9 646.854 374.273 646.227C373.646 645.6 372.902 645.103 372.083 644.764C371.264 644.425 370.386 644.25 369.5 644.25C367.71 644.25 365.993 644.961 364.727 646.227C363.461 647.493 362.75 649.21 362.75 651C362.75 652.79 363.461 654.507 364.727 655.773C365.993 657.039 367.71 657.75 369.5 657.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_37_60)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="647.773">Completion</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="670.091">record outcome</tspan></text>
+</g>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="17" font-weight="600" letter-spacing="0em"><tspan x="300" y="716.682">Validation produces evidence. Evidence does not replace review or policy.</tspan></text>
+<g clip-path="url(#clip10_37_60)">
+<path d="M640 252V279M646 273L640 279L634 273" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip11_37_60)">
+<path d="M640 362V389M646 383L640 389L634 383" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_37_60)">
+<path d="M640 472V499M646 493L640 499L634 493" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip13_37_60)">
+<path d="M640 582V609M646 603L640 609L634 603" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_37_60">
+<rect width="36" height="36" fill="white" transform="translate(351.5 193)"/>
+</clipPath>
+<clipPath id="clip1_37_60">
+<rect width="525" height="45" fill="white" transform="translate(403.5 188.5)"/>
+</clipPath>
+<clipPath id="clip2_37_60">
+<rect width="36" height="36" fill="white" transform="translate(351.5 303)"/>
+</clipPath>
+<clipPath id="clip3_37_60">
+<rect width="525" height="45" fill="white" transform="translate(403.5 298.5)"/>
+</clipPath>
+<clipPath id="clip4_37_60">
+<rect width="36" height="36" fill="white" transform="translate(351.5 413)"/>
+</clipPath>
+<clipPath id="clip5_37_60">
+<rect width="525" height="45" fill="white" transform="translate(403.5 408.5)"/>
+</clipPath>
+<clipPath id="clip6_37_60">
+<rect width="36" height="36" fill="white" transform="translate(351.5 523)"/>
+</clipPath>
+<clipPath id="clip7_37_60">
+<rect width="525" height="45" fill="white" transform="translate(403.5 518.5)"/>
+</clipPath>
+<clipPath id="clip8_37_60">
+<rect width="36" height="36" fill="white" transform="translate(351.5 633)"/>
+</clipPath>
+<clipPath id="clip9_37_60">
+<rect width="525" height="45" fill="white" transform="translate(403.5 628.5)"/>
+</clipPath>
+<clipPath id="clip10_37_60">
+<rect width="16" height="28" fill="white" transform="translate(632 252)"/>
+</clipPath>
+<clipPath id="clip11_37_60">
+<rect width="16" height="28" fill="white" transform="translate(632 362)"/>
+</clipPath>
+<clipPath id="clip12_37_60">
+<rect width="16" height="28" fill="white" transform="translate(632 472)"/>
+</clipPath>
+<clipPath id="clip13_37_60">
+<rect width="16" height="28" fill="white" transform="translate(632 582)"/>
+</clipPath>
+</defs>
+</svg>

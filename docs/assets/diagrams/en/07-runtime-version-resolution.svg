@@ -1,0 +1,97 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Runtime and version resolution</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">One launcher can serve projects pinned to different published releases</tspan></text>
+<rect x="465.75" y="160.75" width="348.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="465.75" y="160.75" width="348.5" height="98.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip0_6_71)">
+<circle cx="504.5" cy="210" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M500.75 207.75L503 210L500.75 212.25M504.5 212.25H508.25M498.5 204.75H510.5V215.25H498.5V204.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_6_71)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="538.5" y="206.773">Global launcher</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="538.5" y="229.091">pipx-installed EmbrAIon</tspan></text>
+</g>
+<rect x="490.75" y="340.75" width="298.5" height="68.5" rx="15.25" fill="#151D2A"/>
+<rect x="490.75" y="340.75" width="298.5" height="68.5" rx="15.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip2_6_71)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="511.5" y="370.273">nearest .embraion/</tspan><tspan x="511.5" y="394.273">project.yaml</tspan></text>
+</g>
+<rect x="160.75" y="500.75" width="398.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="160.75" y="500.75" width="398.5" height="98.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip3_6_71)">
+<circle cx="199.5" cy="550" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M192.75 545.5H197.25L198.75 547H206.25V554.5C206.25 554.898 206.092 555.279 205.811 555.561C205.529 555.842 205.148 556 204.75 556H194.25C193.852 556 193.471 555.842 193.189 555.561C192.908 555.279 192.75 554.898 192.75 554.5V545.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip4_6_71)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="233.5" y="546.773">Project A</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="233.5" y="569.091">pin &#x2192; exact cached runtime</tspan></text>
+</g>
+<rect x="720.75" y="500.75" width="398.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="720.75" y="500.75" width="398.5" height="98.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip5_6_71)">
+<circle cx="759.5" cy="550" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M752.75 545.5H757.25L758.75 547H766.25V554.5C766.25 554.898 766.092 555.279 765.811 555.561C765.529 555.842 765.148 556 764.75 556H754.25C753.852 556 753.471 555.842 753.189 555.561C752.908 555.279 752.75 554.898 752.75 554.5V545.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip6_6_71)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="793.5" y="546.773">Project B</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="793.5" y="569.091">pin &#x2192; another cached runtime</tspan></text>
+</g>
+<rect x="280.75" y="650.75" width="718.5" height="72.5" rx="15.25" fill="#151D2A"/>
+<rect x="280.75" y="650.75" width="718.5" height="72.5" rx="15.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip7_6_71)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="301.5" y="683.773">~/.embraion/versions/&#60;version&#62;/</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="301.5" y="706.091">isolated published runtimes</tspan></text>
+</g>
+<g clip-path="url(#clip8_6_71)">
+<path d="M640 260V339M646 333L640 339L634 333" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_6_71)">
+<path d="M640 410V451M640 451H360V499M640 451H920V499M366 493L360 499L354 493M926 493L920 499L914 493" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_6_71)">
+<path d="M360 600V649M366 643L360 649L354 643" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip11_6_71)">
+<path d="M920 600V649M926 643L920 649L914 643" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_6_71">
+<rect width="36" height="36" fill="white" transform="translate(486.5 192)"/>
+</clipPath>
+<clipPath id="clip1_6_71">
+<rect width="255" height="45" fill="white" transform="translate(538.5 187.5)"/>
+</clipPath>
+<clipPath id="clip2_6_71">
+<rect width="257" height="48" fill="white" transform="translate(511.5 351)"/>
+</clipPath>
+<clipPath id="clip3_6_71">
+<rect width="36" height="36" fill="white" transform="translate(181.5 532)"/>
+</clipPath>
+<clipPath id="clip4_6_71">
+<rect width="305" height="45" fill="white" transform="translate(233.5 527.5)"/>
+</clipPath>
+<clipPath id="clip5_6_71">
+<rect width="36" height="36" fill="white" transform="translate(741.5 532)"/>
+</clipPath>
+<clipPath id="clip6_6_71">
+<rect width="305" height="45" fill="white" transform="translate(793.5 527.5)"/>
+</clipPath>
+<clipPath id="clip7_6_71">
+<rect width="677" height="45" fill="white" transform="translate(301.5 664.5)"/>
+</clipPath>
+<clipPath id="clip8_6_71">
+<rect width="16" height="80" fill="white" transform="translate(632 260)"/>
+</clipPath>
+<clipPath id="clip9_6_71">
+<rect width="576" height="90" fill="white" transform="translate(352 410)"/>
+</clipPath>
+<clipPath id="clip10_6_71">
+<rect width="16" height="50" fill="white" transform="translate(352 600)"/>
+</clipPath>
+<clipPath id="clip11_6_71">
+<rect width="16" height="50" fill="white" transform="translate(912 600)"/>
+</clipPath>
+</defs>
+</svg>

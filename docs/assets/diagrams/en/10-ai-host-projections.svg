@@ -1,0 +1,117 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_37_108)">
+<rect width="1280" height="780" rx="28" fill="#0E1420"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Canonical configuration &#x2192; AI host projections</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">One project contract, multiple host-specific generated views</tspan></text>
+<path d="M780 365H820M849 190H820V580H849M843 196L849 190L843 184M820 320H849M843 326L849 320L843 314M820 450H849M843 456L849 450L843 444M843 586L849 580L843 574" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="70.75" y="290.75" width="388.5" height="148.5" rx="17.25" fill="#151D2A"/>
+<rect x="70.75" y="290.75" width="388.5" height="148.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip1_37_108)">
+<circle cx="109.5" cy="365" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M111 358.25H105V371.75H114V361.25L111 358.25ZM111 358.25V362H114.75M107.25 365H111.75M107.25 368H111.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip2_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="143.5" y="361.773">Canonical project contract</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="143.5" y="384.091">.embraion/ + knowledge/ + EmbrAIon Core</tspan></text>
+</g>
+<rect x="520.75" y="315.75" width="258.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="520.75" y="315.75" width="258.5" height="98.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip3_37_108)">
+<circle cx="559.5" cy="365" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M559.5 362L558 360.5H553.5V369.5H565.5V362H559.5ZM559.5 362V368M556.5 365H562.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip4_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="593.5" y="353.273">Projection</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="593.5" y="375.591">translate canonical </tspan><tspan x="593.5" y="392.591">intent</tspan></text>
+</g>
+<rect x="850.75" y="145.75" width="358.5" height="88.5" rx="17.25" fill="#151D2A"/>
+<rect x="850.75" y="145.75" width="358.5" height="88.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip5_37_108)">
+<circle cx="889.5" cy="190" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M889.5 187L888 185.5H883.5V194.5H895.5V187H889.5ZM889.5 187V193M886.5 190H892.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip6_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="923.5" y="186.773">Codex</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="923.5" y="209.091">.codex/ + .agents/</tspan></text>
+</g>
+<rect x="850.75" y="275.75" width="358.5" height="88.5" rx="17.25" fill="#151D2A"/>
+<rect x="850.75" y="275.75" width="358.5" height="88.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip7_37_108)">
+<circle cx="889.5" cy="320" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M889.5 317L888 315.5H883.5V324.5H895.5V317H889.5ZM889.5 317V323M886.5 320H892.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip8_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="923.5" y="316.773">GitHub Copilot</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="923.5" y="339.091">.github/agents + skills</tspan></text>
+</g>
+<rect x="850.75" y="405.75" width="358.5" height="88.5" rx="17.25" fill="#151D2A"/>
+<rect x="850.75" y="405.75" width="358.5" height="88.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip9_37_108)">
+<circle cx="889.5" cy="450" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M889.5 447L888 445.5H883.5V454.5H895.5V447H889.5ZM889.5 447V453M886.5 450H892.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="923.5" y="446.773">Claude Code</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="923.5" y="469.091">.claude/agents + skills</tspan></text>
+</g>
+<rect x="850.75" y="535.75" width="358.5" height="88.5" rx="17.25" fill="#151D2A"/>
+<rect x="850.75" y="535.75" width="358.5" height="88.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip11_37_108)">
+<circle cx="889.5" cy="580" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M889.5 577L888 575.5H883.5V584.5H895.5V577H889.5ZM889.5 577V583M886.5 580H892.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_37_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="923.5" y="576.773">Portable</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="923.5" y="599.091">portable bundle</tspan></text>
+</g>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="180" y="715.318">Generated host files are projections, not the canonical source of project policy.</tspan></text>
+<g clip-path="url(#clip13_37_108)">
+<path d="M460 365H519M513 371L519 365L513 359" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<defs>
+<clipPath id="clip0_37_108">
+<rect width="1280" height="780" rx="28" fill="white"/>
+</clipPath>
+<clipPath id="clip1_37_108">
+<rect width="36" height="36" fill="white" transform="translate(91.5 347)"/>
+</clipPath>
+<clipPath id="clip2_37_108">
+<rect width="295" height="45" fill="white" transform="translate(143.5 342.5)"/>
+</clipPath>
+<clipPath id="clip3_37_108">
+<rect width="36" height="36" fill="white" transform="translate(541.5 347)"/>
+</clipPath>
+<clipPath id="clip4_37_108">
+<rect width="165" height="62" fill="white" transform="translate(593.5 334)"/>
+</clipPath>
+<clipPath id="clip5_37_108">
+<rect width="36" height="36" fill="white" transform="translate(871.5 172)"/>
+</clipPath>
+<clipPath id="clip6_37_108">
+<rect width="265" height="45" fill="white" transform="translate(923.5 167.5)"/>
+</clipPath>
+<clipPath id="clip7_37_108">
+<rect width="36" height="36" fill="white" transform="translate(871.5 302)"/>
+</clipPath>
+<clipPath id="clip8_37_108">
+<rect width="265" height="45" fill="white" transform="translate(923.5 297.5)"/>
+</clipPath>
+<clipPath id="clip9_37_108">
+<rect width="36" height="36" fill="white" transform="translate(871.5 432)"/>
+</clipPath>
+<clipPath id="clip10_37_108">
+<rect width="265" height="45" fill="white" transform="translate(923.5 427.5)"/>
+</clipPath>
+<clipPath id="clip11_37_108">
+<rect width="36" height="36" fill="white" transform="translate(871.5 562)"/>
+</clipPath>
+<clipPath id="clip12_37_108">
+<rect width="265" height="45" fill="white" transform="translate(923.5 557.5)"/>
+</clipPath>
+<clipPath id="clip13_37_108">
+<rect width="60" height="16" fill="white" transform="translate(460 357)"/>
+</clipPath>
+</defs>
+</svg>

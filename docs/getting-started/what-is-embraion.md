@@ -27,25 +27,7 @@ Your application remains an ordinary application. EmbrAIon sits around the engin
 
 ## How EmbrAIon fits into your project
 
-```text
-Installed EmbrAIon
-Core + CLI + schemas + tools
-          │
-          │ combines with
-          ▼
-Your repository
-application code + knowledge + .embraion/
-          │
-          │ generates a host projection for
-          ▼
-Codex / Copilot / Claude Code
-          │
-          ▼
-AI works on your repository
-          │
-          ▼
-Validation → Review → Evidence
-```
+![How EmbrAIon fits into your project](../assets/diagrams/en/01-how-embraion-fits.svg){ loading=lazy }
 
 There is only one direction to remember: **EmbrAIon helps your AI client work on the repository, then the work is validated and reviewed.**
 
@@ -53,17 +35,7 @@ The finished application does not depend on EmbrAIon at runtime.
 
 ## What lives where
 
-```text
-INSTALLED EMBRAION                 YOUR REPOSITORY
-------------------                 ------------------------------
-Core roles and skills              application source code
-CLI                                tests and project files
-schemas and tools                  knowledge/
-                                   .embraion/       canonical config
-                                   .codex/          generated for Codex
-                                   .github/         Copilot / optional CI
-                                   .claude/         generated for Claude Code
-```
+![What lives where](../assets/diagrams/en/02-what-lives-where.svg){ loading=lazy }
 
 **Core** contains reusable engineering behavior that should work across projects.
 

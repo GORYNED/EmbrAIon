@@ -1,0 +1,106 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_37_223)">
+<rect width="1280" height="780" rx="28" fill="#0E1420"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Model routing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">Host default by default; project override only when needed</tspan></text>
+<path d="M335 265V310H640M640 310H945V265M640 310V355M646 349L640 355L634 349" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.75" y="165.75" width="428.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="120.75" y="165.75" width="428.5" height="98.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip1_37_223)">
+<circle cx="159.5" cy="215" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M159.5 208.25L160.475 211.025L163.25 212L160.475 212.975L159.5 215.75L158.525 212.975L155.75 212L158.525 211.025L159.5 208.25ZM154.25 216.5L154.85 218.15L156.5 218.75L154.85 219.35L154.25 221L153.65 219.35L152 218.75L153.65 218.15L154.25 216.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip2_37_223)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="193.5" y="211.773">AI client default</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="193.5" y="234.091">host chooses its automatic/default model</tspan></text>
+</g>
+<rect x="730.75" y="165.75" width="428.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="730.75" y="165.75" width="428.5" height="98.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip3_37_223)">
+<circle cx="769.5" cy="215" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M764.25 209.75H768.75C769.347 209.75 769.919 209.987 770.341 210.409C770.763 210.831 771 211.403 771 212V218M773.25 215.75L771 218L768.75 215.75M774.75 209.75H773.25" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip4_37_223)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="803.5" y="211.773">Optional routing override</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="803.5" y="234.091">.embraion/routing.yaml</tspan></text>
+</g>
+<rect x="425.75" y="355.75" width="428.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="425.75" y="355.75" width="428.5" height="98.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip5_37_223)">
+<circle cx="464.5" cy="405" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M459.25 399.75H463.75C464.347 399.75 464.919 399.987 465.341 400.409C465.763 400.831 466 401.403 466 402V408M468.25 405.75L466 408L463.75 405.75M469.75 399.75H468.25" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip6_37_223)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="498.5" y="401.773">Selected route / model</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="498.5" y="424.091">resolved by host + optional override</tspan></text>
+</g>
+<rect x="350.75" y="530.75" width="578.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="350.75" y="530.75" width="578.5" height="98.5" rx="17.25" stroke="#FF6B7A" stroke-width="1.5"/>
+<g clip-path="url(#clip7_37_223)">
+<circle cx="389.5" cy="580" r="17" fill="#FF6B7A" fill-opacity="0.16" stroke="#FF6B7A" stroke-width="2"/>
+<path d="M387.25 580L388.75 581.5L391.75 578.5M389.5 573.25L394.75 575.5V579.25C394.75 582.625 392.65 585.1 389.5 586.75C386.35 585.1 384.25 582.625 384.25 579.25V575.5L389.5 573.25Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip8_37_223)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="423.5" y="576.773">Hard safety gates</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="423.5" y="599.091">privacy + access + protected sources + review</tspan></text>
+</g>
+<rect x="425.75" y="675.75" width="428.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="425.75" y="675.75" width="428.5" height="70.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip9_37_223)">
+<circle cx="464.5" cy="711" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M461.5 711L463.375 712.875L467.5 708.75M464.5 717.75C465.386 717.75 466.264 717.575 467.083 717.236C467.902 716.897 468.646 716.4 469.273 715.773C469.9 715.146 470.397 714.402 470.736 713.583C471.075 712.764 471.25 711.886 471.25 711C471.25 710.114 471.075 709.236 470.736 708.417C470.397 707.598 469.9 706.854 469.273 706.227C468.646 705.6 467.902 705.103 467.083 704.764C466.264 704.425 465.386 704.25 464.5 704.25C462.71 704.25 460.993 704.961 459.727 706.227C458.461 707.493 457.75 709.21 457.75 711C457.75 712.79 458.461 714.507 459.727 715.773C460.993 717.039 462.71 717.75 464.5 717.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_37_223)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="498.5" y="707.773">Task execution</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="498.5" y="730.091">routing never widens permissions</tspan></text>
+</g>
+<g clip-path="url(#clip11_37_223)">
+<path d="M640 455V529M646 523L640 529L634 523" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_37_223)">
+<path d="M640 630V674M646 668L640 674L634 668" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<defs>
+<clipPath id="clip0_37_223">
+<rect width="1280" height="780" rx="28" fill="white"/>
+</clipPath>
+<clipPath id="clip1_37_223">
+<rect width="36" height="36" fill="white" transform="translate(141.5 197)"/>
+</clipPath>
+<clipPath id="clip2_37_223">
+<rect width="335" height="45" fill="white" transform="translate(193.5 192.5)"/>
+</clipPath>
+<clipPath id="clip3_37_223">
+<rect width="36" height="36" fill="white" transform="translate(751.5 197)"/>
+</clipPath>
+<clipPath id="clip4_37_223">
+<rect width="335" height="45" fill="white" transform="translate(803.5 192.5)"/>
+</clipPath>
+<clipPath id="clip5_37_223">
+<rect width="36" height="36" fill="white" transform="translate(446.5 387)"/>
+</clipPath>
+<clipPath id="clip6_37_223">
+<rect width="335" height="45" fill="white" transform="translate(498.5 382.5)"/>
+</clipPath>
+<clipPath id="clip7_37_223">
+<rect width="36" height="36" fill="white" transform="translate(371.5 562)"/>
+</clipPath>
+<clipPath id="clip8_37_223">
+<rect width="485" height="45" fill="white" transform="translate(423.5 557.5)"/>
+</clipPath>
+<clipPath id="clip9_37_223">
+<rect width="36" height="36" fill="white" transform="translate(446.5 693)"/>
+</clipPath>
+<clipPath id="clip10_37_223">
+<rect width="335" height="45" fill="white" transform="translate(498.5 688.5)"/>
+</clipPath>
+<clipPath id="clip11_37_223">
+<rect width="16" height="75" fill="white" transform="translate(632 455)"/>
+</clipPath>
+<clipPath id="clip12_37_223">
+<rect width="16" height="45" fill="white" transform="translate(632 630)"/>
+</clipPath>
+</defs>
+</svg>

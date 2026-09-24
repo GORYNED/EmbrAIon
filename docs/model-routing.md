@@ -16,6 +16,8 @@ The canonical task-oriented route classes are `bounded-read`, `bounded-write`, `
 
 It does **not** maintain a canonical list of current model names.
 
+![Model routing](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
+
 ## Default behavior
 
 Without a project override, routing resolves to `host-default`. The selected host remains responsible for its own available models and automatic/default model policy.

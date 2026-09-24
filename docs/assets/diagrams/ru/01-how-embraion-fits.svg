@@ -1,0 +1,96 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">&#x41a;&#x430;&#x43a; EmbrAIon &#x432;&#x43f;&#x438;&#x441;&#x44b;&#x432;&#x430;&#x435;&#x442;&#x441;&#x44f; &#x432; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">&#x41e;&#x434;&#x43d;&#x43e; &#x43d;&#x430;&#x43f;&#x440;&#x430;&#x432;&#x43b;&#x435;&#x43d;&#x438;&#x435;: &#x444;&#x440;&#x435;&#x439;&#x43c;&#x432;&#x43e;&#x440;&#x43a; + &#x43a;&#x43e;&#x43d;&#x442;&#x435;&#x43a;&#x441;&#x442; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x430; &#x2192; &#x440;&#x430;&#x431;&#x43e;&#x442;&#x430; AI &#x2192; evidence</tspan></text>
+<rect x="330.75" y="150.75" width="618.5" height="90.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="150.75" width="618.5" height="90.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip0_7_4)">
+<circle cx="369.5" cy="196" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M369.5 202.75L375.5 199.75V192.25L369.5 189.25L363.5 192.25V199.75L369.5 202.75ZM363.5 192.25L369.5 195.25M375.5 192.25L369.5 195.25M369.5 195.25V202.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_7_4)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="192.773">&#x423;&#x441;&#x442;&#x430;&#x43d;&#x43e;&#x432;&#x43b;&#x435;&#x43d;&#x43d;&#x44b;&#x439; EmbrAIon</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="215.091">EmbrAIon Core + CLI + &#x441;&#x445;&#x435;&#x43c;&#x44b; + &#x438;&#x43d;&#x441;&#x442;&#x440;&#x443;&#x43c;&#x435;&#x43d;&#x442;&#x44b;</tspan></text>
+</g>
+<rect x="330.75" y="310.75" width="618.5" height="90.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="310.75" width="618.5" height="90.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip2_7_4)">
+<circle cx="369.5" cy="356" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M362.75 351.5H367.25L368.75 353H376.25V360.5C376.25 360.898 376.092 361.279 375.811 361.561C375.529 361.842 375.148 362 374.75 362H364.25C363.852 362 363.471 361.842 363.189 361.561C362.908 361.279 362.75 360.898 362.75 360.5V351.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_7_4)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="352.773">&#x412;&#x430;&#x448; &#x440;&#x435;&#x43f;&#x43e;&#x437;&#x438;&#x442;&#x43e;&#x440;&#x438;&#x439;</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="375.091">&#x43a;&#x43e;&#x434; &#x43f;&#x440;&#x438;&#x43b;&#x43e;&#x436;&#x435;&#x43d;&#x438;&#x44f; + knowledge/ + .embraion/</tspan></text>
+</g>
+<rect x="330.75" y="470.75" width="618.5" height="90.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="470.75" width="618.5" height="90.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip4_7_4)">
+<circle cx="369.5" cy="516" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M369.5 509.25L370.475 512.025L373.25 513L370.475 513.975L369.5 516.75L368.525 513.975L365.75 513L368.525 512.025L369.5 509.25ZM364.25 517.5L364.85 519.15L366.5 519.75L364.85 520.35L364.25 522L363.65 520.35L362 519.75L363.65 519.15L364.25 517.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_7_4)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="512.773">Codex / Copilot / Claude Code</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="535.091">&#x441;&#x433;&#x435;&#x43d;&#x435;&#x440;&#x438;&#x440;&#x43e;&#x432;&#x430;&#x43d;&#x43d;&#x44b;&#x435; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x446;&#x438;&#x438; &#x434;&#x43b;&#x44f; AI-&#x43a;&#x43b;&#x438;&#x435;&#x43d;&#x442;&#x430;</tspan></text>
+</g>
+<rect x="330.75" y="630.75" width="618.5" height="80.5" rx="17.25" fill="#151D2A"/>
+<rect x="330.75" y="630.75" width="618.5" height="80.5" rx="17.25" stroke="#43C7E8" stroke-width="1.5"/>
+<g clip-path="url(#clip6_7_4)">
+<circle cx="369.5" cy="671" r="17" fill="#43C7E8" fill-opacity="0.16" stroke="#43C7E8" stroke-width="2"/>
+<path d="M363.5 666.5L365 668L368 665M363.5 671L365 672.5L368 669.5M363.5 675.5L365 677L368 674M370.25 667.25H375.5M370.25 671.75H375.5M370.25 676.25H375.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_7_4)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="403.5" y="667.773">&#x412;&#x430;&#x43b;&#x438;&#x434;&#x430;&#x446;&#x438;&#x44f; &#x2192; &#x420;&#x435;&#x432;&#x44c;&#x44e; &#x2192; Evidence</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="403.5" y="690.091">&#x43f;&#x440;&#x43e;&#x432;&#x435;&#x440;&#x435;&#x43d;&#x43d;&#x44b;&#x439; &#x440;&#x435;&#x437;&#x443;&#x43b;&#x44c;&#x442;&#x430;&#x442; &#x438;&#x43d;&#x436;&#x435;&#x43d;&#x435;&#x440;&#x43d;&#x43e;&#x439; &#x440;&#x430;&#x431;&#x43e;&#x442;&#x44b;</tspan></text>
+</g>
+<g clip-path="url(#clip8_7_4)">
+<path d="M641.5 242V309M647.5 303L641.5 309L635.5 303" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_7_4)">
+<path d="M641.5 402V469M647.5 463L641.5 469L635.5 463" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_7_4)">
+<path d="M641.5 562V629M647.5 623L641.5 629L635.5 623" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<rect x="478.5" y="254" width="323" height="29" rx="7.5" fill="#0E1420" fill-opacity="0.98"/>
+<rect x="478.5" y="254" width="323" height="29" rx="7.5" stroke="#27364A"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" font-weight="500" letter-spacing="0em"><tspan x="489.114" y="273.955">&#x43e;&#x431;&#x44a;&#x435;&#x434;&#x438;&#x43d;&#x44f;&#x435;&#x442;&#x441;&#x44f; &#x441; &#x43a;&#x43e;&#x43d;&#x444;&#x438;&#x433;&#x443;&#x440;&#x430;&#x446;&#x438;&#x435;&#x439; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x430;</tspan></text>
+<rect x="495.5" y="414" width="289" height="29" rx="7.5" fill="#0E1420" fill-opacity="0.98"/>
+<rect x="495.5" y="414" width="289" height="29" rx="7.5" stroke="#27364A"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="15" font-weight="500" letter-spacing="0em"><tspan x="506.165" y="433.955">&#x441;&#x43e;&#x437;&#x434;&#x430;&#x451;&#x442; &#x438;&#x43d;&#x441;&#x442;&#x440;&#x443;&#x43a;&#x446;&#x438;&#x438; &#x434;&#x43b;&#x44f; AI-&#x43a;&#x43b;&#x438;&#x435;&#x43d;&#x442;&#x430;</tspan></text>
+<defs>
+<clipPath id="clip0_7_4">
+<rect width="36" height="36" fill="white" transform="translate(351.5 178)"/>
+</clipPath>
+<clipPath id="clip1_7_4">
+<rect width="525" height="45" fill="white" transform="translate(403.5 173.5)"/>
+</clipPath>
+<clipPath id="clip2_7_4">
+<rect width="36" height="36" fill="white" transform="translate(351.5 338)"/>
+</clipPath>
+<clipPath id="clip3_7_4">
+<rect width="525" height="45" fill="white" transform="translate(403.5 333.5)"/>
+</clipPath>
+<clipPath id="clip4_7_4">
+<rect width="36" height="36" fill="white" transform="translate(351.5 498)"/>
+</clipPath>
+<clipPath id="clip5_7_4">
+<rect width="525" height="45" fill="white" transform="translate(403.5 493.5)"/>
+</clipPath>
+<clipPath id="clip6_7_4">
+<rect width="36" height="36" fill="white" transform="translate(351.5 653)"/>
+</clipPath>
+<clipPath id="clip7_7_4">
+<rect width="525" height="45" fill="white" transform="translate(403.5 648.5)"/>
+</clipPath>
+<clipPath id="clip8_7_4">
+<rect width="16" height="68" fill="white" transform="translate(633.5 242)"/>
+</clipPath>
+<clipPath id="clip9_7_4">
+<rect width="16" height="68" fill="white" transform="translate(633.5 402)"/>
+</clipPath>
+<clipPath id="clip10_7_4">
+<rect width="16" height="68" fill="white" transform="translate(633.5 562)"/>
+</clipPath>
+</defs>
+</svg>
