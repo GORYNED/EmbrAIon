@@ -64,20 +64,6 @@ embraion projection diff --host codex --destination .
 
 ## What a normal task looks like
 
-```text
-user goal
-   ↓
-AI host + projected EmbrAIon roles/skills
-   ↓
-project knowledge + policy
-   ↓
-implementation
-   ↓
-project validation
-   ↓
-review
-   ↓
-human merge decision
-```
+![Your first AI task](../assets/diagrams/en/08-first-ai-task.svg){ loading=lazy }
 
 For a practical recurring routine, continue with [Daily Workflow](../guides/daily-workflow.md).

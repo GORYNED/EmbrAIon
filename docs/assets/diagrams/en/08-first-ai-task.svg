@@ -1,0 +1,137 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Your first AI task</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">From a concrete user goal to a reviewed, validated change</tspan></text>
+<rect x="340.75" y="145.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="145.75" width="598.5" height="70.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip0_37_2)">
+<circle cx="379.5" cy="181" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M379.5 187C382.814 187 385.5 184.314 385.5 181C385.5 177.686 382.814 175 379.5 175C376.186 175 373.5 177.686 373.5 181C373.5 184.314 376.186 187 379.5 187Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M379.5 184C381.157 184 382.5 182.657 382.5 181C382.5 179.343 381.157 178 379.5 178C377.843 178 376.5 179.343 376.5 181C376.5 182.657 377.843 184 379.5 184Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M379.5 181.75C379.914 181.75 380.25 181.414 380.25 181C380.25 180.586 379.914 180.25 379.5 180.25C379.086 180.25 378.75 180.586 378.75 181C378.75 181.414 379.086 181.75 379.5 181.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="177.773">User goal</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="200.091">specific bounded task</tspan></text>
+</g>
+<rect x="340.75" y="241.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="241.75" width="598.5" height="70.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip2_37_2)">
+<circle cx="379.5" cy="277" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M379.5 270.25L380.475 273.025L383.25 274L380.475 274.975L379.5 277.75L378.525 274.975L375.75 274L378.525 273.025L379.5 270.25ZM374.25 278.5L374.85 280.15L376.5 280.75L374.85 281.35L374.25 283L373.65 281.35L372 280.75L373.65 280.15L374.25 278.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="273.773">AI client + EmbrAIon</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="296.091">projected roles, skills, and policy</tspan></text>
+</g>
+<rect x="340.75" y="337.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="337.75" width="598.5" height="70.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip4_37_2)">
+<circle cx="379.5" cy="373" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M379.5 366.25H375.75C375.263 366.223 374.78 366.354 374.375 366.624C373.969 366.895 373.662 367.29 373.5 367.75V380.5C373.662 380.04 373.969 379.645 374.375 379.374C374.78 379.104 375.263 378.973 375.75 379H379.5M379.5 366.25V379M379.5 366.25H383.25C383.737 366.223 384.22 366.354 384.625 366.624C385.031 366.895 385.338 367.29 385.5 367.75V380.5C385.338 380.04 385.031 379.645 384.625 379.374C384.22 379.104 383.737 378.973 383.25 379H379.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="369.773">Project context</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="392.091">knowledge + canonical configuration</tspan></text>
+</g>
+<rect x="340.75" y="433.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="433.75" width="598.5" height="70.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip6_37_2)">
+<circle cx="379.5" cy="469" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M376.5 466L373.5 469L376.5 472M382.5 466L385.5 469L382.5 472M381 463.75L378 474.25" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="465.773">Implementation</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="488.091">AI changes the repository</tspan></text>
+</g>
+<rect x="340.75" y="529.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="529.75" width="598.5" height="70.5" rx="17.25" stroke="#43C7E8" stroke-width="1.5"/>
+<g clip-path="url(#clip8_37_2)">
+<circle cx="379.5" cy="565" r="17" fill="#43C7E8" fill-opacity="0.16" stroke="#43C7E8" stroke-width="2"/>
+<path d="M376.5 565L378.375 566.875L382.5 562.75M379.5 571.75C380.386 571.75 381.264 571.575 382.083 571.236C382.902 570.897 383.646 570.4 384.273 569.773C384.9 569.146 385.397 568.402 385.736 567.583C386.075 566.764 386.25 565.886 386.25 565C386.25 564.114 386.075 563.236 385.736 562.417C385.397 561.598 384.9 560.854 384.273 560.227C383.646 559.6 382.902 559.103 382.083 558.764C381.264 558.425 380.386 558.25 379.5 558.25C377.71 558.25 375.993 558.961 374.727 560.227C373.461 561.493 372.75 563.21 372.75 565C372.75 566.79 373.461 568.507 374.727 569.773C375.993 571.039 377.71 571.75 379.5 571.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="561.773">Validation</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="584.091">run affected/full profile</tspan></text>
+</g>
+<rect x="340.75" y="625.75" width="598.5" height="70.5" rx="17.25" fill="#151D2A"/>
+<rect x="340.75" y="625.75" width="598.5" height="70.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip10_37_2)">
+<circle cx="379.5" cy="661" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M372 661C372 661 374.625 656.5 379.5 656.5C384.375 656.5 387 661 387 661C387 661 384.375 665.5 379.5 665.5C374.625 665.5 372 661 372 661Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M379.5 662.875C380.536 662.875 381.375 662.036 381.375 661C381.375 659.964 380.536 659.125 379.5 659.125C378.464 659.125 377.625 659.964 377.625 661C377.625 662.036 378.464 662.875 379.5 662.875Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip11_37_2)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="413.5" y="657.773">Review &#38; finish</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="413.5" y="680.091">inspect evidence &#x2192; human merge decision</tspan></text>
+</g>
+<g clip-path="url(#clip12_37_2)">
+<path d="M640 217V240M646 234L640 240L634 234" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip13_37_2)">
+<path d="M640 313V336M646 330L640 336L634 330" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip14_37_2)">
+<path d="M640 409V432M646 426L640 432L634 426" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip15_37_2)">
+<path d="M640 505V528M646 522L640 528L634 522" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip16_37_2)">
+<path d="M640 601V624M646 618L640 624L634 618" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 163)"/>
+</clipPath>
+<clipPath id="clip1_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 158.5)"/>
+</clipPath>
+<clipPath id="clip2_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 259)"/>
+</clipPath>
+<clipPath id="clip3_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 254.5)"/>
+</clipPath>
+<clipPath id="clip4_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 355)"/>
+</clipPath>
+<clipPath id="clip5_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 350.5)"/>
+</clipPath>
+<clipPath id="clip6_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 451)"/>
+</clipPath>
+<clipPath id="clip7_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 446.5)"/>
+</clipPath>
+<clipPath id="clip8_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 547)"/>
+</clipPath>
+<clipPath id="clip9_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 542.5)"/>
+</clipPath>
+<clipPath id="clip10_37_2">
+<rect width="36" height="36" fill="white" transform="translate(361.5 643)"/>
+</clipPath>
+<clipPath id="clip11_37_2">
+<rect width="505" height="45" fill="white" transform="translate(413.5 638.5)"/>
+</clipPath>
+<clipPath id="clip12_37_2">
+<rect width="16" height="24" fill="white" transform="translate(632 217)"/>
+</clipPath>
+<clipPath id="clip13_37_2">
+<rect width="16" height="24" fill="white" transform="translate(632 313)"/>
+</clipPath>
+<clipPath id="clip14_37_2">
+<rect width="16" height="24" fill="white" transform="translate(632 409)"/>
+</clipPath>
+<clipPath id="clip15_37_2">
+<rect width="16" height="24" fill="white" transform="translate(632 505)"/>
+</clipPath>
+<clipPath id="clip16_37_2">
+<rect width="16" height="24" fill="white" transform="translate(632 601)"/>
+</clipPath>
+</defs>
+</svg>

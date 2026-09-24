@@ -14,6 +14,8 @@ The easiest way to understand it is by **question**, not by schema:
 | Which commands prove a change works? | `validation.yaml` |
 | Does this project need domain-specific AI specialists? | `agents.yaml` |
 
+![Project configuration map](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
+
 ## Project-owned layout
 
 ```text

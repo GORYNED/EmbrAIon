@@ -66,41 +66,13 @@ Then continue with [Your First AI Task](getting-started/first-ai-task.md).
 
 ## How EmbrAIon fits into your project
 
-```text
-Installed EmbrAIon
-Core + CLI + schemas + tools
-          │
-          │ combines with project-specific configuration
-          ▼
-Your repository
-application code + knowledge + .embraion/
-          │
-          │ projects engineering instructions into
-          ▼
-Codex / Copilot / Claude Code
-          │
-          ▼
-AI works on your repository
-          │
-          ▼
-Validation → Review → Evidence
-```
+![How EmbrAIon fits into your project](assets/diagrams/en/01-how-embraion-fits.svg){ loading=lazy }
 
 EmbrAIon does **not** sit between your application and its runtime. It is used while the repository is being engineered. Your finished application, library, or game remains an ordinary product.
 
 ## What lives where
 
-```text
-INSTALLED EMBRAION                 YOUR REPOSITORY
-------------------                 ------------------------------
-Core roles and skills              application source code
-CLI                                tests and project files
-schemas and tools                  knowledge/
-                                   .embraion/       canonical config
-                                   .codex/          generated for Codex
-                                   .github/         Copilot / optional CI
-                                   .claude/         generated for Claude Code
-```
+![What lives where](assets/diagrams/en/02-what-lives-where.svg){ loading=lazy }
 
 EmbrAIon reads the project-owned `.embraion/` configuration and project knowledge, combines them with the reusable Core, and generates the host-specific files your AI client understands.
 
