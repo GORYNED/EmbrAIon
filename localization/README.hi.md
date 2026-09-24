@@ -166,11 +166,12 @@ embraion init
 ```text
 .embraion/
 ├── project.yaml
+├── knowledge.yaml
 ├── policy.yaml
 └── routing.yaml
 ```
 
-Project Overlay config को अलग files में रखता है: `project.yaml` version/identity के लिए, `policy.yaml` sources/review/privacy के लिए और `routing.yaml` model/effort overrides के लिए।
+Project Overlay config को अलग files में रखता है: `project.yaml` version/identity के लिए, `knowledge.yaml` project knowledge references के लिए, `policy.yaml` sources/review/privacy के लिए और `routing.yaml` model/effort overrides के लिए।
 
 ### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
 
