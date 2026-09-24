@@ -165,10 +165,12 @@ embraion init
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── policy.yaml
+└── routing.yaml
 ```
 
-Project Overlay (प्रोजेक्ट ओवरले) Git में घोषित EmbrAIon संस्करण और प्रोजेक्ट-विशिष्ट कॉन्फ़िगरेशन दर्ज करता है।
+Project Overlay config को अलग files में रखता है: `project.yaml` version/identity के लिए, `policy.yaml` sources/review/privacy के लिए और `routing.yaml` model/effort overrides के लिए।
 
 ### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
 

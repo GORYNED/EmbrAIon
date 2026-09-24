@@ -1,16 +1,34 @@
 # Project Overlay
 
-A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity, while dedicated configuration files own focused concerns.
+A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional host routing overrides.
 
-The overlay records:
+The project configuration currently records:
 
-- the declared EmbrAIon repository and framework version;
-- project identity;
-- project knowledge locations;
-- project-specific agents;
-- external or local capabilities;
+- `project.yaml` — declared EmbrAIon repository/version, project identity, project knowledge locations, validation profiles, project-specific agents, and local capabilities;
+- `policy.yaml` — canonical/protected/generated/external source patterns, substantial-review policy, and default privacy class;
+- `routing.yaml` — optional host model/effort/options overrides;
 
-Project overlays may add stricter rules but must not silently weaken Core hard gates.
+Project configuration may add stricter rules but must not silently weaken Core hard gates.
+
+## Project policy
+
+Project safety policy lives in `.embraion/policy.yaml`:
+
+```yaml
+sources:
+  canonical: []
+  protected: []
+  generated: []
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE
+```
+
+This file is the project-owned source for source classification boundaries, substantial-review requirements, and the default data class.
 
 ## Routing configuration
 

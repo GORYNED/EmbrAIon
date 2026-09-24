@@ -182,10 +182,11 @@ This creates:
 ```text
 .embraion/
 ├── project.yaml
+├── policy.yaml
 └── routing.yaml
 ```
 
-The Project Overlay records the EmbrAIon repository/version declaration and project-specific configuration in version control.
+The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional model/effort/options overrides.
 
 ### Install a host projection
 
@@ -364,7 +365,7 @@ embraion session show
 embraion session set --state review --validation passed
 ```
 
-The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/project.yaml` may optionally override host model selection.
+The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/routing.yaml` may optionally override host model selection.
 
 ### Security
 
@@ -510,4 +511,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 13:40 UTC</sub>
+<sub>Last updated: 2026-09-24 15:45 UTC</sub>

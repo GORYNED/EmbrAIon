@@ -152,10 +152,12 @@ embraion init
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── policy.yaml
+└── routing.yaml
 ```
 
-Project Overlay（项目叠加层）会把声明的 EmbrAIon 版本和项目专用配置记录在 Git 中。
+Project Overlay 将配置拆分到专用文件：`project.yaml` 保存版本和项目身份，`policy.yaml` 保存 sources/review/privacy，`routing.yaml` 保存 model/effort override。
 
 ### 安装所需客户端的 Adapter（适配器）表示
 

@@ -165,10 +165,12 @@ Se crea:
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── policy.yaml
+└── routing.yaml
 ```
 
-El Project Overlay (Capa del proyecto) conserva en Git la versión declarada de EmbrAIon y la configuración específica del proyecto.
+Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión e identidad, `policy.yaml` para sources/review/privacy y `routing.yaml` para overrides de model/effort.
 
 ### Instalar la representación para un cliente
 
