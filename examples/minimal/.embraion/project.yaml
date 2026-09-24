@@ -5,9 +5,6 @@ framework:
 project:
   name: MinimalReference
 
-knowledge:
-  project: knowledge/project.md
-
 validation:
   profiles:
     fast: []
