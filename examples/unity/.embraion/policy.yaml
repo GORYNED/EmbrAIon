@@ -13,3 +13,8 @@ review:
 
 privacy:
   default-class: PRIVATE
+
+enforcement:
+  enabled: false
+  validation-profile: affected
+  require-review: false

@@ -6,7 +6,8 @@
   "required": [
     "sources",
     "review",
-    "privacy"
+    "privacy",
+    "enforcement"
   ],
   "properties": {
     "sources": {
@@ -57,6 +58,27 @@
             "PRIVATE",
             "CONFIDENTIAL"
           ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "enforcement": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "validation-profile",
+        "require-review"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "validation-profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "require-review": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false

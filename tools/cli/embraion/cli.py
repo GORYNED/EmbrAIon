@@ -10,6 +10,11 @@ from . import __version__
 from .common import find_project_root, framework_root, project_root
 from .context import build_context, read_context
 from .evidence import complete_run, read_run, start_run
+from .enforcement import (
+    check_enforcement,
+    enforcement_status,
+    install_enforcement_surface,
+)
 from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
@@ -80,6 +85,7 @@ def _print_main_help(file: object | None = None) -> None:
         "",
         "Engineering controls",
         "  validation Run project validation profiles and record evidence",
+        "  enforcement Check or explicitly install project enforcement gates",
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
@@ -460,6 +466,65 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
             print(f"Attached run: {record['run-id']}")
 
     return 1 if record["status"] == "failed" else 0
+
+
+def _cmd_enforcement_status(args: argparse.Namespace) -> int:
+    report = enforcement_status()
+    if args.json:
+        _print_json(report)
+    else:
+        policy = report["policy"]
+        surface = report["surfaces"]["github-actions"]
+        print("EmbrAIon Enforcement")
+        print()
+        print(f"Enabled: {policy['enabled']}")
+        print(f"Validation profile: {policy['validation-profile']}")
+        print(f"Review required: {policy['require-review']}")
+        print(
+            "GitHub Actions gate: "
+            + ("present" if surface["present"] else "not installed")
+        )
+    return 0
+
+
+def _cmd_enforcement_check(args: argparse.Namespace) -> int:
+    record = check_enforcement(
+        base_ref=args.base_ref,
+        run_id=args.run_id,
+        external_review_gate=args.external_review_gate,
+    )
+    if args.json:
+        _print_json(record)
+    else:
+        print("EmbrAIon Enforcement Check")
+        print()
+        print(f"Base ref: {record['base-ref']}")
+        print(f"Changed paths: {len(record['changed-paths'])}")
+        for item in record["checks"]:
+            print(f"{item['id']}: {item['status']}")
+            for path in item.get("changed-paths") or []:
+                print(f"  {path}")
+        print(f"Evidence: {record['evidence-path']}")
+        print("PASS" if record["passed"] else "FAIL")
+    return 0 if record["passed"] else 1
+
+
+def _cmd_enforcement_install(args: argparse.Namespace) -> int:
+    report = install_enforcement_surface(
+        surface=args.surface,
+        validation_profile=args.validation_profile,
+        require_review=args.require_review,
+        force=args.force,
+    )
+    if args.json:
+        _print_json(report)
+    else:
+        print(f"Installed enforcement surface: {report['surface']}")
+        print(f"Path: {report['path']}")
+        print(f"Validation profile: {report['validation-profile']}")
+        print(f"Review required: {report['require-review']}")
+        print(report["note"])
+    return 0
 
 
 def _cmd_security_scan(args: argparse.Namespace) -> int:
@@ -1197,6 +1262,64 @@ def build_parser() -> argparse.ArgumentParser:
     session_set.add_argument("--validation")
     session_set.add_argument("--review")
     session_set.set_defaults(func=_cmd_session_set)
+
+    enforcement = sub.add_parser(
+        "enforcement",
+        help="Check or install explicit enforcement gates",
+        description=(
+            "Evaluate project enforcement policy or explicitly install an "
+            "opt-in CI enforcement surface."
+        ),
+    )
+    enforcement_sub = enforcement.add_subparsers(
+        dest="enforcement-command",
+        required=True,
+    )
+
+    enforcement_status_parser = enforcement_sub.add_parser(
+        "status",
+        help="Show enforcement policy and installed surfaces",
+    )
+    enforcement_status_parser.add_argument("--json", action="store_true")
+    enforcement_status_parser.set_defaults(func=_cmd_enforcement_status)
+
+    enforcement_check_parser = enforcement_sub.add_parser(
+        "check",
+        help="Evaluate protected paths, validation, and review evidence",
+    )
+    enforcement_check_parser.add_argument("--base-ref", required=True)
+    enforcement_check_parser.add_argument("--run-id")
+    enforcement_check_parser.add_argument(
+        "--external-review-gate",
+        action="store_true",
+        help=(
+            "Delegate required review enforcement to an explicit external "
+            "surface such as the generated GitHub Actions approval gate."
+        ),
+    )
+    enforcement_check_parser.add_argument("--json", action="store_true")
+    enforcement_check_parser.set_defaults(func=_cmd_enforcement_check)
+
+    enforcement_install_parser = enforcement_sub.add_parser(
+        "install",
+        help="Explicitly install an enforcement surface",
+    )
+    enforcement_install_parser.add_argument(
+        "--surface",
+        required=True,
+        choices=["github-actions"],
+    )
+    enforcement_install_parser.add_argument(
+        "--validation-profile",
+        default="affected",
+    )
+    enforcement_install_parser.add_argument(
+        "--require-review",
+        action="store_true",
+    )
+    enforcement_install_parser.add_argument("--force", action="store_true")
+    enforcement_install_parser.add_argument("--json", action="store_true")
+    enforcement_install_parser.set_defaults(func=_cmd_enforcement_install)
 
     security = sub.add_parser("security", help="Run security checks", description="Scan files for likely secrets and policy drift.")
     security_sub = security.add_subparsers(
