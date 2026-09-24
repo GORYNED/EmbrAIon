@@ -1,20 +1,19 @@
 # Project Overlay (प्रोजेक्ट ओवरले)
 
-EmbrAIon उपयोग करने वाली रिपॉजिटरी `.embraion/project.yaml` के माध्यम से स्पष्ट रूप से सिस्टम से जुड़ती है।
+EmbrAIon उपयोग करने वाली रिपॉजिटरी अपनी configuration `.embraion/` में रखती है।
 
-प्रोजेक्ट ओवरले दर्ज करता है:
+फ़ाइलों की जिम्मेदारी:
 
-- घोषित EmbrAIon रिपॉजिटरी और सिस्टम संस्करण;
-- प्रोजेक्ट की पहचान;
-- प्रोजेक्ट ज्ञान का स्थान;
-- प्रोजेक्ट-विशिष्ट Agent (एजेंट);
-- बाहरी क्षमताएँ।
+- `project.yaml` — EmbrAIon repository/version, project identity और `capabilities`;
+- `knowledge.yaml` — project knowledge references और context-selection metadata;
+- `policy.yaml` — source classes, review policy और privacy;
+- `routing.yaml` — optional model/effort/options overrides;
+- `validation.yaml` — validation profiles;
+- `agents.yaml` — project-specific agents.
 
 प्रोजेक्ट ओवरले अधिक कठोर नियम जोड़ सकता है, लेकिन Core की अनिवार्य सीमाओं को चुपचाप कमज़ोर नहीं कर सकता।
 
 ## स्वचालित संस्करण चयन
-
-सार्वजनिक `v0.1.0` रिलीज़ प्रोजेक्ट संस्करण दर्ज करता है, लेकिन उसे अभी अपने आप resolve नहीं करता। वर्तमान `main` में अगले रिलीज़ के लिए resolver लागू है।
 
 सामान्य कमांड के लिए वैश्विक launcher निकटतम `.embraion/project.yaml` खोजता है, `framework.version` पढ़ता है और अपनी संस्करण संख्या से तुलना करता है। अंतर होने पर EmbrAIon `~/.embraion/versions/<version>/` में अलग runtime तैयार करता है और PyPI से ठीक `embraion==<version>` वितरण स्थापित करता है।
 
@@ -22,12 +21,10 @@ EmbrAIon उपयोग करने वाली रिपॉजिटरी `
 
 `embraion init` और `embraion update` जानबूझकर project runtime delegation को छोड़ते हैं:
 
-- `init` नए Project Overlay में वैश्विक launcher संस्करण लिखता है;
-- `update` केवल वर्तमान रिपॉजिटरी का pin बदलता है;
-- `--framework-version` से किसी खास प्रकाशित संस्करण को स्पष्ट रूप से चुना जा सकता है।
+- `init` modular configuration बनाता है और global launcher version लिखता है;
+- `update` केवल वर्तमान repository का pin बदलता है;
+- `--framework-version` से किसी खास प्रकाशित version को स्पष्ट रूप से चुना जा सकता है।
 
-पहले रिलीज़ द्वारा लिखा गया पुराना `0.1.0-dev` pin अपने आप प्रकाशित `0.1.0` वितरण से जोड़ा जाता है।
-
-`EMBRAION_HOME` विकास के लिए स्पष्ट override है और उस प्रक्रिया में स्वचालित संस्करण delegation बंद करता है।
+`EMBRAION_HOME` विकास के लिए स्पष्ट override है और उस process में automatic version delegation बंद करता है।
 
 प्रोजेक्ट रिपॉजिटरी स्वयं उत्पाद विनिर्देशन, वास्तुकला, संगतता अनुबंध, सत्यापन प्रमाण और डोमेन ज्ञान का मानक स्रोत बनी रहती है।

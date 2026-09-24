@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/validation.schema.json",
+  "title": "EmbrAIon Project Validation",
+  "type": "object",
+  "required": [
+    "profiles"
+  ],
+  "properties": {
+    "profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

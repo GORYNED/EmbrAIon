@@ -1,38 +1,100 @@
 # Project Overlay
 
-A consuming repository opts into EmbrAIon through `.embraion/project.yaml`.
+A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity plus `capabilities`; dedicated files own knowledge, policy, routing, validation, and project-specific agents.
 
-The overlay records:
+The project configuration currently records:
 
-- the declared EmbrAIon repository and framework version;
-- project identity;
-- project knowledge locations;
-- project-specific agents;
-- external or local capabilities;
-- optional host routing overrides.
+- `project.yaml` — declared EmbrAIon repository/version, project identity, and local capabilities;
+- `knowledge.yaml` — project knowledge paths plus optional data class, trust, role, and trigger metadata;
+- `policy.yaml` — canonical/protected/generated/external source patterns, substantial-review policy, and default privacy class;
+- `routing.yaml` — optional host model/effort/options overrides;
+- `validation.yaml` — project validation profiles;
+- `agents.yaml` — project-specific agent declarations;
 
-Project overlays may add stricter rules but must not silently weaken Core hard gates.
+Project configuration may add stricter rules but must not silently weaken Core hard gates.
 
-## Model-agnostic routing overrides
+For the complete customization guide, see [Configuration](configuration/index.md) and [Project configuration files](configuration/project-files.md).
 
-EmbrAIon does not require a model catalog in the project. Without an override, a route uses the selected host's default/automatic model policy.
+## Project knowledge
 
-When a user wants explicit routing, their AI client can edit only the relevant override:
+Project knowledge references live in `.embraion/knowledge.yaml`:
 
 ```yaml
-routing:
-  overrides:
-    codex:
-      routes:
-        complex:
-          model: any-host-model-selector
-          effort: high
-      roles:
-        reviewer:
-          model: any-review-model-selector
+project: knowledge/project.md
+architecture:
+  path: knowledge/architecture.md
+  data-class: PRIVATE
+  trust: project
+  roles:
+    - architect
+  triggers:
+    - architecture
+```
+
+Context selection reads only this dedicated file. Knowledge content itself remains in ordinary project files; EmbrAIon stores references and selection metadata here.
+
+## Project policy
+
+Project safety policy lives in `.embraion/policy.yaml`:
+
+```yaml
+sources:
+  canonical: []
+  protected: []
+  generated: []
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE
+```
+
+This file is the project-owned source for source classification boundaries, substantial-review requirements, and the default data class.
+
+## Routing configuration
+
+Model-agnostic routing overrides live in `.embraion/routing.yaml`, separate from project identity and the remaining project policy. EmbrAIon does not require a model catalog. Without an override, a route uses the selected host's default/automatic model policy.
+
+When a user wants explicit routing, their AI client edits the dedicated routing file:
+
+```yaml
+overrides:
+  codex:
+    routes:
+      complex:
+        model: any-host-model-selector
+        effort: high
+    roles:
+      reviewer:
+        model: any-review-model-selector
 ```
 
 Selectors are opaque host-owned strings. Role overrides are applied over route overrides. These settings affect model selection only; they cannot expand privacy, access, protected-source, validation, or review permissions.
+
+## Validation configuration
+
+Project validation profiles live in `.embraion/validation.yaml`:
+
+```yaml
+profiles:
+  fast: []
+  affected: []
+  full: []
+```
+
+These profiles feed the effective project policy and CLI validation workflow.
+
+## Project agents
+
+Project-specific agent declarations live in `.embraion/agents.yaml`:
+
+```yaml
+agents: []
+```
+
+This keeps project agent declarations separate from the framework's canonical agents in `core/agents/`. The current project-agent contract remains intentionally minimal.
 
 ## Version pinning and resolution
 

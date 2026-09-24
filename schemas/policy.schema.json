@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/policy.schema.json",
+  "title": "EmbrAIon Project Policy",
+  "type": "object",
+  "required": [
+    "sources",
+    "review",
+    "privacy"
+  ],
+  "properties": {
+    "sources": {
+      "type": "object",
+      "required": [
+        "canonical",
+        "protected",
+        "generated",
+        "external"
+      ],
+      "properties": {
+        "canonical": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "protected": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "generated": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "external": {
+          "$ref": "#/$defs/pathPatterns"
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "substantial-required"
+      ],
+      "properties": {
+        "substantial-required": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "default-class"
+      ],
+      "properties": {
+        "default-class": {
+          "enum": [
+            "PUBLIC",
+            "PRIVATE",
+            "CONFIDENTIAL"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "pathPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

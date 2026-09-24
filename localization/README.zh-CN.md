@@ -33,7 +33,7 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 
 `core/catalog.yaml` 是能力发现索引。系统无需为每个任务加载整个 EmbrAIon，而是只加载与当前工作相关的规则、角色、技能和工作流。
 
-EmbrAIon 完全与具体模型无关，不维护规范模型列表。默认情况下，AI host 使用自己的默认/自动模型选择。如果需要 override，用户可以直接要求仓库中的 AI 根据当前可用模型配置 EmbrAIon；安装的 `routing-configuration` skill 只会把设置写入 `.embraion/project.yaml` → `routing.overrides`。
+EmbrAIon 完全与具体模型无关，不维护规范模型列表。默认情况下，AI host 使用自己的默认/自动模型选择。如果需要 override，用户可以直接要求仓库中的 AI 根据当前可用模型配置 EmbrAIon；安装的 `routing-configuration` skill 只会把设置写入 `.embraion/routing.yaml` → `overrides`。
 
 ## 运行层
 
@@ -152,10 +152,15 @@ embraion init
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-Project Overlay（项目叠加层）会把声明的 EmbrAIon 版本和项目专用配置记录在 Git 中。
+Project Overlay 将配置拆分到专用文件：`project.yaml` 保存版本、项目身份和 `capabilities`，`knowledge.yaml` 保存 project knowledge 引用，`policy.yaml` 保存 sources/review/privacy，`routing.yaml` 保存 model/effort override，`validation.yaml` 保存 validation profiles，`agents.yaml` 保存 project-specific agents。
 
 ### 安装所需客户端的 Adapter（适配器）表示
 

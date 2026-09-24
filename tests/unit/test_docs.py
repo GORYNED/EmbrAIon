@@ -63,6 +63,9 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("index.md", targets)
         self.assertIn("reference/cli.md", targets)
         self.assertIn("examples/unity.md", targets)
+        self.assertIn("configuration/index.md", targets)
+        self.assertIn("configuration/project-files.md", targets)
+        self.assertIn("configuration/ai-hosts.md", targets)
         self.assertIn("oss/security-reporting.md", targets)
 
         for target in targets:
@@ -72,7 +75,7 @@ class DocumentationTests(unittest.TestCase):
                 self.assertTrue((DOCS / target).is_file())
 
     def test_internal_markdown_links_resolve(self) -> None:
-        link_pattern = re.compile(r"!?[[^]]*](([^)]+))")
+        link_pattern = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
         for path in DOCS.rglob("*.md"):
             text = path.read_text(encoding="utf-8")

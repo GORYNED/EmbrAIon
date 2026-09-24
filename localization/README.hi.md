@@ -55,7 +55,7 @@ EmbrAIon तीन मानक डेटा वर्ग उपयोग कर
 - **[Portable](../adapters/portable/)** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
 - **[API प्रदाता](../adapters/providers/)** — optional provider/transport surfaces, बिना किसी global EmbrAIon model catalog के।
 
-EmbrAIon पूरी तरह model-agnostic है और canonical model list नहीं रखता। Default रूप से AI host अपनी automatic/default selection उपयोग करता है। Override चाहिए तो user repository में काम कर रहे AI से उपलब्ध models के अनुसार EmbrAIon configure करने के लिए कह सकता है; `routing-configuration` skill केवल `.embraion/project.yaml` → `routing.overrides` बदलती है।
+EmbrAIon पूरी तरह model-agnostic है और canonical model list नहीं रखता। Default रूप से AI host अपनी automatic/default selection उपयोग करता है। Override चाहिए तो user repository में काम कर रहे AI से उपलब्ध models के अनुसार EmbrAIon configure करने के लिए कह सकता है; `routing-configuration` skill केवल `.embraion/routing.yaml` → `overrides` बदलती है।
 
 ## स्थापना
 
@@ -165,10 +165,15 @@ embraion init
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-Project Overlay (प्रोजेक्ट ओवरले) Git में घोषित EmbrAIon संस्करण और प्रोजेक्ट-विशिष्ट कॉन्फ़िगरेशन दर्ज करता है।
+Project Overlay config को अलग files में रखता है: `project.yaml` version/identity और `capabilities` के लिए, `knowledge.yaml` project knowledge references के लिए, `policy.yaml` sources/review/privacy के लिए, `routing.yaml` model/effort overrides के लिए, `validation.yaml` validation profiles के लिए और `agents.yaml` project-specific agents के लिए।
 
 ### आवश्यक क्लाइंट के लिए प्रस्तुति स्थापित करें
 

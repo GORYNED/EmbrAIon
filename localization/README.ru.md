@@ -57,7 +57,7 @@ EmbrAIon использует три канонических класса да�
 - **[Portable](../adapters/portable/)** — переносимый пакет возможностей, не привязанный к конкретному AI-клиенту.
 - **[Providers (Провайдеры)](../adapters/providers/)** — необязательные provider/transport integration surfaces без общего каталога моделей EmbrAIon.
 
-EmbrAIon полностью агностичен к моделям и не хранит канонический список моделей. По умолчанию AI-клиент использует собственный default/automatic выбор. Если нужен override, пользователь может просто попросить ИИ в репозитории настроить EmbrAIon под доступные ему модели; установленный skill `routing-configuration` запишет настройки только в `.embraion/project.yaml` → `routing.overrides`.
+EmbrAIon полностью агностичен к моделям и не хранит канонический список моделей. По умолчанию AI-клиент использует собственный default/automatic выбор. Если нужен override, пользователь может просто попросить ИИ в репозитории настроить EmbrAIon под доступные ему модели; установленный skill `routing-configuration` запишет настройки только в `.embraion/routing.yaml` → `overrides`.
 
 ## Установка
 
@@ -167,10 +167,15 @@ embraion init
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-Project Overlay (Проектный слой) хранит в Git объявленную версию EmbrAIon и проектные настройки.
+Project Overlay (Проектный слой) хранит конфигурацию в отдельных файлах: `project.yaml` — версия, идентичность и `capabilities`, `knowledge.yaml` — ссылки на project knowledge, `policy.yaml` — sources/review/privacy, `routing.yaml` — model/effort overrides, `validation.yaml` — validation profiles, `agents.yaml` — project-specific agents.
 
 ### Установить представление для нужного клиента
 

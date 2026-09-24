@@ -1,0 +1,15 @@
+sources:
+  canonical:
+    - Assets/**
+    - Packages/**
+    - ProjectSettings/**
+    - knowledge/**
+  protected: []
+  generated: []
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE

@@ -66,7 +66,7 @@ EmbrAIon does **not** ship or maintain a canonical list of AI models. Model avai
 
 With no project override, the selected host uses its own default or automatic model policy. If you want explicit model routing, ask the AI already working in your repository to configure it for you. For example:
 
-> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/routing.yaml` under `overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
 
 The installed EmbrAIon host projection includes a `routing-configuration` skill that tells the AI exactly where and how to make that change. The project stores only its own overrides; EmbrAIon itself remains independent of individual model names.
 
@@ -181,10 +181,17 @@ This creates:
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-The Project Overlay records the EmbrAIon repository/version declaration and project-specific configuration in version control.
+The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity plus `capabilities`, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, `routing.yaml` owns optional model/effort/options overrides, `validation.yaml` owns validation profiles, and `agents.yaml` owns project-specific agent declarations.
+
+See the **[Configuration guide](docs/configuration/index.md)** for the complete template, every `.embraion/` file, and Codex/Copilot/Claude Code customization examples.
 
 ### Install a host projection
 
@@ -363,7 +370,7 @@ embraion session show
 embraion session set --state review --validation passed
 ```
 
-The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/project.yaml` may optionally override host model selection.
+The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/routing.yaml` may optionally override host model selection.
 
 ### Security
 
@@ -509,4 +516,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 13:40 UTC</sub>
+<sub>Last updated: 2026-09-24 16:25 UTC</sub>

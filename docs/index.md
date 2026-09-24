@@ -6,7 +6,7 @@
 
 **EmbrAIon** is a portable **AI-First Engineering System** for making AI-assisted software development structured, reusable, reviewable, and trustworthy.
 
-It does not replace your application runtime. It sits around the engineering process: roles, skills, project knowledge, routing, permissions, validation, and host-specific projections. It is model-agnostic: the AI host owns model availability, while a project may optionally override model selection in `.embraion/project.yaml`.
+It does not replace your application runtime. It sits around the engineering process: roles, skills, project knowledge, routing, permissions, validation, and host-specific projections. It is model-agnostic: the AI host owns model availability, while a project may optionally override model selection in `.embraion/routing.yaml`.
 
 </div>
 
@@ -116,14 +116,19 @@ embraion status
 
 The project now has a pinned EmbrAIon version plus a generated host projection.
 
-If you want to override model selection, ask the AI in that project to configure EmbrAIon routing. The installed `routing-configuration` skill directs it to `.embraion/project.yaml` → `routing.overrides`; otherwise the host keeps its own default/automatic model policy.
+If you want to override model selection, ask the AI in that project to configure EmbrAIon routing. The installed `routing-configuration` skill directs it to `.embraion/routing.yaml` → `overrides`; otherwise the host keeps its own default/automatic model policy.
 
 ## What EmbrAIon owns
 
 | Area | Purpose |
 | --- | --- |
 | Core | Canonical reusable rules, roles, skills, workflows, routing, and knowledge |
-| Project overlay | Project identity, version pin, domain knowledge, local capabilities, optional model-routing overrides |
+| Project overlay | Project identity, version pin, and local capabilities |
+| Knowledge config | Project knowledge references and context-selection metadata in `.embraion/knowledge.yaml` |
+| Policy config | Sources, substantial-review policy, and default privacy in `.embraion/policy.yaml` |
+| Routing config | Optional project model/effort/options overrides in `.embraion/routing.yaml` |
+| Validation config | Fast/affected/full and custom validation profiles in `.embraion/validation.yaml` |
+| Agents config | Project-specific agent declarations in `.embraion/agents.yaml` |
 | Adapters | Codex, Copilot, Claude Code, Portable, and transport projections without a global model catalog |
 | Tools | Validation, security, worktrees, sessions, learning, evals, install/sync |
 | Evidence | Unit/integration tests, reference E2E, behavioral evals, release gates |

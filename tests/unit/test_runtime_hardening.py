@@ -26,22 +26,25 @@ class RuntimeHardeningTests(unittest.TestCase):
             (knowledge / "architecture.md").write_text("architecture", encoding="utf-8")
             (knowledge / "public.md").write_text("public", encoding="utf-8")
 
-            data = read_yaml(manifest)
-            data["knowledge"] = {
-                "architecture": {
-                    "path": "knowledge/architecture.md",
-                    "data-class": "PRIVATE",
-                    "trust": "project",
-                    "roles": ["architect"],
-                    "triggers": ["architecture"],
-                },
-                "public": {
-                    "path": "knowledge/public.md",
-                    "data-class": "PUBLIC",
-                    "trust": "project",
-                },
-            }
-            write_yaml(manifest, data)
+            knowledge_path = manifest.with_name("knowledge.yaml")
+            data = read_yaml(knowledge_path)
+            data.update(
+                {
+                    "architecture": {
+                        "path": "knowledge/architecture.md",
+                        "data-class": "PRIVATE",
+                        "trust": "project",
+                        "roles": ["architect"],
+                        "triggers": ["architecture"],
+                    },
+                    "public": {
+                        "path": "knowledge/public.md",
+                        "data-class": "PUBLIC",
+                        "trust": "project",
+                    },
+                }
+            )
+            write_yaml(knowledge_path, data)
 
             record = build_context(
                 "Review architecture boundaries",
@@ -71,9 +74,10 @@ class RuntimeHardeningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             manifest = init_project(project, name="Consumer")
-            data = read_yaml(manifest)
-            data["sources"]["protected"] = ["protected/**"]
-            write_yaml(manifest, data)
+            policy_path = manifest.with_name("policy.yaml")
+            policy_data = read_yaml(policy_path)
+            policy_data["sources"]["protected"] = ["protected/**"]
+            write_yaml(policy_path, policy_data)
 
             start_run(
                 "run-1",
@@ -176,8 +180,8 @@ class RuntimeHardeningTests(unittest.TestCase):
             )
             self.assertTrue(routing_skill.is_file())
             routing_text = routing_skill.read_text(encoding="utf-8")
-            self.assertIn(".embraion/project.yaml", routing_text)
-            self.assertIn("routing.overrides", routing_text)
+            self.assertIn(".embraion/routing.yaml", routing_text)
+            self.assertIn("overrides.<host>.routes", routing_text)
 
 
 if __name__ == "__main__":

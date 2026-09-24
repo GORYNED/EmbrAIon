@@ -5,38 +5,6 @@ framework:
 project:
   name: PythonReference
 
-knowledge:
-  project: knowledge/project.md
-  architecture: knowledge/architecture.md
-
-sources:
-  canonical:
-    - src/**
-    - knowledge/**
-  protected: []
-  generated: []
-  external: []
-
-validation:
-  profiles:
-    fast:
-      - python -m unittest discover -s tests -p test_*.py
-    affected:
-      - python -m unittest discover -s tests -p test_*.py
-    full:
-      - python -m unittest discover -s tests -p test_*.py
-
-review:
-  substantial-required: true
-
-privacy:
-  default-class: PRIVATE
-
-routing:
-  overrides: {}
-
-agents: []
-
 capabilities:
   validation:
     command: python -m unittest discover -s tests -p test_*.py

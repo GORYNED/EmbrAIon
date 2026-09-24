@@ -12,10 +12,15 @@ This creates:
 ```text
 .embraion/
 ├── .gitignore
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-The manifest records the current EmbrAIon version and project identity. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
+`project.yaml` records the current EmbrAIon version, project identity, and local capabilities. `knowledge.yaml` owns project knowledge references. `policy.yaml` owns sources/review/privacy policy. `routing.yaml` owns optional host model/effort/options overrides. `validation.yaml` owns validation profiles. `agents.yaml` owns project-specific agent declarations. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
 
 ## Inspect the project
 
@@ -51,7 +56,7 @@ The host projection also installs EmbrAIon Skills for that AI client, including 
 
 EmbrAIon is model-agnostic: if you are happy with the host's default/automatic model choice, configure nothing. If you want explicit model routing, tell the AI in the repository:
 
-> Configure EmbrAIon routing using the models available to you. Write any model/effort overrides only to `.embraion/project.yaml` under `routing.overrides`, and keep all privacy, access, validation, and review rules intact.
+> Configure EmbrAIon routing using the models available to you. Write any model/effort overrides only to `.embraion/routing.yaml` under `overrides`, and keep all privacy, access, validation, and review rules intact.
 
 The AI can then update the project overlay without requiring a framework model catalog.
 
@@ -76,12 +81,15 @@ knowledge/
 └── architecture.md
 ```
 
-Reference these files from `.embraion/project.yaml`:
+Reference these files from `.embraion/knowledge.yaml`:
 
 ```yaml
-knowledge:
-  project: knowledge/project.md
-  architecture: knowledge/architecture.md
+project: knowledge/project.md
+architecture: knowledge/architecture.md
 ```
 
 See [Project knowledge](../concepts/knowledge.md) and [Project overlay](../project-overlay.md).
+
+## Next
+
+[Customize EmbrAIon for your project](../configuration/index.md).

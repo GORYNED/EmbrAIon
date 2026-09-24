@@ -1,0 +1,13 @@
+sources:
+  canonical:
+    - src/**
+    - knowledge/**
+  protected: []
+  generated: []
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE

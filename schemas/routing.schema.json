@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/routing.schema.json",
+  "title": "EmbrAIon Project Routing",
+  "type": "object",
+  "required": [
+    "overrides"
+  ],
+  "properties": {
+    "overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/routingHostOverrides"
+      }
+    }
+  },
+  "$defs": {
+    "routingSelection": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effort": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "model"
+          ]
+        },
+        {
+          "required": [
+            "effort"
+          ]
+        },
+        {
+          "required": [
+            "options"
+          ]
+        }
+      ]
+    },
+    "routingHostOverrides": {
+      "type": "object",
+      "properties": {
+        "routes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/routingSelection"
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/routingSelection"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

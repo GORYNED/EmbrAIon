@@ -75,6 +75,10 @@ nav:
       - Installation: getting-started/installation.md
       - First project: getting-started/first-project.md
       - Updating: getting-started/updating.md
+  - Configuration:
+      - Overview: configuration/index.md
+      - Project files: configuration/project-files.md
+      - AI host examples: configuration/ai-hosts.md
   - Concepts:
       - Overview: concepts/index.md
       - System overview: overview.md

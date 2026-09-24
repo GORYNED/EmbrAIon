@@ -55,7 +55,7 @@ Una clasificación desconocida o ambigua produce una denegación segura. Elegir 
 - **[Portable](../adapters/portable/)** — paquete de capacidades portátil e independiente de un cliente de IA concreto.
 - **[Proveedores de API](../adapters/providers/)** — superficies opcionales de provider/transport sin un catálogo global de modelos de EmbrAIon.
 
-EmbrAIon es completamente agnóstico respecto a modelos y no mantiene una lista canónica. Por defecto, el cliente de IA usa su selección predeterminada/automática. Si se necesita un override, el usuario puede pedir a la IA del repositorio que configure EmbrAIon con los modelos disponibles; la skill `routing-configuration` escribe solo en `.embraion/project.yaml` → `routing.overrides`.
+EmbrAIon es completamente agnóstico respecto a modelos y no mantiene una lista canónica. Por defecto, el cliente de IA usa su selección predeterminada/automática. Si se necesita un override, el usuario puede pedir a la IA del repositorio que configure EmbrAIon con los modelos disponibles; la skill `routing-configuration` escribe solo en `.embraion/routing.yaml` → `overrides`.
 
 ## Instalación
 
@@ -165,10 +165,15 @@ Se crea:
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-El Project Overlay (Capa del proyecto) conserva en Git la versión declarada de EmbrAIon y la configuración específica del proyecto.
+Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión, identidad y `capabilities`, `knowledge.yaml` para referencias de project knowledge, `policy.yaml` para sources/review/privacy, `routing.yaml` para overrides de model/effort, `validation.yaml` para perfiles de validación y `agents.yaml` para agentes específicos del proyecto.
 
 ### Instalar la representación para un cliente
 

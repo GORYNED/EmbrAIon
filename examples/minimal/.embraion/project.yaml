@@ -5,32 +5,6 @@ framework:
 project:
   name: MinimalReference
 
-knowledge:
-  project: knowledge/project.md
-
-sources:
-  canonical: []
-  protected: []
-  generated: []
-  external: []
-
-validation:
-  profiles:
-    fast: []
-    affected: []
-    full: []
-
-review:
-  substantial-required: true
-
-privacy:
-  default-class: PRIVATE
-
-routing:
-  overrides: {}
-
-agents: []
-
 capabilities:
   reference:
     kind: minimal
