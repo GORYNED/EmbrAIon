@@ -320,13 +320,11 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
             projection_before = existing_projection.read_bytes()
 
-            target_version = "0.9.0"
+            target_version = __version__
             updated = self._run(
                 project,
                 environment,
                 "update",
-                "--framework-version",
-                target_version,
             )
             self.assertIn(f"0.8.1 -> {target_version}", updated.stdout)
 
