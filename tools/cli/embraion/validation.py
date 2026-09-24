@@ -120,6 +120,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
     project_schema = root / "schemas/project.schema.json"
     routing_schema = root / "schemas/routing.schema.json"
     policy_schema = root / "schemas/policy.schema.json"
+    knowledge_schema = root / "schemas/knowledge.schema.json"
     framework_data = read_yaml(root / "framework.yaml") or {}
     current_framework_version = str(framework_data.get("version", ""))
 
@@ -177,6 +178,27 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                         message,
                     )
 
+            knowledge_manifest = manifest.parent / "knowledge.yaml"
+            knowledge_data: dict[str, Any] = {}
+            if not knowledge_manifest.is_file():
+                add(
+                    "knowledge-schema",
+                    str(knowledge_manifest.relative_to(root)),
+                    "Missing knowledge.yaml",
+                )
+            else:
+                knowledge_data = read_yaml(knowledge_manifest) or {}
+                if knowledge_schema.exists():
+                    for message in _schema_errors(
+                        knowledge_data,
+                        knowledge_schema,
+                    ):
+                        add(
+                            "knowledge-schema",
+                            str(knowledge_manifest.relative_to(root)),
+                            message,
+                        )
+
             framework = project_data.get("framework") or {}
             declared_repository = str(framework.get("repository", ""))
             declared_version = str(framework.get("version", ""))
@@ -199,12 +221,12 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 )
 
             project_root = manifest.parent.parent
-            for knowledge_id, value in (project_data.get("knowledge") or {}).items():
+            for knowledge_id, value in knowledge_data.items():
                 relative = value.get("path") if isinstance(value, dict) else value
                 if not relative:
                     add(
                         "project-knowledge",
-                        str(manifest.relative_to(root)),
+                        str(knowledge_manifest.relative_to(root)),
                         f"knowledge '{knowledge_id}' has no path",
                     )
                     continue
@@ -215,7 +237,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 except ValueError:
                     add(
                         "project-knowledge",
-                        str(manifest.relative_to(root)),
+                        str(knowledge_manifest.relative_to(root)),
                         f"knowledge '{knowledge_id}' escapes the project root",
                     )
                     continue
@@ -223,7 +245,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 if not target.is_file():
                     add(
                         "project-knowledge",
-                        str(manifest.relative_to(root)),
+                        str(knowledge_manifest.relative_to(root)),
                         f"knowledge '{knowledge_id}' does not resolve to {relative}",
                     )
         except Exception as error:
