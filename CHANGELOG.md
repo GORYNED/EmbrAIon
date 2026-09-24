@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.0 - 2026-09-24
+
 ### Added
 
 - Explicit opt-in enforcement with `embraion enforcement status/check/install`, combining protected-source policy, executable validation evidence, and optional review gates.

@@ -77,7 +77,7 @@ Safely normalize a compatible modular project configuration and change the curre
 
 ```bash
 embraion update
-embraion update --framework-version 0.8.1
+embraion update --framework-version 0.9.0
 ```
 
 Before writing, EmbrAIon builds and validates the target configuration for all canonical `.embraion/` files. It adds only missing defaults, preserves existing project values, and leaves generated host projections and projection state untouched. Incompatible values or an incomplete legacy layout fail before any configuration file is rewritten.
