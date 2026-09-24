@@ -26,22 +26,25 @@ class RuntimeHardeningTests(unittest.TestCase):
             (knowledge / "architecture.md").write_text("architecture", encoding="utf-8")
             (knowledge / "public.md").write_text("public", encoding="utf-8")
 
-            data = read_yaml(manifest)
-            data["knowledge"] = {
-                "architecture": {
-                    "path": "knowledge/architecture.md",
-                    "data-class": "PRIVATE",
-                    "trust": "project",
-                    "roles": ["architect"],
-                    "triggers": ["architecture"],
-                },
-                "public": {
-                    "path": "knowledge/public.md",
-                    "data-class": "PUBLIC",
-                    "trust": "project",
-                },
-            }
-            write_yaml(manifest, data)
+            knowledge_path = manifest.with_name("knowledge.yaml")
+            data = read_yaml(knowledge_path)
+            data.update(
+                {
+                    "architecture": {
+                        "path": "knowledge/architecture.md",
+                        "data-class": "PRIVATE",
+                        "trust": "project",
+                        "roles": ["architect"],
+                        "triggers": ["architecture"],
+                    },
+                    "public": {
+                        "path": "knowledge/public.md",
+                        "data-class": "PUBLIC",
+                        "trust": "project",
+                    },
+                }
+            )
+            write_yaml(knowledge_path, data)
 
             record = build_context(
                 "Review architecture boundaries",
