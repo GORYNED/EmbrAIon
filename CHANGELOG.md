@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.1 - 2026-09-24
+
 ### Added
 
 - A semantic model-agnostic validation invariant that rejects legacy model-tier route names, Lead-owned concrete model selection wording, obsolete `routing.overrides` paths, and model-routing overrides incorrectly documented under `.embraion/project.yaml`.
