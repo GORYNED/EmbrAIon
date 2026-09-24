@@ -1,8 +1,11 @@
-# Model Routing
+# Routing
 
 EmbrAIon routing is model-agnostic.
 
 Core decides the engineering constraints that should survive model churn:
+
+The canonical task-oriented route classes are `bounded-read`, `bounded-write`, `ordinary`, `substantial`, `complex`, and `critical`. These describe work/risk, not model strength, price, or vendor tier.
+
 
 - role;
 - complexity / route class;
@@ -18,7 +21,7 @@ It does **not** maintain a canonical list of current model names.
 Without a project override, routing resolves to `host-default`. The selected host remains responsible for its own available models and automatic/default model policy.
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 A default result therefore has no framework-selected model:
@@ -26,7 +29,7 @@ A default result therefore has no framework-selected model:
 ```json
 {
   "host": "codex",
-  "route": "strong",
+  "route": "substantial",
   "role": null,
   "resolution": "host-default",
   "model": null,
@@ -47,7 +50,7 @@ routing:
   overrides:
     codex:
       routes:
-        strong-high:
+        complex:
           model: any-host-model-selector
           effort: high
       roles:

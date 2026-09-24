@@ -34,11 +34,7 @@ def _append_event(project: Path, event: dict[str, Any]) -> None:
 
 def _known_route_classes() -> set[str]:
     data = read_yaml(framework_root() / "core" / "routing" / "complexity.yaml") or {}
-    return {
-        str(value.get("route-class"))
-        for value in (data.get("classes") or {}).values()
-        if isinstance(value, dict) and value.get("route-class")
-    }
+    return {str(value) for value in (data.get("classes") or {}).keys()}
 
 
 def _known_data_classes() -> set[str]:

@@ -7,7 +7,7 @@ model-neutral: true
 responsibilities:
   - classify scope and risk
   - select the smallest useful role set
-  - select model, effort, and lane through routing
+  - classify the task route and resolve the execution host through policy and project overrides
   - resolve architecture and security escalations
   - integrate results and own final acceptance
 restrictions:

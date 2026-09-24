@@ -14,6 +14,29 @@ README_TIMESTAMP = re.compile(
     re.IGNORECASE,
 )
 
+MODEL_AGNOSTIC_FORBIDDEN_GLOBS = (
+    "core/**/models.yaml",
+    "core/**/models.yml",
+    "core/**/models.json",
+    "adapters/**/models.yaml",
+    "adapters/**/models.yml",
+    "adapters/**/models.json",
+    "adapters/**/model-catalog.yaml",
+    "adapters/**/model-catalog.yml",
+    "adapters/**/model-catalog.json",
+    "adapters/**/routes.yaml",
+    "adapters/**/routes.yml",
+    "adapters/**/routes.json",
+    "schemas/model.schema.json",
+)
+
+
+def find_model_agnostic_violations(root: Path) -> list[Path]:
+    matches: set[Path] = set()
+    for pattern in MODEL_AGNOSTIC_FORBIDDEN_GLOBS:
+        matches.update(path for path in root.glob(pattern) if path.is_file())
+    return sorted(matches)
+
 
 def _schema_errors(instance: Any, schema_path: Path) -> list[str]:
     validator = Draft202012Validator(read_json(schema_path))
@@ -35,6 +58,17 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 "path": path,
                 "message": message,
             }
+        )
+
+    for path in find_model_agnostic_violations(root):
+        add(
+            "model-agnostic-invariant",
+            str(path.relative_to(root)),
+            (
+                "EmbrAIon must not own model catalogs or adapter route-to-model "
+                "maps; keep model availability with the execution host and "
+                "project choices under routing.overrides"
+            ),
         )
 
     for path in iter_text_files(root):

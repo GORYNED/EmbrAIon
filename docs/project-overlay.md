@@ -24,7 +24,7 @@ routing:
   overrides:
     codex:
       routes:
-        strong-high:
+        complex:
           model: any-host-model-selector
           effort: high
       roles:

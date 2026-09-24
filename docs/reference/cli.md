@@ -137,8 +137,8 @@ Pruning is dry-run unless `--apply` is supplied.
 Resolve host-default or project-overridden routing. EmbrAIon does not select a model unless the project explicitly overrides the route or role.
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
-embraion route --host codex --route-class strong --role reviewer --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
+embraion route --host codex --route-class substantial --role reviewer --data PRIVATE
 ```
 
 The result reports `resolution: host-default` with `model: null` when the host should choose automatically, or `resolution: project-override` when `.embraion/project.yaml` supplies a selector.
@@ -152,7 +152,7 @@ embraion dispatch \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class economy-write \
+  --route-class bounded-write \
   --data PRIVATE \
   --access write \
   --owned-path "src/**"
@@ -186,7 +186,7 @@ embraion run start \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class strong \
+  --route-class substantial \
   --data PRIVATE \
   --access write \
   --owned-path "src/**" \

@@ -28,7 +28,7 @@ Without a project routing override, Codex keeps its own default/automatic model 
 Use:
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 to inspect whether the route resolves to `host-default` or a project override without executing a model.

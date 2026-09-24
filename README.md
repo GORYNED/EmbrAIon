@@ -16,7 +16,7 @@
 
 > Where sparks become AI-built products
 
-EmbrAIon is a portable AI-First Engineering System for organizing AI-assisted software engineering around explicit roles, reusable skills, workflow orchestration, model routing, access control, validation, review, security, learning, and project overlays.
+EmbrAIon is a portable AI-First Engineering System for organizing AI-assisted software engineering around explicit roles, reusable skills, workflow orchestration, task routing, access control, validation, review, security, learning, and project overlays.
 
 It is designed to sit above individual languages and frameworks. A Unity/C# project, a Python service, a web application, or another software repository can use the same Core and add only project-specific knowledge and rules.
 
@@ -327,7 +327,7 @@ Use `embraion help` for the categorized command catalog. Use `embraion help <com
 Resolve a route:
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 Create a bounded dispatch plan:
@@ -337,7 +337,7 @@ embraion dispatch \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class economy-write \
+  --route-class bounded-write \
   --data PRIVATE \
   --access write \
   --owned-path "src/**"
@@ -509,4 +509,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 12:50 UTC</sub>
+<sub>Last updated: 2026-09-24 13:40 UTC</sub>

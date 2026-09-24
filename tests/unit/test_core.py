@@ -11,7 +11,7 @@ from embraion.evals import evaluate_case
 from embraion.project import init_project, sync
 from embraion.runtime import route
 from embraion.security import collect_findings
-from embraion.validation import collect_issues
+from embraion.validation import collect_issues, find_model_agnostic_violations
 
 
 class CoreTests(unittest.TestCase):
@@ -50,7 +50,7 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(expected, str(data["framework"]["version"]))
 
     def test_default_route_uses_host_default_without_model_catalog(self) -> None:
-        result = route("codex", "strong", "CONFIDENTIAL")
+        result = route("codex", "substantial", "CONFIDENTIAL")
         self.assertEqual("host-default", result["resolution"])
         self.assertIsNone(result["model"])
         self.assertIsNone(result["effort"])
@@ -65,7 +65,7 @@ class CoreTests(unittest.TestCase):
                 "overrides": {
                     "codex": {
                         "routes": {
-                            "strong": {
+                            "substantial": {
                                 "model": "future-model",
                                 "effort": "deep",
                             }
@@ -83,7 +83,7 @@ class CoreTests(unittest.TestCase):
 
             routed = route(
                 "codex",
-                "strong",
+                "substantial",
                 "PRIVATE",
                 project=project,
             )
@@ -93,7 +93,7 @@ class CoreTests(unittest.TestCase):
 
             reviewed = route(
                 "codex",
-                "strong",
+                "substantial",
                 "PRIVATE",
                 role="reviewer",
                 project=project,
@@ -101,6 +101,31 @@ class CoreTests(unittest.TestCase):
             self.assertEqual("future-review-model", reviewed["model"])
             self.assertEqual("deep", reviewed["effort"])
             self.assertEqual({"thinking": "maximum"}, reviewed["options"])
+
+    def test_model_agnostic_invariant_rejects_framework_model_registries(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            forbidden = [
+                root / "adapters/codex/models.yaml",
+                root / "adapters/providers/example/routes.json",
+                root / "schemas/model.schema.json",
+            ]
+            for path in forbidden:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("placeholder\n", encoding="utf-8")
+
+            violations = {
+                path.relative_to(root).as_posix()
+                for path in find_model_agnostic_violations(root)
+            }
+            self.assertEqual(
+                {
+                    "adapters/codex/models.yaml",
+                    "adapters/providers/example/routes.json",
+                    "schemas/model.schema.json",
+                },
+                violations,
+            )
 
     def test_sync_generates_all_hosts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
