@@ -16,6 +16,6 @@ skills/
 └── routing-configuration/SKILL.md
 ```
 
-A skill describes **how** to perform a class of work. It does not own agent identity or a canonical model catalog. The `routing-configuration` skill tells an installed AI host how to safely write optional project-specific model overrides into `.embraion/project.yaml`.
+A skill describes **how** to perform a class of work. It does not own agent identity or a canonical model catalog. The `routing-configuration` skill tells an installed AI host how to safely write optional project-specific model overrides into `.embraion/routing.yaml` under `overrides`.
 
-<sub>Last updated: 2026-09-24 12:50 UTC</sub>
+<sub>Last updated: 2026-09-24 16:00 UTC</sub>

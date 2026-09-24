@@ -15,7 +15,7 @@
 
 ## Владение выбором модели
 
-Core классифицирует работу по task-oriented route classes. EmbrAIon не хранит глобальный каталог моделей, цен или lifecycle. AI host владеет доступностью моделей и default/automatic selection. Проект при необходимости хранит только свои host-specific overrides в `.embraion/project.yaml`.
+Core классифицирует работу по task-oriented route classes. EmbrAIon не хранит глобальный каталог моделей, цен или lifecycle. AI host владеет доступностью моделей и default/automatic selection. Проект при необходимости хранит только свои host-specific overrides в `.embraion/routing.yaml`.
 
 ## State и Learning
 

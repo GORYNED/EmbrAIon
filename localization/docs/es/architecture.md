@@ -15,7 +15,7 @@ Los agentes de Core usan nombres de funciones: Lead, Worker, Reviewer, Architect
 
 ## Propiedad de la selección de modelos
 
-Core clasifica el trabajo con route classes orientadas a la tarea. EmbrAIon no mantiene un catálogo global de modelos, precios ni lifecycle. El AI host controla la disponibilidad y la selección predeterminada/automática. El proyecto guarda solo sus overrides host-specific en `.embraion/project.yaml` cuando los necesita.
+Core clasifica el trabajo con route classes orientadas a la tarea. EmbrAIon no mantiene un catálogo global de modelos, precios ni lifecycle. El AI host controla la disponibilidad y la selección predeterminada/automática. El proyecto guarda solo sus overrides host-specific en `.embraion/routing.yaml` cuando los necesita.
 
 ## State y Learning
 

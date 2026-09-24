@@ -15,7 +15,7 @@ Core agents role names उपयोग करते हैं: Lead, Worker, Rev
 
 ## Model selection का ownership
 
-Core task-oriented route classes से काम classify करता है। EmbrAIon global model catalog, pricing या lifecycle नहीं रखता। AI host model availability और default/automatic selection का मालिक है। Project आवश्यकता होने पर केवल अपने host-specific overrides `.embraion/project.yaml` में रखता है।
+Core task-oriented route classes से काम classify करता है। EmbrAIon global model catalog, pricing या lifecycle नहीं रखता। AI host model availability और default/automatic selection का मालिक है। Project आवश्यकता होने पर केवल अपने host-specific overrides `.embraion/routing.yaml` में रखता है।
 
 ## State और Learning
 

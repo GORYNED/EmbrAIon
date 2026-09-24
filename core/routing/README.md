@@ -10,8 +10,8 @@ Core routing is model-agnostic and separates five decisions:
 
 Agent role, access profile, route class, execution host, and optional project model override are independent dimensions.
 
-The route classes describe the work and risk, not model strength, price, reasoning tier, or vendor. EmbrAIon does not maintain a canonical list of current models. By default a route resolves to the selected host's own default/automatic model policy. A consuming project may optionally override a route or role with any host-understood model selector, effort string, or host-specific options in `.embraion/project.yaml`.
+The route classes describe the work and risk, not model strength, price, reasoning tier, or vendor. EmbrAIon does not maintain a canonical list of current models. By default a route resolves to the selected host's own default/automatic model policy. A consuming project may optionally override a route or role with any host-understood model selector, effort string, or host-specific options in `.embraion/routing.yaml` under `overrides`.
 
 Project overrides never expand Core access or privacy policy. Host/model availability is ultimately validated by the execution host, not by a framework-wide model catalog.
 
-<sub>Last updated: 2026-09-24 13:45 UTC</sub>
+<sub>Last updated: 2026-09-24 16:00 UTC</sub>

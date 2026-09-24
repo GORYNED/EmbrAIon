@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- A semantic model-agnostic validation invariant that rejects legacy model-tier route names, Lead-owned concrete model selection wording, obsolete `routing.overrides` paths, and model-routing overrides incorrectly documented under `.embraion/project.yaml`.
+
+### Fixed
+
+- Remaining Core and localized architecture wording now consistently keeps task/host routing with Lead, concrete model selection with the execution host, and project model overrides in `.embraion/routing.yaml`.
+
 ## 0.8.0 - 2026-09-24
 
 ### Added

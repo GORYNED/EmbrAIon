@@ -25,7 +25,7 @@ A skill describes how to perform a repeatable engineering activity. Roles can us
 
 This prevents agent definitions from becoming giant collections of unrelated instructions.
 
-A configuration-oriented skill can also teach the active AI host how to maintain framework-owned project configuration without hardcoding vendor data into Core. For example, `routing-configuration` tells the AI to keep model names out of EmbrAIon Core and place optional project model overrides in `.embraion/project.yaml` under `routing.overrides`.
+A configuration-oriented skill can also teach the active AI host how to maintain project-owned EmbrAIon configuration without hardcoding vendor data into Core. For example, `routing-configuration` tells the AI to keep model names out of EmbrAIon Core and place optional project model overrides in `.embraion/routing.yaml` under `overrides`.
 
 ## Composition
 

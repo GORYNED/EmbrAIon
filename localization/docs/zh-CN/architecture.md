@@ -15,7 +15,7 @@ Core 使用职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Va
 
 ## 模型选择的归属
 
-Core 使用面向任务的 route class 对工作进行分类。EmbrAIon 不维护全局模型目录、价格或 lifecycle。AI host 负责模型可用性和默认/自动选择。项目仅在需要时把自己的 host-specific override 保存在 `.embraion/project.yaml` 中。
+Core 使用面向任务的 route class 对工作进行分类。EmbrAIon 不维护全局模型目录、价格或 lifecycle。AI host 负责模型可用性和默认/自动选择。项目仅在需要时把自己的 host-specific override 保存在 `.embraion/routing.yaml` 中。
 
 ## State 与 Learning
 

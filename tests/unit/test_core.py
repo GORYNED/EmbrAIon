@@ -11,7 +11,11 @@ from embraion.evals import evaluate_case
 from embraion.project import init_project, sync
 from embraion.runtime import route
 from embraion.security import collect_findings
-from embraion.validation import collect_issues, find_model_agnostic_violations
+from embraion.validation import (
+    collect_issues,
+    find_model_agnostic_semantic_violations,
+    find_model_agnostic_violations,
+)
 
 
 class CoreTests(unittest.TestCase):
@@ -134,6 +138,73 @@ class CoreTests(unittest.TestCase):
                     "schemas/model.schema.json",
                 },
                 violations,
+            )
+
+    def test_model_agnostic_semantic_invariant_rejects_legacy_wording(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stale_workflow = root / "core/workflows/engineering.md"
+            stale_routing_path = root / "core/routing/README.md"
+            stale_route_class = root / "docs/routing.md"
+            stale_nested_path = root / "localization/docs/ru/model-routing.md"
+            allowed_version_pin = root / "docs/release-process.md"
+            allowed_fallback = root / "core/routing/fallback.yaml"
+            allowed_modular_summary = root / "README.md"
+
+            for path in (
+                stale_workflow,
+                stale_routing_path,
+                stale_route_class,
+                stale_nested_path,
+                allowed_version_pin,
+                allowed_fallback,
+                allowed_modular_summary,
+            ):
+                path.parent.mkdir(parents=True, exist_ok=True)
+
+            stale_workflow.write_text(
+                "Lead selects job-like agents and explicit model/effort routes.\n",
+                encoding="utf-8",
+            )
+            stale_routing_path.write_text(
+                "Store model overrides in .embraion/project.yaml.\n",
+                encoding="utf-8",
+            )
+            stale_route_class.write_text(
+                "Use strong-high for difficult work.\n",
+                encoding="utf-8",
+            )
+            stale_nested_path.write_text(
+                "Write project values under routing.overrides.\n",
+                encoding="utf-8",
+            )
+            allowed_version_pin.write_text(
+                "Pin framework.version in .embraion/project.yaml.\n",
+                encoding="utf-8",
+            )
+            allowed_fallback.write_text(
+                "model-to-model fallback is owned by the execution host\n",
+                encoding="utf-8",
+            )
+            allowed_modular_summary.write_text(
+                ".embraion/project.yaml stores identity; "
+                ".embraion/routing.yaml stores model overrides.\n",
+                encoding="utf-8",
+            )
+
+            violations = find_model_agnostic_semantic_violations(root)
+            paths = {
+                item["path"].relative_to(root).as_posix()
+                for item in violations
+            }
+            self.assertEqual(
+                {
+                    "core/workflows/engineering.md",
+                    "core/routing/README.md",
+                    "docs/routing.md",
+                    "localization/docs/ru/model-routing.md",
+                },
+                paths,
             )
 
     def test_sync_generates_all_hosts(self) -> None:
