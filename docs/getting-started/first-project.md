@@ -82,9 +82,8 @@ knowledge/
 Reference these files from `.embraion/knowledge.yaml`:
 
 ```yaml
-knowledge:
-  project: knowledge/project.md
-  architecture: knowledge/architecture.md
+project: knowledge/project.md
+architecture: knowledge/architecture.md
 ```
 
 See [Project knowledge](../concepts/knowledge.md) and [Project overlay](../project-overlay.md).
