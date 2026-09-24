@@ -30,6 +30,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             )
             self.assertEqual({"agents": []}, agents)
             self.assertEqual("PRIVATE", project_policy["privacy"]["default-class"])
+            self.assertFalse(project_policy["enforcement"]["enabled"])
+            self.assertEqual(
+                "affected",
+                project_policy["enforcement"]["validation-profile"],
+            )
             self.assertTrue(project_policy["review"]["substantial-required"])
             self.assertEqual([], project_policy["sources"]["protected"])
             for key in (

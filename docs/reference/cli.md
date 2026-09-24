@@ -229,6 +229,35 @@ embraion session set --state review --validation passed
 
 ## Engineering controls
 
+### `embraion enforcement`
+
+Inspect project enforcement:
+
+```bash
+embraion enforcement status
+embraion enforcement status --json
+```
+
+Evaluate the enabled gate against a Git base ref:
+
+```bash
+embraion enforcement check --base-ref origin/main
+embraion enforcement check --base-ref origin/main --run-id task-001 --json
+```
+
+The check rejects mutations of protected sources, requires the configured validation profile to produce a real pass, and enforces review from execution evidence when `require-review` is enabled.
+
+Install the GitHub Actions CI surface explicitly:
+
+```bash
+embraion enforcement install \
+  --surface github-actions \
+  --validation-profile affected \
+  --require-review
+```
+
+No enforcement workflow or native hook is installed by `init`, `install`, or `harness audit`. The generated workflow exits non-zero for policy/validation/review failures. To make that check a mandatory merge gate, configure **EmbrAIon enforcement** as a required status check in the repository branch rules/ruleset.
+
 ### `embraion security`
 
 Scan for likely secrets and policy drift.

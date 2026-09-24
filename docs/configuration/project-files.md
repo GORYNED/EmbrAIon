@@ -93,6 +93,11 @@ review:
 
 privacy:
   default-class: PRIVATE
+
+enforcement:
+  enabled: false
+  validation-profile: affected
+  require-review: false
 ```
 
 ### `sources`
@@ -113,6 +118,30 @@ The four path classes are:
 `default-class` defines the project default when a more specific data classification is not supplied. Valid values are `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`.
 
 Model selection never widens these policy boundaries.
+
+### `enforcement`
+
+Enforcement is disabled by default. The policy records whether an explicitly installed gate is active, which validation profile it must run, and whether independent review is required:
+
+```yaml
+enforcement:
+  enabled: false
+  validation-profile: affected
+  require-review: false
+```
+
+Enable a CI surface only by an explicit command:
+
+```bash
+embraion enforcement install \
+  --surface github-actions \
+  --validation-profile affected \
+  --require-review
+```
+
+This creates `.github/workflows/embraion-enforcement.yml`, enables the policy gate, runs protected-path and validation checks on pull requests, and optionally requires at least one current approved GitHub review. Existing different workflow content is refused unless `--force` is deliberately supplied.
+
+EmbrAIon does not silently install host-native hooks. `harness audit` continues to report native hook capability, while enforcement installation remains an explicit project action.
 
 ## `.embraion/routing.yaml`
 

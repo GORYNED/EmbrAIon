@@ -23,6 +23,11 @@ DEFAULT_POLICY: dict[str, Any] = {
     },
     "review": {"substantial-required": True},
     "privacy": {"default-class": "PRIVATE"},
+    "enforcement": {
+        "enabled": False,
+        "validation-profile": "affected",
+        "require-review": False,
+    },
     "routing": {"overrides": {}},
 }
 
@@ -110,6 +115,10 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
         "validation": {"profiles": profiles},
         "review": DEFAULT_POLICY["review"] | (project_policy.get("review") or {}),
         "privacy": DEFAULT_POLICY["privacy"] | (project_policy.get("privacy") or {}),
+        "enforcement": (
+            DEFAULT_POLICY["enforcement"]
+            | (project_policy.get("enforcement") or {})
+        ),
         "routing": DEFAULT_POLICY["routing"] | routing,
     }
 

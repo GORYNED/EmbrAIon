@@ -134,6 +134,11 @@ def _default_policy_config() -> dict[str, Any]:
         },
         "review": {"substantial-required": True},
         "privacy": {"default-class": "PRIVATE"},
+        "enforcement": {
+            "enabled": False,
+            "validation-profile": "affected",
+            "require-review": False,
+        },
     }
 
 

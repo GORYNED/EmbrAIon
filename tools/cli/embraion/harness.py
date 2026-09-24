@@ -33,6 +33,10 @@ def audit_harness(
         )
         skills_present = skill_path.is_dir() and any(skill_path.glob("*/SKILL.md"))
 
+        enforcement_path = (
+            root / ".github" / "workflows" / "embraion-enforcement.yml"
+        )
+
         rows.append(
             {
                 "host": current,
@@ -49,6 +53,14 @@ def audit_harness(
                     "location": hook_location,
                     "projected": bool(hooks.get("projected", False)),
                     "present": hook_present,
+                },
+                "enforcement": {
+                    "github-actions": {
+                        "path": ".github/workflows/embraion-enforcement.yml",
+                        "present": enforcement_path.is_file(),
+                        "explicit-opt-in": True,
+                    },
+                    "native-hooks-projected": False,
                 },
                 "ready": agent_path.is_dir() and skills_present,
             }
