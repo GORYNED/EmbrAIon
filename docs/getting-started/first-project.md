@@ -13,11 +13,12 @@ This creates:
 .embraion/
 ├── .gitignore
 ├── project.yaml
+├── knowledge.yaml
 ├── policy.yaml
 └── routing.yaml
 ```
 
-`project.yaml` records the current EmbrAIon version and project identity. `policy.yaml` owns sources/review/privacy policy. `routing.yaml` owns optional host model/effort/options overrides. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
+`project.yaml` records the current EmbrAIon version and project identity. `knowledge.yaml` owns project knowledge references. `policy.yaml` owns sources/review/privacy policy. `routing.yaml` owns optional host model/effort/options overrides. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
 
 ## Inspect the project
 
@@ -78,7 +79,7 @@ knowledge/
 └── architecture.md
 ```
 
-Reference these files from `.embraion/project.yaml`:
+Reference these files from `.embraion/knowledge.yaml`:
 
 ```yaml
 knowledge:
