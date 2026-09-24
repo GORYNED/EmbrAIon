@@ -7,17 +7,16 @@
 - Explicit opt-in enforcement with `embraion enforcement status/check/install`, combining protected-source policy, executable validation evidence, and optional review gates.
 - A conflict-safe GitHub Actions enforcement surface generated only on explicit request, with pinned EmbrAIon version, pull-request validation, protected-path checks, and optional approval enforcement.
 - Harness audit visibility for the explicit GitHub Actions enforcement surface while native host hooks remain audit-only and are never installed silently.
-
-### Added
-
 - First-class executable project validation profiles through `embraion validation list` and `embraion validation run <profile>`.
 - Redacted per-command validation evidence persisted under `.embraion/state/validation/`, with optional `--run-id` attachment to active execution evidence.
 - Explicit skipped, failed, timeout, fail-fast, and machine-readable JSON behavior for project validation runs.
-
-### Added
-
 - Project-specific agent definitions in `.embraion/agents.yaml` with optional inheritance from non-Lead Core roles and native Codex, GitHub Copilot, and Claude Code projection.
 - Project-agent safety checks that prevent Core agent ID shadowing, Lead inheritance, and access widening across inherited roles.
+
+### Changed
+
+- `embraion update` now safely normalizes compatible modular project configuration by adding only missing defaults, validating every candidate before writing, and leaving generated host projections/state untouched.
+- Incompatible user-owned configuration and incomplete legacy layouts now fail closed instead of being rewritten heuristically.
 
 ## 0.8.1 - 2026-09-24
 
