@@ -11,6 +11,23 @@ Typical examples:
 - source-of-truth locations;
 - decisions that should survive across AI sessions.
 
+## Core vs project knowledge
+
+Keep reusable engineering behavior in Core and product-specific truth in the project.
+
+| EmbrAIon Core | Project repository |
+| --- | --- |
+| roles | product facts |
+| reusable skills | domain rules |
+| model-agnostic routing | architecture |
+| hard gates | compatibility and source-of-truth details |
+
+A practical rule is:
+
+> If a fact is true because of this product, customer, repository, device, or domain, it probably belongs in project knowledge.
+
+Reusable engineering procedures and universal EmbrAIon safety rules belong in Core instead.
+
 ## Keep knowledge in ordinary project files
 
 A common layout is:
@@ -47,11 +64,9 @@ architecture:
 
 ## When to create a knowledge file
 
-A useful rule:
+Create project knowledge when a fact should remain available across AI sessions and belongs to the repository rather than to one transient task.
 
-> If the fact is true because of this product, customer, repository, device, or domain, it probably belongs in project knowledge.
-
-Reusable engineering procedures and universal EmbrAIon safety rules belong in Core instead.
+Do not put executable validation commands in knowledge files. Those belong in `.embraion/validation.yaml`. Knowledge can document why a compatibility or architecture constraint exists; validation defines the commands that prove it still holds.
 
 ## Context selection
 

@@ -1,14 +1,16 @@
 # Codex
 
-The Codex adapter projects EmbrAIon roles, skills, and host configuration into Codex-native files.
+## What it is
 
-Install it into a project:
+The Codex adapter projects EmbrAIon host configuration, Core/project agents, and reusable skills into Codex-native files.
+
+## Install
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-Typical generated shape:
+## Generated structure
 
 ```text
 .codex/
@@ -17,20 +19,54 @@ Typical generated shape:
     ├── analyst.toml
     ├── architect.toml
     ├── reviewer.toml
-    ├── validator.toml
+    └── ...
+
+.agents/
+└── skills/
+    ├── implementation/
+    ├── review/
+    ├── routing-configuration/
     └── ...
 ```
 
-Core owns reusable role, complexity, access, privacy, validation, and review semantics. EmbrAIon does not pin a Codex model in the generated config.
+Generated files are projections. Project policy, knowledge, validation, agents, and optional routing overrides remain canonical under `.embraion/`.
 
-Without a project routing override, Codex keeps its own default/automatic model selection. Optional project overrides can pass any Codex-understood model selector, effort string, or host-specific options.
+## Routing
 
-Use:
+Codex remains authoritative for its available models and automatic/default model selection. Without a project override, EmbrAIon resolves routing to `host-default`.
+
+Optional Codex model, effort, or host-specific settings belong only under `overrides.codex` in `.embraion/routing.yaml`.
+
+Inspect resolution without executing a model:
 
 ```bash
 embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
-to inspect whether the route resolves to `host-default` or a project override without executing a model.
+## Selective adoption
 
-For a complete customization workflow, see [AI host configuration examples](../configuration/ai-hosts.md).
+Codex supports the `config`, `agents`, and `skills` projection components. Mature repositories can adopt only the pieces they want:
+
+```bash
+embraion install --host codex --destination . --component skills
+embraion install --host codex --destination . --component agents --component skills
+```
+
+Preview before writing:
+
+```bash
+embraion projection diff --host codex --destination .
+```
+
+## Verify
+
+```bash
+embraion doctor
+embraion status
+```
+
+`status` reports detected host projections. Use `embraion projection diff --host codex --destination .` whenever you want to inspect ownership-aware changes before reinstalling.
+
+## Further configuration
+
+See [Configure with Your AI Client](../configuration/ai-hosts.md) for conversational routing/configuration examples, and [Adopt an Existing Repository](../getting-started/existing-repository.md) for conflict-safe adoption.
