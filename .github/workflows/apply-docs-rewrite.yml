@@ -22,8 +22,9 @@ jobs:
       - name: Apply documentation archive
         shell: bash
         run: |
+          cat .docs-rewrite.part-* | tr -d '\n\r' | base64 -d > .docs-rewrite.tar.gz
           tar -xzf .docs-rewrite.tar.gz
-          rm .docs-rewrite.tar.gz
+          rm -f .docs-rewrite.tar.gz .docs-rewrite.part-*
           rm .github/workflows/apply-docs-rewrite.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
