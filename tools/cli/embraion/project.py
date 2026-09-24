@@ -96,12 +96,6 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
         },
         "project": {"name": name},
         "knowledge": {},
-        "sources": {
-            "canonical": [],
-            "protected": [],
-            "generated": [],
-            "external": [],
-        },
         "validation": {
             "profiles": {
                 "fast": [],
@@ -109,8 +103,6 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
                 "full": [],
             }
         },
-        "review": {"substantial-required": True},
-        "privacy": {"default-class": "PRIVATE"},
         "agents": [],
         "capabilities": {},
     }
@@ -120,10 +112,24 @@ def _default_routing_config() -> dict[str, Any]:
     return {"overrides": {}}
 
 
+def _default_policy_config() -> dict[str, Any]:
+    return {
+        "sources": {
+            "canonical": [],
+            "protected": [],
+            "generated": [],
+            "external": [],
+        },
+        "review": {"substantial-required": True},
+        "privacy": {"default-class": "PRIVATE"},
+    }
+
+
 def init_project(path: Path, name: str | None = None, force: bool = False) -> Path:
     destination = path.resolve()
     manifest = destination / ".embraion" / "project.yaml"
     routing = destination / ".embraion" / "routing.yaml"
+    policy = destination / ".embraion" / "policy.yaml"
 
     if manifest.exists() and not force:
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
@@ -131,8 +137,12 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     if routing.exists() and not force:
         raise RuntimeError(f"{routing} already exists; use --force to replace it.")
 
+    if policy.exists() and not force:
+        raise RuntimeError(f"{policy} already exists; use --force to replace it.")
+
     write_yaml(manifest, _default_project_overlay(name or destination.name))
     write_yaml(routing, _default_routing_config())
+    write_yaml(policy, _default_policy_config())
 
     local_ignore = destination / ".embraion" / ".gitignore"
     if not local_ignore.exists():

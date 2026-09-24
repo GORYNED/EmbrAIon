@@ -93,24 +93,7 @@
         ]
       }
     },
-    "sources": {
-      "type": "object",
-      "properties": {
-        "canonical": {
-          "$ref": "#/$defs/pathPatterns"
-        },
-        "protected": {
-          "$ref": "#/$defs/pathPatterns"
-        },
-        "generated": {
-          "$ref": "#/$defs/pathPatterns"
-        },
-        "external": {
-          "$ref": "#/$defs/pathPatterns"
-        }
-      },
-      "additionalProperties": false
-    },
+    "sources": false,
     "validation": {
       "type": "object",
       "properties": {
@@ -127,28 +110,8 @@
       },
       "additionalProperties": false
     },
-    "review": {
-      "type": "object",
-      "properties": {
-        "substantial-required": {
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
-    },
-    "privacy": {
-      "type": "object",
-      "properties": {
-        "default-class": {
-          "enum": [
-            "PUBLIC",
-            "PRIVATE",
-            "CONFIDENTIAL"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
+    "review": false,
+    "privacy": false,
     "agents": {
       "type": "array",
       "items": {
@@ -163,15 +126,6 @@
     },
     "routing": false
   },
-  "$defs": {
-    "pathPatterns": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
-    }
-  },
+  "$defs": {},
   "additionalProperties": true
 }

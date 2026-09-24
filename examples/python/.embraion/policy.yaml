@@ -1,0 +1,11 @@
+sources:
+  canonical: []
+  protected: []
+  generated: []
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE

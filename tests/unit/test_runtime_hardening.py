@@ -71,9 +71,10 @@ class RuntimeHardeningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             manifest = init_project(project, name="Consumer")
-            data = read_yaml(manifest)
-            data["sources"]["protected"] = ["protected/**"]
-            write_yaml(manifest, data)
+            policy_path = manifest.with_name("policy.yaml")
+            policy_data = read_yaml(policy_path)
+            policy_data["sources"]["protected"] = ["protected/**"]
+            write_yaml(policy_path, policy_data)
 
             start_run(
                 "run-1",

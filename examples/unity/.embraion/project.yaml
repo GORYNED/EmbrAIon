@@ -25,13 +25,6 @@ validation:
     affected: []
     full: []
 
-review:
-  substantial-required: true
-
-privacy:
-  default-class: PRIVATE
-
-
 agents: []
 
 capabilities:

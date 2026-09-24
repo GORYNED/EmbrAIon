@@ -26,13 +26,6 @@ validation:
     full:
       - python -m unittest discover -s tests -p test_*.py
 
-review:
-  substantial-required: true
-
-privacy:
-  default-class: PRIVATE
-
-
 agents: []
 
 capabilities:

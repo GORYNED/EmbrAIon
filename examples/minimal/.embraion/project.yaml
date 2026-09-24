@@ -8,24 +8,11 @@ project:
 knowledge:
   project: knowledge/project.md
 
-sources:
-  canonical: []
-  protected: []
-  generated: []
-  external: []
-
 validation:
   profiles:
     fast: []
     affected: []
     full: []
-
-review:
-  substantial-required: true
-
-privacy:
-  default-class: PRIVATE
-
 
 agents: []
 

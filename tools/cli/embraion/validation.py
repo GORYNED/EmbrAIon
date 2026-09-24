@@ -119,6 +119,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
 
     project_schema = root / "schemas/project.schema.json"
     routing_schema = root / "schemas/routing.schema.json"
+    policy_schema = root / "schemas/policy.schema.json"
     framework_data = read_yaml(root / "framework.yaml") or {}
     current_framework_version = str(framework_data.get("version", ""))
 
@@ -155,6 +156,24 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     add(
                         "routing-schema",
                         str(routing_manifest.relative_to(root)),
+                        message,
+                    )
+
+            policy_manifest = manifest.parent / "policy.yaml"
+            if not policy_manifest.is_file():
+                add(
+                    "policy-schema",
+                    str(policy_manifest.relative_to(root)),
+                    "Missing policy.yaml",
+                )
+            elif policy_schema.exists():
+                for message in _schema_errors(
+                    read_yaml(policy_manifest) or {},
+                    policy_schema,
+                ):
+                    add(
+                        "policy-schema",
+                        str(policy_manifest.relative_to(root)),
                         message,
                     )
 

@@ -47,11 +47,24 @@ def read_routing_config(project: Path | None = None) -> dict[str, Any]:
     return data
 
 
+def read_policy_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "policy.yaml"
+    if not path.is_file():
+        raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
+
+    data = read_yaml(path) or {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid project policy configuration: {path}")
+    return data
+
+
 def effective_policy(project: Path | None = None) -> dict[str, Any]:
     data = read_project_overlay(project)
+    project_policy = read_policy_config(project)
     routing = read_routing_config(project)
 
-    sources = DEFAULT_POLICY["sources"] | (data.get("sources") or {})
+    sources = DEFAULT_POLICY["sources"] | (project_policy.get("sources") or {})
     default_profiles = DEFAULT_POLICY["validation"]["profiles"]
     validation = data.get("validation") or {}
     profiles = default_profiles | (validation.get("profiles") or {})
@@ -59,8 +72,8 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
     return {
         "sources": sources,
         "validation": {"profiles": profiles},
-        "review": DEFAULT_POLICY["review"] | (data.get("review") or {}),
-        "privacy": DEFAULT_POLICY["privacy"] | (data.get("privacy") or {}),
+        "review": DEFAULT_POLICY["review"] | (project_policy.get("review") or {}),
+        "privacy": DEFAULT_POLICY["privacy"] | (project_policy.get("privacy") or {}),
         "routing": DEFAULT_POLICY["routing"] | routing,
     }
 
