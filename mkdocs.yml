@@ -109,4 +109,3 @@ nav:
       - Licensing: licensing.md
   - Internals:
       - Historical extraction plan: extraction-plan.md
-      - Markdown index: README.md

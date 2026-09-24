@@ -215,14 +215,19 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 add("route-model", str(route_path.relative_to(root)), f"Unknown model id: {model}")
 
     docs = {path.name for path in (root / "docs").glob("*.md")}
+    site_only_docs = {"index.md"}
+    localized_index_docs = {"README.md"}
+    canonical_docs = docs - site_only_docs
+
     for locale in ("ru", "zh-CN", "hi", "es"):
         local = root / "localization" / "docs" / locale
         names = {path.name for path in local.glob("*.md")} if local.exists() else set()
+        localized_docs = names - localized_index_docs
 
-        for name in sorted(docs - names):
+        for name in sorted(canonical_docs - localized_docs):
             add("localization", f"localization/docs/{locale}", f"Missing {name}")
 
-        for name in sorted(names - docs):
+        for name in sorted(localized_docs - canonical_docs):
             add(
                 "localization",
                 f"localization/docs/{locale}",

@@ -473,7 +473,7 @@ Tagged releases generate source, Codex, Copilot, Claude Code, and Portable archi
 
 ## Documentation
 
-Documentation: **[goryned.github.io/EmbrAIon](https://goryned.github.io/EmbrAIon/)** · [Markdown sources](docs/README.md)
+Documentation: **[goryned.github.io/EmbrAIon](https://goryned.github.io/EmbrAIon/)** · [Markdown sources](docs/index.md)
 
 Translations:
 
