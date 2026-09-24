@@ -89,3 +89,7 @@ architecture: knowledge/architecture.md
 ```
 
 See [Project knowledge](../concepts/knowledge.md) and [Project overlay](../project-overlay.md).
+
+## Next
+
+[Customize EmbrAIon for your project](../configuration/index.md).

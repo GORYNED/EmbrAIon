@@ -32,3 +32,5 @@ embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 to inspect whether the route resolves to `host-default` or a project override without executing a model.
+
+For a complete customization workflow, see [AI host configuration examples](../configuration/ai-hosts.md).

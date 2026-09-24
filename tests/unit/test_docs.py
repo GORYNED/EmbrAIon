@@ -63,6 +63,9 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("index.md", targets)
         self.assertIn("reference/cli.md", targets)
         self.assertIn("examples/unity.md", targets)
+        self.assertIn("configuration/index.md", targets)
+        self.assertIn("configuration/project-files.md", targets)
+        self.assertIn("configuration/ai-hosts.md", targets)
         self.assertIn("oss/security-reporting.md", targets)
 
         for target in targets:

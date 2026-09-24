@@ -13,6 +13,8 @@ The project configuration currently records:
 
 Project configuration may add stricter rules but must not silently weaken Core hard gates.
 
+For the complete customization guide, see [Configuration](configuration/index.md) and [Project configuration files](configuration/project-files.md).
+
 ## Project knowledge
 
 Project knowledge references live in `.embraion/knowledge.yaml`:

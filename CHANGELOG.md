@@ -4,6 +4,7 @@
 
 ### Added
 
+- A dedicated Configuration documentation section with a full `.embraion/` template, file-by-file customization reference, and practical Codex, GitHub Copilot, and Claude Code setup examples.
 - Dedicated `.embraion/routing.yaml` project configuration with its own schema, keeping model/effort/options overrides separate from project identity and policy.
 - Dedicated `.embraion/policy.yaml` project configuration with its own schema for source classes, substantial-review policy, and default privacy.
 - Dedicated `.embraion/knowledge.yaml` project configuration with its own schema for knowledge paths and context-selection metadata.

@@ -97,3 +97,7 @@ EmbrAIon can deterministically validate:
 The execution host remains authoritative for whether a particular selector or option is actually available to the current user/account.
 
 This separation keeps Core usable with future models and hosts that did not exist when the current EmbrAIon release was published.
+
+## Host-specific setup examples
+
+See [AI host configuration examples](configuration/ai-hosts.md) for Codex, GitHub Copilot, and Claude Code workflows.

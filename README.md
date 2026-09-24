@@ -191,6 +191,8 @@ This creates:
 
 The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity plus `capabilities`, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, `routing.yaml` owns optional model/effort/options overrides, `validation.yaml` owns validation profiles, and `agents.yaml` owns project-specific agent declarations.
 
+See the **[Configuration guide](docs/configuration/index.md)** for the complete template, every `.embraion/` file, and Codex/Copilot/Claude Code customization examples.
+
 ### Install a host projection
 
 Install the projection for each AI client used by the repository.
@@ -514,4 +516,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 16:15 UTC</sub>
+<sub>Last updated: 2026-09-24 16:25 UTC</sub>
