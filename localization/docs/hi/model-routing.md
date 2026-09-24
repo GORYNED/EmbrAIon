@@ -1,9 +1,11 @@
-# Routing (मॉडल रूटिंग)
+# Routing (रूटिंग)
 
-रूटिंग EmbrAIon की प्रथम-स्तरीय क्षमता है।
+EmbrAIon की रूटिंग पूरी तरह model-agnostic है।
 
-मानक रूटिंग नियम यह तय करते हैं कि कार्य की विशेषताओं से मॉडल और प्रदाता, तर्क स्तर, निष्पादन अनुमति, उन्नयन मार्ग और समीक्षा आवश्यकता कैसे चुनी जाए।
+Core काम को `bounded-read`, `bounded-write`, `ordinary`, `substantial`, `complex` और `critical` route classes में वर्गीकृत करता है। ये classes काम और जोखिम का वर्णन करती हैं, किसी मॉडल की शक्ति, कीमत, प्रदाता या नाम का नहीं।
 
-प्रदाता एडाप्टर मॉडल को तकनीकी रूप से कॉल करते हैं, लेकिन निर्णय के मानक नियम उनके स्वामित्व में नहीं होते।
+यदि प्रोजेक्ट कोई override नहीं देता, तो चुना हुआ AI host अपनी default/automatic model selection का उपयोग करता है। स्पष्ट चयन की आवश्यकता होने पर प्रोजेक्ट host-specific `model`, `effort` और `options` को `.embraion/project.yaml` → `routing.overrides` में रख सकता है।
 
-EmbrAIon के विकास के साथ विस्तृत रूटिंग अनुबंध अलग से संस्करणबद्ध किए जाते हैं।
+उपयोगकर्ता repository में काम कर रहे AI से उपलब्ध मॉडलों के अनुसार EmbrAIon configure करने के लिए कह सकता है। इंस्टॉल की गई `routing-configuration` skill AI को बताती है कि override कहाँ लिखना है और किन policies को कमजोर नहीं करना है।
+
+EmbrAIon कोई canonical model catalog नहीं रखता। Privacy, access, ownership, validation और review model selection से स्वतंत्र रहते हैं।
