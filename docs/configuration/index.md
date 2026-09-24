@@ -97,6 +97,8 @@ profiles:
 agents: []
 ```
 
+Add project-specific agents here when the project needs domain or workflow specialists beyond the reusable Core roles. See [Project files](project-files.md) for the full `extends` contract and host projection behavior.
+
 ### `.embraion/.gitignore`
 
 ```gitignore

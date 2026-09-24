@@ -1,1 +1,14 @@
-agents: []
+agents:
+  - id: test-specialist
+    title: Test Specialist
+    extends: reviewer
+    purpose: Review test coverage and regression evidence for this project.
+    access: read-only
+    responsibilities:
+      - focus review on test coverage, failure modes, and regression evidence
+    restrictions:
+      - do not edit implementation or tests
+    triggers:
+      - test coverage review
+    outputs:
+      - test-focused review findings

@@ -76,6 +76,107 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertTrue((project / ".github/skills/review/SKILL.md").is_file())
             self.assertTrue((project / ".claude/skills/review/SKILL.md").is_file())
 
+    def test_project_agents_extend_core_roles_and_project_to_hosts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            agents_path = project / ".embraion" / "agents.yaml"
+            write_yaml(
+                agents_path,
+                {
+                    "agents": [
+                        {
+                            "id": "domain-specialist",
+                            "title": "Domain Specialist",
+                            "extends": "reviewer",
+                            "purpose": "Review project-specific domain behavior.",
+                            "access": "read-only",
+                            "responsibilities": [
+                                "focus on project-specific domain contracts"
+                            ],
+                            "restrictions": [
+                                "do not modify project files"
+                            ],
+                        }
+                    ]
+                },
+            )
+
+            install("codex", project)
+            install("copilot", project)
+            install("claude-code", project)
+
+            codex = project / ".codex" / "agents" / "domain-specialist.toml"
+            copilot = (
+                project
+                / ".github"
+                / "agents"
+                / "domain-specialist.agent.md"
+            )
+            claude = project / ".claude" / "agents" / "domain-specialist.md"
+
+            self.assertTrue(codex.is_file())
+            self.assertTrue(copilot.is_file())
+            self.assertTrue(claude.is_file())
+
+            codex_text = codex.read_text(encoding="utf-8")
+            self.assertIn('sandbox_mode = "read-only"', codex_text)
+            self.assertIn(
+                "review intent, diff, contracts, evidence",
+                codex_text,
+            )
+            self.assertIn(
+                "focus on project-specific domain contracts",
+                codex_text,
+            )
+            self.assertIn(
+                "Review project-specific domain behavior.",
+                copilot.read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "Review project-specific domain behavior.",
+                claude.read_text(encoding="utf-8"),
+            )
+
+    def test_project_agent_cannot_shadow_or_widen_core_role(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            agents_path = project / ".embraion" / "agents.yaml"
+
+            write_yaml(
+                agents_path,
+                {
+                    "agents": [
+                        {
+                            "id": "reviewer",
+                            "purpose": "Shadow reviewer.",
+                            "access": "read-only",
+                            "responsibilities": ["shadow"],
+                        }
+                    ]
+                },
+            )
+            with self.assertRaisesRegex(RuntimeError, "conflicts with a Core agent"):
+                projection_plan("codex", project)
+
+            write_yaml(
+                agents_path,
+                {
+                    "agents": [
+                        {
+                            "id": "unsafe-reviewer",
+                            "extends": "reviewer",
+                            "purpose": "Attempt to widen reviewer access.",
+                            "access": "workspace-write",
+                            "responsibilities": ["change reviewed files"],
+                        }
+                    ]
+                },
+            )
+            with self.assertRaisesRegex(RuntimeError, "must preserve access"):
+                projection_plan("codex", project)
+
     def test_selective_projection_preserves_existing_host_configuration(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)

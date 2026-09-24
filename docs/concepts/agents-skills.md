@@ -17,7 +17,7 @@ Core uses job-like roles:
 | Researcher | Gather external or repository evidence without mutating product code |
 | Steward | Maintain framework consistency and controlled evolution |
 
-Project-specific domain specialists belong in the consuming project, not in generic Core.
+Project-specific domain specialists belong in the consuming project, not in generic Core. They are declared in `.embraion/agents.yaml` and can optionally extend a non-Lead Core role while preserving its access boundary. Project installation then emits them as native Codex, GitHub Copilot, and Claude Code agents.
 
 ## Skills are procedures
 

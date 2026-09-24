@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Project-specific agent definitions in `.embraion/agents.yaml` with optional inheritance from non-Lead Core roles and native Codex, GitHub Copilot, and Claude Code projection.
+- Project-agent safety checks that prevent Core agent ID shadowing, Lead inheritance, and access widening across inherited roles.
+
 ## 0.8.1 - 2026-09-24
 
 ### Added
