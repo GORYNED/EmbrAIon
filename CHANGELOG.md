@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.1 - 2026-09-24
+
 ### Added
 
 - Minimal child-process safety helpers for environment allowlisting and stdout/stderr redaction in future execution adapters.
