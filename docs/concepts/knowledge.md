@@ -27,12 +27,11 @@ routing             architecture
 hard gates          compatibility
 ```
 
-The project manifest maps knowledge IDs to files:
+The dedicated `.embraion/knowledge.yaml` file maps knowledge IDs to files:
 
 ```yaml
-knowledge:
-  project: knowledge/project.md
-  architecture: knowledge/architecture.md
+project: knowledge/project.md
+architecture: knowledge/architecture.md
 ```
 
 EmbrAIon validation verifies that declared knowledge files resolve.
