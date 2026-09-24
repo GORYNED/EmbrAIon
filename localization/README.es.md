@@ -166,11 +166,12 @@ Se crea:
 ```text
 .embraion/
 ├── project.yaml
+├── knowledge.yaml
 ├── policy.yaml
 └── routing.yaml
 ```
 
-Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión e identidad, `policy.yaml` para sources/review/privacy y `routing.yaml` para overrides de model/effort.
+Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión e identidad, `knowledge.yaml` para referencias de project knowledge, `policy.yaml` para sources/review/privacy y `routing.yaml` para overrides de model/effort.
 
 ### Instalar la representación para un cliente
 
