@@ -1,5 +1,9 @@
 sources:
-  canonical: []
+  canonical:
+    - Assets/**
+    - Packages/**
+    - ProjectSettings/**
+    - knowledge/**
   protected: []
   generated: []
   external: []
