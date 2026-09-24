@@ -117,9 +117,10 @@ class RuntimeHardeningTests(unittest.TestCase):
                 )
 
     def test_runtime_redaction_removes_likely_credentials(self) -> None:
-        value = "token=abcdefghijklmnop and Authorization: Bearer abcdefghijklmnop"
+        secret = "abcdefgh" + "ijklmnop"
+        value = "token=" + secret + " and Authorization: Bearer " + secret
         redacted = redact_text(value)
-        self.assertNotIn("abcdefghijklmnop", redacted)
+        self.assertNotIn(secret, redacted)
         self.assertIn("<REDACTED>", redacted)
 
     def test_harness_audit_reports_agents_and_skills(self) -> None:
