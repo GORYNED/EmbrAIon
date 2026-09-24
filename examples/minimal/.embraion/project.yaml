@@ -26,6 +26,9 @@ review:
 privacy:
   default-class: PRIVATE
 
+routing:
+  overrides: {}
+
 agents: []
 
 capabilities:

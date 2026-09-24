@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -22,17 +22,6 @@ def _schema_errors(instance: Any, schema_path: Path) -> list[str]:
         location = ".".join(str(value) for value in error.absolute_path) or "<root>"
         errors.append(f"{location}: {error.message}")
     return errors
-
-
-def _model_refs(value: Any) -> Iterable[str]:
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == "model" and isinstance(child, str):
-                yield child
-            yield from _model_refs(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from _model_refs(child)
 
 
 def collect_issues(root: Path) -> list[dict[str, str]]:
@@ -159,12 +148,6 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
             for message in _schema_errors(read_yaml(path), agent_schema):
                 add("agent-schema", str(path.relative_to(root)), message)
 
-    model_schema = root / "schemas/model.schema.json"
-    if model_schema.exists():
-        for path in sorted((root / "adapters").glob("**/models.yaml")):
-            for message in _schema_errors(read_yaml(path), model_schema):
-                add("model-schema", str(path.relative_to(root)), message)
-
     eval_schema = root / "schemas/eval.schema.json"
     if eval_schema.exists():
         for path in sorted((root / "evals/cases").glob("*.yaml")):
@@ -220,23 +203,6 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     add("skill-description", str(entry.relative_to(root)), "description is required")
             except Exception as error:
                 add("skill-frontmatter", str(entry.relative_to(root)), str(error))
-
-    for route_path in sorted((root / "adapters").glob("*/routes.yaml")):
-        model_path = route_path.parent / "models.yaml"
-        if not model_path.exists():
-            continue
-
-        models = read_yaml(model_path) or {}
-        known = {
-            str(item.get("id"))
-            for group in ("models", "options")
-            for item in models.get(group, []) or []
-            if item.get("id")
-        }
-        routes = read_yaml(route_path) or {}
-        for model in _model_refs(routes):
-            if model not in known:
-                add("route-model", str(route_path.relative_to(root)), f"Unknown model id: {model}")
 
     docs = {path.name for path in (root / "docs").glob("*.md")}
     site_only_docs = {"index.md"}
