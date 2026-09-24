@@ -11,10 +11,11 @@ This creates:
 
 ```text
 .embraion/
+├── .gitignore
 └── project.yaml
 ```
 
-The manifest records the current EmbrAIon version and project identity.
+The manifest records the current EmbrAIon version and project identity. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
 
 ## Inspect the project
 
@@ -44,6 +45,15 @@ embraion install --host portable --destination vendor/embraion
 ```
 
 Generated host files are projections. Canonical reusable policy remains in EmbrAIon Core.
+
+For an existing repository that already owns host configuration or agents, preview and install only the components you want EmbrAIon to own:
+
+```bash
+embraion projection diff --host codex --destination . --component skills
+embraion install --host codex --destination . --component skills
+```
+
+Repeat `--component` to select multiple components. Omitting it keeps the complete-projection behavior. Selective install never treats unselected host files as obsolete or EmbrAIon-owned.
 
 ## Add project knowledge
 

@@ -24,6 +24,8 @@ Installed host projections persist generated-file hashes under `.embraion/state/
 
 A later projection diff classifies files as create, safe update, unchanged, conflict, obsolete-but-owned, or obsolete-and-modified.
 
+Mature repositories can scope install and diff to host-native components such as `skills` without taking ownership of existing host configuration or agents. Ownership state is preserved for previously managed but currently unselected components.
+
 ## Context provenance
 
 Structured knowledge entries can declare path, data class, trust source, eligible roles, and task triggers.

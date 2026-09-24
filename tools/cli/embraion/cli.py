@@ -184,6 +184,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
 def _print_projection_plan(plan: dict[str, object]) -> None:
     print(f"Projection: {plan['host']}")
     print(f"Destination: {plan['destination']}")
+    print(f"Components: {', '.join(plan.get('components', []))}")
     for key in (
         "create",
         "update",
@@ -205,6 +206,7 @@ def _cmd_install(args: argparse.Namespace) -> int:
         force=args.force,
         dry_run=args.dry_run,
         prune=args.prune,
+        components=args.component,
     )
     if args.json:
         _print_json(plan)
@@ -220,7 +222,11 @@ def _cmd_install(args: argparse.Namespace) -> int:
 
 
 def _cmd_projection_diff(args: argparse.Namespace) -> int:
-    plan = projection_plan(args.host, Path(args.destination or "."))
+    plan = projection_plan(
+        args.host,
+        Path(args.destination or "."),
+        components=args.component,
+    )
     if args.json:
         _print_json(plan)
     else:
@@ -818,6 +824,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["codex", "copilot", "claude-code", "portable"],
     )
     install_parser.add_argument("--destination", default=".")
+    install_parser.add_argument(
+        "--component",
+        action="append",
+        choices=["config", "agents", "skills", "bundle"],
+        help=(
+            "Install only this projection component; repeat to select multiple. "
+            "Omit to install the complete host projection."
+        ),
+    )
     install_parser.add_argument("--force", action="store_true")
     install_parser.add_argument("--dry-run", action="store_true")
     install_parser.add_argument("--prune", action="store_true")
@@ -844,6 +859,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["codex", "copilot", "claude-code", "portable"],
     )
     projection_diff.add_argument("--destination", default=".")
+    projection_diff.add_argument(
+        "--component",
+        action="append",
+        choices=["config", "agents", "skills", "bundle"],
+        help=(
+            "Diff only this projection component; repeat to select multiple. "
+            "Omit to diff the complete host projection."
+        ),
+    )
     projection_diff.add_argument("--json", action="store_true")
     projection_diff.set_defaults(func=_cmd_projection_diff)
 

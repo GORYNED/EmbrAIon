@@ -258,7 +258,54 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
 
             current = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(__version__, str(current["framework"]["version"]))
+            self.assertTrue((project / ".embraion" / ".gitignore").is_file())
 
+            existing_config = project / ".codex" / "config.toml"
+            existing_config.parent.mkdir(parents=True)
+            existing_config.write_text(
+                "[project]\ncustom = true\n",
+                encoding="utf-8",
+            )
+
+            selective = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "projection",
+                    "diff",
+                    "--host",
+                    "codex",
+                    "--destination",
+                    ".",
+                    "--component",
+                    "skills",
+                    "--json",
+                ).stdout
+            )
+            self.assertEqual(["skills"], selective["components"])
+            self.assertEqual([], selective["conflict"])
+
+            self._run(
+                project,
+                environment,
+                "install",
+                "--host",
+                "codex",
+                "--destination",
+                ".",
+                "--component",
+                "skills",
+            )
+            self.assertEqual(
+                "[project]\ncustom = true\n",
+                existing_config.read_text(encoding="utf-8"),
+            )
+            self.assertTrue(
+                (project / ".agents" / "skills" / "review" / "SKILL.md").is_file()
+            )
+            self.assertFalse((project / ".codex" / "agents" / "reviewer.toml").exists())
+
+            existing_config.unlink()
             self._run(
                 project,
                 environment,
@@ -269,6 +316,7 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 ".",
             )
             self.assertTrue((project / ".codex" / "config.toml").is_file())
+            self.assertTrue((project / ".codex" / "agents" / "reviewer.toml").is_file())
 
     def test_python_reference_application_tests(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

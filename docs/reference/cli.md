@@ -43,12 +43,22 @@ embraion install --host codex --destination . --dry-run
 
 Installed projections track generated-file hashes. Later installs distinguish safe updates from local conflicts instead of blindly overwriting files.
 
+Existing repositories can select projection components explicitly:
+
+```bash
+embraion install --host codex --destination . --component skills
+embraion install --host codex --destination . --component agents --component skills
+```
+
+Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot and Claude Code support `agents` and `skills`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
+
 ### `embraion projection`
 
 Preview ownership-aware projection changes:
 
 ```bash
 embraion projection diff --host codex --destination .
+embraion projection diff --host codex --destination . --component skills
 embraion projection diff --host codex --destination . --json
 ```
 

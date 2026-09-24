@@ -25,6 +25,68 @@ HOST_SKILL_DIRECTORIES = {
     "claude-code": Path(".claude") / "skills",
 }
 
+HOST_COMPONENTS = {
+    "codex": ("config", "agents", "skills"),
+    "copilot": ("agents", "skills"),
+    "claude-code": ("agents", "skills"),
+    "portable": ("bundle",),
+}
+
+_LOCAL_STATE_GITIGNORE = """# Local EmbrAIon runtime state
+state/
+cache/
+"""
+
+
+def _normalize_components(
+    host: str,
+    components: list[str] | tuple[str, ...] | None,
+) -> tuple[str, ...]:
+    supported = HOST_COMPONENTS.get(host)
+    if supported is None:
+        raise RuntimeError(f"Unsupported host: {host}")
+
+    if not components:
+        return supported
+
+    requested = tuple(dict.fromkeys(str(item) for item in components))
+    invalid = [item for item in requested if item not in supported]
+    if invalid:
+        raise RuntimeError(
+            f"Host '{host}' does not support projection component(s): "
+            + ", ".join(invalid)
+            + f". Supported: {', '.join(supported)}."
+        )
+    return requested
+
+
+def _component_for_path(host: str, relative: str) -> str | None:
+    normalized = relative.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+
+    if host == "codex":
+        if normalized == ".codex/config.toml":
+            return "config"
+        if normalized.startswith(".codex/agents/"):
+            return "agents"
+        if normalized.startswith(".agents/skills/"):
+            return "skills"
+    elif host == "copilot":
+        if normalized.startswith(".github/agents/"):
+            return "agents"
+        if normalized.startswith(".github/skills/"):
+            return "skills"
+    elif host == "claude-code":
+        if normalized.startswith(".claude/agents/"):
+            return "agents"
+        if normalized.startswith(".claude/skills/"):
+            return "skills"
+    elif host == "portable" and normalized.startswith("embraion/"):
+        return "bundle"
+
+    return None
+
 
 def _default_project_overlay(name: str) -> dict[str, Any]:
     return {
@@ -62,6 +124,11 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
 
     write_yaml(manifest, _default_project_overlay(name or destination.name))
+
+    local_ignore = destination / ".embraion" / ".gitignore"
+    if not local_ignore.exists():
+        local_ignore.write_text(_LOCAL_STATE_GITIGNORE, encoding="utf-8")
+
     return manifest
 
 
@@ -103,22 +170,36 @@ def _agent_instructions(agent: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
-def _generate_codex(root: Path, output: Path) -> None:
+def _generate_codex(
+    root: Path,
+    output: Path,
+    components: tuple[str, ...],
+) -> None:
     target = output / ".codex"
-    (target / "agents").mkdir(parents=True, exist_ok=True)
 
-    routes = read_yaml(root / "adapters/codex/routes.yaml") or {}
-    default = routes.get("defensive-default", routes.get("routes", {}).get("economy", {}))
+    if "config" in components:
+        target.mkdir(parents=True, exist_ok=True)
+        routes = read_yaml(root / "adapters/codex/routes.yaml") or {}
+        default = routes.get(
+            "defensive-default",
+            routes.get("routes", {}).get("economy", {}),
+        )
 
-    config = [
-        "[agents]",
-        "enabled = true",
-        "max_concurrent_threads_per_session = 3",
-        f'default_subagent_model = "{default.get("model", "gpt-6-luna")}"',
-        f'default_subagent_reasoning_effort = "{default.get("effort", "medium")}"',
-        "",
-    ]
-    (target / "config.toml").write_text("\n".join(config), encoding="utf-8")
+        config = [
+            "[agents]",
+            "enabled = true",
+            "max_concurrent_threads_per_session = 3",
+            f'default_subagent_model = "{default.get("model", "gpt-6-luna")}"',
+            f'default_subagent_reasoning_effort = "{default.get("effort", "medium")}"',
+            "",
+        ]
+        (target / "config.toml").write_text("\n".join(config), encoding="utf-8")
+
+    if "agents" not in components:
+        return
+
+    agents_target = target / "agents"
+    agents_target.mkdir(parents=True, exist_ok=True)
 
     for agent in load_agents(root):
         if agent.get("id") == "lead":
@@ -133,7 +214,7 @@ def _generate_codex(root: Path, output: Path) -> None:
             f'sandbox_mode = "{sandbox}"\n'
             f'developer_instructions = """\n{instructions}\n"""\n'
         )
-        (target / "agents" / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
+        (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
 
 
 def _generate_markdown_agents(root: Path, output: Path, host: str) -> None:
@@ -198,18 +279,31 @@ def _generate_portable(root: Path, output: Path) -> None:
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
 
 
-def generate_host(root: Path, host: str, output: Path) -> None:
+def generate_host(
+    root: Path,
+    host: str,
+    output: Path,
+    components: list[str] | tuple[str, ...] | None = None,
+) -> None:
+    selected = _normalize_components(host, components)
+
     if host == "codex":
-        _generate_codex(root, output)
-        _generate_host_skills(root, output, host)
+        _generate_codex(root, output, selected)
+        if "skills" in selected:
+            _generate_host_skills(root, output, host)
     elif host == "copilot":
-        _generate_markdown_agents(root, output, "copilot")
-        _generate_host_skills(root, output, host)
+        if "agents" in selected:
+            _generate_markdown_agents(root, output, "copilot")
+        if "skills" in selected:
+            _generate_host_skills(root, output, host)
     elif host == "claude-code":
-        _generate_markdown_agents(root, output, "claude-code")
-        _generate_host_skills(root, output, host)
+        if "agents" in selected:
+            _generate_markdown_agents(root, output, "claude-code")
+        if "skills" in selected:
+            _generate_host_skills(root, output, host)
     elif host == "portable":
-        _generate_portable(root, output)
+        if "bundle" in selected:
+            _generate_portable(root, output)
     else:
         raise RuntimeError(f"Unsupported host: {host}")
 
@@ -274,6 +368,7 @@ def _projection_plan_from_generated(
     host: str,
     generated: Path,
     destination: Path,
+    components: tuple[str, ...],
 ) -> dict[str, Any]:
     project = project_root(destination)
     previous = _load_projection_state(project, host, destination)
@@ -284,6 +379,7 @@ def _projection_plan_from_generated(
         "schema-version": 1,
         "host": host,
         "destination": str(destination.resolve()),
+        "components": list(components),
         "create": [],
         "update": [],
         "unchanged": [],
@@ -309,8 +405,11 @@ def _projection_plan_from_generated(
         else:
             plan["conflict"].append(relative)
 
+    selected = set(components)
     for relative, previous_hash in previous_files.items():
         if relative in generated_files:
+            continue
+        if _component_for_path(host, relative) not in selected:
             continue
 
         target = destination / relative
@@ -335,14 +434,25 @@ def _projection_plan_from_generated(
     return plan
 
 
-def projection_plan(host: str, destination: Path) -> dict[str, Any]:
+def projection_plan(
+    host: str,
+    destination: Path,
+    *,
+    components: list[str] | tuple[str, ...] | None = None,
+) -> dict[str, Any]:
     root = framework_root()
     destination = destination.resolve()
+    selected = _normalize_components(host, components)
 
     with tempfile.TemporaryDirectory(prefix="embraion-projection-") as temporary:
         generated = Path(temporary)
-        generate_host(root, host, generated)
-        return _projection_plan_from_generated(host, generated, destination)
+        generate_host(root, host, generated, selected)
+        return _projection_plan_from_generated(
+            host,
+            generated,
+            destination,
+            selected,
+        )
 
 
 def install(
@@ -352,15 +462,22 @@ def install(
     force: bool = False,
     dry_run: bool = False,
     prune: bool = False,
+    components: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     root = framework_root()
     destination = destination.resolve()
     project = project_root(destination)
+    selected = _normalize_components(host, components)
 
     with tempfile.TemporaryDirectory(prefix="embraion-install-") as temporary:
         generated = Path(temporary)
-        generate_host(root, host, generated)
-        plan = _projection_plan_from_generated(host, generated, destination)
+        generate_host(root, host, generated, selected)
+        plan = _projection_plan_from_generated(
+            host,
+            generated,
+            destination,
+            selected,
+        )
 
         if dry_run:
             return plan
@@ -396,7 +513,13 @@ def install(
                 if target.is_file():
                     target.unlink()
 
-        current_files = _file_hashes(generated)
+        selected_components = set(selected)
+        current_files = {
+            relative: digest
+            for relative, digest in previous_files.items()
+            if _component_for_path(host, relative) not in selected_components
+        }
+        current_files.update(_file_hashes(generated))
         preserved_obsolete = list(plan["obsolete-modified"])
         if not prune:
             preserved_obsolete += list(plan["obsolete-owned"])
@@ -414,6 +537,15 @@ def install(
                 "framework-version": framework_version(root),
                 "host": host,
                 "destination": str(destination),
+                "managed-components": sorted(
+                    set((previous or {}).get("managed-components") or [])
+                    | {
+                        component
+                        for relative in previous_files
+                        if (component := _component_for_path(host, relative))
+                    }
+                    | set(selected)
+                ),
                 "files": current_files,
             },
         )

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Selective host projection adoption through repeatable `--component` flags on `install` and `projection diff`, allowing mature repositories to adopt skills or agents without replacing existing host-owned configuration.
+- Project initialization now creates `.embraion/.gitignore` so local runtime state and cache data stay untracked by default.
+
 ## 0.6.1 - 2026-09-24
 
 ### Added

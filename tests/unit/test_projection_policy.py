@@ -19,6 +19,24 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
             self.assertTrue(policy["review"]["substantial-required"])
             self.assertEqual([], policy["sources"]["protected"])
+            local_ignore = (project / ".embraion/.gitignore").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("state/", local_ignore)
+            self.assertIn("cache/", local_ignore)
+
+    def test_init_preserves_existing_local_ignore(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            local_ignore = project / ".embraion/.gitignore"
+            local_ignore.parent.mkdir(parents=True)
+            local_ignore.write_text("custom-local-rule/\n", encoding="utf-8")
+
+            init_project(project, name="Consumer")
+            self.assertEqual(
+                "custom-local-rule/\n",
+                local_ignore.read_text(encoding="utf-8"),
+            )
 
     def test_host_projection_includes_project_skills(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -31,6 +49,97 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertTrue((project / ".agents/skills/review/SKILL.md").is_file())
             self.assertTrue((project / ".github/skills/review/SKILL.md").is_file())
             self.assertTrue((project / ".claude/skills/review/SKILL.md").is_file())
+
+    def test_selective_projection_preserves_existing_host_configuration(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+
+            existing = project / ".codex/config.toml"
+            existing.parent.mkdir(parents=True)
+            existing.write_text("[project]\ncustom = true\n", encoding="utf-8")
+
+            plan = projection_plan(
+                "codex",
+                project,
+                components=["skills"],
+            )
+            self.assertEqual(["skills"], plan["components"])
+            self.assertEqual([], plan["conflict"])
+
+            installed = install(
+                "codex",
+                project,
+                components=["skills"],
+            )
+            self.assertEqual(["skills"], installed["components"])
+            self.assertEqual(
+                "[project]\ncustom = true\n",
+                existing.read_text(encoding="utf-8"),
+            )
+            self.assertFalse((project / ".codex/agents/reviewer.toml").exists())
+            self.assertTrue((project / ".agents/skills/review/SKILL.md").is_file())
+
+            full = projection_plan("codex", project)
+            self.assertIn(".codex/config.toml", full["conflict"])
+            self.assertIn(
+                ".agents/skills/review/SKILL.md",
+                full["unchanged"],
+            )
+
+    def test_selective_projection_does_not_orphan_unselected_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            install("codex", project)
+
+            selective = projection_plan(
+                "codex",
+                project,
+                components=["skills"],
+            )
+            self.assertEqual([], selective["obsolete-owned"])
+            self.assertEqual([], selective["obsolete-modified"])
+
+            install("codex", project, components=["skills"])
+            state = read_json(
+                project / ".embraion/state/projections/codex.json"
+            )
+            self.assertIn(".codex/config.toml", state["files"])
+            self.assertIn(".codex/agents/reviewer.toml", state["files"])
+            self.assertEqual(
+                ["agents", "config", "skills"],
+                state["managed-components"],
+            )
+
+    def test_selective_install_infers_legacy_managed_components(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            install("codex", project)
+
+            state_path = project / ".embraion/state/projections/codex.json"
+            state = read_json(state_path)
+            state.pop("managed-components", None)
+            write_json(state_path, state)
+
+            install("codex", project, components=["skills"])
+            upgraded = read_json(state_path)
+            self.assertEqual(
+                ["agents", "config", "skills"],
+                upgraded["managed-components"],
+            )
+
+    def test_invalid_projection_component_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            with self.assertRaises(RuntimeError):
+                projection_plan(
+                    "copilot",
+                    project,
+                    components=["config"],
+                )
 
     def test_projection_lifecycle_detects_local_modification(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
