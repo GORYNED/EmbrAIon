@@ -211,28 +211,32 @@ class ProjectionPolicyTests(unittest.TestCase):
             install("codex", project, prune=True)
             self.assertFalse(stale.exists())
 
-    def test_structured_knowledge_remains_backward_compatible(self) -> None:
+    def test_structured_knowledge_uses_dedicated_config(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             manifest = init_project(project, name="Consumer")
-            knowledge = project / "knowledge"
-            knowledge.mkdir()
-            (knowledge / "architecture.md").write_text("architecture", encoding="utf-8")
+            knowledge_dir = project / "knowledge"
+            knowledge_dir.mkdir()
+            (knowledge_dir / "architecture.md").write_text(
+                "architecture",
+                encoding="utf-8",
+            )
 
-            data = read_yaml(manifest)
-            data["knowledge"] = {
-                "architecture": {
-                    "path": "knowledge/architecture.md",
-                    "data-class": "PRIVATE",
-                    "trust": "project",
-                    "roles": ["architect"],
-                    "triggers": ["architecture"],
-                }
+            knowledge_path = manifest.with_name("knowledge.yaml")
+            data = read_yaml(knowledge_path)
+            data["architecture"] = {
+                "path": "knowledge/architecture.md",
+                "data-class": "PRIVATE",
+                "trust": "project",
+                "roles": ["architect"],
+                "triggers": ["architecture"],
             }
-            write_yaml(manifest, data)
+            write_yaml(knowledge_path, data)
+
+            self.assertNotIn("knowledge", read_yaml(manifest))
             self.assertEqual(
                 "knowledge/architecture.md",
-                read_yaml(manifest)["knowledge"]["architecture"]["path"],
+                read_yaml(knowledge_path)["architecture"]["path"],
             )
 
 
