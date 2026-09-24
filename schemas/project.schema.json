@@ -39,60 +39,7 @@
       },
       "additionalProperties": true
     },
-    "knowledge": {
-      "type": "object",
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": "string",
-            "minLength": 1
-          },
-          {
-            "type": "object",
-            "required": [
-              "path"
-            ],
-            "properties": {
-              "path": {
-                "type": "string",
-                "minLength": 1
-              },
-              "data-class": {
-                "enum": [
-                  "PUBLIC",
-                  "PRIVATE",
-                  "CONFIDENTIAL"
-                ]
-              },
-              "trust": {
-                "enum": [
-                  "project",
-                  "external",
-                  "generated"
-                ]
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "uniqueItems": true
-              },
-              "triggers": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "uniqueItems": true
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
-      }
-    },
+    "knowledge": false,
     "sources": false,
     "validation": {
       "type": "object",
