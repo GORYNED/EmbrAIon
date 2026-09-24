@@ -4,105 +4,51 @@
 
 <div class="embraion-lead" markdown>
 
-**EmbrAIon** is a portable **AI-First Engineering System** for making AI-assisted software development structured, reusable, reviewable, and trustworthy.
+**EmbrAIon** is a portable **AI-First Engineering System** that makes AI-assisted software development structured, reusable, reviewable, and safer to operate.
 
-It does not replace your application runtime. It sits around the engineering process: roles, skills, project knowledge, routing, permissions, validation, and host-specific projections. It is model-agnostic: the AI host owns model availability, while a project may optionally override model selection in `.embraion/routing.yaml`.
+It sits around your engineering process — not inside your product runtime — and gives AI clients a consistent project contract for knowledge, roles, skills, routing, permissions, validation, review, and evidence.
 
 </div>
+
+## Start with what you want to do
 
 <div class="grid cards" markdown>
 
--   :material-rocket-launch-outline:{ .lg .middle } **Start in minutes**
+-   :material-rocket-launch-outline:{ .lg .middle } **I am new to EmbrAIon**
 
     ---
 
-    Install one launcher, initialize a project, and install the host projection you use.
+    Understand the mental model, install the launcher, and add it to a repository.
 
-    [Get started](getting-started/installation.md)
+    [Start here](getting-started/what-is-embraion.md)
 
--   :material-brain:{ .lg .middle } **One canonical Core**
-
-    ---
-
-    Keep reusable engineering policy upstream while project-specific truth stays with each consuming repository.
-
-    [Understand the model](concepts/index.md)
-
--   :material-connection:{ .lg .middle } **Multiple AI hosts**
+-   :material-source-repository:{ .lg .middle } **I have an existing repository**
 
     ---
 
-    Project the same Core into Codex, GitHub Copilot, Claude Code, or a host-neutral Portable bundle.
+    Adopt EmbrAIon conservatively without replacing host files you already own.
 
-    [Explore hosts](hosts/index.md)
+    [Adopt an existing repo](getting-started/existing-repository.md)
 
--   :material-check-decagram-outline:{ .lg .middle } **Evidence, not assumptions**
+-   :material-tune-variant:{ .lg .middle } **I need to configure my project**
 
     ---
 
-    Deterministic validation, behavioral evals, security checks, reference E2E, and release gates make changes observable.
+    Configure knowledge, policy, validation, agents, and optional model routing.
 
-    [See validation](validation.md)
+    [Configure EmbrAIon](configuration/index.md)
+
+-   :material-shield-check:{ .lg .middle } **I want validation or CI enforcement**
+
+    ---
+
+    Run project validation, collect evidence, and optionally install explicit merge-time enforcement.
+
+    [Use validation & enforcement](guides/enforcement.md)
 
 </div>
 
-## The basic idea
-
-A software project keeps its normal source code and runtime:
-
-```text
-Application / Library / Game
-          ↑
-      your code
-```
-
-EmbrAIon adds an engineering layer around that repository:
-
-<div class="embraion-architecture-diagram">
-<svg viewBox="0 0 760 430" role="img" aria-labelledby="architecture-title architecture-desc">
-  <title id="architecture-title">EmbrAIon engineering layer architecture</title>
-  <desc id="architecture-desc">EmbrAIon Core projects into Codex, Copilot, and Claude Code. Those hosts operate on a consuming project, which produces the product runtime.</desc>
-
-  <g class="diagram-lines" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M380 58 V95" />
-    <path d="M170 95 H590" />
-    <path d="M170 95 V130" />
-    <path d="M380 95 V130" />
-    <path d="M590 95 V130" />
-
-    <path d="M170 205 V245" />
-    <path d="M380 205 V245" />
-    <path d="M590 205 V245" />
-    <path d="M170 245 H590" />
-    <path d="M380 245 V285" />
-
-    <path d="M380 335 V375" />
-  </g>
-
-  <g class="diagram-arrows" fill="currentColor">
-    <path d="M170 130 l-7 -10 h14 z" />
-    <path d="M380 130 l-7 -10 h14 z" />
-    <path d="M590 130 l-7 -10 h14 z" />
-    <path d="M380 285 l-7 -10 h14 z" />
-    <path d="M380 375 l-7 -10 h14 z" />
-  </g>
-
-  <g class="diagram-labels" fill="currentColor" text-anchor="middle">
-    <text x="380" y="42">EmbrAIon Core</text>
-
-    <text x="170" y="175">Codex</text>
-    <text x="380" y="175">Copilot</text>
-    <text x="590" y="175">Claude Code</text>
-
-    <text x="380" y="325">Consuming project</text>
-    <text x="380" y="420">Product runtime</text>
-  </g>
-</svg>
-</div>
-
-The final application does not need an EmbrAIon runtime dependency. EmbrAIon is used to organize how humans and AI agents engineer the project.
-
-## Quick start
+## The shortest working path
 
 ```bash
 pipx install embraion
@@ -114,36 +60,65 @@ embraion doctor
 embraion status
 ```
 
-The project now has a pinned EmbrAIon version plus a generated host projection.
+Use `copilot` or `claude-code` when that is your AI client.
 
-If you want to override model selection, ask the AI in that project to configure EmbrAIon routing. The installed `routing-configuration` skill directs it to `.embraion/routing.yaml` → `overrides`; otherwise the host keeps its own default/automatic model policy.
+Then continue with [Your First AI Task](getting-started/first-ai-task.md).
 
-## What EmbrAIon owns
+## The mental model
 
-| Area | Purpose |
-| --- | --- |
-| Core | Canonical reusable rules, roles, skills, workflows, routing, and knowledge |
-| Project overlay | Project identity, version pin, and local capabilities |
-| Knowledge config | Project knowledge references and context-selection metadata in `.embraion/knowledge.yaml` |
-| Policy config | Sources, substantial-review policy, and default privacy in `.embraion/policy.yaml` |
-| Routing config | Optional project model/effort/options overrides in `.embraion/routing.yaml` |
-| Validation config | Fast/affected/full and custom validation profiles in `.embraion/validation.yaml` |
-| Agents config | Project-specific agent declarations in `.embraion/agents.yaml` |
-| Adapters | Codex, Copilot, Claude Code, Portable, and transport projections without a global model catalog |
-| Tools | Validation, security, worktrees, sessions, learning, evals, install/sync |
-| Evidence | Unit/integration tests, reference E2E, behavioral evals, release gates |
+```text
+Your application / library / game
+              ↑
+        ordinary source code
+              ↑
+        consuming repository
+              ↑
+ project knowledge + .embraion/
+              ↑
+          EmbrAIon Core
+              ↓
+ Codex / Copilot / Claude Code
+              ↓
+ AI-assisted engineering work
+              ↓
+ validation → review → evidence
+```
 
-## See it in a real project
+The final product does not need an EmbrAIon runtime dependency. EmbrAIon organizes **how the project is engineered**.
 
-The repository ships with executable reference projects:
+## What lives in your project
 
-- [Minimal](examples/minimal.md) — the smallest complete EmbrAIon consumer.
-- [Python](examples/python.md) — ordinary application code and tests wrapped by EmbrAIon.
-- [Unity](examples/unity.md) — a runnable Unity 6 example showing that EmbrAIon lives around the project, not inside the game runtime.
+`embraion init` creates a small, explicit configuration surface:
 
-## Status
+```text
+.embraion/
+├── .gitignore
+├── project.yaml      # project identity + EmbrAIon version pin
+├── knowledge.yaml    # project knowledge references
+├── policy.yaml       # source classes, privacy, review, enforcement
+├── routing.yaml      # optional host-specific model overrides
+├── validation.yaml   # executable project validation profiles
+└── agents.yaml       # project-specific agent declarations
+```
 
-EmbrAIon is pre-1.0. Patch releases are intended to remain migration-free; minor releases may evolve public framework contracts while release notes and project pinning preserve intentional upgrades.
+The project owns these files. Generated Codex/Copilot/Claude files are projections of the canonical configuration and reusable EmbrAIon Core.
 
-[Start with installation](getting-started/installation.md){ .md-button .md-button--primary }
+## Important defaults
+
+- **Model selection is host-owned by default.** You do not need to configure model names.
+- **Validation runs only when requested.** Put real commands in `validation.yaml` and invoke them explicitly.
+- **Enforcement is opt-in.** `init` and host installation do not silently add executable CI or hooks.
+- **Project updates are intentional.** Projects pin exact releases and update only when you run `embraion update`.
+- **State/cache stay local.** `.embraion/state/` and `.embraion/cache/` are ignored by the project-local `.gitignore`.
+
+## Recommended next steps
+
+1. [What is EmbrAIon?](getting-started/what-is-embraion.md)
+2. [Install EmbrAIon](getting-started/installation.md)
+3. [Add it to a project](getting-started/first-project.md)
+4. [Configure the project](configuration/index.md)
+5. [Run your first AI task](getting-started/first-ai-task.md)
+6. [Use the daily workflow](guides/daily-workflow.md)
+
+[Start here](getting-started/what-is-embraion.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/GORYNED/EmbrAIon){ .md-button }

@@ -1,13 +1,13 @@
-# Your First Project
+# Add EmbrAIon to a Project
 
-Start inside an existing repository or an empty project directory.
+Start inside an existing repository or an empty project directory:
 
 ```bash
 cd MyProject
 embraion init
 ```
 
-This creates:
+This creates the canonical project-owned configuration:
 
 ```text
 .embraion/
@@ -20,7 +20,15 @@ This creates:
 └── agents.yaml
 ```
 
-`project.yaml` records the current EmbrAIon version, project identity, and local capabilities. `knowledge.yaml` owns project knowledge references. `policy.yaml` owns sources/review/privacy policy. `routing.yaml` owns optional host model/effort/options overrides. `validation.yaml` owns validation profiles. `agents.yaml` owns project-specific agent declarations. The project-local `.gitignore` keeps `.embraion/state/` and `.embraion/cache/` local so runtime evidence and cache data are not accidentally committed.
+The files have focused ownership:
+
+- `project.yaml` — project identity, framework pin, and open capability metadata;
+- `knowledge.yaml` — project knowledge references;
+- `policy.yaml` — source classes, privacy, review, and enforcement policy;
+- `routing.yaml` — optional host-specific model/effort/options overrides;
+- `validation.yaml` — executable project validation profiles;
+- `agents.yaml` — project-specific agent declarations;
+- `.gitignore` — keeps `.embraion/state/` and `.embraion/cache/` local.
 
 ## Inspect the project
 
@@ -29,51 +37,47 @@ embraion status
 embraion doctor
 ```
 
-`status` explains the launcher, project pin, resolved runtime, cache, and detected host projections.
+Resolve configuration errors before adding host projections.
 
-`doctor` checks framework health and, when a project is detected, project-level diagnostics.
+## Install the AI client you use
 
-## Install a host projection
-
-For Codex:
+Codex:
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-Other supported projections:
+GitHub Copilot:
 
 ```bash
 embraion install --host copilot --destination .
+```
+
+Claude Code:
+
+```bash
 embraion install --host claude-code --destination .
+```
+
+Portable bundle:
+
+```bash
 embraion install --host portable --destination vendor/embraion
 ```
 
-Generated host files are projections. Canonical reusable policy remains in EmbrAIon Core.
+A repository may install multiple projections.
 
+If the repository already owns host configuration, agents, or skills, use the safer incremental flow in [Adopt an Existing Repository](existing-repository.md) instead of overwriting files blindly.
 
-The host projection also installs EmbrAIon Skills for that AI client, including `routing-configuration`. That skill tells the AI where optional model overrides belong.
+## Model routing is optional
 
-EmbrAIon is model-agnostic: if you are happy with the host's default/automatic model choice, configure nothing. If you want explicit model routing, tell the AI in the repository:
+EmbrAIon is model-agnostic. If the AI client's default/automatic model choice is acceptable, configure nothing.
 
-> Configure EmbrAIon routing using the models available to you. Write any model/effort overrides only to `.embraion/routing.yaml` under `overrides`, and keep all privacy, access, validation, and review rules intact.
-
-The AI can then update the project overlay without requiring a framework model catalog.
-
-For an existing repository that already owns host configuration or agents, preview and install only the components you want EmbrAIon to own:
-
-```bash
-embraion projection diff --host codex --destination . --component skills
-embraion install --host codex --destination . --component skills
-```
-
-Repeat `--component` to select multiple components. Omitting it keeps the complete-projection behavior. Selective install never treats unselected host files as obsolete or EmbrAIon-owned.
+If explicit project routing is useful, ask the AI client to write only confirmed selectors to `.embraion/routing.yaml`. Do not weaken privacy, access, protected-source, validation, or review policy to make a model fit.
 
 ## Add project knowledge
 
-Project-specific facts belong with the consuming project rather than in reusable Core.
-
-A common layout is:
+Project-specific facts belong with the repository. For example:
 
 ```text
 knowledge/
@@ -81,15 +85,16 @@ knowledge/
 └── architecture.md
 ```
 
-Reference these files from `.embraion/knowledge.yaml`:
+Reference them from `.embraion/knowledge.yaml`. See [Project Knowledge](../configuration/knowledge.md).
 
-```yaml
-project: knowledge/project.md
-architecture: knowledge/architecture.md
-```
+## Add real validation early
 
-See [Project knowledge](../concepts/knowledge.md) and [Project overlay](../project-overlay.md).
+The default validation profiles are empty. Before relying on validation as evidence, configure real repository commands in `.embraion/validation.yaml`.
+
+See [Validation Profiles](../configuration/validation.md).
 
 ## Next
 
-[Customize EmbrAIon for your project](../configuration/index.md).
+- New/small repository: [Configure EmbrAIon](../configuration/index.md)
+- Mature repository: [Adopt an Existing Repository](existing-repository.md)
+- Ready to work: [Your First AI Task](first-ai-task.md)

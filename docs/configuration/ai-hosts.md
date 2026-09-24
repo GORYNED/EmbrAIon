@@ -1,4 +1,8 @@
-# AI Host Configuration Examples
+# Configure with Your AI Client
+
+You do not have to hand-edit every `.embraion/` file. The AI client already working in the repository can help configure project-owned EmbrAIon settings, as long as it edits the canonical file for the requested concern and preserves safety boundaries.
+
+This page focuses on conversational configuration patterns for Codex, GitHub Copilot, and Claude Code. For install locations and generated files, use the dedicated [AI Clients](../hosts/index.md) section.
 
 EmbrAIon keeps the project configuration host-neutral where possible, then projects reusable agents and skills into the AI client you actually use.
 

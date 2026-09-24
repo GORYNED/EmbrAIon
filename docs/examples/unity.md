@@ -1,21 +1,8 @@
 # Unity Usage Example
 
-The Unity example is a small runnable Unity 6 project.
+The Unity reference is a small runnable Unity 6 project showing that EmbrAIon is an engineering layer around a normal Unity repository.
 
-When `Assets/Scenes/SampleScene.unity` enters Play Mode, it displays a simple counter:
-
-```text
-EmbrAIon Unity Reference
-
-Value: 0
-
-[ Increment ]
-[ Reset ]
-```
-
-The counter is intentionally simple. The example is demonstrating the boundary between an ordinary Unity application and the EmbrAIon engineering layer.
-
-## Application architecture
+When `Assets/Scenes/SampleScene.unity` enters Play Mode, it displays a simple counter. The application architecture stays ordinary Unity/C#:
 
 ```text
 CounterState
@@ -28,33 +15,39 @@ CounterSampleView
 sample presentation
 ```
 
-`CounterState` does not depend on `UnityEngine`. `CounterController` coordinates Unity lifecycle and state. `CounterSampleView` owns the sample UI.
+## Repository shape
 
-The project itself is a normal Unity project with `Assets/`, `Packages/`, and `ProjectSettings/`.
-
-## EmbrAIon layer
-
-Alongside Unity files, the project has:
+Alongside `Assets/`, `Packages/`, and `ProjectSettings/`, the example uses the full current project configuration:
 
 ```text
-.embraion/project.yaml
+.embraion/
+├── .gitignore
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
+
 knowledge/
 ├── project.md
 └── architecture.md
 ```
 
-This is where the project declares its EmbrAIon pin and local engineering knowledge.
+The `.embraion/` files declare the framework pin and project engineering contract. The `knowledge/` files contain Unity-specific project truth.
 
-Installing a host projection:
+## Install an AI-client projection
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-adds Codex-facing engineering configuration without changing the Unity runtime architecture.
+This adds Codex-facing engineering files without changing the Unity runtime architecture.
 
 ## What the example proves
 
 EmbrAIon is used while engineering the project. It does not sit between Unity and the finished application runtime.
+
+The same Core/project/host split used here applies to larger Unity repositories: project architecture belongs with the project, reusable engineering behavior stays in EmbrAIon, and generated AI-client files remain projections.
 
 [Browse the Unity Usage Example on GitHub](https://github.com/GORYNED/EmbrAIon/tree/main/examples/unity).

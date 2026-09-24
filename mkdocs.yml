@@ -71,49 +71,51 @@ copyright: EmbrAIon · AI-First Engineering System · by GORYNED
 
 nav:
   - Home: index.md
-  - Getting Started:
+  - Start Here:
+      - What is EmbrAIon?: getting-started/what-is-embraion.md
       - Installation: getting-started/installation.md
-      - First project: getting-started/first-project.md
-      - Updating: getting-started/updating.md
-  - Configuration:
+      - Add EmbrAIon to a project: getting-started/first-project.md
+      - Adopt an existing repository: getting-started/existing-repository.md
+      - Your first AI task: getting-started/first-ai-task.md
+  - Configure:
       - Overview: configuration/index.md
       - Project files: configuration/project-files.md
-      - AI host examples: configuration/ai-hosts.md
-  - Concepts:
-      - Overview: concepts/index.md
-      - System overview: overview.md
-      - Capability model: capability-model.md
-      - Agents & skills: concepts/agents-skills.md
-      - Project knowledge: concepts/knowledge.md
-      - Project overlay: project-overlay.md
+      - Project knowledge: configuration/knowledge.md
+      - Policy & protected paths: configuration/policy.md
+      - Validation profiles: configuration/validation.md
+      - Project agents: configuration/agents.md
       - Model routing: model-routing.md
-      - Pre-adoption hardening: concepts/pre-adoption-hardening.md
-  - Hosts:
+      - Configure with your AI client: configuration/ai-hosts.md
+  - Use & Automate:
+      - Daily workflow: guides/daily-workflow.md
+      - Validation & evidence: validation.md
+      - Runs & review: guides/runs-review.md
+      - Enforcement: guides/enforcement.md
+      - Updating safely: getting-started/updating.md
+  - AI Clients:
       - Overview: hosts/index.md
       - Codex: hosts/codex.md
       - GitHub Copilot: hosts/copilot.md
       - Claude Code: hosts/claude-code.md
       - Portable: hosts/portable.md
-  - CLI:
-      - Command reference: reference/cli.md
-  - Usage Examples:
-      - Overview: examples/index.md
+  - Guides & Examples:
+      - Troubleshooting: guides/troubleshooting.md
+      - Examples overview: examples/index.md
       - Minimal: examples/minimal.md
       - Python: examples/python.md
       - Unity: examples/unity.md
-  - Architecture & Quality:
-      - Architecture: architecture.md
-      - Validation: validation.md
-      - Security model: security.md
-      - Learning: learning.md
       - Spec Kit: spec-kit.md
-      - Release process: release-process.md
-  - Open Source:
-      - Overview: oss/index.md
+  - Reference:
+      - CLI reference: reference/cli.md
+      - Runtime & version resolution: reference/runtime-version-resolution.md
+      - Security model: security.md
+      - Architecture: architecture.md
+      - Capability model: capability-model.md
+  - Maintainers & Project:
       - Contributing: oss/contributing.md
       - Support: oss/support.md
       - Security reporting: oss/security-reporting.md
       - Governance: oss/governance.md
       - Licensing: licensing.md
-  - Internals:
-      - Historical extraction plan: extraction-plan.md
+      - Release process: release-process.md
+      - Learning: learning.md

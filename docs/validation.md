@@ -1,31 +1,34 @@
-# Validation
+# Validation & Evidence
 
-Validation is evidence that a framework or project change preserves intended contracts. Consuming-project validation profiles are declared in `.embraion/validation.yaml` and executed with `embraion validation run <profile>`. Each execution produces redacted structured evidence that can optionally attach to an active EmbrAIon run.
+EmbrAIon has two related but different validation concepts.
 
-The validation system grows in layers:
+## Framework validation
 
-- schema validation;
-- capability-reference validation;
-- adapter/projection parity;
-- routing-policy validation;
-- installation and doctor checks;
-- security and integration inventory checks;
-- integration tests;
-- behavioral eval comparison against applicable baselines.
+```bash
+embraion validate
+```
 
-A passing result should identify what was checked rather than merely report generic success.
+This validates the installed EmbrAIon framework itself: schemas, catalogs, references, localization contracts, and other deterministic framework invariants.
 
-Behavioral improvement is evaluated separately from deterministic correctness. A better aggregate eval score never overrides a hard security, privacy, permission, compatibility, or mutation failure.
+Use it when verifying the EmbrAIon installation or developing the framework.
 
 ## Project validation profiles
 
-Inspect configured profiles:
+Consuming repositories define executable commands in `.embraion/validation.yaml` and run them with:
+
+```bash
+embraion validation run <profile>
+```
+
+Configure profiles first: [Validation Profiles](configuration/validation.md).
+
+Inspect available project profiles:
 
 ```bash
 embraion validation list
 ```
 
-Execute fresh project evidence:
+Run fresh evidence:
 
 ```bash
 embraion validation run fast
@@ -33,6 +36,40 @@ embraion validation run affected --json
 embraion validation run full --run-id task-001
 ```
 
-Profile commands execute sequentially from the consuming repository root. Results preserve command identity, exit code, duration, redacted output tails, and overall status. Empty profiles are `skipped`; a failing or timed-out command produces a failed profile.
+## Evidence behavior
 
-The evidence record is stored beneath `.embraion/state/validation/`, which is local runtime state and ignored by the project-local `.gitignore`.
+Commands execute sequentially from the project root. Each result records:
+
+- profile and overall status;
+- command identity;
+- exit code;
+- duration;
+- redacted stdout/stderr tails;
+- optional attached execution run;
+- evidence ID/path.
+
+Evidence is stored under:
+
+```text
+.embraion/state/validation/
+```
+
+That is local runtime state and is ignored by the project-local `.gitignore`.
+
+An empty profile reports `skipped`. A failed or timed-out command makes the profile fail. Use `--fail-fast` only when later commands are not useful after the first failure.
+
+## Validation is evidence, not a policy override
+
+A green test result cannot override a failed privacy, permission, protected-path, compatibility, or security gate.
+
+Likewise, behavioral eval improvement does not turn a deterministic safety failure into a pass.
+
+## Attach evidence to a structured run
+
+```bash
+embraion validation run affected --run-id task-001
+```
+
+The run must be active. The validation record is attached by evidence ID rather than re-entered as an unverified claim.
+
+See [Runs & Review](guides/runs-review.md) and [Enforcement](guides/enforcement.md).
