@@ -16,171 +16,46 @@
 
 > Where sparks become AI-built products
 
-EmbrAIon is a portable AI-First Engineering System for organizing AI-assisted software engineering around explicit roles, reusable skills, workflow orchestration, task routing, access control, validation, review, security, learning, and project overlays.
+EmbrAIon is a portable engineering layer for teams that use AI to build software. It gives Codex, GitHub Copilot, Claude Code, and other integrations a consistent project contract: roles, reusable skills, project knowledge, routing, permissions, validation, review, security, and evidence.
 
-It is designed to sit above individual languages and frameworks. A Unity/C# project, a Python service, a web application, or another software repository can use the same Core and add only project-specific knowledge and rules.
+EmbrAIon does **not** sit inside your application runtime. Your Unity game, Python service, web app, or library remains a normal project. EmbrAIon organizes how humans and AI engineer it.
 
-## What EmbrAIon does
+## Why use it?
 
-EmbrAIon separates the engineering system into independent dimensions:
+- **One reusable engineering system** across different repositories and technology stacks.
+- **Project-owned configuration** under `.embraion/` instead of hidden framework assumptions.
+- **Native AI-client projections** for Codex, GitHub Copilot, Claude Code, and a Portable bundle.
+- **Model-agnostic routing**: the AI client owns model availability unless your project explicitly overrides it.
+- **Executable validation profiles** with structured evidence.
+- **Project-specific agents** without copying project semantics into reusable Core.
+- **Fail-closed safety boundaries** for privacy, protected paths, configuration, review, and enforcement.
+- **Explicit automation**: EmbrAIon does not silently install executable hooks or CI gates.
 
-- **[Agent](core/agents/)** — who is responsible: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, Steward.
-- **[Skill](core/skills/)** — how a repeatable class of work is performed.
-- **[Rule](core/rules/)** — what is required, forbidden, or protected.
-- **[Workflow](core/workflows/)** — in what order capabilities are composed.
-- **[Routing](core/routing/)** — which complexity route, access/privacy constraints, and host should execute the work; model selection stays host-owned unless the project overrides it.
-- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, provider transports, or a host-neutral Portable bundle.
-- **[Tool](tools/)** — deterministic executable behavior such as validation, security scanning, worktree management, synchronization, and diagnostics.
-- **[Eval](evals/)** — whether AI behavior actually follows the intended engineering contract.
+## Quick start
 
-`core/catalog.yaml` is the discovery index. Instead of loading the entire framework for every task, EmbrAIon can load only capabilities whose triggers match the current work.
-
-## Data classes
-
-EmbrAIon uses three canonical data classes:
-
-| Class | Meaning |
-| --- | --- |
-| `PUBLIC` | Public information that may be sent to eligible external systems |
-| `PRIVATE` | Proprietary/internal project information; external use requires an explicit eligible route |
-| `CONFIDENTIAL` | Highest protection level; denied externally unless a route explicitly allows it |
-
-Unknown or ambiguous classification fails closed. Model choice never expands access or privacy eligibility.
-
-## Supported host adapters
-
-Current adapters:
-
-- **[Codex](https://openai.com/codex/)** — generated project config, agents, and skills; Codex owns its available models and default selection.
-- **[GitHub Copilot](https://github.com/features/copilot)** — generated custom-agent and skills projection; Copilot owns its available models and default selection.
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — generated agent and skills projection; Claude Code owns its available models and default selection.
-- **[Portable](adapters/portable/)** — host-neutral installable capability bundle.
-- **[Providers](adapters/providers/)** — optional provider/transport integration surfaces without a framework-wide model catalog.
-
-Core remains model-neutral. EmbrAIon does not maintain a canonical model list: hosts choose their own defaults, while projects may optionally store opaque host-specific model/effort/options overrides.
-
-
-### Model-agnostic by design
-
-EmbrAIon does **not** ship or maintain a canonical list of AI models. Model availability changes independently across hosts, plans, accounts, and time, so the framework keeps that knowledge out of Core.
-
-With no project override, the selected host uses its own default or automatic model policy. If you want explicit model routing, ask the AI already working in your repository to configure it for you. For example:
-
-> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/routing.yaml` under `overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
-
-The installed EmbrAIon host projection includes a `routing-configuration` skill that tells the AI exactly where and how to make that change. The project stores only its own overrides; EmbrAIon itself remains independent of individual model names.
-
-## Installation
-
-### Install once per machine
-
-EmbrAIon is distributed through [PyPI](https://pypi.org/project/embraion/). For normal use, install the CLI once on each Windows or macOS computer with `pipx`. A source checkout or `git clone` is not required.
-
-A regular `pip` installation is also supported when you intentionally manage the Python environment yourself, but `pipx` is the recommended CLI installation path.
-
-#### Windows
-
-EmbrAIon requires Python 3.11 or newer.
-
-1. Check whether Python is already available:
-
-```powershell
-py --version
-```
-
-If `py` is unavailable or reports a version older than 3.11, install a current Python 3 release from the [official Python downloads for Windows](https://www.python.org/downloads/windows/), then reopen PowerShell.
-
-2. Install [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) and add its command directory to `PATH`:
-
-```powershell
-py -m pip install --user pipx
-py -m pipx ensurepath
-```
-
-3. Close and reopen PowerShell so the updated `PATH` is loaded, then install EmbrAIon:
-
-```powershell
-pipx install embraion
-```
-
-If you deliberately use a managed Python environment instead of `pipx`, this is also supported:
-
-```powershell
-py -m pip install embraion
-```
-
-#### macOS
-
-If [Homebrew](https://brew.sh/) is already installed, the simplest path is:
-
-```bash
-brew install pipx
-pipx ensurepath
-```
-
-Open a new Terminal window, then install EmbrAIon:
+Install the launcher once:
 
 ```bash
 pipx install embraion
 ```
 
-Without Homebrew, first check Python:
+Add EmbrAIon to a repository:
 
 ```bash
-python3 --version
-```
-
-If Python is missing or older than 3.11, install a current Python 3 release from the [official Python downloads for macOS](https://www.python.org/downloads/macos/). Then install `pipx`:
-
-```bash
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-```
-
-Open a new Terminal window and run:
-
-```bash
-pipx install embraion
-```
-
-A regular `python3 -m pip install embraion` is also supported when you manage the Python environment yourself.
-
-#### Verify
-
-```bash
-embraion --version
-embraion validate
-embraion doctor
-embraion help
-embraion status
-embraion cache list
-```
-
-`embraion validate` validates the framework data bundled with the active EmbrAIon installation. `embraion doctor` prints a human-readable diagnostic report by default and automatically detects whether the current directory is inside a Git or EmbrAIon project. Outside a project it performs installation/framework diagnostics only; it does not recursively scan your home directory or another arbitrary folder. Use `embraion doctor --json` when structured machine-readable output is required.
-
-#### Upgrade
-
-```bash
-pipx upgrade embraion
-```
-
-The global `pipx` installation makes the `embraion` command available from any project on that computer. It does **not** automatically enable EmbrAIon in every repository or modify repositories in the background.
-
-## Add EmbrAIon to each project
-
-Each repository opts in explicitly. From the project root:
-
-```bash
-cd /path/to/your/project
+cd MyProject
 embraion init
+embraion install --host codex --destination .
+embraion doctor
+embraion status
 ```
 
-By default, `init` uses the directory name as the project name. Use `--name MyProject` only when you want to override it.
+Use `copilot` or `claude-code` instead of `codex` when that is the AI client you use.
 
-This creates:
+`embraion init` creates the project-owned configuration surface:
 
 ```text
 .embraion/
+├── .gitignore
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
@@ -189,331 +64,96 @@ This creates:
 └── agents.yaml
 ```
 
-The Project Overlay records project configuration in focused files: `project.yaml` keeps framework/project identity plus `capabilities`, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, `routing.yaml` owns optional model/effort/options overrides, `validation.yaml` owns validation profiles, and `agents.yaml` owns project-specific agent declarations.
+The generated host files are projections. The `.embraion/` files remain the canonical project configuration.
 
-See the **[Configuration guide](docs/configuration/index.md)** for the complete template, every `.embraion/` file, and Codex/Copilot/Claude Code customization examples.
-
-### Install a host projection
-
-Install the projection for each AI client used by the repository.
-
-[Codex](https://openai.com/codex/):
-
-```bash
-embraion install --host codex --destination .
-```
-
-[GitHub Copilot](https://github.com/features/copilot):
-
-```bash
-embraion install --host copilot --destination .
-```
-
-[Claude Code](https://code.claude.com/docs/en/overview):
-
-```bash
-embraion install --host claude-code --destination .
-```
-
-Portable bundle:
-
-```bash
-embraion install --host portable --destination ./vendor/embraion
-```
-
-If a repository uses multiple clients, run the corresponding `install` command once for each one. Existing generated files are protected by default; use `--force` only when intentionally replacing them.
-
-### Automatic project runtime resolution
-
-`v0.2.0` adds automatic per-project version resolution.
-
-For ordinary commands, the global `embraion` launcher walks upward from the current directory until it finds the nearest `.embraion/project.yaml`. It then reads `framework.version`:
+## How it fits together
 
 ```text
-global embraion launcher
-        ↓
-nearest .embraion/project.yaml
-        ↓
-framework.version
-        ↓
-exact cached runtime for that project
+Your repository
+     │
+     ├── .embraion/ configuration + project knowledge
+     │
+EmbrAIon Core
+     │
+     ├── roles / skills / workflows / safety policy
+     │
+     ▼
+Codex / Copilot / Claude Code / Portable
+     │
+     ▼
+AI-assisted engineering work
+     │
+     ▼
+validation → review → evidence → human merge
 ```
 
-If the pinned version differs from the launcher version, EmbrAIon installs the exact PyPI distribution into an isolated cache under:
+By default EmbrAIon does not pin a specific AI model. The selected host uses its own default or automatic choice. Optional project overrides belong only in `.embraion/routing.yaml`.
 
-```text
-~/.embraion/versions/<version>/
-```
+## Validation and enforcement
 
-The first command for a version may download it from PyPI. Later commands reuse the cached runtime. Projects can therefore use different EmbrAIon releases on the same Windows PC or Mac without separate global installations.
-
-Legacy project overlays created by `v0.1.0` may contain `0.1.0-dev`; the new resolver treats that legacy pin as the published `0.1.0` distribution.
-
-`embraion init` and `embraion update` intentionally run in the globally installed launcher instead of delegating to the old project runtime:
-
-- `embraion init` opts a repository into the current launcher version.
-- after `pipx upgrade embraion`, `embraion update` moves only the current project to the new launcher version.
-- `embraion update --framework-version X.Y.Z` explicitly pins a chosen release; the next ordinary command resolves it automatically.
-
-For framework development, setting `EMBRAION_HOME` keeps using the explicitly selected framework checkout. Automatic resolution can also be disabled explicitly with `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
-
-### Inspect launcher, project pin, and runtime cache
+Projects declare real commands in `.embraion/validation.yaml` and run them explicitly:
 
 ```bash
-embraion status
+embraion validation run affected
 ```
 
-The status report shows the globally installed launcher version, nearest project, project pin, resolved runtime, whether the pinned runtime is already cached, the cache location, and detected host projections. Use `embraion status --json` for automation.
-
-Inspect cached project runtimes:
+Enforcement is opt-in. When a project wants a GitHub Actions gate:
 
 ```bash
-embraion cache list
+embraion enforcement install \
+  --surface github-actions \
+  --validation-profile affected
 ```
 
-Clean invalid or stale cache entries with a dry run first:
+EmbrAIon never installs that workflow silently. Repository branch rules decide whether its status check is mandatory for merge.
+
+## Updating
+
+Upgrade the launcher first, then intentionally update a project:
 
 ```bash
-embraion cache prune
-```
-
-Optionally include valid runtimes not used for a chosen number of days:
-
-```bash
-embraion cache prune --older-than 90
-embraion cache prune --older-than 90 --apply
-```
-
-The current launcher version and the current project's resolved version are protected from age-based pruning.
-
-## How a task flows through EmbrAIon
-
-A substantial task conceptually follows this path:
-
-```text
-User goal
-  ↓
-Project overlay + Core catalog
-  ↓
-Relevant rules / agents / skills / workflows
-  ↓
-Data class + access profile + complexity
-  ↓
-Host adapter + host-default/project routing
-  ↓
-Implementation
-  ↓
-Validation
-  ↓
-Independent review
-  ↓
-Verification
-  ↓
-Delivery / human merge gate
-```
-
-For substantial specification-driven work, [Spec Kit](https://github.com/github/spec-kit) is recommended as an independent companion. It refines planning and specification but does not replace Core rules, project truth, compatibility contracts, or validation evidence.
-
-## CLI
-
-### Framework and project
-
-```text
-embraion init
-embraion install
+pipx upgrade embraion
+cd MyProject
 embraion update
-embraion sync
-embraion validate
 embraion doctor
 ```
 
-Use `embraion help` for the categorized command catalog. Use `embraion help <command>` (including nested paths such as `embraion help cache prune`) or `embraion <command> --help` for detailed command-specific help.
-
-### Routing and runtime state
-
-Resolve a route:
-
-```bash
-embraion route --host codex --route-class substantial --data PRIVATE
-```
-
-Create a bounded dispatch plan:
-
-```bash
-embraion dispatch \
-  --task "Implement feature" \
-  --role worker \
-  --host codex \
-  --route-class bounded-write \
-  --data PRIVATE \
-  --access write \
-  --owned-path "src/**"
-```
-
-Writable dispatch planning requires explicit owned paths and refuses the stable `main`/`master` branch. The plan and privacy-safe routing telemetry are written under `.embraion/state/`.
-
-Start normalized session state:
-
-```bash
-embraion session start \
-  --session-id task-001 \
-  --task "Implement feature" \
-  --role lead \
-  --host codex \
-  --access plan
-```
-
-Inspect or update it:
-
-```bash
-embraion session show
-embraion session set --state review --validation passed
-```
-
-The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/routing.yaml` may optionally override host model selection.
-
-### Security
-
-```bash
-embraion security scan --path .
-```
-
-The scanner checks for high-risk configuration problems such as possible embedded credentials and policy drift.
-
-### MCP inventory
-
-```bash
-embraion mcp inventory
-```
-
-This creates a normalized privacy-safe inventory under `.embraion/state/`. Environment-variable names may be recorded; secret values are never intentionally persisted.
-
-### Worktrees
-
-```bash
-embraion worktree list
-embraion worktree create ai/my-task
-embraion worktree gc
-embraion worktree salvage /path/to/worktree
-```
-
-`gc` is dry-run by default and only considers directly proven, clean, unlocked worktrees. Use `--apply` explicitly to remove safe candidates.
-
-### Learning
-
-Record repeated evidence:
-
-```bash
-embraion learning observe \
-  --id repeated-review-gap \
-  --kind repeated-failure \
-  --target-type skill \
-  --target-id review \
-  --summary "Repeated review gap"
-```
-
-Promotion is gated:
-
-```text
-observe → accumulate evidence → propose → approve → promote
-```
-
-Promotion never edits Core automatically. A promoted candidate still requires an ordinary reviewed engineering change.
-
-### Behavioral evals
-
-Run an eval case:
-
-```bash
-embraion eval run \
-  --case reviewer-readonly \
-  --record path/to/execution-record.json
-```
-
-Create and compare baselines:
-
-```bash
-embraion eval baseline --reports build/evals --output baseline.json
-embraion eval compare --baseline baseline.json --reports build/evals
-```
-
-## Generate adapter projections
-
-Generate all supported projections without installing them into a project:
-
-```bash
-embraion sync --host all --output build/generated --force
-```
-
-Generated outputs are disposable projections. Canonical policy always remains in `core/`.
-
-## Reference projects
-
-EmbrAIon includes three executable reference shapes:
-
-- [Minimal](examples/minimal/README.md) — the smallest complete project overlay.
-- [Python](examples/python/README.md) — a normal Python package with its own unit tests.
-- [Unity/C#](examples/unity/README.md) — a generic Unity 6 project with an assembly definition, pure state logic, a Unity-facing controller, and project architecture knowledge.
-
-CI copies each reference project into a temporary directory and exercises the real consuming-project lifecycle. Generated Codex, Copilot, Claude Code, and Portable projections are recreated rather than stored as canonical example source.
-
-## Repository layout
-
-```text
-brand/         Brand specification and README assets
-core/          Canonical rules, agents, skills, workflows, routing, knowledge
-adapters/      Codex, Copilot, Claude Code, Portable, provider integrations
-tools/         CLI, runtime, learning, security, MCP, worktree, validation, sync
-schemas/       Machine-readable contracts
-templates/     Project overlay templates
-docs/          Canonical English documentation
-localization/  Russian, Simplified Chinese, Hindi, and Spanish translations
-tests/         Deterministic unit/integration tests
-evals/         Behavioral cases, baselines, graders, fixtures, reports
-examples/      Reference integrations
-```
-
-## Validation and CI
-
-Every push and pull request is intended to run:
-
-- schema and catalog validation;
-- localization parity;
-- unit and integration tests;
-- Linux, Windows, and macOS compatibility on Python 3.11 and 3.14;
-- project-version resolver E2E checks on each operating system;
-- consuming-project E2E for Minimal, Python, and Unity/C# reference projects;
-- security scanning;
-- generation of all host projections;
-- behavioral eval smoke tests.
-
-Tagged releases generate source, Codex, Copilot, Claude Code, and Portable archives.
+Safe configuration normalization targets the installed launcher version. Existing project-owned values are preserved, missing compatible defaults may be added, and incompatible configuration fails before mutation.
 
 ## Documentation
 
-Documentation: **[goryned.github.io/EmbrAIon](https://goryned.github.io/EmbrAIon/)** · [Markdown sources](docs/index.md)
+Start here: **[goryned.github.io/EmbrAIon](https://goryned.github.io/EmbrAIon/)**
 
-Translations:
+Recommended path:
 
-- [Русский](localization/docs/ru/README.md)
-- [简体中文](localization/docs/zh-CN/README.md)
-- [Español](localization/docs/es/README.md)
-- [हिन्दी](localization/docs/hi/README.md)
+1. [What is EmbrAIon?](docs/getting-started/what-is-embraion.md)
+2. [Installation](docs/getting-started/installation.md)
+3. [Add EmbrAIon to a project](docs/getting-started/first-project.md)
+4. [Adopt an existing repository](docs/getting-started/existing-repository.md)
+5. [Run your first AI task](docs/getting-started/first-ai-task.md)
+6. [Configure your project](docs/configuration/index.md)
+7. [Daily workflow](docs/guides/daily-workflow.md)
+
+Full command details live in the [CLI reference](docs/reference/cli.md).
+
+## Examples
+
+The repository includes executable reference projects for:
+
+- [Minimal](examples/minimal/) — the smallest complete EmbrAIon consumer.
+- [Python](examples/python/) — ordinary application code and tests with EmbrAIon layered around them.
+- [Unity](examples/unity/) — a runnable Unity 6 project showing that EmbrAIon remains outside the game runtime.
+
+CI exercises the real consuming-project lifecycle across Windows, macOS, and Linux.
+
+## Status
+
+EmbrAIon is pre-1.0. Patch releases are intended for compatible fixes and improvements; minor releases may evolve public framework contracts. Projects pin exact published versions so upgrades remain intentional.
 
 ## License and brand
 
-EmbrAIon source code and documentation are licensed under the [MIT License](LICENSE), except where a file or directory explicitly states otherwise.
-
-The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and the files under `brand/assets/` are **not licensed under MIT**. The MIT License does not grant trademark or brand-identity rights. See [TRADEMARKS.md](TRADEMARKS.md) for the canonical policy.
-
-## Current status
-
-EmbrAIon is **pre-stable**. The architecture and first executable CLI are in place, but the public compatibility contract is not frozen yet.
-
-Before the first stable release, routing overrides, generated host projections, validation coverage, security rules, installation behavior, and release packaging may still evolve.
+Source code and documentation are licensed under the [MIT License](LICENSE) except where explicitly stated otherwise. The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and files under `brand/assets/` are governed separately by [TRADEMARKS.md](TRADEMARKS.md).
 
 ---
 
-**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
-
-<sub>Last updated: 2026-09-24 16:25 UTC</sub>
+<sub>Last updated: 2026-09-24 18:49 UTC</sub>

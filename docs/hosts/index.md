@@ -1,36 +1,54 @@
-# Host Integrations
+# AI Clients
 
-EmbrAIon has one canonical Core and multiple host projections.
+EmbrAIon keeps one canonical Core and projects it into the AI client(s) used by each repository.
 
-| Host | Generated location | Purpose |
+| Client | Typical generated locations | What EmbrAIon projects |
 | --- | --- | --- |
-| Codex | `.codex/` | Codex configuration and native specialist agents |
-| GitHub Copilot | `.github/agents/` | Copilot custom agents |
-| Claude Code | `.claude/agents/` | Claude Code agent definitions |
-| Portable | `embraion/` inside the chosen destination | Host-neutral capability bundle |
+| Codex | `.codex/`, `.agents/skills/` | config, specialist agents, skills |
+| GitHub Copilot | `.github/agents/`, `.github/skills/` | custom agents, skills |
+| Claude Code | `.claude/agents/`, `.claude/skills/` | agent definitions, skills |
+| Portable | `embraion/` inside the chosen destination | host-neutral capability bundle |
 
-The generated files are projections, not the source of policy.
+Generated files are projections. Canonical reusable behavior remains in EmbrAIon Core; project-specific configuration remains under `.embraion/`.
 
-Install a projection with:
+## Install a client projection
 
 ```bash
 embraion install --host codex --destination .
 ```
 
-Or generate disposable output without installing it into a project:
+Other hosts:
 
 ```bash
-embraion sync --host all --output build/generated --force
+embraion install --host copilot --destination .
+embraion install --host claude-code --destination .
+embraion install --host portable --destination vendor/embraion
 ```
 
-## Explicit enforcement
+A repository can support multiple AI clients at the same time.
 
-Host projections do not silently install executable hooks. Native hook capability remains visible through `embraion harness audit`.
+## Existing host configuration
 
-Projects that want deterministic merge-time enforcement can explicitly install the GitHub Actions surface:
+For mature repositories, preview before writing:
 
 ```bash
-embraion enforcement install --surface github-actions --validation-profile affected
+embraion projection diff --host codex --destination .
 ```
 
-Add `--require-review` when the CI gate should also require a current approved pull-request review. Repository branch rules must mark the generated **EmbrAIon enforcement** status check as required if merges should be blocked by the gate.
+Or adopt only selected components:
+
+```bash
+embraion install --host codex --destination . --component skills
+```
+
+See [Adopt an Existing Repository](../getting-started/existing-repository.md).
+
+## Model selection
+
+The AI client owns its current model availability and default/automatic selection. EmbrAIon does not ship a canonical model catalog.
+
+Optional project-specific selectors belong in `.embraion/routing.yaml`.
+
+## Enforcement is separate
+
+Installing an AI-client projection does not silently install executable merge enforcement. See [Enforcement](../guides/enforcement.md) when the project wants an explicit GitHub Actions gate.

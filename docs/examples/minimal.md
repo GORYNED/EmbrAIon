@@ -1,11 +1,17 @@
 # Minimal Example
 
-The Minimal example contains only what is necessary to be a complete EmbrAIon consumer:
+The Minimal reference project demonstrates the smallest **complete current** EmbrAIon configuration shape.
 
 ```text
 examples/minimal/
 ├── .embraion/
-│   └── project.yaml
+│   ├── .gitignore
+│   ├── project.yaml
+│   ├── knowledge.yaml
+│   ├── policy.yaml
+│   ├── routing.yaml
+│   ├── validation.yaml
+│   └── agents.yaml
 ├── knowledge/
 │   └── project.md
 └── README.md
@@ -13,9 +19,10 @@ examples/minimal/
 
 It demonstrates:
 
-- a pinned framework version;
+- an exact framework pin;
 - project identity;
-- one project-knowledge file;
+- project knowledge;
+- focused policy/routing/validation/agent configuration files;
 - no committed generated host projection.
 
 Try the lifecycle from the example directory:
@@ -23,6 +30,7 @@ Try the lifecycle from the example directory:
 ```bash
 embraion status
 embraion doctor
+embraion validation list
 embraion install --host codex --destination .
 ```
 

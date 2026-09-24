@@ -1,61 +1,76 @@
-# Updating
+# Updating Safely
 
-There are two separate versions to think about:
+EmbrAIon has two versions to think about:
 
-1. the global EmbrAIon launcher installed on the machine;
-2. the framework version pinned by each project.
+1. the global launcher installed on the machine;
+2. the exact framework release pinned by each project.
 
-## Update the launcher
+Project updates are intentionally explicit.
+
+## Normal update flow
+
+Upgrade the launcher:
 
 ```bash
 pipx upgrade embraion
 ```
 
-Updating the launcher does not silently migrate every project.
-
-## Update one project
-
-From that project:
+Then, inside the project you want to move forward:
 
 ```bash
+cd MyProject
 embraion update
-```
-
-Or choose an explicit published version:
-
-```bash
-embraion update --framework-version 0.9.1
-```
-
-Safe configuration normalization currently targets the installed EmbrAIon launcher version only. To move a project to another published version, install or upgrade/downgrade the launcher to that version first, then run `embraion update`; this prevents the current launcher from writing configuration for a release contract it does not own.
-
-Then verify:
-
-```bash
-embraion status
 embraion doctor
+embraion status
 ```
 
-## Compatible configuration normalization
+Updating the launcher does not silently migrate every repository.
 
-`embraion update` also normalizes an existing **modular** `.embraion/` configuration to the target release contract before changing the project pin.
+## Why the launcher must match the target
 
-The normalization is conservative:
+Safe configuration normalization is owned by the installed launcher release.
 
-- only missing default fields are added;
-- existing project values are not replaced with framework defaults;
-- all candidate configuration files are validated before any file is written;
-- generated Codex, Copilot, Claude Code, Portable, and projection-state files are not regenerated or modified;
-- incompatible user-authored values fail the update instead of being guessed or rewritten.
+`embraion update` therefore targets the installed launcher version instead of asking one release to guess another release's schema/defaults.
 
-For example, a project created on `0.8.1` can gain a later default such as the disabled `policy.yaml → enforcement` block without changing its privacy, source, routing, validation, agent, or host-projection choices.
+If you intentionally need a different published release, install that launcher version first, then run `embraion update` from the project.
 
-Automatic normalization expects the focused modular layout introduced in the `0.8.x` line. If required dedicated files such as `policy.yaml` or `validation.yaml` are missing, the update stops and reports the legacy/incomplete layout rather than attempting an unsafe migration.
+## What update may change
 
-Host projections remain intentionally separate. After a framework update, use `embraion projection diff` and `embraion install` only when you explicitly want to refresh generated host files.
+For a compatible modular `.embraion/` layout, update can:
 
-## Why updates are explicit
+- move the project pin to the active launcher version;
+- add compatible defaults that are missing;
+- preserve existing project-owned values.
 
-A project pin is part of reproducibility. Older projects can keep using their exact published runtime while another project moves forward.
+Before writing anything, EmbrAIon builds and validates candidate configuration for all canonical project files.
 
-Before 1.0, patch releases are intended for compatible fixes and documentation improvements. Minor releases may evolve framework contracts. Review the release notes before moving a production project across a minor version.
+## What update does not do
+
+`embraion update` does **not**:
+
+- silently guess a migration for an incomplete/legacy layout;
+- rewrite incompatible user-owned values heuristically;
+- refresh Codex/Copilot/Claude/Portable projections automatically;
+- rewrite projection ownership state.
+
+If configuration is incompatible, update fails before the canonical files are rewritten.
+
+## Review host projection changes separately
+
+After an update:
+
+```bash
+embraion projection diff --host codex --destination .
+```
+
+Reinstall only when you intentionally want the generated host files to move to the new projection.
+
+## Version resolution
+
+Older projects can remain pinned to older published releases even when the global launcher is newer. Ordinary commands can resolve the exact project runtime from the local version cache.
+
+See [Runtime & Version Resolution](../reference/runtime-version-resolution.md).
+
+## Pre-1.0 compatibility
+
+Patch releases are intended for compatible fixes and improvements. Minor releases may evolve framework contracts. Review release notes before moving a production repository across a minor version.
