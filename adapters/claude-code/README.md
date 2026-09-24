@@ -1,12 +1,9 @@
 # Claude Code
 
-The Claude Code adapter owns Claude Code-specific model selection, effort defaults, host routing, and generated integration behavior.
+The Claude Code adapter projects EmbrAIon roles and skills into Claude Code agent files.
 
-- `models.yaml` — current Claude Code model facts used by EmbrAIon.
-- `routes.yaml` — mapping from Core route classes to Claude Code selections.
+EmbrAIon does not maintain a Claude Code model catalog. Claude Code keeps ownership of its available models and default selection. Optional project routing overrides may pass arbitrary Claude Code-understood model selectors and settings without making them framework-level truth.
 
-The adapter is host-specific. Canonical role, access, privacy, and workflow policy remains in Core.
+Canonical role, complexity, access, privacy, validation, and workflow policy remains in Core.
 
-The initial catalog is based on current Anthropic model documentation and Claude Code availability as verified on 2026-09-23.
-
-<sub>Last updated: 2026-09-23 19:58 UTC</sub>
+<sub>Last updated: 2026-09-24 04:40 UTC</sub>

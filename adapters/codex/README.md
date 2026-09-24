@@ -1,10 +1,9 @@
 # Codex
 
-The Codex adapter owns Codex-specific model discovery evidence, model aliases, supported efforts, native route mappings, configuration projection, and plugin packaging.
+The Codex adapter projects EmbrAIon configuration, agents, and skills into Codex-native files.
 
-- `models.yaml` — current observed and enabled model facts.
-- `routes.yaml` — mapping from Core route classes to concrete Codex models.
+EmbrAIon does not maintain a Codex model catalog. When a project does not define a routing override, Codex keeps ownership of its default/automatic model selection. When a project does define an override, EmbrAIon treats the model selector, effort, and optional host settings as opaque Codex-owned values.
 
-The initial catalog was bootstrapped from a validated 2026-09-22 routing registry and Codex model snapshot. Future updates are maintained directly by this adapter.
+Canonical role, complexity, access, privacy, validation, and review policy remains in Core.
 
-<sub>Last updated: 2026-09-23 19:04 UTC</sub>
+<sub>Last updated: 2026-09-24 04:40 UTC</sub>

@@ -1,37 +1,88 @@
 # Model Routing
 
-Routing is a first-class EmbrAIon capability.
+EmbrAIon routing is model-agnostic.
 
-Core routing decides how task characteristics map to a provider-neutral route class, data eligibility, execution permissions, escalation, and review expectations.
+Core decides the engineering constraints that should survive model churn:
 
-Current CLI route classes include:
+- role;
+- complexity / route class;
+- data class;
+- access mode;
+- owned paths;
+- validation and review requirements.
 
-- `economy-read`
-- `economy-write`
-- `economy`
-- `strong`
-- `strong-high`
-- `critical`
+It does **not** maintain a canonical list of current model names.
 
-Host adapters map those classes to concrete host/model selectors. That keeps current model names, supported efforts, pricing metadata, and provider mechanics outside canonical Core policy.
+## Default behavior
 
-Inspect a configured route with:
+Without a project override, routing resolves to `host-default`. The selected host remains responsible for its own available models and automatic/default model policy.
 
 ```bash
 embraion route --host codex --route-class strong --data PRIVATE
 ```
 
-Supported data classes are `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`. A route must remain eligible for the requested data class; host availability alone is not permission to use a provider.
+A default result therefore has no framework-selected model:
 
-A bounded execution plan can combine routing with role, access, and owned-path constraints:
-
-```bash
-embraion dispatch \
-  --task "Implement feature" \
-  --role worker \
-  --host codex \
-  --route-class economy-write \
-  --data PRIVATE \
-  --access write \
-  --owned-path "src/**"
+```json
+{
+  "host": "codex",
+  "route": "strong",
+  "role": null,
+  "resolution": "host-default",
+  "model": null,
+  "effort": null,
+  "options": {},
+  "data": "PRIVATE"
+}
 ```
+
+New models can appear in a host without requiring an EmbrAIon release.
+
+## Optional project overrides
+
+A project may override a route or role in `.embraion/project.yaml`:
+
+```yaml
+routing:
+  overrides:
+    codex:
+      routes:
+        strong-high:
+          model: any-host-model-selector
+          effort: high
+      roles:
+        reviewer:
+          model: any-review-model-selector
+          options:
+            thinking: maximum
+```
+
+The strings are intentionally open-ended. EmbrAIon validates the structure, not a global model catalog.
+
+Resolution precedence is:
+
+1. role override, when a role is supplied;
+2. route override;
+3. host default/automatic selection.
+
+A role override is merged over the route override, so a role can replace only the fields it needs.
+
+## AI-first configuration
+
+A user does not need to edit YAML manually. They can ask the AI client already working in the repository to inspect the models/settings available in that client and update the project's EmbrAIon routing overrides.
+
+The AI should change only project overrides. It must not weaken privacy, access, owned-path, protected-source, validation, or review policy to make a model fit.
+
+## What EmbrAIon validates
+
+EmbrAIon can deterministically validate:
+
+- route-class names;
+- data-class names;
+- project-override structure;
+- role/route precedence;
+- access and privacy policy that is independent from model identity.
+
+The execution host remains authoritative for whether a particular selector or option is actually available to the current user/account.
+
+This separation keeps Core usable with future models and hosts that did not exist when the current EmbrAIon release was published.

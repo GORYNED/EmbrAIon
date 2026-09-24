@@ -18,7 +18,7 @@ Core owns reusable concepts that should behave consistently across projects:
 - job-like agent roles;
 - reusable skills;
 - workflows;
-- provider-neutral route classes;
+- model-agnostic route classes;
 - shared knowledge.
 
 ## Project overlay
@@ -29,7 +29,8 @@ A consuming repository adds what is specific to that project:
 - pinned framework version;
 - product/domain knowledge;
 - local capabilities;
-- stricter local rules where required.
+- stricter local rules where required;
+- optional host-specific routing overrides.
 
 ## Host adapters
 

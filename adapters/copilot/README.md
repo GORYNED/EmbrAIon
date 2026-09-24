@@ -1,10 +1,9 @@
-# Copilot
+# GitHub Copilot
 
-The Copilot adapter owns GitHub Copilot-specific selectors, available model options, effort options, credit billing metadata, and advisory routing.
+The GitHub Copilot adapter projects EmbrAIon roles and skills into Copilot-native project files.
 
-- `models.yaml` — current known interactive model options.
-- `routes.yaml` — advisory mapping from engineering use cases to Copilot selections.
+EmbrAIon does not maintain a Copilot model catalog. Copilot keeps ownership of its available models and default/automatic selection. Optional project routing overrides may pass arbitrary Copilot-understood model selectors and settings without making them part of EmbrAIon Core.
 
-Copilot remains an interactive client surface rather than a canonical provider-routing authority.
+Canonical role, complexity, access, privacy, validation, and workflow policy remains in Core.
 
-<sub>Last updated: 2026-09-23 18:11 UTC</sub>
+<sub>Last updated: 2026-09-24 04:40 UTC</sub>

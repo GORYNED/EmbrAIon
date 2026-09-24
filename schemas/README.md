@@ -7,7 +7,6 @@ Current foundation schemas include:
 - `framework.schema.json`
 - `project.schema.json`
 - `agent.schema.json`
-- `model.schema.json`
 - `catalog.schema.json`
 - `eval.schema.json`
 - `learning.schema.json`

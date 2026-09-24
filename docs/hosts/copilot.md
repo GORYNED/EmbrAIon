@@ -1,6 +1,6 @@
 # GitHub Copilot
 
-The Copilot adapter projects EmbrAIon roles into GitHub Copilot custom-agent files.
+The Copilot adapter projects EmbrAIon roles and skills into GitHub Copilot custom-agent files.
 
 Install it:
 
@@ -14,4 +14,6 @@ Generated agents live under:
 .github/agents/
 ```
 
-Copilot is treated as an interactive host surface. Canonical role, privacy, access, and workflow policy remains in EmbrAIon Core rather than being redefined in each generated agent file.
+Copilot remains the authority for its available models and default/automatic selection. EmbrAIon does not maintain a Copilot model catalog.
+
+Optional project routing overrides may pass arbitrary Copilot-understood selectors/options. Core privacy, access, ownership, validation, and review policy remains independent from model identity.

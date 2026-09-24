@@ -1,6 +1,6 @@
 # Claude Code
 
-The Claude Code adapter projects EmbrAIon roles into Claude Code agent files.
+The Claude Code adapter projects EmbrAIon roles and skills into Claude Code agent files.
 
 Install it:
 
@@ -14,6 +14,6 @@ Generated files live under:
 .claude/agents/
 ```
 
-The adapter owns Claude Code-specific model selection and host mechanics. Core continues to own reusable role, privacy, access, and workflow policy.
+Claude Code remains the authority for its available models and default selection. EmbrAIon does not maintain a Claude Code model catalog.
 
-Provider eligibility still depends on the route and data classification. A host being installed does not make every data class eligible for every provider.
+Optional project routing overrides may pass arbitrary Claude Code-understood selectors/options. Core privacy, access, ownership, validation, and review policy remains independent from model identity.

@@ -250,7 +250,7 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             print(f"Validation {name}: {len(commands)} command(s)")
         for category, patterns in policy["sources"].items():
             print(f"Sources {category}: {len(patterns)} pattern(s)")
-        print(f"Routing override hosts: {len(policy[\'routing\'][\'overrides\'])}")
+        print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
     return 0
 
 

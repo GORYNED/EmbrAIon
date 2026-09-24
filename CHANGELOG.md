@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Model-agnostic project routing overrides by host, route class, and role. Overrides accept opaque host-owned model selectors, effort strings, and options without requiring an EmbrAIon model catalog.
+
+### Changed
+
+- Routing now resolves to the host's own default/automatic model policy unless a consuming project explicitly overrides it.
+- Generated Codex configuration no longer pins a framework-chosen default model or reasoning effort.
+
+### Removed
+
+- Built-in host/provider model catalogs and hardcoded route-to-model mappings. Model availability is owned by the execution host or consuming project rather than EmbrAIon Core.
+
 ## 0.7.0 - 2026-09-24
 
 ### Added

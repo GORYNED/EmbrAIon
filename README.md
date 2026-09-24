@@ -28,8 +28,8 @@ EmbrAIon separates the engineering system into independent dimensions:
 - **[Skill](core/skills/)** — how a repeatable class of work is performed.
 - **[Rule](core/rules/)** — what is required, forbidden, or protected.
 - **[Workflow](core/workflows/)** — in what order capabilities are composed.
-- **[Routing](core/routing/)** — which access profile, model tier, host, and provider may execute the work.
-- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, providers, or a host-neutral Portable bundle.
+- **[Routing](core/routing/)** — which complexity route, access/privacy constraints, and host should execute the work; model selection stays host-owned unless the project overrides it.
+- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, provider transports, or a host-neutral Portable bundle.
 - **[Tool](tools/)** — deterministic executable behavior such as validation, security scanning, worktree management, synchronization, and diagnostics.
 - **[Eval](evals/)** — whether AI behavior actually follows the intended engineering contract.
 
@@ -51,13 +51,13 @@ Unknown or ambiguous classification fails closed. Model choice never expands acc
 
 Current adapters:
 
-- **[Codex](https://openai.com/codex/)** — native model catalog, model/effort route mapping, generated project agents and config.
-- **[GitHub Copilot](https://github.com/features/copilot)** — advisory model catalog and generated custom-agent projection.
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — Claude model catalog and generated subagent projection.
+- **[Codex](https://openai.com/codex/)** — generated project config, agents, and skills; Codex owns its available models and default selection.
+- **[GitHub Copilot](https://github.com/features/copilot)** — generated custom-agent and skills projection; Copilot owns its available models and default selection.
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — generated agent and skills projection; Claude Code owns its available models and default selection.
 - **[Portable](adapters/portable/)** — host-neutral installable capability bundle.
-- **[Providers](adapters/providers/)** — direct API model catalogs for [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/), and [DeepSeek](https://www.deepseek.com/), plus transport metadata.
+- **[Providers](adapters/providers/)** — optional provider/transport integration surfaces without a framework-wide model catalog.
 
-Core remains model-neutral. Current model identities and host selectors live only in adapters.
+Core remains model-neutral. EmbrAIon does not maintain a canonical model list: hosts choose their own defaults, while projects may optionally store opaque host-specific model/effort/options overrides.
 
 ## Installation
 
@@ -281,7 +281,7 @@ Relevant rules / agents / skills / workflows
   ↓
 Data class + access profile + complexity
   ↓
-Host adapter + model route
+Host adapter + host-default/project routing
   ↓
 Implementation
   ↓
@@ -492,10 +492,10 @@ The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and the 
 
 EmbrAIon is **pre-stable**. The architecture and first executable CLI are in place, but the public compatibility contract is not frozen yet.
 
-Before the first stable release, model catalogs, generated host projections, validation coverage, security rules, installation behavior, and release packaging may still evolve.
+Before the first stable release, routing overrides, generated host projections, validation coverage, security rules, installation behavior, and release packaging may still evolve.
 
 ---
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 00:45 UTC</sub>
+<sub>Last updated: 2026-09-24 04:40 UTC</sub>
