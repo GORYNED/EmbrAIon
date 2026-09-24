@@ -111,11 +111,18 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
 
             self.assertTrue((project / ".codex" / "config.toml").is_file())
+            self.assertTrue((project / ".agents" / "skills" / "review" / "SKILL.md").is_file())
             self.assertTrue(
                 (project / ".github" / "agents" / "reviewer.agent.md").is_file()
             )
             self.assertTrue(
+                (project / ".github" / "skills" / "review" / "SKILL.md").is_file()
+            )
+            self.assertTrue(
                 (project / ".claude" / "agents" / "reviewer.md").is_file()
+            )
+            self.assertTrue(
+                (project / ".claude" / "skills" / "review" / "SKILL.md").is_file()
             )
             self.assertTrue(
                 (
@@ -135,6 +142,28 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 set(status_after["host-projections"]),
             )
 
+            projection = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "projection",
+                    "diff",
+                    "--host",
+                    "codex",
+                    "--destination",
+                    ".",
+                    "--json",
+                ).stdout
+            )
+            self.assertEqual([], projection["conflict"])
+            self.assertGreater(len(projection["unchanged"]), 0)
+
+            reviewer = project / ".codex" / "agents" / "reviewer.toml"
+            reviewer.write_text(
+                reviewer.read_text(encoding="utf-8") + "\n# local change\n",
+                encoding="utf-8",
+            )
+
             refused = self._run(
                 project,
                 environment,
@@ -146,7 +175,7 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 check=False,
             )
             self.assertNotEqual(0, refused.returncode)
-            self.assertIn("Refusing to overwrite", refused.stderr)
+            self.assertIn("Projection conflicts", refused.stderr)
 
             self._run(
                 project,
@@ -158,6 +187,11 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 ".",
                 "--force",
             )
+
+            policy = json.loads(
+                self._run(project, environment, "policy", "show", "--json").stdout
+            )
+            self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
 
     def test_reference_projects_complete_consuming_lifecycle(self) -> None:
         for name in REFERENCE_PROJECTS:

@@ -1,12 +1,57 @@
 from __future__ import annotations
 
+import hashlib
 import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
 
 from . import __version__
-from .common import framework_root, framework_version, read_yaml, write_json, write_yaml
+from .common import (
+    framework_root,
+    framework_version,
+    project_root,
+    read_json,
+    read_yaml,
+    state_root,
+    write_json,
+    write_yaml,
+)
+
+
+HOST_SKILL_DIRECTORIES = {
+    "codex": Path(".agents") / "skills",
+    "copilot": Path(".github") / "skills",
+    "claude-code": Path(".claude") / "skills",
+}
+
+
+def _default_project_overlay(name: str) -> dict[str, Any]:
+    return {
+        "framework": {
+            "repository": "GORYNED/EmbrAIon",
+            "version": __version__,
+        },
+        "project": {"name": name},
+        "knowledge": {},
+        "sources": {
+            "canonical": [],
+            "protected": [],
+            "generated": [],
+            "external": [],
+        },
+        "validation": {
+            "profiles": {
+                "fast": [],
+                "affected": [],
+                "full": [],
+            }
+        },
+        "review": {"substantial-required": True},
+        "privacy": {"default-class": "PRIVATE"},
+        "agents": [],
+        "capabilities": {},
+    }
 
 
 def init_project(path: Path, name: str | None = None, force: bool = False) -> Path:
@@ -16,17 +61,7 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     if manifest.exists() and not force:
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
 
-    data = {
-        "framework": {
-            "repository": "GORYNED/EmbrAIon",
-            "version": __version__,
-        },
-        "project": {"name": name or destination.name},
-        "knowledge": {},
-        "agents": [],
-        "capabilities": {},
-    }
-    write_yaml(manifest, data)
+    write_yaml(manifest, _default_project_overlay(name or destination.name))
     return manifest
 
 
@@ -129,6 +164,20 @@ def _generate_markdown_agents(root: Path, output: Path, host: str) -> None:
         (target / f"{agent['id']}{suffix}").write_text("\n".join(lines), encoding="utf-8")
 
 
+def _generate_host_skills(root: Path, output: Path, host: str) -> None:
+    relative = HOST_SKILL_DIRECTORIES.get(host)
+    if relative is None:
+        return
+
+    target = output / relative
+    target.mkdir(parents=True, exist_ok=True)
+
+    for directory in sorted((root / "core" / "skills").iterdir()):
+        if not directory.is_dir() or not (directory / "SKILL.md").is_file():
+            continue
+        shutil.copytree(directory, target / directory.name, dirs_exist_ok=True)
+
+
 def _generate_portable(root: Path, output: Path) -> None:
     target = output / "embraion"
     target.mkdir(parents=True, exist_ok=True)
@@ -152,10 +201,13 @@ def _generate_portable(root: Path, output: Path) -> None:
 def generate_host(root: Path, host: str, output: Path) -> None:
     if host == "codex":
         _generate_codex(root, output)
+        _generate_host_skills(root, output, host)
     elif host == "copilot":
         _generate_markdown_agents(root, output, "copilot")
+        _generate_host_skills(root, output, host)
     elif host == "claude-code":
         _generate_markdown_agents(root, output, "claude-code")
+        _generate_host_skills(root, output, host)
     elif host == "portable":
         _generate_portable(root, output)
     else:
@@ -183,26 +235,173 @@ def sync(host: str, output: Path, force: bool = False) -> list[Path]:
     return generated
 
 
-def _merge_tree(source: Path, destination: Path, force: bool) -> None:
-    for path in source.rglob("*"):
-        relative = path.relative_to(source)
-        target = destination / relative
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
-        if path.is_dir():
-            target.mkdir(parents=True, exist_ok=True)
+
+def _file_hashes(root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(root).as_posix(): _sha256(path)
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
+
+
+def _projection_state_path(project: Path, host: str) -> Path:
+    return state_root(project) / "projections" / f"{host}.json"
+
+
+def _load_projection_state(
+    project: Path,
+    host: str,
+    destination: Path,
+) -> dict[str, Any] | None:
+    path = _projection_state_path(project, host)
+    if not path.is_file():
+        return None
+
+    data = read_json(path) or {}
+    if data.get("destination") != str(destination.resolve()):
+        return None
+    return data
+
+
+def _projection_plan_from_generated(
+    host: str,
+    generated: Path,
+    destination: Path,
+) -> dict[str, Any]:
+    project = project_root(destination)
+    previous = _load_projection_state(project, host, destination)
+    previous_files = (previous or {}).get("files") or {}
+    generated_files = _file_hashes(generated)
+
+    plan: dict[str, Any] = {
+        "schema-version": 1,
+        "host": host,
+        "destination": str(destination.resolve()),
+        "create": [],
+        "update": [],
+        "unchanged": [],
+        "conflict": [],
+        "obsolete-owned": [],
+        "obsolete-modified": [],
+    }
+
+    for relative, generated_hash in generated_files.items():
+        target = destination / relative
+        if not target.exists():
+            plan["create"].append(relative)
             continue
 
-        if target.exists() and not force:
-            raise RuntimeError(f"Refusing to overwrite {target}; use --force.")
+        current_hash = _sha256(target)
+        if current_hash == generated_hash:
+            plan["unchanged"].append(relative)
+            continue
 
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, target)
+        previous_hash = previous_files.get(relative)
+        if previous_hash and previous_hash == current_hash:
+            plan["update"].append(relative)
+        else:
+            plan["conflict"].append(relative)
+
+    for relative, previous_hash in previous_files.items():
+        if relative in generated_files:
+            continue
+
+        target = destination / relative
+        if not target.exists():
+            continue
+
+        if _sha256(target) == previous_hash:
+            plan["obsolete-owned"].append(relative)
+        else:
+            plan["obsolete-modified"].append(relative)
+
+    for key in (
+        "create",
+        "update",
+        "unchanged",
+        "conflict",
+        "obsolete-owned",
+        "obsolete-modified",
+    ):
+        plan[key] = sorted(plan[key])
+
+    return plan
 
 
-def install(host: str, destination: Path, force: bool = False) -> None:
+def projection_plan(host: str, destination: Path) -> dict[str, Any]:
     root = framework_root()
+    destination = destination.resolve()
+
+    with tempfile.TemporaryDirectory(prefix="embraion-projection-") as temporary:
+        generated = Path(temporary)
+        generate_host(root, host, generated)
+        return _projection_plan_from_generated(host, generated, destination)
+
+
+def install(
+    host: str,
+    destination: Path,
+    *,
+    force: bool = False,
+    dry_run: bool = False,
+    prune: bool = False,
+) -> dict[str, Any]:
+    root = framework_root()
+    destination = destination.resolve()
+    project = project_root(destination)
 
     with tempfile.TemporaryDirectory(prefix="embraion-install-") as temporary:
         generated = Path(temporary)
         generate_host(root, host, generated)
-        _merge_tree(generated, destination.resolve(), force)
+        plan = _projection_plan_from_generated(host, generated, destination)
+
+        if dry_run:
+            return plan
+
+        conflicts = list(plan["conflict"])
+        if conflicts and not force:
+            joined = ", ".join(conflicts[:5])
+            suffix = "" if len(conflicts) <= 5 else f" (+{len(conflicts) - 5} more)"
+            raise RuntimeError(
+                f"Projection conflicts with user-modified or unowned files: "
+                f"{joined}{suffix}. Review with 'embraion projection diff' "
+                f"and use --force only when replacement is intentional."
+            )
+
+        destination.mkdir(parents=True, exist_ok=True)
+
+        writable = list(plan["create"]) + list(plan["update"])
+        if force:
+            writable += conflicts
+
+        for relative in writable:
+            source = generated / relative
+            target = destination / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+
+        if prune:
+            for relative in plan["obsolete-owned"]:
+                target = destination / relative
+                if target.is_file():
+                    target.unlink()
+
+        current_files = _file_hashes(generated)
+        write_json(
+            _projection_state_path(project, host),
+            {
+                "schema-version": 1,
+                "framework-version": framework_version(root),
+                "host": host,
+                "destination": str(destination),
+                "files": current_files,
+            },
+        )
+        return plan

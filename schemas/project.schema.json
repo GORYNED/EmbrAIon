@@ -24,7 +24,74 @@
     },
     "knowledge": {
       "type": "object",
-      "additionalProperties": { "type": "string" }
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "data-class": {
+                "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]
+              },
+              "trust": {
+                "enum": ["project", "external", "generated"]
+              },
+              "roles": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              },
+              "triggers": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "sources": {
+      "type": "object",
+      "properties": {
+        "canonical": { "$ref": "#/$defs/pathPatterns" },
+        "protected": { "$ref": "#/$defs/pathPatterns" },
+        "generated": { "$ref": "#/$defs/pathPatterns" },
+        "external": { "$ref": "#/$defs/pathPatterns" }
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "substantial-required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "default-class": {
+          "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]
+        }
+      },
+      "additionalProperties": false
     },
     "agents": {
       "type": "array",
@@ -34,6 +101,13 @@
     "capabilities": {
       "type": "object",
       "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "pathPatterns": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     }
   },
   "additionalProperties": true

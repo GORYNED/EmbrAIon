@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Host-native project Skills projection for Codex, GitHub Copilot, and Claude Code using reusable `SKILL.md` directories.
+- Project Overlay v2 contracts for canonical/protected/generated/external source classes, validation profiles, substantial-review policy, and default privacy classification.
+- Ownership-aware projection planning with dry-run/diff, generated-file hashes, conflict detection, safe updates, and conservative obsolete-file pruning.
+
+### Changed
+
+- Project initialization now creates Project Overlay v2 safety defaults.
+- Re-installing an unchanged generated host projection is idempotent; locally modified or unowned conflicts are refused unless replacement is explicitly forced.
+
+
 ## 0.5.0 - 2026-09-24
 
 ### Added

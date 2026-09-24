@@ -119,8 +119,27 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 )
 
             project_root = manifest.parent.parent
-            for knowledge_id, relative in (project_data.get("knowledge") or {}).items():
-                target = project_root / str(relative)
+            for knowledge_id, value in (project_data.get("knowledge") or {}).items():
+                relative = value.get("path") if isinstance(value, dict) else value
+                if not relative:
+                    add(
+                        "project-knowledge",
+                        str(manifest.relative_to(root)),
+                        f"knowledge '{knowledge_id}' has no path",
+                    )
+                    continue
+
+                target = (project_root / str(relative)).resolve()
+                try:
+                    target.relative_to(project_root.resolve())
+                except ValueError:
+                    add(
+                        "project-knowledge",
+                        str(manifest.relative_to(root)),
+                        f"knowledge '{knowledge_id}' escapes the project root",
+                    )
+                    continue
+
                 if not target.is_file():
                     add(
                         "project-knowledge",

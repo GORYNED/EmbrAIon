@@ -10,7 +10,8 @@ from . import __version__
 from .common import find_project_root, framework_root, project_root
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
-from .project import init_project, install, sync, update_project
+from .policy import effective_policy
+from .project import init_project, install, projection_plan, sync, update_project
 from .runtime import create_dispatch, read_session, route, start_session, update_session
 from .security import SEVERITY_ORDER, collect_findings, save_mcp_inventory
 from .validation import collect_issues
@@ -50,6 +51,8 @@ def _print_main_help(file: object | None = None) -> None:
         "Project & setup",
         "  init       Add EmbrAIon to a project and create .embraion/project.yaml",
         "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
+        "  projection Preview ownership-aware projection changes",
+        "  policy     Inspect the effective project policy overlay",
         "  update     Change the current project's pinned EmbrAIon version",
         "  sync       Generate disposable host projections without installing them",
         "",
@@ -167,13 +170,69 @@ def _cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_projection_plan(plan: dict[str, object]) -> None:
+    print(f"Projection: {plan['host']}")
+    print(f"Destination: {plan['destination']}")
+    for key in (
+        "create",
+        "update",
+        "unchanged",
+        "conflict",
+        "obsolete-owned",
+        "obsolete-modified",
+    ):
+        values = list(plan.get(key, []) or [])
+        print(f"{key}: {len(values)}")
+        for value in values:
+            print(f"  {value}")
+
+
 def _cmd_install(args: argparse.Namespace) -> int:
-    install(
+    plan = install(
         args.host,
         Path(args.destination or "."),
         force=args.force,
+        dry_run=args.dry_run,
+        prune=args.prune,
     )
-    print(f"Installed {args.host} projection into {Path(args.destination or '.').resolve()}")
+    if args.json:
+        _print_json(plan)
+    elif args.dry_run:
+        _print_projection_plan(plan)
+    else:
+        print(f"Installed {args.host} projection into {Path(args.destination or '.').resolve()}")
+        print(
+            f"Created {len(plan['create'])}, updated {len(plan['update'])}, "
+            f"unchanged {len(plan['unchanged'])}."
+        )
+    return 0
+
+
+def _cmd_projection_diff(args: argparse.Namespace) -> int:
+    plan = projection_plan(args.host, Path(args.destination or "."))
+    if args.json:
+        _print_json(plan)
+    else:
+        _print_projection_plan(plan)
+    return 1 if plan["conflict"] or plan["obsolete-modified"] else 0
+
+
+def _cmd_policy_show(args: argparse.Namespace) -> int:
+    policy = effective_policy()
+    if args.json:
+        _print_json(policy)
+    else:
+        print("EmbrAIon Project Policy")
+        print()
+        print(f"Default privacy: {policy['privacy']['default-class']}")
+        print(
+            "Substantial review required: "
+            f"{policy['review']['substantial-required']}"
+        )
+        for name, commands in policy["validation"]["profiles"].items():
+            print(f"Validation {name}: {len(commands)} command(s)")
+        for category, patterns in policy["sources"].items():
+            print(f"Sources {category}: {len(patterns)} pattern(s)")
     return 0
 
 
@@ -674,7 +733,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install_parser.add_argument("--destination", default=".")
     install_parser.add_argument("--force", action="store_true")
+    install_parser.add_argument("--dry-run", action="store_true")
+    install_parser.add_argument("--prune", action="store_true")
+    install_parser.add_argument("--json", action="store_true")
     install_parser.set_defaults(func=_cmd_install)
+
+    projection = sub.add_parser(
+        "projection",
+        help="Preview host projection lifecycle changes",
+        description="Inspect ownership-aware create/update/conflict/obsolete projection state.",
+    )
+    projection_sub = projection.add_subparsers(
+        dest="projection-command",
+        required=True,
+    )
+    projection_diff = projection_sub.add_parser(
+        "diff",
+        help="Preview projection changes",
+        description="Preview generated projection changes without mutating the project.",
+    )
+    projection_diff.add_argument(
+        "--host",
+        required=True,
+        choices=["codex", "copilot", "claude-code", "portable"],
+    )
+    projection_diff.add_argument("--destination", default=".")
+    projection_diff.add_argument("--json", action="store_true")
+    projection_diff.set_defaults(func=_cmd_projection_diff)
+
+    policy = sub.add_parser(
+        "policy",
+        help="Inspect project policy",
+        description="Inspect normalized source, validation, review, and privacy policy.",
+    )
+    policy_sub = policy.add_subparsers(dest="policy-command", required=True)
+    policy_show = policy_sub.add_parser("show", help="Show effective project policy")
+    policy_show.add_argument("--json", action="store_true")
+    policy_show.set_defaults(func=_cmd_policy_show)
 
     update = sub.add_parser("update", help="Change the project version pin", description="Update the EmbrAIon version recorded by the current project.")
     update.add_argument("path", nargs="?")

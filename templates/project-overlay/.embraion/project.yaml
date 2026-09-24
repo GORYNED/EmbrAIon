@@ -7,6 +7,24 @@ project:
 
 knowledge: {}
 
+sources:
+  canonical: []
+  protected: []
+  generated: []
+  external: []
+
+validation:
+  profiles:
+    fast: []
+    affected: []
+    full: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE
+
 agents: []
 
 capabilities: {}

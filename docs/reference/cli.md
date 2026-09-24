@@ -35,6 +35,32 @@ embraion install --host codex --destination .
 
 Hosts: `codex`, `copilot`, `claude-code`, `portable`.
 
+Preview without writing:
+
+```bash
+embraion install --host codex --destination . --dry-run
+```
+
+Installed projections track generated-file hashes. Later installs distinguish safe updates from local conflicts instead of blindly overwriting files.
+
+### `embraion projection`
+
+Preview ownership-aware projection changes:
+
+```bash
+embraion projection diff --host codex --destination .
+embraion projection diff --host codex --destination . --json
+```
+
+### `embraion policy`
+
+Inspect normalized source, validation, review, and privacy policy:
+
+```bash
+embraion policy show
+embraion policy show --json
+```
+
 ### `embraion update`
 
 Change the current project's framework pin.
