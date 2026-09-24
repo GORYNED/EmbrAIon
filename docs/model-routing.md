@@ -43,21 +43,20 @@ New models can appear in a host without requiring an EmbrAIon release.
 
 ## Optional project overrides
 
-A project may override a route or role in `.embraion/project.yaml`:
+A project may override a route or role in `.embraion/routing.yaml`:
 
 ```yaml
-routing:
-  overrides:
-    codex:
-      routes:
-        complex:
-          model: any-host-model-selector
-          effort: high
-      roles:
-        reviewer:
-          model: any-review-model-selector
-          options:
-            thinking: maximum
+overrides:
+  codex:
+    routes:
+      complex:
+        model: any-host-model-selector
+        effort: high
+    roles:
+      reviewer:
+        model: any-review-model-selector
+        options:
+          thinking: maximum
 ```
 
 The strings are intentionally open-ended. EmbrAIon validates the structure, not a global model catalog.
@@ -72,11 +71,11 @@ A role override is merged over the route override, so a role can replace only th
 
 ## AI-First configuration
 
-Every installed host projection includes the reusable `routing-configuration` skill. It tells the AI that model overrides belong in `.embraion/project.yaml` under `routing.overrides`, and that EmbrAIon itself has no model registry.
+Every installed host projection includes the reusable `routing-configuration` skill. It tells the AI that model overrides belong in `.embraion/routing.yaml` under `overrides`, and that EmbrAIon itself has no model registry.
 
 The intended user experience is therefore conversational rather than manual configuration. A user can simply tell the AI already working in the repository:
 
-> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/routing.yaml` under `overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
 
 The AI should inspect host-native model choices when available, edit only the relevant override subtree, and verify the affected routes. Users may still edit the YAML directly, but they do not need to.
 

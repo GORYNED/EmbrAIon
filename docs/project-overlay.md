@@ -1,6 +1,6 @@
 # Project Overlay
 
-A consuming repository opts into EmbrAIon through `.embraion/project.yaml`.
+A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity, while dedicated configuration files own focused concerns.
 
 The overlay records:
 
@@ -9,27 +9,25 @@ The overlay records:
 - project knowledge locations;
 - project-specific agents;
 - external or local capabilities;
-- optional host routing overrides.
 
 Project overlays may add stricter rules but must not silently weaken Core hard gates.
 
-## Model-agnostic routing overrides
+## Routing configuration
 
-EmbrAIon does not require a model catalog in the project. Without an override, a route uses the selected host's default/automatic model policy.
+Model-agnostic routing overrides live in `.embraion/routing.yaml`, separate from project identity and the remaining project policy. EmbrAIon does not require a model catalog. Without an override, a route uses the selected host's default/automatic model policy.
 
-When a user wants explicit routing, their AI client can edit only the relevant override:
+When a user wants explicit routing, their AI client edits the dedicated routing file:
 
 ```yaml
-routing:
-  overrides:
-    codex:
-      routes:
-        complex:
-          model: any-host-model-selector
-          effort: high
-      roles:
-        reviewer:
-          model: any-review-model-selector
+overrides:
+  codex:
+    routes:
+      complex:
+        model: any-host-model-selector
+        effort: high
+    roles:
+      reviewer:
+        model: any-review-model-selector
 ```
 
 Selectors are opaque host-owned strings. Role overrides are applied over route overrides. These settings affect model selection only; they cannot expand privacy, access, protected-source, validation, or review permissions.

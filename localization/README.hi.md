@@ -55,7 +55,7 @@ EmbrAIon तीन मानक डेटा वर्ग उपयोग कर
 - **[Portable](../adapters/portable/)** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
 - **[API प्रदाता](../adapters/providers/)** — optional provider/transport surfaces, बिना किसी global EmbrAIon model catalog के।
 
-EmbrAIon पूरी तरह model-agnostic है और canonical model list नहीं रखता। Default रूप से AI host अपनी automatic/default selection उपयोग करता है। Override चाहिए तो user repository में काम कर रहे AI से उपलब्ध models के अनुसार EmbrAIon configure करने के लिए कह सकता है; `routing-configuration` skill केवल `.embraion/project.yaml` → `routing.overrides` बदलती है।
+EmbrAIon पूरी तरह model-agnostic है और canonical model list नहीं रखता। Default रूप से AI host अपनी automatic/default selection उपयोग करता है। Override चाहिए तो user repository में काम कर रहे AI से उपलब्ध models के अनुसार EmbrAIon configure करने के लिए कह सकता है; `routing-configuration` skill केवल `.embraion/routing.yaml` → `overrides` बदलती है।
 
 ## स्थापना
 

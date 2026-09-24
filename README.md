@@ -66,7 +66,7 @@ EmbrAIon does **not** ship or maintain a canonical list of AI models. Model avai
 
 With no project override, the selected host uses its own default or automatic model policy. If you want explicit model routing, ask the AI already working in your repository to configure it for you. For example:
 
-> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/routing.yaml` under `overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
 
 The installed EmbrAIon host projection includes a `routing-configuration` skill that tells the AI exactly where and how to make that change. The project stores only its own overrides; EmbrAIon itself remains independent of individual model names.
 
@@ -181,7 +181,8 @@ This creates:
 
 ```text
 .embraion/
-└── project.yaml
+├── project.yaml
+└── routing.yaml
 ```
 
 The Project Overlay records the EmbrAIon repository/version declaration and project-specific configuration in version control.
