@@ -16,7 +16,7 @@
 
 > Where sparks become AI-built products *(Donde las chispas se convierten en productos creados con IA)*
 
-EmbrAIon es un AI-First Engineering System portátil para organizar la ingeniería de software asistida por IA mediante roles explícitos, habilidades reutilizables, flujos de trabajo, enrutamiento de modelos, control de acceso, validación, revisión independiente, seguridad, aprendizaje del sistema y capas específicas de cada proyecto.
+EmbrAIon es un AI-First Engineering System portátil para organizar la ingeniería de software asistida por IA mediante roles explícitos, habilidades reutilizables, flujos de trabajo, enrutamiento de tareas, control de acceso, validación, revisión independiente, seguridad, aprendizaje del sistema y capas específicas de cada proyecto.
 
 No está ligado a un único lenguaje de programación ni a un único entorno. Un proyecto Unity/C#, un servicio Python, una aplicación web u otro repositorio de software pueden utilizar el mismo núcleo de EmbrAIon y añadir únicamente su conocimiento y sus reglas específicas.
 
@@ -28,7 +28,7 @@ EmbrAIon divide el sistema de ingeniería en componentes independientes:
 - **[Skill (Habilidad)](../core/skills/)** — cómo realizar una clase de trabajo repetible.
 - **[Rule (Regla)](../core/rules/)** — qué comportamiento es obligatorio, está prohibido o debe protegerse.
 - **[Workflow (Flujo de trabajo)](../core/workflows/)** — en qué orden se combinan las capacidades.
-- **[Routing (Enrutamiento)](../core/routing/)** — qué perfil de acceso, nivel de modelo, cliente y proveedor pueden ejecutar una tarea.
+- **[Routing (Enrutamiento)](../core/routing/)** — qué clase de tarea, perfil de acceso y cliente de IA se utilizan; el modelo concreto lo decide el host o un override del proyecto.
 - **[Adapter (Adaptador)](../adapters/)** — cómo se representan las capacidades canónicas en Codex, GitHub Copilot, Claude Code, proveedores de API o un paquete Portable.
 - **[Tool (Herramienta)](../tools/)** — lógica ejecutable determinista, como validación, análisis de seguridad, gestión de árboles de trabajo Git, sincronización y diagnóstico.
 - **[Eval (Evaluación de comportamiento)](../evals/)** — comprobación de que la IA realmente cumple el contrato de ingeniería previsto.
@@ -49,13 +49,13 @@ Una clasificación desconocida o ambigua produce una denegación segura. Elegir 
 
 ## Adaptadores compatibles
 
-- **[Codex](https://openai.com/codex/)** — catálogo de modelos, correspondencia entre modelo/nivel de razonamiento y rutas, y generación de agentes y configuración del proyecto.
-- **[GitHub Copilot](https://github.com/features/copilot)** — catálogo de modelos compatibles, rutas recomendadas y generación de agentes personalizados.
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — catálogo de modelos Claude, rutas y generación de subagentes.
+- **[Codex](https://openai.com/codex/)** — configuración, agentes y skills generados; Codex controla sus modelos disponibles y la selección predeterminada/automática.
+- **[GitHub Copilot](https://github.com/features/copilot)** — custom agents y skills generados; Copilot controla sus modelos disponibles y la selección predeterminada/automática.
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — agents y skills generados; Claude Code controla sus modelos disponibles y la selección predeterminada.
 - **[Portable](../adapters/portable/)** — paquete de capacidades portátil e independiente de un cliente de IA concreto.
-- **[Proveedores de API](../adapters/providers/)** — catálogos directos de [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) y [DeepSeek](https://www.deepseek.com/), además de información de conexión.
+- **[Proveedores de API](../adapters/providers/)** — superficies opcionales de provider/transport sin un catálogo global de modelos de EmbrAIon.
 
-El Core permanece independiente de modelos concretos. Las identidades actuales de modelos y los selectores específicos de cada cliente viven únicamente en `adapters/`.
+EmbrAIon es completamente agnóstico respecto a modelos y no mantiene una lista canónica. Por defecto, el cliente de IA usa su selección predeterminada/automática. Si se necesita un override, el usuario puede pedir a la IA del repositorio que configure EmbrAIon con los modelos disponibles; la skill `routing-configuration` escribe solo en `.embraion/project.yaml` → `routing.overrides`.
 
 ## Instalación
 
@@ -264,7 +264,7 @@ Reglas / agentes / habilidades / flujos necesarios
   ↓
 Clase de datos + perfil de acceso + complejidad
   ↓
-Adaptador del cliente + ruta del modelo
+Adaptador del cliente + routing host-default/project
   ↓
 Implementación
   ↓
@@ -298,7 +298,7 @@ Use `embraion help` para ver el catálogo completo de comandos. Para ayuda detal
 ### Routing (Enrutamiento)
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 ### Plan de ejecución acotado
@@ -308,7 +308,7 @@ embraion dispatch \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class economy-write \
+  --route-class bounded-write \
   --data PRIVATE \
   --access write \
   --owned-path "src/**"
@@ -426,10 +426,10 @@ Los nombres **EmbrAIon** y **GORYNED**, los logotipos, marcas denominativas, sig
 
 EmbrAIon está en fase **preestable**. La arquitectura y la primera versión ejecutable del CLI ya existen, pero el contrato público de compatibilidad todavía no está congelado.
 
-Antes de la primera versión estable todavía pueden cambiar los catálogos de modelos, las representaciones generadas, la cobertura de validación, las reglas de seguridad, la instalación y el empaquetado de releases.
+Antes de la primera versión estable todavía pueden cambiar los routing overrides, las representaciones generadas, la cobertura de validación, las reglas de seguridad, la instalación y el empaquetado de releases.
 
 ---
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-23 23:55 UTC</sub>
+<sub>Última actualización: 2026-09-24 13:55 UTC</sub>

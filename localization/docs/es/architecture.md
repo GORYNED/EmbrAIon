@@ -2,31 +2,25 @@
 
 ## Capas
 
-1. **Core (Núcleo)** — reglas, agentes, habilidades, flujos, enrutamiento y conocimiento independientes de un proveedor concreto.
-2. **Adapters (Adaptadores)** — representaciones para clientes, modelos, proveedores, métodos de conexión y paquetes portátiles concretos.
-3. **Tools (Herramientas)** — lógica ejecutable determinista: estado de ejecución, aprendizaje, seguridad, inventario MCP, gestión de árboles de trabajo Git, validación, sincronización, instalación, diagnóstico e interfaz de línea de comandos.
-4. **Project Overlay (Capa del proyecto)** — agentes, dominios, clases de origen, reglas de compatibilidad y conocimiento de producto específicos de cada proyecto.
-5. **External Capabilities (Capacidades externas)** — sistemas complementarios e integraciones de dominio recomendados u opcionales.
-6. **Evidence (Evidencia)** — pruebas deterministas, evaluaciones de comportamiento, resultados de referencia e informes.
+1. **Core (Núcleo)** — reglas, agentes, habilidades, flujos, routing y conocimiento independientes de modelos y proveedores concretos.
+2. **Adapters (Adaptadores)** — proyecciones para clientes de IA, transportes y paquetes portátiles.
+3. **Tools (Herramientas)** — lógica determinista para estado, aprendizaje, seguridad, MCP, Git worktrees, validación, sincronización, instalación, diagnóstico y CLI.
+4. **Project Overlay (Capa del proyecto)** — conocimiento, restricciones y routing overrides opcionales específicos del proyecto.
+5. **External Capabilities** — sistemas e integraciones complementarios recomendados u opcionales.
+6. **Evidence (Evidencia)** — pruebas, evaluaciones de comportamiento, referencias e informes.
 
 ## Modelo de agentes
 
-Los agentes del Core usan nombres de funciones: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher y Steward.
+Los agentes de Core usan nombres de funciones: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher y Steward. Elegir una función no determina un modelo concreto.
 
-Los especialistas propios de un dominio concreto permanecen en el proyecto que utiliza EmbrAIon y no se convierten en funciones universales del Core.
+## Propiedad de la selección de modelos
 
-## State (Estado) y Learning (Aprendizaje)
+Core clasifica el trabajo con route classes orientadas a la tarea. EmbrAIon no mantiene un catálogo global de modelos, precios ni lifecycle. El AI host controla la disponibilidad y la selección predeterminada/automática. El proyecto guarda solo sus overrides host-specific en `.embraion/project.yaml` cuando los necesita.
 
-El estado de ejecución se normaliza en registros de sesión que no contienen contenido protegido. Los resultados repetidos pueden producir candidatos de mejora, pero toda nueva capacidad canónica requiere revisión y aprobación explícita.
+## State y Learning
 
-## Integrations (Integraciones)
-
-La configuración de servidores y herramientas externos se inventaría por separado de las reglas del Core. El inventario conserva metadatos y diferencias, pero nunca valores secretos.
-
-## Propiedad de la información de modelos
-
-El enrutamiento del Core selecciona clases abstractas de ruta. Los catálogos de adaptadores contienen identificadores actuales de modelos, niveles de razonamiento, precios, estado del ciclo de vida y parámetros de selección de cada cliente.
+El estado de ejecución se normaliza en registros privacy-safe. Los resultados repetidos pueden producir candidatos de mejora, pero cambiar Core requiere revisión y aprobación explícita.
 
 ## Spec Kit
 
-Spec Kit se conecta como capacidad externa. EmbrAIon lo recomienda para trabajo importante basado en especificaciones, pero no integra sus habilidades, plantillas ni lógica de ejecución dentro del Core.
+Spec Kit se conecta como capacidad externa y no sustituye las reglas de Core, la verdad del proyecto ni la evidencia de validación.

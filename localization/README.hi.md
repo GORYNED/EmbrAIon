@@ -16,7 +16,7 @@
 
 > Where sparks become AI-built products *(जहाँ चिंगारियाँ AI द्वारा बनाए गए उत्पादों में बदलती हैं)*
 
-EmbrAIon एक पोर्टेबल AI-First Engineering System है, जो AI-सहायित सॉफ़्टवेयर इंजीनियरिंग को स्पष्ट भूमिकाओं, पुन: उपयोग योग्य कौशलों, कार्यप्रवाहों, मॉडल रूटिंग, पहुँच नियंत्रण, सत्यापन, स्वतंत्र समीक्षा, सुरक्षा, सिस्टम सीखने और प्रोजेक्ट-विशिष्ट परतों के आधार पर व्यवस्थित करता है।
+EmbrAIon एक पोर्टेबल AI-First Engineering System है, जो AI-सहायित सॉफ़्टवेयर इंजीनियरिंग को स्पष्ट भूमिकाओं, पुन: उपयोग योग्य कौशलों, कार्यप्रवाहों, task routing, पहुँच नियंत्रण, सत्यापन, स्वतंत्र समीक्षा, सुरक्षा, सिस्टम सीखने और प्रोजेक्ट-विशिष्ट परतों के आधार पर व्यवस्थित करता है।
 
 यह किसी एक प्रोग्रामिंग भाषा या सिस्टम ढाँचे से बँधा नहीं है। Unity/C# प्रोजेक्ट, Python सेवा, वेब अनुप्रयोग या कोई अन्य सॉफ़्टवेयर रिपॉजिटरी एक ही EmbrAIon Core का उपयोग कर सकती है और केवल अपने प्रोजेक्ट-विशिष्ट ज्ञान व नियम जोड़ सकती है।
 
@@ -28,7 +28,7 @@ EmbrAIon इंजीनियरिंग सिस्टम को स्व�
 - **[Skill (कौशल)](../core/skills/)** — किसी दोहराए जाने वाले काम को कैसे किया जाए।
 - **[Rule (नियम)](../core/rules/)** — क्या अनिवार्य, निषिद्ध या संरक्षित है।
 - **[Workflow (कार्यप्रवाह)](../core/workflows/)** — क्षमताएँ किस क्रम में मिलकर काम करती हैं।
-- **[Routing (रूटिंग)](../core/routing/)** — कौन-सा पहुँच प्रोफ़ाइल, मॉडल स्तर, क्लाइंट और प्रदाता किसी कार्य को चला सकते हैं।
+- **[Routing (रूटिंग)](../core/routing/)** — कौन-सी task class, access profile और AI host उपयोग किए जाते हैं; concrete model host या project override चुनता है।
 - **[Adapter (एडाप्टर)](../adapters/)** — EmbrAIon की मानक क्षमताओं को Codex, GitHub Copilot, Claude Code, API प्रदाताओं या Portable पैकेज में कैसे प्रस्तुत किया जाए।
 - **[Tool (उपकरण)](../tools/)** — निर्धारक निष्पादन तर्क, जैसे सत्यापन, सुरक्षा जाँच, Git कार्य-वृक्ष प्रबंधन, समन्वयन और निदान।
 - **[Eval (व्यवहार मूल्यांकन)](../evals/)** — यह जाँचना कि AI अपेक्षित इंजीनियरिंग अनुबंध का वास्तव में पालन करता है या नहीं।
@@ -49,13 +49,13 @@ EmbrAIon तीन मानक डेटा वर्ग उपयोग कर
 
 ## समर्थित एडाप्टर
 
-- **[Codex](https://openai.com/codex/)** — मॉडल सूची, मॉडल और तर्क स्तर का मार्ग से मिलान, तथा प्रोजेक्ट एजेंट और कॉन्फ़िगरेशन निर्माण।
-- **[GitHub Copilot](https://github.com/features/copilot)** — समर्थित मॉडल सूची, अनुशंसित मार्ग और कस्टम एजेंट निर्माण।
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — Claude मॉडल सूची, मार्ग और अधीनस्थ एजेंट निर्माण।
+- **[Codex](https://openai.com/codex/)** — generated project config, agents और skills; उपलब्ध models और default/automatic selection Codex के स्वामित्व में हैं।
+- **[GitHub Copilot](https://github.com/features/copilot)** — generated custom agents और skills; उपलब्ध models और default/automatic selection Copilot के स्वामित्व में हैं।
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — generated agents और skills; उपलब्ध models और default selection Claude Code के स्वामित्व में हैं।
 - **[Portable](../adapters/portable/)** — किसी एक AI क्लाइंट से न बँधा पोर्टेबल क्षमता पैकेज।
-- **[API प्रदाता](../adapters/providers/)** — [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/) और [DeepSeek](https://www.deepseek.com/) की प्रत्यक्ष मॉडल सूचियाँ तथा कनेक्शन संबंधी जानकारी।
+- **[API प्रदाता](../adapters/providers/)** — optional provider/transport surfaces, बिना किसी global EmbrAIon model catalog के।
 
-Core विशिष्ट मॉडलों से स्वतंत्र रहता है। वर्तमान मॉडल पहचान और क्लाइंट-विशिष्ट चयन केवल `adapters/` में रखे जाते हैं।
+EmbrAIon पूरी तरह model-agnostic है और canonical model list नहीं रखता। Default रूप से AI host अपनी automatic/default selection उपयोग करता है। Override चाहिए तो user repository में काम कर रहे AI से उपलब्ध models के अनुसार EmbrAIon configure करने के लिए कह सकता है; `routing-configuration` skill केवल `.embraion/project.yaml` → `routing.overrides` बदलती है।
 
 ## स्थापना
 
@@ -264,7 +264,7 @@ Project Overlay + Core सूची
   ↓
 डेटा वर्ग + पहुँच प्रोफ़ाइल + जटिलता
   ↓
-क्लाइंट एडाप्टर + मॉडल मार्ग
+क्लाइंट एडाप्टर + host-default/project routing
   ↓
 कार्यान्वयन
   ↓
@@ -298,7 +298,7 @@ embraion help
 ### Routing (रूटिंग)
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 ### सीमित निष्पादन योजना
@@ -308,7 +308,7 @@ embraion dispatch \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class economy-write \
+  --route-class bounded-write \
   --data PRIVATE \
   --access write \
   --owned-path "src/**"
@@ -426,10 +426,10 @@ EmbrAIon का स्रोत कोड और दस्तावेज़ [MI
 
 EmbrAIon अभी **पूर्व-स्थिर** अवस्था में है। वास्तुकला और पहला निष्पादन योग्य CLI उपलब्ध हैं, लेकिन सार्वजनिक संगतता अनुबंध अभी स्थिर नहीं किया गया है।
 
-पहले स्थिर रिलीज़ से पहले मॉडल सूचियाँ, जनित क्लाइंट प्रस्तुतियाँ, सत्यापन कवरेज, सुरक्षा नियम, स्थापना और रिलीज़ पैकेजिंग बदल सकती हैं।
+पहले stable release से पहले routing overrides, generated host projections, validation coverage, security rules, installation और release packaging बदल सकते हैं।
 
 ---
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-23 23:55 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-24 13:55 UTC</sub>

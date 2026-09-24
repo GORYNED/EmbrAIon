@@ -2,31 +2,25 @@
 
 ## 层次
 
-1. **Core（核心）** — 与具体供应商无关的规则、代理角色、技能、工作流、路由和知识。
-2. **Adapters（适配器）** — 面向具体客户端、模型、供应商、连接方式和可移植软件包的表示层。
-3. **Tools（工具）** — 确定性的可执行逻辑，包括运行状态、学习、安全、MCP 清单、Git 工作树管理、验证、同步、安装、诊断和命令行界面。
-4. **Project Overlay（项目叠加层）** — 属于具体项目的代理角色、业务领域、来源类别、兼容性规则和产品知识。
-5. **External Capabilities（外部能力）** — 推荐或可选的附加系统以及领域集成。
-6. **Evidence（证据）** — 确定性测试、行为评估、基准结果和报告。
+1. **Core（核心）** — 与具体模型和供应商无关的规则、代理角色、技能、工作流、路由和知识。
+2. **Adapters（适配器）** — 面向 AI host、transport 和可移植软件包的投影层。
+3. **Tools（工具）** — 用于状态、学习、安全、MCP、Git worktree、验证、同步、安装、诊断和 CLI 的确定性逻辑。
+4. **Project Overlay（项目叠加层）** — 项目专属知识、约束和可选 routing override。
+5. **External Capabilities（外部能力）** — 推荐或可选的附加系统与集成。
+6. **Evidence（证据）** — 测试、行为评估、参考结果和报告。
 
 ## 代理模型
 
-核心代理使用职位式名称：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 和 Steward。
+Core 使用职位式角色：Lead、Worker、Reviewer、Architect、Analyst、Validator、Researcher 和 Steward。选择角色并不意味着选择某个具体模型。
 
-只属于某个具体业务领域的专家角色应保留在使用 EmbrAIon 的项目中，而不应变成通用核心角色。
+## 模型选择的归属
 
-## State（状态）与 Learning（学习）
+Core 使用面向任务的 route class 对工作进行分类。EmbrAIon 不维护全局模型目录、价格或 lifecycle。AI host 负责模型可用性和默认/自动选择。项目仅在需要时把自己的 host-specific override 保存在 `.embraion/project.yaml` 中。
 
-运行状态会被标准化为不包含受保护内容的会话记录。重复出现的结果可以形成改进候选项，但任何新能力进入规范核心之前，都必须经过评审和明确批准。
+## State 与 Learning
 
-## Integrations（集成）
-
-外部服务器和工具的配置独立于核心规则进行清单化管理。清单只保存元数据和差异信息，不保存任何秘密值。
-
-## 模型信息的归属
-
-核心路由只选择抽象的路由类别。适配器目录负责保存当前模型标识、推理级别、价格、生命周期状态以及具体客户端中的选择参数。
+执行状态被标准化为 privacy-safe 记录。重复证据可以形成改进候选，但修改 Core 仍需要评审和明确批准。
 
 ## Spec Kit
 
-Spec Kit 作为外部能力接入。EmbrAIon 推荐在重要的规格驱动工作中使用它，但不会把它的技能、模板或运行逻辑内置进核心。
+Spec Kit 作为外部能力接入，不替代 Core 规则、项目事实或 validation evidence。

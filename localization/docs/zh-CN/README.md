@@ -15,7 +15,7 @@
 3. [能力模型](capability-model.md)
 4. [Project Overlay（项目叠加层）](project-overlay.md)
 5. [Spec Kit](spec-kit.md)
-6. [Routing（模型路由）](model-routing.md)
+6. [Routing（路由）](model-routing.md)
 7. [Learning（系统学习）](learning.md)
 8. [Validation（验证）](validation.md)
 9. [Security（安全）](security.md)

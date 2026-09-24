@@ -15,7 +15,7 @@
 3. [क्षमता मॉडल](capability-model.md)
 4. [Project Overlay (प्रोजेक्ट ओवरले)](project-overlay.md)
 5. [Spec Kit](spec-kit.md)
-6. [Routing (मॉडल रूटिंग)](model-routing.md)
+6. [Routing (रूटिंग)](model-routing.md)
 7. [Learning (सिस्टम सीखना)](learning.md)
 8. [Validation (सत्यापन)](validation.md)
 9. [Security (सुरक्षा)](security.md)
