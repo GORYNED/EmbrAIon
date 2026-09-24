@@ -9,13 +9,6 @@ knowledge:
   project: knowledge/project.md
   architecture: knowledge/architecture.md
 
-sources:
-  canonical:
-    - src/**
-    - knowledge/**
-  protected: []
-  generated: []
-  external: []
 
 validation:
   profiles:
