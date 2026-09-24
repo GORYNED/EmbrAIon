@@ -183,6 +183,150 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     return manifest
 
 
+def _merge_missing_defaults(
+    current: dict[str, Any],
+    defaults: dict[str, Any],
+) -> dict[str, Any]:
+    merged = dict(current)
+    for key, default in defaults.items():
+        if key not in merged:
+            merged[key] = default
+            continue
+
+        existing = merged[key]
+        if isinstance(existing, dict) and isinstance(default, dict):
+            merged[key] = _merge_missing_defaults(existing, default)
+
+    return merged
+
+
+def _config_upgrade_inputs(
+    destination: Path,
+    *,
+    version: str,
+) -> dict[Path, tuple[dict[str, Any], Path]]:
+    config_root = destination / ".embraion"
+    manifest = config_root / "project.yaml"
+    raw_manifest = read_yaml(manifest) or {}
+    if not isinstance(raw_manifest, dict):
+        raise RuntimeError(f"Invalid project configuration mapping: {manifest}")
+
+    project_name = str(
+        (raw_manifest.get("project") or {}).get("name")
+        or destination.name
+    )
+    project_defaults = _default_project_overlay(project_name)
+    project_defaults["framework"]["version"] = version
+
+    definitions = {
+        manifest: (project_defaults, Path("schemas/project.schema.json")),
+        config_root / "routing.yaml": (
+            _default_routing_config(),
+            Path("schemas/routing.schema.json"),
+        ),
+        config_root / "policy.yaml": (
+            _default_policy_config(),
+            Path("schemas/policy.schema.json"),
+        ),
+        config_root / "knowledge.yaml": (
+            _default_knowledge_config(),
+            Path("schemas/knowledge.schema.json"),
+        ),
+        config_root / "validation.yaml": (
+            _default_validation_config(),
+            Path("schemas/validation.schema.json"),
+        ),
+        config_root / "agents.yaml": (
+            _default_agents_config(),
+            Path("schemas/agents.schema.json"),
+        ),
+    }
+
+    missing = [path for path in definitions if not path.is_file()]
+    if missing:
+        relative = ", ".join(
+            path.relative_to(destination).as_posix()
+            for path in missing
+        )
+        raise RuntimeError(
+            "Project configuration uses an incomplete or legacy layout. "
+            "Automatic update only normalizes the modular .embraion layout; "
+            f"missing: {relative}."
+        )
+
+    return definitions
+
+
+def _validate_upgrade_candidate(
+    path: Path,
+    data: dict[str, Any],
+    schema_path: Path,
+) -> None:
+    schema = read_json(framework_root() / schema_path)
+    validator = Draft202012Validator(schema)
+    errors = sorted(
+        validator.iter_errors(data),
+        key=lambda item: list(item.absolute_path),
+    )
+    if not errors:
+        return
+
+    formatted: list[str] = []
+    for error in errors:
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        formatted.append(f"{location}: {error.message}")
+
+    raise RuntimeError(
+        f"Cannot safely update {path}: current values are incompatible with "
+        "the target configuration contract; " + "; ".join(formatted)
+    )
+
+
+def normalize_project_config(
+    path: Path,
+    *,
+    version: str,
+) -> list[Path]:
+    destination = path.resolve()
+    manifest = destination / ".embraion" / "project.yaml"
+    if not manifest.is_file():
+        raise RuntimeError(f"Missing {manifest}; run 'embraion init' first.")
+
+    definitions = _config_upgrade_inputs(destination, version=version)
+    candidates: dict[Path, dict[str, Any]] = {}
+    originals: dict[Path, dict[str, Any]] = {}
+
+    for config_path, (defaults, schema_path) in definitions.items():
+        loaded = read_yaml(config_path) or {}
+        if not isinstance(loaded, dict):
+            raise RuntimeError(
+                f"Invalid project configuration mapping: {config_path}"
+            )
+
+        originals[config_path] = loaded
+        candidate = _merge_missing_defaults(loaded, defaults)
+
+        if config_path == manifest:
+            framework = dict(candidate.get("framework") or {})
+            framework["repository"] = "GORYNED/EmbrAIon"
+            framework["version"] = version
+            candidate["framework"] = framework
+
+        _validate_upgrade_candidate(config_path, candidate, schema_path)
+        candidates[config_path] = candidate
+
+    changed = [
+        config_path
+        for config_path, candidate in candidates.items()
+        if candidate != originals[config_path]
+    ]
+
+    for config_path in changed:
+        write_yaml(config_path, candidates[config_path])
+
+    return changed
+
+
 def update_project(path: Path, version: str | None = None) -> tuple[str | None, str]:
     destination = path.resolve()
     manifest = destination / ".embraion" / "project.yaml"
@@ -191,15 +335,13 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
         raise RuntimeError(f"Missing {manifest}; run 'embraion init' first.")
 
     data = read_yaml(manifest) or {}
-    data.setdefault("framework", {})
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid project configuration mapping: {manifest}")
 
-    previous = data["framework"].get("version")
+    previous = (data.get("framework") or {}).get("version")
     current = version or __version__
 
-    data["framework"]["repository"] = "GORYNED/EmbrAIon"
-    data["framework"]["version"] = current
-    write_yaml(manifest, data)
-
+    normalize_project_config(destination, version=current)
     return previous, current
 
 

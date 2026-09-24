@@ -34,6 +34,24 @@ embraion status
 embraion doctor
 ```
 
+## Compatible configuration normalization
+
+`embraion update` also normalizes an existing **modular** `.embraion/` configuration to the target release contract before changing the project pin.
+
+The normalization is conservative:
+
+- only missing default fields are added;
+- existing project values are not replaced with framework defaults;
+- all candidate configuration files are validated before any file is written;
+- generated Codex, Copilot, Claude Code, Portable, and projection-state files are not regenerated or modified;
+- incompatible user-authored values fail the update instead of being guessed or rewritten.
+
+For example, a project created on `0.8.1` can gain a later default such as the disabled `policy.yaml → enforcement` block without changing its privacy, source, routing, validation, agent, or host-projection choices.
+
+Automatic normalization expects the focused modular layout introduced in the `0.8.x` line. If required dedicated files such as `policy.yaml` or `validation.yaml` are missing, the update stops and reports the legacy/incomplete layout rather than attempting an unsafe migration.
+
+Host projections remain intentionally separate. After a framework update, use `embraion projection diff` and `embraion install` only when you explicitly want to refresh generated host files.
+
 ## Why updates are explicit
 
 A project pin is part of reproducibility. Older projects can keep using their exact published runtime while another project moves forward.

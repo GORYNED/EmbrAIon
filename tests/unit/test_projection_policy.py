@@ -7,7 +7,13 @@ from pathlib import Path
 
 from embraion.common import read_json, read_yaml, write_json, write_yaml
 from embraion.policy import effective_policy
-from embraion.project import init_project, install, projection_plan
+from embraion.project import (
+    init_project,
+    install,
+    normalize_project_config,
+    projection_plan,
+    update_project,
+)
 
 
 class ProjectionPolicyTests(unittest.TestCase):
@@ -55,6 +61,132 @@ class ProjectionPolicyTests(unittest.TestCase):
             )
             self.assertIn("state/", local_ignore)
             self.assertIn("cache/", local_ignore)
+
+    def test_update_adds_missing_defaults_without_overwriting_user_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="Consumer")
+
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy = read_yaml(policy_path)
+            policy.pop("enforcement")
+            policy["privacy"]["default-class"] = "CONFIDENTIAL"
+            policy["review"]["substantial-required"] = False
+            policy["sources"]["canonical"] = ["src/**"]
+            write_yaml(policy_path, policy)
+
+            validation_path = project / ".embraion" / "validation.yaml"
+            validation = read_yaml(validation_path)
+            validation["profiles"]["fast"] = ["python -m unittest"]
+            write_yaml(validation_path, validation)
+
+            routing_path = project / ".embraion" / "routing.yaml"
+            routing = read_yaml(routing_path)
+            routing["overrides"] = {
+                "codex": {
+                    "routes": {
+                        "ordinary": {
+                            "model": "host-owned-selector",
+                        }
+                    }
+                }
+            }
+            write_yaml(routing_path, routing)
+
+            install("codex", project)
+            projection_path = project / ".codex" / "config.toml"
+            projection_before = projection_path.read_bytes()
+            state_path = project / ".embraion/state/projections/codex.json"
+            state_before = state_path.read_bytes()
+
+            project_data = read_yaml(manifest)
+            project_data["framework"]["version"] = "0.8.1"
+            write_yaml(manifest, project_data)
+
+            previous, current = update_project(project, version="0.9.0")
+            self.assertEqual("0.8.1", str(previous))
+            self.assertEqual("0.9.0", current)
+
+            updated_policy = read_yaml(policy_path)
+            self.assertEqual(
+                {
+                    "enabled": False,
+                    "validation-profile": "affected",
+                    "require-review": False,
+                },
+                updated_policy["enforcement"],
+            )
+            self.assertEqual(
+                "CONFIDENTIAL",
+                updated_policy["privacy"]["default-class"],
+            )
+            self.assertFalse(updated_policy["review"]["substantial-required"])
+            self.assertEqual(
+                ["src/**"],
+                updated_policy["sources"]["canonical"],
+            )
+
+            self.assertEqual(
+                ["python -m unittest"],
+                read_yaml(validation_path)["profiles"]["fast"],
+            )
+            self.assertEqual(
+                "host-owned-selector",
+                read_yaml(routing_path)["overrides"]["codex"]["routes"][
+                    "ordinary"
+                ]["model"],
+            )
+            self.assertEqual(
+                "0.9.0",
+                str(read_yaml(manifest)["framework"]["version"]),
+            )
+
+            self.assertEqual(projection_before, projection_path.read_bytes())
+            self.assertEqual(state_before, state_path.read_bytes())
+
+    def test_update_validates_every_candidate_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="Consumer")
+            policy_path = project / ".embraion" / "policy.yaml"
+            validation_path = project / ".embraion" / "validation.yaml"
+
+            project_data = read_yaml(manifest)
+            project_data["framework"]["version"] = "0.8.1"
+            write_yaml(manifest, project_data)
+
+            policy = read_yaml(policy_path)
+            policy.pop("enforcement")
+            write_yaml(policy_path, policy)
+
+            validation = read_yaml(validation_path)
+            validation["profiles"]["fast"] = "not-a-command-list"
+            write_yaml(validation_path, validation)
+
+            manifest_before = manifest.read_bytes()
+            policy_before = policy_path.read_bytes()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot safely update",
+            ):
+                update_project(project, version="0.9.0")
+
+            self.assertEqual(manifest_before, manifest.read_bytes())
+            self.assertEqual(policy_before, policy_path.read_bytes())
+            self.assertNotIn("enforcement", read_yaml(policy_path))
+
+    def test_update_refuses_incomplete_legacy_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            (project / ".embraion" / "policy.yaml").unlink()
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "incomplete or legacy layout",
+            ):
+                normalize_project_config(project, version="0.9.0")
 
     def test_init_preserves_existing_local_ignore(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -297,21 +297,66 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(__version__, str(manifest["framework"]["version"]))
 
-            manifest["framework"]["version"] = "0.3.2"
+            manifest["framework"]["version"] = "0.8.1"
             manifest_path.write_text(
                 yaml.safe_dump(manifest, sort_keys=False),
                 encoding="utf-8",
             )
 
-            updated = self._run(project, environment, "update")
-            self.assertIn(f"0.3.2 -> {__version__}", updated.stdout)
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+            policy.pop("enforcement", None)
+            policy["privacy"]["default-class"] = "CONFIDENTIAL"
+            policy_path.write_text(
+                yaml.safe_dump(policy, sort_keys=False),
+                encoding="utf-8",
+            )
+
+            existing_projection = project / ".codex" / "agents" / "sentinel.toml"
+            existing_projection.parent.mkdir(parents=True)
+            existing_projection.write_text(
+                "user-owned projection sentinel\n",
+                encoding="utf-8",
+            )
+            projection_before = existing_projection.read_bytes()
+
+            target_version = __version__
+            updated = self._run(
+                project,
+                environment,
+                "update",
+            )
+            self.assertIn(f"0.8.1 -> {target_version}", updated.stdout)
 
             current = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(__version__, str(current["framework"]["version"]))
+            self.assertEqual(
+                target_version,
+                str(current["framework"]["version"]),
+            )
+            upgraded_policy = yaml.safe_load(
+                policy_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                "CONFIDENTIAL",
+                upgraded_policy["privacy"]["default-class"],
+            )
+            self.assertEqual(
+                {
+                    "enabled": False,
+                    "validation-profile": "affected",
+                    "require-review": False,
+                },
+                upgraded_policy["enforcement"],
+            )
+            self.assertEqual(
+                projection_before,
+                existing_projection.read_bytes(),
+            )
             self.assertTrue((project / ".embraion" / ".gitignore").is_file())
 
+            existing_projection.unlink()
             existing_config = project / ".codex" / "config.toml"
-            existing_config.parent.mkdir(parents=True)
+            existing_config.parent.mkdir(parents=True, exist_ok=True)
             existing_config.write_text(
                 "[project]\ncustom = true\n",
                 encoding="utf-8",
