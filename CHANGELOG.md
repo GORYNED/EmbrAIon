@@ -5,6 +5,7 @@
 ### Added
 
 - Model-agnostic project routing overrides by host, route class, and role. Overrides accept opaque host-owned model selectors, effort strings, and options without requiring an EmbrAIon model catalog.
+- A projected `routing-configuration` skill that teaches AI clients to write optional model overrides only to `.embraion/project.yaml` while preserving host-default behavior and Core safety policy.
 
 ### Changed
 

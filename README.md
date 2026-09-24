@@ -59,6 +59,17 @@ Current adapters:
 
 Core remains model-neutral. EmbrAIon does not maintain a canonical model list: hosts choose their own defaults, while projects may optionally store opaque host-specific model/effort/options overrides.
 
+
+### Model-agnostic by design
+
+EmbrAIon does **not** ship or maintain a canonical list of AI models. Model availability changes independently across hosts, plans, accounts, and time, so the framework keeps that knowledge out of Core.
+
+With no project override, the selected host uses its own default or automatic model policy. If you want explicit model routing, ask the AI already working in your repository to configure it for you. For example:
+
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+
+The installed EmbrAIon host projection includes a `routing-configuration` skill that tells the AI exactly where and how to make that change. The project stores only its own overrides; EmbrAIon itself remains independent of individual model names.
+
 ## Installation
 
 ### Install once per machine
@@ -352,7 +363,7 @@ embraion session show
 embraion session set --state review --validation passed
 ```
 
-The host adapter performs actual AI execution; EmbrAIon owns canonical routing, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry.
+The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/project.yaml` may optionally override host model selection.
 
 ### Security
 
@@ -498,4 +509,4 @@ Before the first stable release, routing overrides, generated host projections, 
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 04:40 UTC</sub>
+<sub>Last updated: 2026-09-24 12:50 UTC</sub>

@@ -6,7 +6,7 @@
 
 **EmbrAIon** is a portable **AI-First Engineering System** for making AI-assisted software development structured, reusable, reviewable, and trustworthy.
 
-It does not replace your application runtime. It sits around the engineering process: roles, skills, project knowledge, routing, permissions, validation, and host-specific projections.
+It does not replace your application runtime. It sits around the engineering process: roles, skills, project knowledge, routing, permissions, validation, and host-specific projections. It is model-agnostic: the AI host owns model availability, while a project may optionally override model selection in `.embraion/project.yaml`.
 
 </div>
 
@@ -116,13 +116,15 @@ embraion status
 
 The project now has a pinned EmbrAIon version plus a generated host projection.
 
+If you want to override model selection, ask the AI in that project to configure EmbrAIon routing. The installed `routing-configuration` skill directs it to `.embraion/project.yaml` → `routing.overrides`; otherwise the host keeps its own default/automatic model policy.
+
 ## What EmbrAIon owns
 
 | Area | Purpose |
 | --- | --- |
 | Core | Canonical reusable rules, roles, skills, workflows, routing, and knowledge |
-| Project overlay | Project identity, version pin, domain knowledge, local capabilities |
-| Adapters | Codex, Copilot, Claude Code, Portable, and provider-specific facts |
+| Project overlay | Project identity, version pin, domain knowledge, local capabilities, optional model-routing overrides |
+| Adapters | Codex, Copilot, Claude Code, Portable, and transport projections without a global model catalog |
 | Tools | Validation, security, worktrees, sessions, learning, evals, install/sync |
 | Evidence | Unit/integration tests, reference E2E, behavioral evals, release gates |
 

@@ -69,6 +69,15 @@ A role override is merged over the route override, so a role can replace only th
 
 ## AI-First configuration
 
+Every installed host projection includes the reusable `routing-configuration` skill. It tells the AI that model overrides belong in `.embraion/project.yaml` under `routing.overrides`, and that EmbrAIon itself has no model registry.
+
+The intended user experience is therefore conversational rather than manual configuration. A user can simply tell the AI already working in the repository:
+
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+
+The AI should inspect host-native model choices when available, edit only the relevant override subtree, and verify the affected routes. Users may still edit the YAML directly, but they do not need to.
+
+
 A user does not need to edit YAML manually. They can ask the AI client already working in the repository to inspect the models/settings available in that client and update the project's EmbrAIon routing overrides.
 
 The AI should change only project overrides. It must not weaken privacy, access, owned-path, protected-source, validation, or review policy to make a model fit.

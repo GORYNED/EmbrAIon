@@ -46,6 +46,15 @@ embraion install --host portable --destination vendor/embraion
 
 Generated host files are projections. Canonical reusable policy remains in EmbrAIon Core.
 
+
+The host projection also installs EmbrAIon Skills for that AI client, including `routing-configuration`. That skill tells the AI where optional model overrides belong.
+
+EmbrAIon is model-agnostic: if you are happy with the host's default/automatic model choice, configure nothing. If you want explicit model routing, tell the AI in the repository:
+
+> Configure EmbrAIon routing using the models available to you. Write any model/effort overrides only to `.embraion/project.yaml` under `routing.overrides`, and keep all privacy, access, validation, and review rules intact.
+
+The AI can then update the project overlay without requiring a framework model catalog.
+
 For an existing repository that already owns host configuration or agents, preview and install only the components you want EmbrAIon to own:
 
 ```bash

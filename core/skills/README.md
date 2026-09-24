@@ -12,9 +12,10 @@ skills/
 ├── review/SKILL.md
 ├── validation/SKILL.md
 ├── debugging/SKILL.md
-└── verification/SKILL.md
+├── verification/SKILL.md
+└── routing-configuration/SKILL.md
 ```
 
-A skill describes **how** to perform a class of work. It does not own agent identity, concrete model selection, or host-specific syntax.
+A skill describes **how** to perform a class of work. It does not own agent identity or a canonical model catalog. The `routing-configuration` skill tells an installed AI host how to safely write optional project-specific model overrides into `.embraion/project.yaml`.
 
-<sub>Last updated: 2026-09-23 19:21 UTC</sub>
+<sub>Last updated: 2026-09-24 12:50 UTC</sub>

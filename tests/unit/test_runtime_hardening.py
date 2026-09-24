@@ -167,6 +167,18 @@ class RuntimeHardeningTests(unittest.TestCase):
             self.assertTrue(report["hosts"][0]["ready"])
             self.assertTrue(report["hosts"][0]["skills"]["present"])
 
+            routing_skill = (
+                project
+                / ".agents"
+                / "skills"
+                / "routing-configuration"
+                / "SKILL.md"
+            )
+            self.assertTrue(routing_skill.is_file())
+            routing_text = routing_skill.read_text(encoding="utf-8")
+            self.assertIn(".embraion/project.yaml", routing_text)
+            self.assertIn("routing.overrides", routing_text)
+
 
 if __name__ == "__main__":
     unittest.main()
