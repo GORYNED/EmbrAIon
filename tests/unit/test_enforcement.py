@@ -177,6 +177,16 @@ class EnforcementTests(unittest.TestCase):
                 "Require approved pull-request review",
                 workflow_text,
             )
+            self.assertIn(
+                "${{ github.event.pull_request.head.sha }}",
+                workflow_text,
+            )
+            self.assertIn(
+                "${{ github.event.pull_request.base.sha }}",
+                workflow_text,
+            )
+            self.assertIn("persist-credentials: false", workflow_text)
+            self.assertIn(".commit_id == $head", workflow_text)
 
             status = enforcement_status(project)
             self.assertTrue(

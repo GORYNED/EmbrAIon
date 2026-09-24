@@ -252,10 +252,11 @@ def _github_actions_content(
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         shell: bash
         run: |
-          approvals="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/reviews" \
-            --jq 'group_by(.user.login) | map(sort_by(.submitted_at) | last) | map(select(.state == "APPROVED")) | length')"
+          approvals="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/reviews" |
+            jq --arg head "$HEAD_SHA" 'group_by(.user.login) | map(sort_by(.submitted_at) | last) | map(select(.state == "APPROVED" and .commit_id == $head)) | length')"
           if [ "$approvals" -lt 1 ]; then
             echo "EmbrAIon enforcement requires at least one current approved review."
             exit 1
@@ -284,8 +285,9 @@ jobs:
       - name: Checkout pull request head
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{{{ github.event.pull_request.head.sha }}}}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -298,7 +300,7 @@ jobs:
       - name: Enforce project policy and validation
         run: >-
           embraion enforcement check
-          --base-ref "${{ github.event.pull_request.base.sha }}"
+          --base-ref "${{{{ github.event.pull_request.base.sha }}}}"
           {"--external-review-gate" if require_review else ""}
 {review_step}"""
 
