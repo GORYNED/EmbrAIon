@@ -35,8 +35,21 @@ def read_project_overlay(project: Path | None = None) -> dict[str, Any]:
     return read_yaml(manifest) or {}
 
 
+def read_routing_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "routing.yaml"
+    if not path.is_file():
+        return {"overrides": {}}
+
+    data = read_yaml(path) or {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid routing configuration: {path}")
+    return data
+
+
 def effective_policy(project: Path | None = None) -> dict[str, Any]:
     data = read_project_overlay(project)
+    routing = read_routing_config(project)
 
     sources = DEFAULT_POLICY["sources"] | (data.get("sources") or {})
     default_profiles = DEFAULT_POLICY["validation"]["profiles"]
@@ -48,7 +61,7 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
         "validation": {"profiles": profiles},
         "review": DEFAULT_POLICY["review"] | (data.get("review") or {}),
         "privacy": DEFAULT_POLICY["privacy"] | (data.get("privacy") or {}),
-        "routing": DEFAULT_POLICY["routing"] | (data.get("routing") or {}),
+        "routing": DEFAULT_POLICY["routing"] | routing,
     }
 
 

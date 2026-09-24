@@ -6,6 +6,7 @@ Current foundation schemas include:
 
 - `framework.schema.json`
 - `project.schema.json`
+- `routing.schema.json`
 - `agent.schema.json`
 - `catalog.schema.json`
 - `eval.schema.json`
@@ -18,4 +19,4 @@ Current foundation schemas include:
 
 Schemas should describe executable or validated contracts rather than speculative future structure.
 
-<sub>Last updated: 2026-09-23 20:20 UTC</sub>
+<sub>Last updated: 2026-09-24 15:15 UTC</sub>

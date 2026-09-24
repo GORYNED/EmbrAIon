@@ -118,6 +118,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
             add("schema", str(instance_path.relative_to(root)), str(error))
 
     project_schema = root / "schemas/project.schema.json"
+    routing_schema = root / "schemas/routing.schema.json"
     framework_data = read_yaml(root / "framework.yaml") or {}
     current_framework_version = str(framework_data.get("version", ""))
 
@@ -136,6 +137,24 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     add(
                         "project-schema",
                         str(manifest.relative_to(root)),
+                        message,
+                    )
+
+            routing_manifest = manifest.parent / "routing.yaml"
+            if not routing_manifest.is_file():
+                add(
+                    "routing-schema",
+                    str(routing_manifest.relative_to(root)),
+                    "Missing routing.yaml",
+                )
+            elif routing_schema.exists():
+                for message in _schema_errors(
+                    read_yaml(routing_manifest) or {},
+                    routing_schema,
+                ):
+                    add(
+                        "routing-schema",
+                        str(routing_manifest.relative_to(root)),
                         message,
                     )
 

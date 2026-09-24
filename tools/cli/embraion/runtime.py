@@ -17,7 +17,7 @@ from .common import (
     state_root,
     write_json,
 )
-from .policy import read_project_overlay
+from .policy import read_routing_config
 
 
 def _append_event(project: Path, event: dict[str, Any]) -> None:
@@ -48,12 +48,7 @@ def _routing_override(
     route_class: str,
     role: str | None,
 ) -> dict[str, Any]:
-    try:
-        overlay = read_project_overlay(project)
-    except RuntimeError:
-        return {}
-
-    routing = overlay.get("routing") or {}
+    routing = read_routing_config(project)
     overrides = routing.get("overrides") or {}
     host_overrides = overrides.get(host) or {}
     if not isinstance(host_overrides, dict):

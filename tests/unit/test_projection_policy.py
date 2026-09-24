@@ -16,6 +16,12 @@ class ProjectionPolicyTests(unittest.TestCase):
             project = Path(temporary)
             init_project(project, name="Consumer")
             policy = effective_policy(project)
+            routing = read_yaml(project / ".embraion/routing.yaml")
+            self.assertEqual({"overrides": {}}, routing)
+            self.assertNotIn(
+                "routing",
+                read_yaml(project / ".embraion/project.yaml"),
+            )
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
             self.assertTrue(policy["review"]["substantial-required"])
             self.assertEqual([], policy["sources"]["protected"])

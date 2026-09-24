@@ -60,26 +60,25 @@ class CoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             manifest = init_project(project, name="Consumer")
-            data = read_yaml(manifest)
-            data["routing"] = {
-                "overrides": {
-                    "codex": {
-                        "routes": {
-                            "substantial": {
-                                "model": "future-model",
-                                "effort": "deep",
-                            }
-                        },
-                        "roles": {
-                            "reviewer": {
-                                "model": "future-review-model",
-                                "options": {"thinking": "maximum"},
-                            }
-                        },
-                    }
+            routing_path = manifest.with_name("routing.yaml")
+            routing = read_yaml(routing_path)
+            routing["overrides"] = {
+                "codex": {
+                    "routes": {
+                        "substantial": {
+                            "model": "future-model",
+                            "effort": "deep",
+                        }
+                    },
+                    "roles": {
+                        "reviewer": {
+                            "model": "future-review-model",
+                            "options": {"thinking": "maximum"},
+                        }
+                    },
                 }
             }
-            write_yaml(manifest, data)
+            write_yaml(routing_path, routing)
 
             routed = route(
                 "codex",

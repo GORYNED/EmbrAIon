@@ -111,20 +111,28 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
         },
         "review": {"substantial-required": True},
         "privacy": {"default-class": "PRIVATE"},
-        "routing": {"overrides": {}},
         "agents": [],
         "capabilities": {},
     }
 
 
+def _default_routing_config() -> dict[str, Any]:
+    return {"overrides": {}}
+
+
 def init_project(path: Path, name: str | None = None, force: bool = False) -> Path:
     destination = path.resolve()
     manifest = destination / ".embraion" / "project.yaml"
+    routing = destination / ".embraion" / "routing.yaml"
 
     if manifest.exists() and not force:
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
 
+    if routing.exists() and not force:
+        raise RuntimeError(f"{routing} already exists; use --force to replace it.")
+
     write_yaml(manifest, _default_project_overlay(name or destination.name))
+    write_yaml(routing, _default_routing_config())
 
     local_ignore = destination / ".embraion" / ".gitignore"
     if not local_ignore.exists():
