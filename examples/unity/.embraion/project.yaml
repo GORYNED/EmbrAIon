@@ -5,10 +5,6 @@ framework:
 project:
   name: UnityReference
 
-knowledge:
-  project: knowledge/project.md
-  architecture: knowledge/architecture.md
-
 validation:
   profiles:
     fast: []
