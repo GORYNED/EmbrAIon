@@ -25,24 +25,53 @@ EmbrAIon is **not**:
 
 Your application remains an ordinary application. EmbrAIon sits around the engineering workflow.
 
-## The three layers
+## How EmbrAIon fits into your project
 
 ```text
-EmbrAIon Core
-reusable roles, skills, workflows, safety rules
-        ↓
-Project configuration
-.embraion/ + project knowledge
-        ↓
-AI-client projection
-Codex / Copilot / Claude Code / Portable
+Installed EmbrAIon
+Core + CLI + schemas + tools
+          │
+          │ combines with
+          ▼
+Your repository
+application code + knowledge + .embraion/
+          │
+          │ generates a host projection for
+          ▼
+Codex / Copilot / Claude Code
+          │
+          ▼
+AI works on your repository
+          │
+          ▼
+Validation → Review → Evidence
+```
+
+There is only one direction to remember: **EmbrAIon helps your AI client work on the repository, then the work is validated and reviewed.**
+
+The finished application does not depend on EmbrAIon at runtime.
+
+## What lives where
+
+```text
+INSTALLED EMBRAION                 YOUR REPOSITORY
+------------------                 ------------------------------
+Core roles and skills              application source code
+CLI                                tests and project files
+schemas and tools                  knowledge/
+                                   .embraion/       canonical config
+                                   .codex/          generated for Codex
+                                   .github/         Copilot / optional CI
+                                   .claude/         generated for Claude Code
 ```
 
 **Core** contains reusable engineering behavior that should work across projects.
 
-**Project configuration** contains facts and policy that belong only to the consuming repository.
+**Project configuration** lives in `.embraion/` and contains facts and policy that belong to this repository.
 
-**Host projections** translate the reusable Core and project-specific agents/skills into the files understood by an AI client.
+**Project knowledge** remains ordinary repository content, typically under `knowledge/`, and is referenced by `.embraion/knowledge.yaml`.
+
+**Host projections** are generated files for the AI client. They are not the canonical source of project policy.
 
 ## Model selection
 
