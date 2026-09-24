@@ -207,7 +207,9 @@ def _config_upgrade_inputs(
 ) -> dict[Path, tuple[dict[str, Any], Path]]:
     config_root = destination / ".embraion"
     manifest = config_root / "project.yaml"
-    raw_manifest = read_yaml(manifest) or {}
+    raw_manifest = read_yaml(manifest)
+    if raw_manifest is None:
+        raw_manifest = {}
     if not isinstance(raw_manifest, dict):
         raise RuntimeError(f"Invalid project configuration mapping: {manifest}")
 
@@ -297,7 +299,9 @@ def normalize_project_config(
     originals: dict[Path, dict[str, Any]] = {}
 
     for config_path, (defaults, schema_path) in definitions.items():
-        loaded = read_yaml(config_path) or {}
+        loaded = read_yaml(config_path)
+        if loaded is None:
+            loaded = {}
         if not isinstance(loaded, dict):
             raise RuntimeError(
                 f"Invalid project configuration mapping: {config_path}"
@@ -334,12 +338,20 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
     if not manifest.exists():
         raise RuntimeError(f"Missing {manifest}; run 'embraion init' first.")
 
-    data = read_yaml(manifest) or {}
+    data = read_yaml(manifest)
+    if data is None:
+        data = {}
     if not isinstance(data, dict):
         raise RuntimeError(f"Invalid project configuration mapping: {manifest}")
 
     previous = (data.get("framework") or {}).get("version")
-    current = version or __version__
+    current = str(version or __version__).strip()
+    if current != __version__:
+        raise RuntimeError(
+            "Safe project configuration update currently targets the installed "
+            f"EmbrAIon launcher version ({__version__}) only. Install the desired "
+            "launcher version first, then run 'embraion update'."
+        )
 
     normalize_project_config(destination, version=current)
     return previous, current
@@ -548,7 +560,7 @@ def _generate_markdown_agents(
 
         lines = [
             "---",
-            f"name: {agent['title']}",
+            f"name: {__import__('json').dumps(str(agent['title']), ensure_ascii=False)}",
             f"description: {__import__('json').dumps(agent.get('purpose', ''), ensure_ascii=False)}",
             "---",
             "",
