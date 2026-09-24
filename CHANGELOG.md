@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.0 - 2026-09-24
+
 ### Added
 
 - A dedicated Configuration documentation section with a full `.embraion/` template, file-by-file customization reference, and practical Codex, GitHub Copilot, and Claude Code setup examples.

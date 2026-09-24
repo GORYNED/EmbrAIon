@@ -24,7 +24,7 @@ embraion update
 Or choose an explicit published version:
 
 ```bash
-embraion update --framework-version 0.7.0
+embraion update --framework-version 0.8.0
 ```
 
 Then verify:

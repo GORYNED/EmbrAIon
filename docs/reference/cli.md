@@ -18,7 +18,7 @@ for command-specific help.
 
 ### `embraion init`
 
-Create `.embraion/project.yaml` in a project.
+Create the modular `.embraion/` project configuration.
 
 ```bash
 embraion init
@@ -77,7 +77,7 @@ Change the current project's framework pin.
 
 ```bash
 embraion update
-embraion update --framework-version 0.7.0
+embraion update --framework-version 0.8.0
 ```
 
 ### `embraion sync`
@@ -141,7 +141,7 @@ embraion route --host codex --route-class substantial --data PRIVATE
 embraion route --host codex --route-class substantial --role reviewer --data PRIVATE
 ```
 
-The result reports `resolution: host-default` with `model: null` when the host should choose automatically, or `resolution: project-override` when `.embraion/project.yaml` supplies a selector.
+The result reports `resolution: host-default` with `model: null` when the host should choose automatically, or `resolution: project-override` when `.embraion/routing.yaml` supplies a selector.
 
 ### `embraion dispatch`
 
