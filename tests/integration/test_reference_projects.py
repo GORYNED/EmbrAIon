@@ -358,7 +358,7 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
 
             existing_projection.unlink()
             existing_config = project / ".codex" / "config.toml"
-            existing_config.parent.mkdir(parents=True)
+            existing_config.parent.mkdir(parents=True, exist_ok=True)
             existing_config.write_text(
                 "[project]\ncustom = true\n",
                 encoding="utf-8",
