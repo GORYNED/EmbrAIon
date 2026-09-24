@@ -6,6 +6,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
 from . import __version__
 from .common import (
     framework_root,
@@ -17,6 +19,7 @@ from .common import (
     write_json,
     write_yaml,
 )
+from .policy import read_agents_config
 
 
 HOST_SKILL_DIRECTORIES = {
@@ -195,8 +198,132 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
     return previous, current
 
 
-def load_agents(root: Path) -> list[dict[str, Any]]:
+PROJECT_AGENT_ACCESS = {"read-only", "workspace-write"}
+
+
+def _core_agents(root: Path) -> list[dict[str, Any]]:
     return [read_yaml(path) for path in sorted((root / "core/agents").glob("*.yaml"))]
+
+
+def _merge_agent_items(*values: Any) -> list[str]:
+    merged: list[str] = []
+    for value in values:
+        for item in value or []:
+            text = str(item)
+            if text not in merged:
+                merged.append(text)
+    return merged
+
+
+def _validate_project_agents_schema(
+    root: Path,
+    config: dict[str, Any],
+) -> None:
+    schema = read_json(root / "schemas" / "agents.schema.json")
+    validator = Draft202012Validator(schema)
+    errors = sorted(
+        validator.iter_errors(config),
+        key=lambda item: list(item.absolute_path),
+    )
+    if not errors:
+        return
+
+    formatted = []
+    for error in errors:
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        formatted.append(f"{location}: {error.message}")
+    raise RuntimeError(
+        "Invalid .embraion/agents.yaml: " + "; ".join(formatted)
+    )
+
+
+def _project_agents(
+    root: Path,
+    project: Path,
+    core_agents: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    config = read_agents_config(project)
+    _validate_project_agents_schema(root, config)
+
+    core_by_id = {str(agent["id"]): agent for agent in core_agents}
+    project_agents: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for definition in config.get("agents") or []:
+        agent_id = str(definition["id"])
+        if agent_id in core_by_id:
+            raise RuntimeError(
+                f"Project agent '{agent_id}' conflicts with a Core agent id."
+            )
+        if agent_id in seen:
+            raise RuntimeError(f"Duplicate project agent id: {agent_id}")
+        seen.add(agent_id)
+
+        base_id = definition.get("extends")
+        base: dict[str, Any] = {}
+        if base_id:
+            if base_id == "lead":
+                raise RuntimeError(
+                    f"Project agent '{agent_id}' cannot extend the Core Lead role."
+                )
+            if base_id not in core_by_id:
+                raise RuntimeError(
+                    f"Project agent '{agent_id}' extends unknown Core agent "
+                    f"'{base_id}'."
+                )
+            base = core_by_id[base_id]
+
+        access = str(definition["access"])
+        if access not in PROJECT_AGENT_ACCESS:
+            raise RuntimeError(
+                f"Project agent '{agent_id}' has unsupported access '{access}'."
+            )
+        if base and access != base.get("access"):
+            raise RuntimeError(
+                f"Project agent '{agent_id}' must preserve access "
+                f"'{base.get('access')}' inherited from Core agent '{base_id}'."
+            )
+
+        project_agents.append(
+            {
+                "schema-version": 1,
+                "id": agent_id,
+                "title": definition.get("title")
+                or agent_id.replace("-", " ").title(),
+                "purpose": definition["purpose"],
+                "access": access,
+                "model-neutral": True,
+                "responsibilities": _merge_agent_items(
+                    base.get("responsibilities"),
+                    definition.get("responsibilities"),
+                ),
+                "restrictions": _merge_agent_items(
+                    base.get("restrictions"),
+                    definition.get("restrictions"),
+                ),
+                "triggers": _merge_agent_items(
+                    base.get("triggers"),
+                    definition.get("triggers"),
+                ),
+                "outputs": _merge_agent_items(
+                    base.get("outputs"),
+                    definition.get("outputs"),
+                ),
+                "extends": base_id,
+            }
+        )
+
+    return project_agents
+
+
+def load_agents(
+    root: Path,
+    project: Path | None = None,
+) -> list[dict[str, Any]]:
+    core_agents = _core_agents(root)
+    if project is None:
+        return core_agents
+    return core_agents + _project_agents(root, project, core_agents)
 
 
 def _agent_instructions(agent: dict[str, Any]) -> str:
@@ -217,6 +344,7 @@ def _generate_codex(
     root: Path,
     output: Path,
     components: tuple[str, ...],
+    project: Path | None = None,
 ) -> None:
     target = output / ".codex"
 
@@ -236,7 +364,7 @@ def _generate_codex(
     agents_target = target / "agents"
     agents_target.mkdir(parents=True, exist_ok=True)
 
-    for agent in load_agents(root):
+    for agent in load_agents(root, project):
         if agent.get("id") == "lead":
             continue
 
@@ -252,7 +380,12 @@ def _generate_codex(
         (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
 
 
-def _generate_markdown_agents(root: Path, output: Path, host: str) -> None:
+def _generate_markdown_agents(
+    root: Path,
+    output: Path,
+    host: str,
+    project: Path | None = None,
+) -> None:
     if host == "copilot":
         target = output / ".github" / "agents"
         suffix = ".agent.md"
@@ -262,7 +395,7 @@ def _generate_markdown_agents(root: Path, output: Path, host: str) -> None:
 
     target.mkdir(parents=True, exist_ok=True)
 
-    for agent in load_agents(root):
+    for agent in load_agents(root, project):
         if agent.get("id") == "lead":
             continue
 
@@ -319,21 +452,23 @@ def generate_host(
     host: str,
     output: Path,
     components: list[str] | tuple[str, ...] | None = None,
+    *,
+    project: Path | None = None,
 ) -> None:
     selected = _normalize_components(host, components)
 
     if host == "codex":
-        _generate_codex(root, output, selected)
+        _generate_codex(root, output, selected, project)
         if "skills" in selected:
             _generate_host_skills(root, output, host)
     elif host == "copilot":
         if "agents" in selected:
-            _generate_markdown_agents(root, output, "copilot")
+            _generate_markdown_agents(root, output, "copilot", project)
         if "skills" in selected:
             _generate_host_skills(root, output, host)
     elif host == "claude-code":
         if "agents" in selected:
-            _generate_markdown_agents(root, output, "claude-code")
+            _generate_markdown_agents(root, output, "claude-code", project)
         if "skills" in selected:
             _generate_host_skills(root, output, host)
     elif host == "portable":
@@ -481,7 +616,7 @@ def projection_plan(
 
     with tempfile.TemporaryDirectory(prefix="embraion-projection-") as temporary:
         generated = Path(temporary)
-        generate_host(root, host, generated, selected)
+        generate_host(root, host, generated, selected, project=project_root(destination))
         return _projection_plan_from_generated(
             host,
             generated,
@@ -506,7 +641,7 @@ def install(
 
     with tempfile.TemporaryDirectory(prefix="embraion-install-") as temporary:
         generated = Path(temporary)
-        generate_host(root, host, generated, selected)
+        generate_host(root, host, generated, selected, project=project)
         plan = _projection_plan_from_generated(
             host,
             generated,

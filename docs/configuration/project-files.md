@@ -179,17 +179,53 @@ Keep commands deterministic and repository-local where possible.
 
 ## `.embraion/agents.yaml`
 
-This file declares project-specific agent IDs:
+This file defines project-specific agents that are projected into Codex, GitHub Copilot, and Claude Code together with the reusable Core roles.
+
+A project agent can extend one existing non-Lead Core role:
 
 ```yaml
 agents:
-  - domain-specialist
-  - release-specialist
+  - id: domain-specialist
+    title: Domain Specialist
+    extends: reviewer
+    purpose: Review project-specific domain behavior.
+    access: read-only
+    responsibilities:
+      - focus review on project-specific domain contracts
+    restrictions:
+      - do not modify project files
+    triggers:
+      - domain-focused review
+    outputs:
+      - domain review findings
 ```
 
-The current project-agent contract is intentionally minimal. EmbrAIon's generated built-in agent definitions still come from canonical `core/agents/`. Declaring an arbitrary ID in `agents.yaml` does not by itself generate a complete new host-native agent definition.
+Required fields:
 
-Use this file for explicit project declarations while keeping reusable canonical agent behavior in Core.
+- `id` — unique kebab-case project agent ID; it must not shadow a Core agent ID;
+- `purpose` — concise project-specific responsibility;
+- `access` — explicit `read-only` or `workspace-write` boundary;
+- `responsibilities` — one or more project-specific responsibilities.
+
+Optional fields:
+
+- `title` — display title; defaults to the title-cased ID;
+- `extends` — an existing non-Lead Core agent ID;
+- `restrictions`, `triggers`, and `outputs` — additional project-specific contract items.
+
+When `extends` is present, EmbrAIon inherits the Core role's responsibilities, restrictions, triggers, and outputs, then appends the project-specific items. The project agent must preserve the Core role's access level. It cannot extend `lead`, widen a read-only role into a writable role, or replace a canonical Core agent.
+
+Without `extends`, the definition is a standalone project agent with its explicitly declared access and responsibilities.
+
+During `embraion install` or `embraion projection diff`, these definitions are resolved from the consuming project's `.embraion/agents.yaml` and emitted as host-native files:
+
+```text
+Codex          .codex/agents/<id>.toml
+GitHub Copilot .github/agents/<id>.agent.md
+Claude Code    .claude/agents/<id>.md
+```
+
+Framework-only `embraion sync` remains deterministic and generates Core agents only; project agents belong to a consuming repository and are resolved during project projection.
 
 ## `.embraion/.gitignore`
 

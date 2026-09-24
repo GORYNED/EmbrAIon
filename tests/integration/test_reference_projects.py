@@ -121,6 +121,31 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             self.assertTrue(
                 (project / ".claude" / "agents" / "reviewer.md").is_file()
             )
+            if name == "python":
+                self.assertTrue(
+                    (
+                        project
+                        / ".codex"
+                        / "agents"
+                        / "test-specialist.toml"
+                    ).is_file()
+                )
+                self.assertTrue(
+                    (
+                        project
+                        / ".github"
+                        / "agents"
+                        / "test-specialist.agent.md"
+                    ).is_file()
+                )
+                self.assertTrue(
+                    (
+                        project
+                        / ".claude"
+                        / "agents"
+                        / "test-specialist.md"
+                    ).is_file()
+                )
             self.assertTrue(
                 (project / ".claude" / "skills" / "review" / "SKILL.md").is_file()
             )
