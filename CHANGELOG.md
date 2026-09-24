@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Added
+
+- A full MkDocs Material documentation site with branded navigation, search, dark/light modes, and GitHub Pages deployment.
+- Getting Started guides for installation, first-project bootstrap, and intentional project updates.
+- Concept guides for agents, skills, knowledge, routing, and project overlays.
+- Host guides for Codex, GitHub Copilot, Claude Code, and Portable projections.
+- A consolidated CLI reference and walkthroughs for Minimal, Python, and Unity usage examples.
+- Open-source documentation pages for contribution, support, security reporting, and governance.
+- Deterministic documentation tests covering nav targets, internal links, site assets, CLI command coverage, and the published documentation URL.
+- A dedicated documentation workflow that performs strict MkDocs builds on pushes and pull requests and deploys the built site to GitHub Pages from `main`.
+
+### Changed
+
+- Package metadata and the repository README now point to the public documentation site while preserving Markdown sources in `docs/`.
+- Stage C development aligns framework/project pins at `0.5.0.dev0`.
+
+
 ## 0.4.3 - 2026-09-24
 
 ### Fixed

@@ -6,7 +6,7 @@ The MIT License intentionally does not grant trademark or brand-identity rights.
 
 The EmbrAIon and GORYNED names, logos, wordmarks, visual marks, and files under `brand/assets/` are excluded from the MIT License unless separately authorized.
 
-See:
+Canonical repository policies:
 
-- [LICENSE](../LICENSE) — canonical software/documentation license;
-- [TRADEMARKS.md](../TRADEMARKS.md) — canonical trademark and brand-assets policy.
+- [MIT License](https://github.com/GORYNED/EmbrAIon/blob/main/LICENSE)
+- [Trademark and brand-assets policy](https://github.com/GORYNED/EmbrAIon/blob/main/TRADEMARKS.md)

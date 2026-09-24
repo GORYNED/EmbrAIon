@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "embraion"
-version = "0.4.3"
+version = "0.5.0.dev0"
 description = "Portable AI-First Engineering System"
 readme = "README.md"
 license = "MIT"
@@ -17,7 +17,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://goryned.com"
 Repository = "https://github.com/GORYNED/EmbrAIon"
-Documentation = "https://github.com/GORYNED/EmbrAIon/tree/main/docs"
+Documentation = "https://goryned.github.io/EmbrAIon/"
 
 [project.scripts]
 embraion = "embraion.cli:main"

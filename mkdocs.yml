@@ -1,0 +1,112 @@
+site_name: EmbrAIon
+site_description: Portable AI-First Engineering System for structured, reviewable AI-assisted software engineering.
+site_author: GORYNED
+site_url: https://goryned.github.io/EmbrAIon/
+repo_url: https://github.com/GORYNED/EmbrAIon
+repo_name: GORYNED/EmbrAIon
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  logo: assets/icon-dark-1024.png
+  favicon: assets/icon-dark-1024.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/GORYNED/EmbrAIon
+      name: EmbrAIon on GitHub
+    - icon: fontawesome/solid/globe
+      link: https://goryned.com
+      name: GORYNED
+
+copyright: EmbrAIon · AI-First Engineering System · by GORYNED
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - First project: getting-started/first-project.md
+      - Updating: getting-started/updating.md
+  - Concepts:
+      - Overview: concepts/index.md
+      - System overview: overview.md
+      - Capability model: capability-model.md
+      - Agents & skills: concepts/agents-skills.md
+      - Project knowledge: concepts/knowledge.md
+      - Project overlay: project-overlay.md
+      - Model routing: model-routing.md
+  - Hosts:
+      - Overview: hosts/index.md
+      - Codex: hosts/codex.md
+      - GitHub Copilot: hosts/copilot.md
+      - Claude Code: hosts/claude-code.md
+      - Portable: hosts/portable.md
+  - CLI:
+      - Command reference: reference/cli.md
+  - Usage Examples:
+      - Overview: examples/index.md
+      - Minimal: examples/minimal.md
+      - Python: examples/python.md
+      - Unity: examples/unity.md
+  - Architecture & Quality:
+      - Architecture: architecture.md
+      - Validation: validation.md
+      - Security model: security.md
+      - Learning: learning.md
+      - Spec Kit: spec-kit.md
+      - Release process: release-process.md
+  - Open Source:
+      - Overview: oss/index.md
+      - Contributing: oss/contributing.md
+      - Support: oss/support.md
+      - Security reporting: oss/security-reporting.md
+      - Governance: oss/governance.md
+      - Licensing: licensing.md
+  - Internals:
+      - Historical extraction plan: extraction-plan.md
+      - Markdown index: README.md

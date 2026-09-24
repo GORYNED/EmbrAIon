@@ -1,0 +1,54 @@
+:root {
+  --embraion-ember: #ff7a1a;
+  --embraion-amber: #ffad42;
+  --embraion-surface: #111116;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #111116;
+  --md-primary-fg-color--light: #1a1a22;
+  --md-primary-fg-color--dark: #09090c;
+  --md-accent-fg-color: var(--embraion-ember);
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #15151b;
+  --md-primary-fg-color--light: #24242c;
+  --md-primary-fg-color--dark: #09090c;
+  --md-accent-fg-color: #d95700;
+}
+
+.md-header,
+.md-tabs {
+  background: linear-gradient(90deg, #0d0d11 0%, #17131a 55%, #21140c 100%);
+}
+
+.md-typeset a {
+  text-underline-offset: 0.15em;
+}
+
+.md-typeset .embraion-lead {
+  font-size: 1.08rem;
+  max-width: 52rem;
+  margin: 1.25rem auto 2rem;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-color: color-mix(in srgb, var(--embraion-ember) 30%, transparent);
+}
+
+.md-typeset .md-button--primary {
+  background-color: var(--embraion-ember);
+  border-color: var(--embraion-ember);
+  color: #111116;
+}
+
+.md-typeset .md-button--primary:hover {
+  background-color: var(--embraion-amber);
+  border-color: var(--embraion-amber);
+}
+
+.md-typeset h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

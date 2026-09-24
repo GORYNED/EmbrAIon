@@ -473,7 +473,7 @@ Tagged releases generate source, Codex, Copilot, Claude Code, and Portable archi
 
 ## Documentation
 
-Canonical documentation: [docs/](docs/README.md)
+Documentation: **[goryned.github.io/EmbrAIon](https://goryned.github.io/EmbrAIon/)** · [Markdown sources](docs/README.md)
 
 Translations:
 
@@ -498,4 +498,4 @@ Before the first stable release, model catalogs, generated host projections, val
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-23 23:55 UTC</sub>
+<sub>Last updated: 2026-09-24 00:45 UTC</sub>
