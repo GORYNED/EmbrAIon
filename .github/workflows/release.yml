@@ -30,10 +30,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 
@@ -75,10 +75,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -188,10 +188,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -251,7 +251,7 @@ jobs:
           done
 
       - name: Upload Python distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-package-distributions
           path: |
@@ -261,7 +261,7 @@ jobs:
           retention-days: 7
 
       - name: Upload GitHub release assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: github-release-assets
           path: dist/release/*
@@ -277,13 +277,13 @@ jobs:
 
     steps:
       - name: Download Python distributions
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/python
 
       - name: Download release assets
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: github-release-assets
           path: dist/release
@@ -320,7 +320,7 @@ jobs:
 
     steps:
       - name: Download Python distributions
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist
