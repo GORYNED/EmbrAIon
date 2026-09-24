@@ -1,13 +1,15 @@
 # Project Overlay
 
-A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity plus validation/agents/capabilities, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional host routing overrides.
+A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity plus `capabilities`; dedicated files own knowledge, policy, routing, validation, and project-specific agents.
 
 The project configuration currently records:
 
-- `project.yaml` — declared EmbrAIon repository/version, project identity, validation profiles, project-specific agents, and local capabilities;
+- `project.yaml` — declared EmbrAIon repository/version, project identity, and local capabilities;
 - `knowledge.yaml` — project knowledge paths plus optional data class, trust, role, and trigger metadata;
 - `policy.yaml` — canonical/protected/generated/external source patterns, substantial-review policy, and default privacy class;
 - `routing.yaml` — optional host model/effort/options overrides;
+- `validation.yaml` — project validation profiles;
+- `agents.yaml` — project-specific agent declarations;
 
 Project configuration may add stricter rules but must not silently weaken Core hard gates.
 
@@ -68,6 +70,29 @@ overrides:
 ```
 
 Selectors are opaque host-owned strings. Role overrides are applied over route overrides. These settings affect model selection only; they cannot expand privacy, access, protected-source, validation, or review permissions.
+
+## Validation configuration
+
+Project validation profiles live in `.embraion/validation.yaml`:
+
+```yaml
+profiles:
+  fast: []
+  affected: []
+  full: []
+```
+
+These profiles feed the effective project policy and CLI validation workflow.
+
+## Project agents
+
+Project-specific agent declarations live in `.embraion/agents.yaml`:
+
+```yaml
+agents: []
+```
+
+This keeps project agent declarations separate from the framework's canonical agents in `core/agents/`. The current project-agent contract remains intentionally minimal.
 
 ## Version pinning and resolution
 

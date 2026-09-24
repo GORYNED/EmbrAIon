@@ -1,6 +1,6 @@
 # Validation
 
-Validation is evidence that a framework change preserves intended contracts.
+Validation is evidence that a framework change preserves intended contracts. Consuming-project validation profiles are declared in `.embraion/validation.yaml`.
 
 The validation system grows in layers:
 

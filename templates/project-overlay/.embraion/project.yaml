@@ -5,12 +5,4 @@ framework:
 project:
   name: ExampleProject
 
-validation:
-  profiles:
-    fast: []
-    affected: []
-    full: []
-
-agents: []
-
 capabilities: {}

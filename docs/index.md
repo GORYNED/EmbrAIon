@@ -123,10 +123,12 @@ If you want to override model selection, ask the AI in that project to configure
 | Area | Purpose |
 | --- | --- |
 | Core | Canonical reusable rules, roles, skills, workflows, routing, and knowledge |
-| Project overlay | Project identity, version pin, validation, and local capabilities |
+| Project overlay | Project identity, version pin, and local capabilities |
 | Knowledge config | Project knowledge references and context-selection metadata in `.embraion/knowledge.yaml` |
 | Policy config | Sources, substantial-review policy, and default privacy in `.embraion/policy.yaml` |
 | Routing config | Optional project model/effort/options overrides in `.embraion/routing.yaml` |
+| Validation config | Fast/affected/full and custom validation profiles in `.embraion/validation.yaml` |
+| Agents config | Project-specific agent declarations in `.embraion/agents.yaml` |
 | Adapters | Codex, Copilot, Claude Code, Portable, and transport projections without a global model catalog |
 | Tools | Validation, security, worktrees, sessions, learning, evals, install/sync |
 | Evidence | Unit/integration tests, reference E2E, behavioral evals, release gates |

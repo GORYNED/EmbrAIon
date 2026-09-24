@@ -5,14 +5,6 @@ framework:
 project:
   name: UnityReference
 
-validation:
-  profiles:
-    fast: []
-    affected: []
-    full: []
-
-agents: []
-
 capabilities:
   engine:
     family: Unity

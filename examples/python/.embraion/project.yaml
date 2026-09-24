@@ -5,17 +5,6 @@ framework:
 project:
   name: PythonReference
 
-validation:
-  profiles:
-    fast:
-      - python -m unittest discover -s tests -p test_*.py
-    affected:
-      - python -m unittest discover -s tests -p test_*.py
-    full:
-      - python -m unittest discover -s tests -p test_*.py
-
-agents: []
-
 capabilities:
   validation:
     command: python -m unittest discover -s tests -p test_*.py
