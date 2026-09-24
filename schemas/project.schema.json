@@ -41,32 +41,10 @@
     },
     "knowledge": false,
     "sources": false,
-    "validation": {
-      "type": "object",
-      "properties": {
-        "profiles": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
+    "validation": false,
     "review": false,
     "privacy": false,
-    "agents": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true
-    },
+    "agents": false,
     "capabilities": {
       "type": "object",
       "additionalProperties": true

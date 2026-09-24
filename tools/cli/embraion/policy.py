@@ -59,6 +59,30 @@ def read_knowledge_config(project: Path | None = None) -> dict[str, Any]:
     return data
 
 
+def read_validation_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "validation.yaml"
+    if not path.is_file():
+        raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
+
+    data = read_yaml(path) or {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid project validation configuration: {path}")
+    return data
+
+
+def read_agents_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "agents.yaml"
+    if not path.is_file():
+        raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
+
+    data = read_yaml(path) or {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid project agents configuration: {path}")
+    return data
+
+
 def read_policy_config(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     path = root / ".embraion" / "policy.yaml"
@@ -72,13 +96,13 @@ def read_policy_config(project: Path | None = None) -> dict[str, Any]:
 
 
 def effective_policy(project: Path | None = None) -> dict[str, Any]:
-    data = read_project_overlay(project)
+    read_project_overlay(project)
     project_policy = read_policy_config(project)
     routing = read_routing_config(project)
+    validation = read_validation_config(project)
 
     sources = DEFAULT_POLICY["sources"] | (project_policy.get("sources") or {})
     default_profiles = DEFAULT_POLICY["validation"]["profiles"]
-    validation = data.get("validation") or {}
     profiles = default_profiles | (validation.get("profiles") or {})
 
     return {

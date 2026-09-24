@@ -121,6 +121,8 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
     routing_schema = root / "schemas/routing.schema.json"
     policy_schema = root / "schemas/policy.schema.json"
     knowledge_schema = root / "schemas/knowledge.schema.json"
+    validation_config_schema = root / "schemas/validation.schema.json"
+    project_agents_schema = root / "schemas/agents.schema.json"
     framework_data = read_yaml(root / "framework.yaml") or {}
     current_framework_version = str(framework_data.get("version", ""))
 
@@ -198,6 +200,42 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                             str(knowledge_manifest.relative_to(root)),
                             message,
                         )
+
+            validation_manifest = manifest.parent / "validation.yaml"
+            if not validation_manifest.is_file():
+                add(
+                    "validation-schema",
+                    str(validation_manifest.relative_to(root)),
+                    "Missing validation.yaml",
+                )
+            elif validation_config_schema.exists():
+                for message in _schema_errors(
+                    read_yaml(validation_manifest) or {},
+                    validation_config_schema,
+                ):
+                    add(
+                        "validation-schema",
+                        str(validation_manifest.relative_to(root)),
+                        message,
+                    )
+
+            agents_manifest = manifest.parent / "agents.yaml"
+            if not agents_manifest.is_file():
+                add(
+                    "agents-schema",
+                    str(agents_manifest.relative_to(root)),
+                    "Missing agents.yaml",
+                )
+            elif project_agents_schema.exists():
+                for message in _schema_errors(
+                    read_yaml(agents_manifest) or {},
+                    project_agents_schema,
+                ):
+                    add(
+                        "agents-schema",
+                        str(agents_manifest.relative_to(root)),
+                        message,
+                    )
 
             framework = project_data.get("framework") or {}
             declared_repository = str(framework.get("repository", ""))

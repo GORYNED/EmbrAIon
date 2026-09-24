@@ -19,13 +19,28 @@ class ProjectionPolicyTests(unittest.TestCase):
             routing = read_yaml(project / ".embraion/routing.yaml")
             knowledge = read_yaml(project / ".embraion/knowledge.yaml")
             project_policy = read_yaml(project / ".embraion/policy.yaml")
+            validation = read_yaml(project / ".embraion/validation.yaml")
+            agents = read_yaml(project / ".embraion/agents.yaml")
             project_manifest = read_yaml(project / ".embraion/project.yaml")
             self.assertEqual({"overrides": {}}, routing)
             self.assertEqual({}, knowledge)
+            self.assertEqual(
+                {"fast": [], "affected": [], "full": []},
+                validation["profiles"],
+            )
+            self.assertEqual({"agents": []}, agents)
             self.assertEqual("PRIVATE", project_policy["privacy"]["default-class"])
             self.assertTrue(project_policy["review"]["substantial-required"])
             self.assertEqual([], project_policy["sources"]["protected"])
-            for key in ("routing", "knowledge", "sources", "review", "privacy"):
+            for key in (
+                "routing",
+                "knowledge",
+                "sources",
+                "review",
+                "privacy",
+                "validation",
+                "agents",
+            ):
                 self.assertNotIn(key, project_manifest)
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
             self.assertTrue(policy["review"]["substantial-required"])

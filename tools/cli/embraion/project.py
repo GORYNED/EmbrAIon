@@ -95,14 +95,6 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
             "version": __version__,
         },
         "project": {"name": name},
-        "validation": {
-            "profiles": {
-                "fast": [],
-                "affected": [],
-                "full": [],
-            }
-        },
-        "agents": [],
         "capabilities": {},
     }
 
@@ -113,6 +105,20 @@ def _default_routing_config() -> dict[str, Any]:
 
 def _default_knowledge_config() -> dict[str, Any]:
     return {}
+
+
+def _default_validation_config() -> dict[str, Any]:
+    return {
+        "profiles": {
+            "fast": [],
+            "affected": [],
+            "full": [],
+        }
+    }
+
+
+def _default_agents_config() -> dict[str, Any]:
+    return {"agents": []}
 
 
 def _default_policy_config() -> dict[str, Any]:
@@ -134,6 +140,8 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     routing = destination / ".embraion" / "routing.yaml"
     policy = destination / ".embraion" / "policy.yaml"
     knowledge = destination / ".embraion" / "knowledge.yaml"
+    validation = destination / ".embraion" / "validation.yaml"
+    agents = destination / ".embraion" / "agents.yaml"
 
     if manifest.exists() and not force:
         raise RuntimeError(f"{manifest} already exists; use --force to replace it.")
@@ -147,10 +155,18 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     if knowledge.exists() and not force:
         raise RuntimeError(f"{knowledge} already exists; use --force to replace it.")
 
+    if validation.exists() and not force:
+        raise RuntimeError(f"{validation} already exists; use --force to replace it.")
+
+    if agents.exists() and not force:
+        raise RuntimeError(f"{agents} already exists; use --force to replace it.")
+
     write_yaml(manifest, _default_project_overlay(name or destination.name))
     write_yaml(routing, _default_routing_config())
     write_yaml(policy, _default_policy_config())
     write_yaml(knowledge, _default_knowledge_config())
+    write_yaml(validation, _default_validation_config())
+    write_yaml(agents, _default_agents_config())
 
     local_ignore = destination / ".embraion" / ".gitignore"
     if not local_ignore.exists():
