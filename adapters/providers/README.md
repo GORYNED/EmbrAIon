@@ -1,18 +1,9 @@
 # Providers
 
-Provider adapters own direct API model facts and provider-specific execution metadata.
+Provider integrations are optional execution/transport surfaces.
 
-```text
-providers/
-├── openai/
-├── google/
-├── anthropic/
-├── deepseek/
-└── litellm/
-```
+EmbrAIon intentionally does not ship a canonical catalog of provider models, prices, or current model availability. Those facts change independently from the framework and may differ by account, plan, region, host, or runtime.
 
-Each provider's `models.yaml` records the current model deployment facts known to EmbrAIon. Project-specific credentials and source classifications remain in the consuming project overlay.
+A consuming project may supply provider/host selectors through its routing overrides, while Core continues to enforce model-independent privacy, access, ownership, validation, review, and evidence policy. Transport adapters such as `litellm/` may define transport mechanics without becoming model authorities.
 
-LiteLLM is a transport adapter and does not own canonical model identity or routing policy.
-
-<sub>Last updated: 2026-09-23 18:11 UTC</sub>
+<sub>Last updated: 2026-09-24 04:40 UTC</sub>

@@ -2,31 +2,25 @@
 
 ## परतें
 
-1. **Core (केंद्र)** — किसी विशिष्ट प्रदाता से स्वतंत्र नियम, एजेंट, कौशल, कार्यप्रवाह, रूटिंग और ज्ञान।
-2. **Adapters (एडाप्टर)** — विशिष्ट क्लाइंट, मॉडल, प्रदाता, कनेक्शन विधि और पोर्टेबल पैकेज के लिए प्रस्तुति।
-3. **Tools (उपकरण)** — निर्धारक निष्पादन तर्क: रनटाइम स्थिति, सीखना, सुरक्षा, MCP सूची, Git कार्य-वृक्ष प्रबंधन, सत्यापन, समन्वयन, स्थापना, निदान और कमांड-लाइन इंटरफ़ेस।
-4. **Project Overlay (प्रोजेक्ट ओवरले)** — प्रोजेक्ट-विशिष्ट एजेंट, डोमेन, स्रोत-वर्ग, संगतता नियम और उत्पाद ज्ञान।
-5. **External Capabilities (बाहरी क्षमताएँ)** — अनुशंसित या वैकल्पिक सहायक सिस्टम और डोमेन एकीकरण।
-6. **Evidence (प्रमाण)** — निर्धारक परीक्षण, व्यवहार मूल्यांकन, आधार परिणाम और रिपोर्ट।
+1. **Core (केंद्र)** — models और specific providers से स्वतंत्र rules, agents, skills, workflows, routing और knowledge।
+2. **Adapters (एडाप्टर)** — AI hosts, transports और portable packages के लिए projections।
+3. **Tools (उपकरण)** — state, learning, security, MCP, Git worktrees, validation, sync, install, diagnostics और CLI के deterministic tools।
+4. **Project Overlay** — project-specific knowledge, constraints और optional routing overrides।
+5. **External Capabilities** — recommended या optional companion systems और integrations।
+6. **Evidence** — tests, behavioral evals, reference results और reports।
 
 ## एजेंट मॉडल
 
-Core के एजेंट भूमिका-नाम उपयोग करते हैं: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher और Steward।
+Core agents role names उपयोग करते हैं: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher और Steward। Role चुनना concrete model नहीं चुनता।
 
-किसी विशिष्ट डोमेन से जुड़े विशेषज्ञ उस प्रोजेक्ट में रहते हैं जो EmbrAIon का उपयोग करता है; वे सार्वभौमिक Core भूमिकाएँ नहीं बनते।
+## Model selection का ownership
 
-## State (स्थिति) और Learning (सीखना)
+Core task-oriented route classes से काम classify करता है। EmbrAIon global model catalog, pricing या lifecycle नहीं रखता। AI host model availability और default/automatic selection का मालिक है। Project आवश्यकता होने पर केवल अपने host-specific overrides `.embraion/project.yaml` में रखता है।
 
-रनटाइम स्थिति को ऐसे सत्र रिकॉर्ड में सामान्यीकृत किया जाता है जिनमें संरक्षित सामग्री नहीं होती। दोहराए जाने वाले परिणाम सुधार उम्मीदवार बना सकते हैं, पर किसी नई क्षमता को Core में शामिल करने के लिए समीक्षा और स्पष्ट स्वीकृति आवश्यक है।
+## State और Learning
 
-## Integrations (एकीकरण)
-
-बाहरी सर्वर और उपकरण कॉन्फ़िगरेशन की सूची Core नियमों से अलग रखी जाती है। सूची में मेटाडेटा और अंतर दर्ज होते हैं, गुप्त मान नहीं।
-
-## मॉडल जानकारी का स्वामित्व
-
-Core रूटिंग केवल अमूर्त मार्ग-वर्ग चुनती है। एडाप्टर सूची वास्तविक मॉडल पहचान, तर्क स्तर, मूल्य, जीवनचक्र स्थिति और क्लाइंट-विशिष्ट चयन जानकारी रखती है।
+Execution state privacy-safe records में normalize होता है। Repeated evidence improvement candidates बना सकता है, लेकिन Core change के लिए review और explicit approval चाहिए।
 
 ## Spec Kit
 
-Spec Kit बाहरी क्षमता के रूप में जुड़ता है। EmbrAIon इसे महत्वपूर्ण विनिर्देशन-आधारित कार्य के लिए सुझाता है, लेकिन इसके कौशल, टेम्पलेट या रनटाइम को Core में शामिल नहीं करता।
+Spec Kit external capability है; यह Core rules, project truth या validation evidence को replace नहीं करता।

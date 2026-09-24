@@ -17,11 +17,7 @@ from .common import (
     state_root,
     write_json,
 )
-
-
-def _catalog(root: Path, host: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    base = root / "adapters" / host
-    return read_yaml(base / "models.yaml") or {}, read_yaml(base / "routes.yaml") or {}
+from .policy import read_project_overlay
 
 
 def _append_event(project: Path, event: dict[str, Any]) -> None:
@@ -36,58 +32,84 @@ def _append_event(project: Path, event: dict[str, Any]) -> None:
         stream.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
+def _known_route_classes() -> set[str]:
+    data = read_yaml(framework_root() / "core" / "routing" / "complexity.yaml") or {}
+    return {str(value) for value in (data.get("classes") or {}).keys()}
+
+
+def _known_data_classes() -> set[str]:
+    data = read_yaml(framework_root() / "core" / "routing" / "privacy.yaml") or {}
+    return {str(value) for value in (data.get("data-classes") or {}).keys()}
+
+
+def _routing_override(
+    project: Path,
+    host: str,
+    route_class: str,
+    role: str | None,
+) -> dict[str, Any]:
+    try:
+        overlay = read_project_overlay(project)
+    except RuntimeError:
+        return {}
+
+    routing = overlay.get("routing") or {}
+    overrides = routing.get("overrides") or {}
+    host_overrides = overrides.get(host) or {}
+    if not isinstance(host_overrides, dict):
+        raise RuntimeError(f"Routing overrides for host '{host}' must be a mapping.")
+
+    routes = host_overrides.get("routes") or {}
+    roles = host_overrides.get("roles") or {}
+    route_override = routes.get(route_class) or {}
+    role_override = (roles.get(role) or {}) if role else {}
+
+    if not isinstance(route_override, dict) or not isinstance(role_override, dict):
+        raise RuntimeError("Routing route/role overrides must be mappings.")
+
+    return {**route_override, **role_override}
+
+
 def route(
     host: str,
     route_class: str,
     data_class: str,
     *,
+    role: str | None = None,
     project: Path | None = None,
 ) -> dict[str, Any]:
-    root = framework_root()
-    models, routes = _catalog(root, host)
+    if route_class not in _known_route_classes():
+        raise RuntimeError(f"Unknown route class: {route_class}")
+    if data_class not in _known_data_classes():
+        raise RuntimeError(f"Unknown data class: {data_class}")
 
-    mapping = routes.get("routes", {}).get(route_class)
-    if not mapping:
-        raise RuntimeError(f"No route '{route_class}' for {host}")
-
-    model_id = mapping.get("model")
-    catalog = {
-        str(item.get("id")): item
-        for group in ("models", "options")
-        for item in models.get(group, []) or []
-        if item.get("id")
-    }
-
-    model = catalog.get(model_id)
-    if not model:
-        raise RuntimeError(f"Route selects unknown model: {model_id}")
-
-    allowed = model.get("data")
-
-    if data_class == "CONFIDENTIAL":
-        if not allowed or data_class not in allowed:
-            raise RuntimeError(
-                f"{host}/{model_id} is not explicitly eligible for CONFIDENTIAL data"
-            )
-    elif allowed and data_class not in allowed:
-        raise RuntimeError(f"{host}/{model_id} is not eligible for {data_class}")
+    project_path = project_root(project)
+    override = _routing_override(project_path, host, route_class, role)
+    options = override.get("options") or {}
+    if not isinstance(options, dict):
+        raise RuntimeError("Routing override options must be a mapping.")
 
     result = {
         "host": host,
         "route": route_class,
-        "model": model_id,
-        "effort": mapping.get("effort"),
+        "role": role,
+        "resolution": "project-override" if override else "host-default",
+        "model": override.get("model"),
+        "effort": override.get("effort"),
+        "options": options,
         "data": data_class,
     }
 
     _append_event(
-        project_root(project),
+        project_path,
         {
             "event": "route-selected",
             "host": host,
             "route": route_class,
-            "model": model_id,
-            "effort": mapping.get("effort"),
+            "role": role,
+            "resolution": result["resolution"],
+            "model": result["model"],
+            "effort": result["effort"],
             "data-class": data_class,
         },
     )
@@ -126,7 +148,13 @@ def create_dispatch(
                 "Writable dispatch is not allowed from the stable main/master branch."
             )
 
-    selected = route(host, route_class, data_class)
+    selected = route(
+        host,
+        route_class,
+        data_class,
+        role=role,
+        project=project,
+    )
     dispatch_id = uuid.uuid4().hex
 
     record = {
@@ -136,8 +164,10 @@ def create_dispatch(
         "role": role,
         "host": host,
         "route": route_class,
+        "resolution": selected["resolution"],
         "model": selected["model"],
         "effort": selected.get("effort"),
+        "options": selected.get("options") or {},
         "data-class": data_class,
         "access": access,
         "owned-paths": owned_paths,
@@ -156,6 +186,7 @@ def create_dispatch(
             "dispatch-id": dispatch_id,
             "role": role,
             "host": host,
+            "resolution": selected["resolution"],
             "model": selected["model"],
             "effort": selected.get("effort"),
             "data-class": data_class,

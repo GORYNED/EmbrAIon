@@ -48,7 +48,13 @@ def start_run(
     if context_id:
         read_context(context_id, root)
 
-    selected = route(host, route_class, data_class, project=root)
+    selected = route(
+        host,
+        route_class,
+        data_class,
+        role=role,
+        project=root,
+    )
     now = datetime.now(timezone.utc).isoformat()
     record = redact_value(
         {
@@ -59,8 +65,10 @@ def start_run(
             "route": {
                 "host": host,
                 "class": route_class,
+                "resolution": selected["resolution"],
                 "model": selected["model"],
                 "effort": selected.get("effort"),
+                "options": selected.get("options") or {},
                 "data-class": data_class,
             },
             "access": access,
@@ -90,6 +98,7 @@ def start_run(
             "run-id": run_id,
             "role": role,
             "host": host,
+            "resolution": selected["resolution"],
             "model": selected["model"],
             "effort": selected.get("effort"),
             "data-class": data_class,

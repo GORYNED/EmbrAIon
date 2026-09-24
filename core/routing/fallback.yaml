@@ -1,8 +1,8 @@
 schema-version: 1
 rules:
-  - apply privacy, access, role, and capability filters before fallback
-  - do not reintroduce an ineligible provider through cost or health ranking
-  - operational failure may move to the next eligible route
-  - validation failure is a quality signal, not provider outage
-  - external unavailability alone does not justify critical escalation
-  - unresolved writer or mutation state blocks writable fallback
+  - apply privacy, access, role, ownership, and route eligibility before any fallback
+  - model selection and model-to-model fallback are owned by the execution host unless a project explicitly overrides selection
+  - a project model override may narrow host automatic selection but never widens EmbrAIon policy
+  - changing execution host or external boundary requires a fresh privacy and access decision
+  - validation failure is a quality signal, not host or model unavailability
+  - unresolved writer or mutation state blocks writable rerouting

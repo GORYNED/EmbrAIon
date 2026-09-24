@@ -24,7 +24,7 @@ Canonical Core agents are job-like roles: `lead`, `worker`, `reviewer`, `archite
 
 ## Separation of concerns
 
-Agent role, access profile, model route, provider, and external integration state are independent dimensions.
+Agent role, access profile, route class, execution host, project model override, and external integration state are independent dimensions.
 
 A role never implies broader permissions or a more expensive model. Model choice never expands access.
 
@@ -40,7 +40,7 @@ Learning output is advisory until explicitly promoted. Runtime evidence may crea
 
 - External integrations must be inventoried.
 - Inventories store metadata and environment-variable names, never secret values.
-- Unknown integration state, access expansion, provider/privacy mismatch, and embedded credentials fail closed according to policy.
+- Unknown integration state, access expansion, external-execution/privacy mismatch, and embedded credentials fail closed according to policy.
 - Security scanners report findings; they do not weaken policy to pass.
 
 ## Worktrees

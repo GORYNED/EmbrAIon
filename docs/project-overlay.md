@@ -8,9 +8,31 @@ The overlay records:
 - project identity;
 - project knowledge locations;
 - project-specific agents;
-- external or local capabilities.
+- external or local capabilities;
+- optional host routing overrides.
 
 Project overlays may add stricter rules but must not silently weaken Core hard gates.
+
+## Model-agnostic routing overrides
+
+EmbrAIon does not require a model catalog in the project. Without an override, a route uses the selected host's default/automatic model policy.
+
+When a user wants explicit routing, their AI client can edit only the relevant override:
+
+```yaml
+routing:
+  overrides:
+    codex:
+      routes:
+        complex:
+          model: any-host-model-selector
+          effort: high
+      roles:
+        reviewer:
+          model: any-review-model-selector
+```
+
+Selectors are opaque host-owned strings. Role overrides are applied over route overrides. These settings affect model selection only; they cannot expand privacy, access, protected-source, validation, or review permissions.
 
 ## Version pinning and resolution
 

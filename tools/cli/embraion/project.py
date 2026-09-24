@@ -111,6 +111,7 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
         },
         "review": {"substantial-required": True},
         "privacy": {"default-class": "PRIVATE"},
+        "routing": {"overrides": {}},
         "agents": [],
         "capabilities": {},
     }
@@ -179,18 +180,10 @@ def _generate_codex(
 
     if "config" in components:
         target.mkdir(parents=True, exist_ok=True)
-        routes = read_yaml(root / "adapters/codex/routes.yaml") or {}
-        default = routes.get(
-            "defensive-default",
-            routes.get("routes", {}).get("economy", {}),
-        )
-
         config = [
             "[agents]",
             "enabled = true",
             "max_concurrent_threads_per_session = 3",
-            f'default_subagent_model = "{default.get("model", "gpt-6-luna")}"',
-            f'default_subagent_reasoning_effort = "{default.get("effort", "medium")}"',
             "",
         ]
         (target / "config.toml").write_text("\n".join(config), encoding="utf-8")

@@ -15,7 +15,7 @@
 3. [Модель возможностей](capability-model.md)
 4. [Project Overlay (Проектный слой)](project-overlay.md)
 5. [Spec Kit](spec-kit.md)
-6. [Routing (Маршрутизация моделей)](model-routing.md)
+6. [Routing (Маршрутизация)](model-routing.md)
 7. [Learning (Обучение системы)](learning.md)
 8. [Validation (Валидация)](validation.md)
 9. [Security (Безопасность)](security.md)

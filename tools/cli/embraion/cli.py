@@ -71,7 +71,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  cache      Inspect or clean cached project-pinned EmbrAIon runtimes",
         "",
         "AI execution",
-        "  route      Resolve the model/provider route for a host, route class, and data class",
+        "  route      Resolve host-default or project routing for a task route class",
         "  dispatch   Create a bounded execution plan with access and owned-path constraints",
         "  context    Select project knowledge with provenance and privacy metadata",
         "  run        Record structured execution evidence for an engineering run",
@@ -250,6 +250,7 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             print(f"Validation {name}: {len(commands)} command(s)")
         for category, patterns in policy["sources"].items():
             print(f"Sources {category}: {len(patterns)} pattern(s)")
+        print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
     return 0
 
 
@@ -274,7 +275,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 
 def _cmd_route(args: argparse.Namespace) -> int:
-    _print_json(route(args.host, args.route_class, args.data))
+    _print_json(route(args.host, args.route_class, args.data, role=args.role))
     return 0
 
 
@@ -896,7 +897,7 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.add_argument("--force", action="store_true")
     sync_parser.set_defaults(func=_cmd_sync)
 
-    route_parser = sub.add_parser("route", help="Resolve a model/provider route", description="Resolve a configured model/provider route for a host, route class, and data class.")
+    route_parser = sub.add_parser("route", help="Resolve host-default or project routing", description="Resolve host-default or project routing for a host, route class, role, and data class.")
     route_parser.add_argument(
         "--host",
         required=True,
@@ -906,14 +907,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--route-class",
         required=True,
         choices=[
-            "economy-read",
-            "economy-write",
-            "economy",
-            "strong",
-            "strong-high",
+            "bounded-read",
+            "bounded-write",
+            "ordinary",
+            "substantial",
+            "complex",
             "critical",
         ],
     )
+    route_parser.add_argument("--role")
     route_parser.add_argument(
         "--data",
         default="PRIVATE",
@@ -933,11 +935,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--route-class",
         required=True,
         choices=[
-            "economy-read",
-            "economy-write",
-            "economy",
-            "strong",
-            "strong-high",
+            "bounded-read",
+            "bounded-write",
+            "ordinary",
+            "substantial",
+            "complex",
             "critical",
         ],
     )
@@ -995,11 +997,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--route-class",
         required=True,
         choices=[
-            "economy-read",
-            "economy-write",
-            "economy",
-            "strong",
-            "strong-high",
+            "bounded-read",
+            "bounded-write",
+            "ordinary",
+            "substantial",
+            "complex",
             "critical",
         ],
     )

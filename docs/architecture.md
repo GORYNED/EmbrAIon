@@ -3,7 +3,7 @@
 ## Layers
 
 1. **Core** — vendor-neutral rules, agents, skills, workflows, routing, and knowledge.
-2. **Adapters** — concrete hosts, models, providers, transports, and package projections.
+2. **Adapters** — concrete hosts, transports, and package projections.
 3. **Tools** — deterministic runtime, learning, security, MCP inventory, worktree, validation, sync, install, doctor, and CLI behavior.
 4. **Project overlay** — consuming-project agents, domains, source classes, compatibility rules, and product knowledge.
 5. **External capabilities** — recommended or optional companion systems and domain-specific integrations.
@@ -25,7 +25,9 @@ External server/tool configuration is inventoried separately from Core policy. I
 
 ## Model ownership
 
-Core routing selects provider-neutral route classes. Adapter catalogs own current model identities, efforts, pricing, lifecycle, and host selectors.
+Core routing selects model-agnostic route classes. EmbrAIon does not own a global model catalog.
+
+By default the execution host selects its own model. Projects may optionally store opaque host-specific model/effort/options overrides in the Project Overlay. Those overrides can change model selection but cannot expand Core privacy, access, ownership, validation, or review policy.
 
 ## Spec Kit
 

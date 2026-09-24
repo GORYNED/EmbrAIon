@@ -1,6 +1,6 @@
 # Codex
 
-The Codex adapter maps EmbrAIon roles and route classes into Codex-specific configuration.
+The Codex adapter projects EmbrAIon roles, skills, and host configuration into Codex-native files.
 
 Install it into a project:
 
@@ -21,12 +21,14 @@ Typical generated shape:
     └── ...
 ```
 
-Core owns the reusable role and access semantics. The Codex adapter owns Codex-specific model identities, reasoning-effort mappings, and projection details.
+Core owns reusable role, complexity, access, privacy, validation, and review semantics. EmbrAIon does not pin a Codex model in the generated config.
+
+Without a project routing override, Codex keeps its own default/automatic model selection. Optional project overrides can pass any Codex-understood model selector, effort string, or host-specific options.
 
 Use:
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
-to inspect a route without executing a model.
+to inspect whether the route resolves to `host-default` or a project override without executing a model.

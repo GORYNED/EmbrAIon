@@ -15,7 +15,7 @@ Empiece aquí:
 3. [Modelo de capacidades](capability-model.md)
 4. [Project Overlay (Capa del proyecto)](project-overlay.md)
 5. [Spec Kit](spec-kit.md)
-6. [Routing (Enrutamiento de modelos)](model-routing.md)
+6. [Routing (Enrutamiento)](model-routing.md)
 7. [Learning (Aprendizaje del sistema)](learning.md)
 8. [Validation (Validación)](validation.md)
 9. [Security (Seguridad)](security.md)

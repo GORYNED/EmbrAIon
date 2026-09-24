@@ -1,9 +1,11 @@
-# Routing (Enrutamiento de modelos)
+# Routing (Enrutamiento)
 
-El enrutamiento es una capacidad de primer nivel en EmbrAIon.
+El routing de EmbrAIon es completamente agnóstico respecto a los modelos.
 
-Las reglas canónicas de enrutamiento determinan cómo las características de una tarea se convierten en una selección de modelo y proveedor, nivel de razonamiento, permisos de ejecución, ruta de escalado y requisitos de revisión.
+Core clasifica el trabajo mediante `bounded-read`, `bounded-write`, `ordinary`, `substantial`, `complex` y `critical`. Estas clases describen el trabajo y el riesgo, no la potencia, el precio, el proveedor ni un modelo concreto.
 
-Los adaptadores de proveedores implementan la llamada técnica al modelo, pero no son propietarios de las reglas canónicas de decisión.
+Si el proyecto no define un override, el cliente de IA elegido conserva su selección de modelo predeterminada o automática. Cuando se necesita una selección explícita, el proyecto puede guardar valores arbitrarios de `model`, `effort` y `options` propios del host en `.embraion/project.yaml` → `routing.overrides`.
 
-Los contratos detallados de enrutamiento se versionan por separado a medida que evoluciona EmbrAIon.
+El usuario puede pedir directamente a la IA del repositorio que configure EmbrAIon con los modelos disponibles. La skill instalada `routing-configuration` indica dónde escribir el override y qué políticas no deben debilitarse.
+
+EmbrAIon no mantiene un catálogo canónico de modelos. Privacy, access, ownership, validation y review permanecen independientes de la selección de modelo.

@@ -16,7 +16,7 @@
 
 > Where sparks become AI-built products
 
-EmbrAIon is a portable AI-First Engineering System for organizing AI-assisted software engineering around explicit roles, reusable skills, workflow orchestration, model routing, access control, validation, review, security, learning, and project overlays.
+EmbrAIon is a portable AI-First Engineering System for organizing AI-assisted software engineering around explicit roles, reusable skills, workflow orchestration, task routing, access control, validation, review, security, learning, and project overlays.
 
 It is designed to sit above individual languages and frameworks. A Unity/C# project, a Python service, a web application, or another software repository can use the same Core and add only project-specific knowledge and rules.
 
@@ -28,8 +28,8 @@ EmbrAIon separates the engineering system into independent dimensions:
 - **[Skill](core/skills/)** — how a repeatable class of work is performed.
 - **[Rule](core/rules/)** — what is required, forbidden, or protected.
 - **[Workflow](core/workflows/)** — in what order capabilities are composed.
-- **[Routing](core/routing/)** — which access profile, model tier, host, and provider may execute the work.
-- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, providers, or a host-neutral Portable bundle.
+- **[Routing](core/routing/)** — which complexity route, access/privacy constraints, and host should execute the work; model selection stays host-owned unless the project overrides it.
+- **[Adapter](adapters/)** — how canonical capabilities are represented in Codex, Copilot, Claude Code, provider transports, or a host-neutral Portable bundle.
 - **[Tool](tools/)** — deterministic executable behavior such as validation, security scanning, worktree management, synchronization, and diagnostics.
 - **[Eval](evals/)** — whether AI behavior actually follows the intended engineering contract.
 
@@ -51,13 +51,24 @@ Unknown or ambiguous classification fails closed. Model choice never expands acc
 
 Current adapters:
 
-- **[Codex](https://openai.com/codex/)** — native model catalog, model/effort route mapping, generated project agents and config.
-- **[GitHub Copilot](https://github.com/features/copilot)** — advisory model catalog and generated custom-agent projection.
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — Claude model catalog and generated subagent projection.
+- **[Codex](https://openai.com/codex/)** — generated project config, agents, and skills; Codex owns its available models and default selection.
+- **[GitHub Copilot](https://github.com/features/copilot)** — generated custom-agent and skills projection; Copilot owns its available models and default selection.
+- **[Claude Code](https://code.claude.com/docs/en/overview)** — generated agent and skills projection; Claude Code owns its available models and default selection.
 - **[Portable](adapters/portable/)** — host-neutral installable capability bundle.
-- **[Providers](adapters/providers/)** — direct API model catalogs for [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [Google](https://ai.google.dev/), and [DeepSeek](https://www.deepseek.com/), plus transport metadata.
+- **[Providers](adapters/providers/)** — optional provider/transport integration surfaces without a framework-wide model catalog.
 
-Core remains model-neutral. Current model identities and host selectors live only in adapters.
+Core remains model-neutral. EmbrAIon does not maintain a canonical model list: hosts choose their own defaults, while projects may optionally store opaque host-specific model/effort/options overrides.
+
+
+### Model-agnostic by design
+
+EmbrAIon does **not** ship or maintain a canonical list of AI models. Model availability changes independently across hosts, plans, accounts, and time, so the framework keeps that knowledge out of Core.
+
+With no project override, the selected host uses its own default or automatic model policy. If you want explicit model routing, ask the AI already working in your repository to configure it for you. For example:
+
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/project.yaml` under `routing.overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+
+The installed EmbrAIon host projection includes a `routing-configuration` skill that tells the AI exactly where and how to make that change. The project stores only its own overrides; EmbrAIon itself remains independent of individual model names.
 
 ## Installation
 
@@ -281,7 +292,7 @@ Relevant rules / agents / skills / workflows
   ↓
 Data class + access profile + complexity
   ↓
-Host adapter + model route
+Host adapter + host-default/project routing
   ↓
 Implementation
   ↓
@@ -316,7 +327,7 @@ Use `embraion help` for the categorized command catalog. Use `embraion help <com
 Resolve a route:
 
 ```bash
-embraion route --host codex --route-class strong --data PRIVATE
+embraion route --host codex --route-class substantial --data PRIVATE
 ```
 
 Create a bounded dispatch plan:
@@ -326,7 +337,7 @@ embraion dispatch \
   --task "Implement feature" \
   --role worker \
   --host codex \
-  --route-class economy-write \
+  --route-class bounded-write \
   --data PRIVATE \
   --access write \
   --owned-path "src/**"
@@ -352,7 +363,7 @@ embraion session show
 embraion session set --state review --validation passed
 ```
 
-The host adapter performs actual AI execution; EmbrAIon owns canonical routing, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry.
+The host adapter performs actual AI execution and owns model availability. EmbrAIon owns route classes and policy, generated agent definitions, access/ownership boundaries, dispatch plans, normalized state, and privacy-safe operational telemetry; `.embraion/project.yaml` may optionally override host model selection.
 
 ### Security
 
@@ -492,10 +503,10 @@ The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and the 
 
 EmbrAIon is **pre-stable**. The architecture and first executable CLI are in place, but the public compatibility contract is not frozen yet.
 
-Before the first stable release, model catalogs, generated host projections, validation coverage, security rules, installation behavior, and release packaging may still evolve.
+Before the first stable release, routing overrides, generated host projections, validation coverage, security rules, installation behavior, and release packaging may still evolve.
 
 ---
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Last updated: 2026-09-24 00:45 UTC</sub>
+<sub>Last updated: 2026-09-24 13:40 UTC</sub>

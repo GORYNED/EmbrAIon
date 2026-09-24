@@ -23,6 +23,7 @@ DEFAULT_POLICY: dict[str, Any] = {
     },
     "review": {"substantial-required": True},
     "privacy": {"default-class": "PRIVATE"},
+    "routing": {"overrides": {}},
 }
 
 
@@ -47,6 +48,7 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
         "validation": {"profiles": profiles},
         "review": DEFAULT_POLICY["review"] | (data.get("review") or {}),
         "privacy": DEFAULT_POLICY["privacy"] | (data.get("privacy") or {}),
+        "routing": DEFAULT_POLICY["routing"] | (data.get("routing") or {}),
     }
 
 

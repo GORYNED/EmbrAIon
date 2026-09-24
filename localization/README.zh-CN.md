@@ -26,12 +26,14 @@ EmbrAIon 将工程系统拆分为彼此独立的组成部分：
 - **[Skill（技能）](../core/skills/)** — 如何执行一类可重复的工作。
 - **[Rule（规则）](../core/rules/)** — 哪些行为是必须的、禁止的或受保护的。
 - **[Workflow（工作流）](../core/workflows/)** — 各项能力按照什么顺序组合执行。
-- **[Routing（路由）](../core/routing/)** — 哪种访问配置、模型级别、客户端和 Provider（提供方）可以执行任务。
+- **[Routing（路由）](../core/routing/)** — 使用哪种任务类别、访问配置和 AI host；具体模型由 host 或项目 override 决定。
 - **[Adapter（适配器）](../adapters/)** — 如何将 EmbrAIon 的规范能力映射到 [Codex](https://openai.com/codex/)、[GitHub Copilot](https://github.com/features/copilot)、[Claude Code](https://code.claude.com/docs/en/overview)、API 提供方或中立的 Portable 包。
 - **[Tool（工具）](../tools/)** — 确定性的可执行逻辑，例如验证、安全扫描、Git worktree 管理、同步和诊断。
 - **[Eval（行为评估）](../evals/)** — 检查 AI 是否真正遵循预期的工程约束。
 
 `core/catalog.yaml` 是能力发现索引。系统无需为每个任务加载整个 EmbrAIon，而是只加载与当前工作相关的规则、角色、技能和工作流。
+
+EmbrAIon 完全与具体模型无关，不维护规范模型列表。默认情况下，AI host 使用自己的默认/自动模型选择。如果需要 override，用户可以直接要求仓库中的 AI 根据当前可用模型配置 EmbrAIon；安装的 `routing-configuration` skill 只会把设置写入 `.embraion/project.yaml` → `routing.overrides`。
 
 ## 运行层
 
@@ -277,4 +279,4 @@ embraion help cache prune
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-23 22:00 UTC</sub>
+<sub>最后更新：2026-09-24 13:55 UTC</sub>

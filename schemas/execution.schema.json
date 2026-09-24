@@ -17,67 +17,163 @@
     "updated-utc"
   ],
   "properties": {
-    "schema-version": { "type": "integer", "minimum": 1 },
-    "run-id": { "type": "string", "minLength": 1 },
-    "task": { "type": "string", "minLength": 1 },
-    "role": { "type": "string", "minLength": 1 },
+    "schema-version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run-id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "minLength": 1
+    },
     "route": {
       "type": "object",
-      "required": ["host", "class", "model", "data-class"],
+      "required": [
+        "host",
+        "class",
+        "model",
+        "data-class"
+      ],
       "properties": {
-        "host": { "type": "string" },
-        "class": { "type": "string" },
-        "model": { "type": "string" },
-        "effort": { "type": ["string", "null"] },
+        "host": {
+          "type": "string"
+        },
+        "class": {
+          "type": "string"
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "data-class": {
-          "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]
+          "enum": [
+            "PUBLIC",
+            "PRIVATE",
+            "CONFIDENTIAL"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "host-default",
+            "project-override"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
     },
-    "access": { "type": "string" },
+    "access": {
+      "type": "string"
+    },
     "owned-paths": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
-    "context-id": { "type": ["string", "null"] },
-    "substantial": { "type": "boolean" },
+    "context-id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "substantial": {
+      "type": "boolean"
+    },
     "workspace": {
       "type": "object",
       "properties": {
-        "root": { "type": "string" },
-        "branch": { "type": ["string", "null"] },
-        "head": { "type": ["string", "null"] }
+        "root": {
+          "type": "string"
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "head": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       },
       "additionalProperties": false
     },
     "changed-paths": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "validation": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["profile", "status"],
+        "required": [
+          "profile",
+          "status"
+        ],
         "properties": {
-          "profile": { "type": "string" },
-          "status": { "type": "string" }
+          "profile": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       }
     },
-    "review": { "type": "string" },
-    "outcome": { "type": ["string", "null"] },
+    "review": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "residual-risks": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "state": {
-      "enum": ["active", "completed", "blocked", "failed", "cancelled"]
+      "enum": [
+        "active",
+        "completed",
+        "blocked",
+        "failed",
+        "cancelled"
+      ]
     },
-    "started-utc": { "type": "string" },
-    "updated-utc": { "type": "string" }
+    "started-utc": {
+      "type": "string"
+    },
+    "updated-utc": {
+      "type": "string"
+    }
   },
   "additionalProperties": false
 }

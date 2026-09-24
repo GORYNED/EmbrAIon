@@ -3,22 +3,39 @@
   "$id": "https://github.com/GORYNED/EmbrAIon/schemas/project.schema.json",
   "title": "EmbrAIon Project Overlay",
   "type": "object",
-  "required": ["framework", "project"],
+  "required": [
+    "framework",
+    "project"
+  ],
   "properties": {
     "framework": {
       "type": "object",
-      "required": ["repository", "version"],
+      "required": [
+        "repository",
+        "version"
+      ],
       "properties": {
-        "repository": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 }
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": true
     },
     "project": {
       "type": "object",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 }
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": true
     },
@@ -26,26 +43,48 @@
       "type": "object",
       "additionalProperties": {
         "oneOf": [
-          { "type": "string", "minLength": 1 },
+          {
+            "type": "string",
+            "minLength": 1
+          },
           {
             "type": "object",
-            "required": ["path"],
+            "required": [
+              "path"
+            ],
             "properties": {
-              "path": { "type": "string", "minLength": 1 },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
               "data-class": {
-                "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]
+                "enum": [
+                  "PUBLIC",
+                  "PRIVATE",
+                  "CONFIDENTIAL"
+                ]
               },
               "trust": {
-                "enum": ["project", "external", "generated"]
+                "enum": [
+                  "project",
+                  "external",
+                  "generated"
+                ]
               },
               "roles": {
                 "type": "array",
-                "items": { "type": "string", "minLength": 1 },
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "uniqueItems": true
               },
               "triggers": {
                 "type": "array",
-                "items": { "type": "string", "minLength": 1 },
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
                 "uniqueItems": true
               }
             },
@@ -57,10 +96,18 @@
     "sources": {
       "type": "object",
       "properties": {
-        "canonical": { "$ref": "#/$defs/pathPatterns" },
-        "protected": { "$ref": "#/$defs/pathPatterns" },
-        "generated": { "$ref": "#/$defs/pathPatterns" },
-        "external": { "$ref": "#/$defs/pathPatterns" }
+        "canonical": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "protected": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "generated": {
+          "$ref": "#/$defs/pathPatterns"
+        },
+        "external": {
+          "$ref": "#/$defs/pathPatterns"
+        }
       },
       "additionalProperties": false
     },
@@ -71,7 +118,10 @@
           "type": "object",
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string", "minLength": 1 }
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       },
@@ -80,7 +130,9 @@
     "review": {
       "type": "object",
       "properties": {
-        "substantial-required": { "type": "boolean" }
+        "substantial-required": {
+          "type": "boolean"
+        }
       },
       "additionalProperties": false
     },
@@ -88,26 +140,101 @@
       "type": "object",
       "properties": {
         "default-class": {
-          "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]
+          "enum": [
+            "PUBLIC",
+            "PRIVATE",
+            "CONFIDENTIAL"
+          ]
         }
       },
       "additionalProperties": false
     },
     "agents": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "uniqueItems": true
     },
     "capabilities": {
       "type": "object",
       "additionalProperties": true
+    },
+    "routing": {
+      "type": "object",
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/routingHostOverrides"
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {
     "pathPatterns": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "uniqueItems": true
+    },
+    "routingSelection": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effort": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "model"
+          ]
+        },
+        {
+          "required": [
+            "effort"
+          ]
+        },
+        {
+          "required": [
+            "options"
+          ]
+        }
+      ]
+    },
+    "routingHostOverrides": {
+      "type": "object",
+      "properties": {
+        "routes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/routingSelection"
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/routingSelection"
+          }
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": true
