@@ -1,0 +1,32 @@
+name: Apply documentation restructure
+
+on:
+  push:
+    branches:
+      - docs/user-journey-restructure
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: docs/user-journey-restructure
+          persist-credentials: true
+
+      - name: Apply documentation archive
+        shell: bash
+        run: |
+          tar -xzf .docs-rewrite.tar.gz
+          rm .docs-rewrite.tar.gz
+          rm .github/workflows/apply-docs-rewrite.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: restructure documentation around user journey"
+          git push
