@@ -1,5 +1,7 @@
 sources:
-  canonical: []
+  canonical:
+    - src/**
+    - knowledge/**
   protected: []
   generated: []
   external: []
