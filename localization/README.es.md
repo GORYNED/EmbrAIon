@@ -168,10 +168,12 @@ Se crea:
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
-└── routing.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión e identidad, `knowledge.yaml` para referencias de project knowledge, `policy.yaml` para sources/review/privacy y `routing.yaml` para overrides de model/effort.
+Project Overlay guarda la configuración en archivos separados: `project.yaml` para versión, identidad y `capabilities`, `knowledge.yaml` para referencias de project knowledge, `policy.yaml` para sources/review/privacy, `routing.yaml` para overrides de model/effort, `validation.yaml` para perfiles de validación y `agents.yaml` para agentes específicos del proyecto.
 
 ### Instalar la representación para un cliente
 

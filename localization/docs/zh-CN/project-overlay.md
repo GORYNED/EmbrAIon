@@ -1,20 +1,19 @@
 # Project Overlay（项目叠加层）
 
-使用 EmbrAIon 的仓库通过 `.embraion/project.yaml` 明确接入系统。
+使用 EmbrAIon 的仓库把项目配置存放在 `.embraion/` 下。
 
-项目叠加层记录：
+各文件职责：
 
-- 声明的 EmbrAIon 仓库和系统版本；
-- 项目标识；
-- 项目知识所在位置；
-- 仅属于该项目的 Agent（代理角色）；
-- 外部能力。
+- `project.yaml`：EmbrAIon repository/version、项目身份和 `capabilities`；
+- `knowledge.yaml`：project knowledge 引用和 context-selection metadata；
+- `policy.yaml`：source classes、review policy 和 privacy；
+- `routing.yaml`：可选的 model/effort/options override；
+- `validation.yaml`：validation profiles；
+- `agents.yaml`：project-specific agents。
 
-项目叠加层可以增加更严格的规则，但不得暗中削弱 Core（核心）的强制限制。
+Project Overlay 可以增加更严格的规则，但不得暗中削弱 Core（核心）的强制限制。
 
 ## 自动版本解析
-
-公共版本 `v0.1.0` 会记录项目版本，但还不会自动解析它。当前 `main` 已为下一版本实现 resolver。
 
 对于普通命令，全局 launcher 会找到最近的 `.embraion/project.yaml`，读取 `framework.version` 并与自身版本比较。如果不同，EmbrAIon 会在 `~/.embraion/versions/<version>/` 中创建隔离 runtime，并从 PyPI 安装准确的 `embraion==<version>` 包。
 
@@ -22,11 +21,9 @@
 
 `embraion init` 和 `embraion update` 会刻意绕过项目 runtime：
 
-- `init` 把全局 launcher 版本写入新的 Project Overlay；
+- `init` 创建模块化配置并写入全局 launcher 版本；
 - `update` 只修改当前仓库的版本固定；
 - `--framework-version` 可以明确选择某个具体发布版本。
-
-首个版本写入的旧标记 `0.1.0-dev` 会自动映射到已发布的 `0.1.0` 包。
 
 `EMBRAION_HOME` 是开发时的明确 override，并会在当前进程中关闭自动版本委派。
 

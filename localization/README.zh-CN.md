@@ -155,10 +155,12 @@ embraion init
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
-└── routing.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
 ```
 
-Project Overlay 将配置拆分到专用文件：`project.yaml` 保存版本和项目身份，`knowledge.yaml` 保存 project knowledge 引用，`policy.yaml` 保存 sources/review/privacy，`routing.yaml` 保存 model/effort override。
+Project Overlay 将配置拆分到专用文件：`project.yaml` 保存版本、项目身份和 `capabilities`，`knowledge.yaml` 保存 project knowledge 引用，`policy.yaml` 保存 sources/review/privacy，`routing.yaml` 保存 model/effort override，`validation.yaml` 保存 validation profiles，`agents.yaml` 保存 project-specific agents。
 
 ### 安装所需客户端的 Adapter（适配器）表示
 

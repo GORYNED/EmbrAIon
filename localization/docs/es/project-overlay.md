@@ -1,20 +1,19 @@
 # Project Overlay (Capa del proyecto)
 
-Un repositorio se incorpora explícitamente a EmbrAIon mediante `.embraion/project.yaml`.
+Un repositorio consumidor guarda la configuración de EmbrAIon dentro de `.embraion/`.
 
-La capa del proyecto registra:
+Responsabilidad de cada archivo:
 
-- el repositorio de EmbrAIon y la versión del sistema declarados;
-- la identidad del proyecto;
-- la ubicación del conocimiento del proyecto;
-- los Agent (Agentes) específicos del proyecto;
-- las capacidades externas.
+- `project.yaml`: repositorio/versión de EmbrAIon, identidad del proyecto y `capabilities`;
+- `knowledge.yaml`: referencias al conocimiento del proyecto y metadatos de selección de contexto;
+- `policy.yaml`: clases de fuentes, política de review y privacy;
+- `routing.yaml`: overrides opcionales de model/effort/options;
+- `validation.yaml`: perfiles de validación;
+- `agents.yaml`: agentes específicos del proyecto.
 
 La capa del proyecto puede añadir reglas más estrictas, pero no puede debilitar silenciosamente las restricciones obligatorias del Core.
 
 ## Resolución automática de versiones
-
-La versión pública `v0.1.0` registra una versión del proyecto, pero todavía no la resuelve automáticamente. El `main` actual implementa el resolver para la siguiente versión.
 
 Para los comandos normales, el launcher global encuentra el `.embraion/project.yaml` más cercano, lee `framework.version` y lo compara con su propia versión. Si son diferentes, EmbrAIon prepara un runtime aislado en `~/.embraion/versions/<version>/` e instala allí la distribución exacta `embraion==<version>` desde PyPI.
 
@@ -22,11 +21,9 @@ A continuación, el comando se ejecuta con esa versión almacenada en caché. As
 
 `embraion init` y `embraion update` omiten intencionadamente la delegación al runtime del proyecto:
 
-- `init` escribe la versión del launcher global en un nuevo Project Overlay;
+- `init` crea la configuración modular y escribe la versión del launcher global;
 - `update` cambia únicamente el pin del repositorio actual;
 - `--framework-version` permite seleccionar explícitamente una versión publicada concreta.
-
-El pin heredado `0.1.0-dev` escrito por la primera versión se normaliza automáticamente a la distribución publicada `0.1.0`.
 
 `EMBRAION_HOME` es un override explícito para desarrollo y desactiva la delegación automática de versión en ese proceso.
 
