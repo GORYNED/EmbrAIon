@@ -47,6 +47,18 @@ def read_routing_config(project: Path | None = None) -> dict[str, Any]:
     return data
 
 
+def read_knowledge_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "knowledge.yaml"
+    if not path.is_file():
+        raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
+
+    data = read_yaml(path) or {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid project knowledge configuration: {path}")
+    return data
+
+
 def read_policy_config(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     path = root / ".embraion" / "policy.yaml"
