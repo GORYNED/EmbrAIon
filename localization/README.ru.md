@@ -168,11 +168,12 @@ embraion init
 ```text
 .embraion/
 ├── project.yaml
+├── knowledge.yaml
 ├── policy.yaml
 └── routing.yaml
 ```
 
-Project Overlay (Проектный слой) хранит конфигурацию в отдельных файлах: `project.yaml` — версия и идентичность проекта, `policy.yaml` — sources/review/privacy, `routing.yaml` — model/effort overrides.
+Project Overlay (Проектный слой) хранит конфигурацию в отдельных файлах: `project.yaml` — версия и идентичность проекта, `knowledge.yaml` — ссылки на project knowledge, `policy.yaml` — sources/review/privacy, `routing.yaml` — model/effort overrides.
 
 ### Установить представление для нужного клиента
 
