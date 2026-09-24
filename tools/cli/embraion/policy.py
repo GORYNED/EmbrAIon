@@ -4,7 +4,9 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
-from .common import project_root, read_yaml
+from jsonschema import Draft202012Validator
+
+from .common import framework_root, project_root, read_json, read_yaml
 
 
 DEFAULT_POLICY: dict[str, Any] = {
@@ -32,12 +34,51 @@ DEFAULT_POLICY: dict[str, Any] = {
 }
 
 
+def normalize_project_path(path: str) -> str:
+    normalized = path.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized
+
+
+def _validated_config_mapping(
+    path: Path,
+    *,
+    schema_name: str,
+    label: str,
+) -> dict[str, Any]:
+    data = read_yaml(path)
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Invalid {label}: expected a mapping.")
+
+    schema = read_json(framework_root() / "schemas" / schema_name)
+    validator = Draft202012Validator(schema)
+    errors = sorted(
+        validator.iter_errors(data),
+        key=lambda item: list(item.absolute_path),
+    )
+    if errors:
+        formatted: list[str] = []
+        for error in errors:
+            location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+            formatted.append(f"{location}: {error.message}")
+        raise RuntimeError(f"Invalid {label}: " + "; ".join(formatted))
+
+    return data
+
+
 def read_project_overlay(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     manifest = root / ".embraion" / "project.yaml"
     if not manifest.is_file():
         raise RuntimeError(f"Missing {manifest}; run 'embraion init' first.")
-    return read_yaml(manifest) or {}
+    return _validated_config_mapping(
+        manifest,
+        schema_name="project.schema.json",
+        label=".embraion/project.yaml",
+    )
 
 
 def read_routing_config(project: Path | None = None) -> dict[str, Any]:
@@ -45,11 +86,11 @@ def read_routing_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "routing.yaml"
     if not path.is_file():
         return {"overrides": {}}
-
-    data = read_yaml(path) or {}
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Invalid routing configuration: {path}")
-    return data
+    return _validated_config_mapping(
+        path,
+        schema_name="routing.schema.json",
+        label=".embraion/routing.yaml",
+    )
 
 
 def read_knowledge_config(project: Path | None = None) -> dict[str, Any]:
@@ -57,11 +98,11 @@ def read_knowledge_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "knowledge.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-
-    data = read_yaml(path) or {}
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Invalid project knowledge configuration: {path}")
-    return data
+    return _validated_config_mapping(
+        path,
+        schema_name="knowledge.schema.json",
+        label=".embraion/knowledge.yaml",
+    )
 
 
 def read_validation_config(project: Path | None = None) -> dict[str, Any]:
@@ -69,11 +110,11 @@ def read_validation_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "validation.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-
-    data = read_yaml(path) or {}
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Invalid project validation configuration: {path}")
-    return data
+    return _validated_config_mapping(
+        path,
+        schema_name="validation.schema.json",
+        label=".embraion/validation.yaml",
+    )
 
 
 def read_agents_config(project: Path | None = None) -> dict[str, Any]:
@@ -81,11 +122,11 @@ def read_agents_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "agents.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-
-    data = read_yaml(path) or {}
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Invalid project agents configuration: {path}")
-    return data
+    return _validated_config_mapping(
+        path,
+        schema_name="agents.schema.json",
+        label=".embraion/agents.yaml",
+    )
 
 
 def read_policy_config(project: Path | None = None) -> dict[str, Any]:
@@ -93,11 +134,11 @@ def read_policy_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "policy.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-
-    data = read_yaml(path) or {}
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Invalid project policy configuration: {path}")
-    return data
+    return _validated_config_mapping(
+        path,
+        schema_name="policy.schema.json",
+        label=".embraion/policy.yaml",
+    )
 
 
 def effective_policy(project: Path | None = None) -> dict[str, Any]:
@@ -124,7 +165,7 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
 
 
 def path_matches(path: str, patterns: list[str]) -> bool:
-    normalized = path.replace("\\", "/").lstrip("./")
+    normalized = normalize_project_path(path)
     return any(
         fnmatchcase(normalized, pattern.replace("\\", "/"))
         for pattern in patterns
