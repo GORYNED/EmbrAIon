@@ -66,8 +66,10 @@ EmbrAIon adds an engineering layer around that repository:
       Codex        Copilot      Claude Code
         │             │             │
         └─────────────┼─────────────┘
+                      │
                       ↓
                Consuming project
+                      │
                       ↓
                 Product runtime
 ```
