@@ -57,6 +57,89 @@ def find_model_agnostic_violations(root: Path) -> list[Path]:
     return sorted(matches)
 
 
+MODEL_AGNOSTIC_SEMANTIC_SCOPES = {
+    "core",
+    "docs",
+    "localization",
+    "adapters",
+}
+
+LEGACY_MODEL_TIER_ROUTE_TOKENS = (
+    "economy-read",
+    "economy-write",
+    "strong-high",
+)
+
+
+def find_model_agnostic_semantic_violations(
+    root: Path,
+) -> list[dict[str, Any]]:
+    violations: list[dict[str, Any]] = []
+
+    for path in iter_text_files(root):
+        relative = path.relative_to(root)
+        in_scope = (
+            relative.as_posix() in {"README.md", "AGENTS.md"}
+            or (
+                bool(relative.parts)
+                and relative.parts[0] in MODEL_AGNOSTIC_SEMANTIC_SCOPES
+            )
+        )
+        if not in_scope or path.suffix.lower() not in {".md", ".yaml", ".yml"}:
+            continue
+
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            lowered = line.lower()
+            reason: str | None = None
+
+            if any(token in lowered for token in LEGACY_MODEL_TIER_ROUTE_TOKENS):
+                reason = "legacy model-tier route class is not allowed"
+            elif "routing.overrides" in lowered:
+                reason = (
+                    "obsolete nested routing path; project model overrides belong "
+                    "in .embraion/routing.yaml under overrides"
+                )
+            elif "model/effort route" in lowered:
+                reason = (
+                    "EmbrAIon roles and Core routes must not own concrete "
+                    "model/effort selection"
+                )
+            elif re.search(
+                r"\blead\b.{0,120}\b(?:selects?|chooses?)\b.{0,80}\bmodel\b",
+                line,
+                re.IGNORECASE,
+            ):
+                reason = (
+                    "Lead classifies task routing and resolves the host; "
+                    "it does not select a concrete model"
+                )
+            elif (
+                ".embraion/project.yaml" in lowered
+                and ".embraion/routing.yaml" not in lowered
+                and re.search(
+                    r"\b(model|routing|override|selector|effort)\b",
+                    lowered,
+                    re.IGNORECASE,
+                )
+            ):
+                reason = (
+                    "model-routing overrides belong in .embraion/routing.yaml, "
+                    "not .embraion/project.yaml"
+                )
+
+            if reason:
+                violations.append(
+                    {
+                        "path": path,
+                        "line": line_number,
+                        "reason": reason,
+                    }
+                )
+
+    return violations
+
+
 def _schema_errors(instance: Any, schema_path: Path) -> list[str]:
     validator = Draft202012Validator(read_json(schema_path))
     errors = []
@@ -88,6 +171,14 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 "maps; keep model availability with the execution host and "
                 "project choices under routing.overrides"
             ),
+        )
+
+    for item in find_model_agnostic_semantic_violations(root):
+        path = item["path"]
+        add(
+            "model-agnostic-semantics",
+            str(path.relative_to(root)),
+            f"line {item['line']}: {item['reason']}",
         )
 
     for path in iter_text_files(root):
