@@ -77,7 +77,7 @@ Safely normalize a compatible modular project configuration and change the curre
 
 ```bash
 embraion update
-embraion update --framework-version 0.9.0
+embraion update --framework-version 0.9.1
 ```
 
 Safe configuration normalization currently targets the installed EmbrAIon launcher version only. To move a project to another published version, install or upgrade/downgrade the launcher to that version first, then run `embraion update`; this prevents the current launcher from writing configuration for a release contract it does not own.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.1 - 2026-09-24
+
 ### Fixed
 
 - Protected-source enforcement now covers deletions, rename sources, and dot-prefixed paths instead of allowing those changes to escape path checks.
