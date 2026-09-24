@@ -6,6 +6,7 @@ It demonstrates a realistic repository shape without using any private applicati
 
 - a Unity project version file;
 - a package manifest;
+- a conventional `Assets/Scripts/` source layout;
 - an assembly definition;
 - pure C# state logic;
 - a Unity-facing `MonoBehaviour` controller;

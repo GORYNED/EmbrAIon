@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.4.1 - 2026-09-23
+
+### Changed
+
+- The Unity reference project now uses the conventional `Assets/Scripts/` layout.
+- Reference-project privacy checks no longer encode project-specific identifiers in the public repository; validation stays generic and structural.
+
 ## 0.4.0 - 2026-09-23
 
 ### Added

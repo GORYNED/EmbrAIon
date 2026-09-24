@@ -243,19 +243,14 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             (
                 root
                 / "Assets"
-                / "Reference"
                 / "Scripts"
                 / "EmbrAIon.Reference.Unity.asmdef"
             ).is_file()
         )
-
-        forbidden = ("SensorEdge", "SensorGrip", "SwingAppRelease")
-        for path in root.rglob("*"):
-            if not path.is_file():
-                continue
-            text = path.read_text(encoding="utf-8", errors="ignore")
-            for token in forbidden:
-                self.assertNotIn(token, text)
+        self.assertTrue((root / "Assets" / "Scripts" / "CounterState.cs").is_file())
+        self.assertTrue(
+            (root / "Assets" / "Scripts" / "CounterController.cs").is_file()
+        )
 
 
 if __name__ == "__main__":
