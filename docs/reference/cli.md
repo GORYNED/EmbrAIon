@@ -117,6 +117,22 @@ embraion validate
 embraion validate --json
 ```
 
+### `embraion validation`
+
+List or execute project validation profiles from `.embraion/validation.yaml`:
+
+```bash
+embraion validation list
+embraion validation list --json
+embraion validation run fast
+embraion validation run affected --json
+embraion validation run full --run-id task-001
+```
+
+`validation run` executes commands from the project root, persists redacted evidence under `.embraion/state/validation/`, and exits non-zero when the profile fails. Empty profiles report `skipped`. Use `--fail-fast` to stop after the first failing command and `--timeout SECONDS` for a per-command timeout.
+
+`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually.
+
 ### `embraion cache`
 
 Inspect or clean isolated project runtimes.

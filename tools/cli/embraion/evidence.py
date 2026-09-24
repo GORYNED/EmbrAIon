@@ -117,6 +117,47 @@ def read_run(run_id: str, project: Path | None = None) -> dict[str, Any]:
     return read_json(path)
 
 
+def attach_validation_evidence(
+    run_id: str,
+    *,
+    profile: str,
+    status: str,
+    evidence_id: str,
+    project: Path | None = None,
+) -> dict[str, Any]:
+    root = project_root(project)
+    record = read_run(run_id, root)
+    if record.get("state") != "active":
+        raise RuntimeError(
+            f"Validation evidence can only attach to an active run: {run_id}"
+        )
+
+    entries = list(record.get("validation") or [])
+    entry = {
+        "profile": profile,
+        "status": status,
+        "evidence-id": evidence_id,
+    }
+    if entry not in entries:
+        entries.append(entry)
+
+    record["validation"] = entries
+    record["updated-utc"] = datetime.now(timezone.utc).isoformat()
+    record = redact_value(record)
+    write_json(_run_path(root, run_id), record)
+    _append_event(
+        root,
+        {
+            "event": "run-validation-attached",
+            "run-id": run_id,
+            "profile": profile,
+            "status": status,
+            "evidence-id": evidence_id,
+        },
+    )
+    return record
+
+
 def complete_run(
     run_id: str,
     *,
@@ -159,7 +200,7 @@ def complete_run(
         )
 
     record["changed-paths"] = normalized
-    record["validation"] = validation
+    record["validation"] = list(record.get("validation") or []) + validation
     record["review"] = review
     record["outcome"] = outcome
     record["residual-risks"] = residual_risks

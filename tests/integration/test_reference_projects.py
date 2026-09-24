@@ -56,6 +56,8 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             cache = temporary_root / "cache"
             project = self._copy_reference(name, temporary_root)
             environment = self._environment(cache)
+            if name == "python":
+                environment["PYTHONPATH"] = str(project / "src")
 
             manifest = yaml.safe_load(
                 (project / ".embraion" / "project.yaml").read_text(encoding="utf-8")
@@ -221,6 +223,25 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 self._run(project, environment, "policy", "show", "--json").stdout
             )
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
+
+            validation = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "validation",
+                    "run",
+                    "fast",
+                    "--json",
+                ).stdout
+            )
+            expected_validation = "passed" if name == "python" else "skipped"
+            self.assertEqual(expected_validation, validation["status"])
+            self.assertTrue(
+                (
+                    project
+                    / validation["evidence-path"]
+                ).is_file()
+            )
 
             context = json.loads(
                 self._run(
