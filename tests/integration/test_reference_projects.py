@@ -188,6 +188,7 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 "--force",
             )
 
+            self.assertTrue((project / ".embraion" / "knowledge.yaml").is_file())
             self.assertTrue((project / ".embraion" / "policy.yaml").is_file())
             policy = json.loads(
                 self._run(project, environment, "policy", "show", "--json").stdout
