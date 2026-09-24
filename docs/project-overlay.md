@@ -8,26 +8,46 @@ The overlay records:
 - project identity;
 - project knowledge locations;
 - project-specific agents;
-- external capabilities.
+- external or local capabilities.
 
 Project overlays may add stricter rules but must not silently weaken Core hard gates.
 
-## Automatic version resolution
+## Version pinning and resolution
 
-`v0.2.0` resolves the project version automatically.
+Ordinary commands find the nearest `.embraion/project.yaml`, read `framework.version`, and compare it with the global launcher version.
 
-For ordinary commands, the global launcher finds the nearest `.embraion/project.yaml`, reads `framework.version`, and compares it with the launcher version. When they differ, EmbrAIon prepares an isolated runtime under `~/.embraion/versions/<version>/` and installs the exact `embraion==<version>` PyPI distribution there.
+When the project pin differs from the launcher, EmbrAIon prepares an isolated runtime under:
 
-The cached runtime is then used for the command. A single machine can therefore have one global launcher while different repositories remain pinned to different EmbrAIon releases.
+```text
+~/.embraion/versions/<version>/
+```
 
-`embraion init` and `embraion update` intentionally bypass project delegation:
+and installs the exact published `embraion==<version>` distribution there. The command is then delegated to that runtime.
 
-- `init` writes the active global launcher version into a new project overlay;
-- `update` changes only the current repository's pin;
-- an explicit `--framework-version` selects a specific release.
+A single machine can therefore use one current launcher while different repositories remain reproducibly pinned to different EmbrAIon releases.
 
-Legacy `0.1.0-dev` pins written by the first release are normalized to the published `0.1.0` distribution.
+Launcher-owned setup and inspection commands intentionally avoid unnecessary delegation where appropriate. In particular, `init`, `update`, `status`, cache management, and help remain available from the current launcher.
+
+## Creating and updating a pin
+
+```bash
+embraion init
+```
+
+writes the active launcher version into a new project overlay.
+
+```bash
+embraion update
+```
+
+updates only the current project's pin. An explicit version can be selected with:
+
+```bash
+embraion update --framework-version <published-version>
+```
 
 Setting `EMBRAION_HOME` is an explicit development override and disables automatic version delegation for that process.
 
-The project repository remains the canonical source for its product specification, architecture, compatibility contracts, validation evidence, and domain semantics.
+## Ownership
+
+The consuming repository remains the source of truth for its product specification, architecture, compatibility contracts, validation evidence, domain semantics, and project-specific knowledge.

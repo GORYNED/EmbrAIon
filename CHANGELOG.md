@@ -12,6 +12,7 @@
 - Open-source documentation pages for contribution, support, security reporting, and governance.
 - Deterministic documentation tests covering nav targets, internal links, site assets, CLI command coverage, and the published documentation URL.
 - A dedicated documentation workflow that performs strict MkDocs builds on pushes and pull requests and deploys the built site to GitHub Pages from `main`.
+- Strict documentation builds in the release preparation and tagged-release gates.
 
 ### Changed
 
