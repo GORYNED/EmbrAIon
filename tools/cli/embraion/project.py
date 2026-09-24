@@ -387,6 +387,9 @@ def install(
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
 
+        previous = _load_projection_state(project, host, destination)
+        previous_files = (previous or {}).get("files") or {}
+
         if prune:
             for relative in plan["obsolete-owned"]:
                 target = destination / relative
@@ -394,6 +397,16 @@ def install(
                     target.unlink()
 
         current_files = _file_hashes(generated)
+        preserved_obsolete = list(plan["obsolete-modified"])
+        if not prune:
+            preserved_obsolete += list(plan["obsolete-owned"])
+
+        for relative in preserved_obsolete:
+            target = destination / relative
+            previous_hash = previous_files.get(relative)
+            if target.is_file() and previous_hash:
+                current_files[relative] = previous_hash
+
         write_json(
             _projection_state_path(project, host),
             {

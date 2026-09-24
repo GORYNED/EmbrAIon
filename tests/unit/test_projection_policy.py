@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
 
-from embraion.common import read_yaml, write_yaml
+from embraion.common import read_json, read_yaml, write_json, write_yaml
 from embraion.policy import effective_policy
 from embraion.project import init_project, install, projection_plan
 
@@ -55,6 +56,42 @@ class ProjectionPolicyTests(unittest.TestCase):
             install("codex", project, force=True)
             restored = projection_plan("codex", project)
             self.assertEqual([], restored["conflict"])
+
+    def test_obsolete_projection_ownership_survives_until_pruned(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            install("codex", project)
+
+            relative = ".codex/agents/obsolete.toml"
+            stale = project / relative
+            original = "generated obsolete projection\n"
+            stale.write_text(original, encoding="utf-8")
+
+            state_path = project / ".embraion/state/projections/codex.json"
+            state = read_json(state_path)
+            state["files"][relative] = hashlib.sha256(stale.read_bytes()).hexdigest()
+            write_json(state_path, state)
+
+            before = projection_plan("codex", project)
+            self.assertIn(relative, before["obsolete-owned"])
+
+            install("codex", project)
+            retained = projection_plan("codex", project)
+            self.assertIn(relative, retained["obsolete-owned"])
+
+            stale.write_text(original + "# local change\n", encoding="utf-8")
+            modified = projection_plan("codex", project)
+            self.assertIn(relative, modified["obsolete-modified"])
+
+            install("codex", project, prune=True)
+            self.assertTrue(stale.is_file())
+            still_modified = projection_plan("codex", project)
+            self.assertIn(relative, still_modified["obsolete-modified"])
+
+            stale.write_text(original, encoding="utf-8")
+            install("codex", project, prune=True)
+            self.assertFalse(stale.exists())
 
     def test_structured_knowledge_remains_backward_compatible(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -9,7 +9,11 @@ from embraion.context import build_context
 from embraion.evidence import complete_run, start_run
 from embraion.harness import audit_harness
 from embraion.project import init_project, install
-from embraion.security import redact_text
+from embraion.security import (
+    allowlisted_environment,
+    redact_child_output,
+    redact_text,
+)
 
 
 class RuntimeHardeningTests(unittest.TestCase):
@@ -122,6 +126,37 @@ class RuntimeHardeningTests(unittest.TestCase):
         redacted = redact_text(value)
         self.assertNotIn(secret, redacted)
         self.assertIn("<REDACTED>", redacted)
+
+    def test_environment_allowlist_excludes_unapproved_values(self) -> None:
+        sensitive_name = "PROVIDER_" + "TOKEN"
+        filtered = allowlisted_environment(
+            {
+                "PATH": "/tools",
+                "HOME": "/home/worker",
+                sensitive_name: "hidden",
+                "TASK_ID": "42",
+            },
+            extra=["TASK_ID"],
+        )
+        self.assertEqual(
+            {
+                "HOME": "/home/worker",
+                "PATH": "/tools",
+                "TASK_ID": "42",
+            },
+            filtered,
+        )
+        self.assertNotIn(sensitive_name, filtered)
+
+    def test_child_output_redaction_sanitizes_captured_streams(self) -> None:
+        secret = "abcdefgh" + "ijklmnop"
+        output = redact_child_output(
+            "token=" + secret,
+            "Authorization: Bearer " + secret,
+        )
+        combined = output["stdout"] + output["stderr"]
+        self.assertNotIn(secret, combined)
+        self.assertIn("<REDACTED>", combined)
 
     def test_harness_audit_reports_agents_and_skills(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

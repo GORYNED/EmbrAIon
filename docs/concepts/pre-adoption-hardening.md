@@ -40,4 +40,6 @@ Completed writable runs are checked against owned scope and project-protected pa
 
 Runtime state applies credential redaction before persistence.
 
+For child-process adapters owned by EmbrAIon, `allowlisted_environment()` constructs a minimal environment instead of forwarding the host environment wholesale, and `redact_child_output()` sanitizes captured stdout/stderr before persistence. Host-native agents launched by external hosts remain subject to those hosts' own environment controls.
+
 `embraion harness audit` reports generated agents and skills plus host-native hook/enforcement availability. Hook execution stays explicit: EmbrAIon does not silently install executable policy hooks into a consuming repository.

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Minimal child-process safety helpers for environment allowlisting and stdout/stderr redaction in future execution adapters.
+
+### Fixed
+
+- Projection ownership state now retains obsolete generated entries until clean files are explicitly pruned, so later diff/prune operations remain deterministic even after an install without `--prune`.
+
 ## 0.6.0 - 2026-09-24
 
 ### Added

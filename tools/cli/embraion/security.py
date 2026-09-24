@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 from .common import iter_text_files, read_json, state_root, write_json
 
@@ -186,3 +186,48 @@ def redact_value(value: Any) -> Any:
     if isinstance(value, tuple):
         return [redact_value(child) for child in value]
     return value
+
+
+DEFAULT_ENVIRONMENT_ALLOWLIST = frozenset(
+    {
+        "CI",
+        "COMSPEC",
+        "HOME",
+        "LANG",
+        "LC_ALL",
+        "PATH",
+        "PATHEXT",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "USERPROFILE",
+        "WINDIR",
+    }
+)
+
+
+def allowlisted_environment(
+    environment: Mapping[str, str],
+    *,
+    extra: Iterable[str] = (),
+) -> dict[str, str]:
+    allowed = set(DEFAULT_ENVIRONMENT_ALLOWLIST)
+    allowed.update(str(name) for name in extra)
+    return {
+        name: str(environment[name])
+        for name in sorted(allowed)
+        if name in environment
+    }
+
+
+def redact_child_output(
+    stdout: str | None,
+    stderr: str | None,
+) -> dict[str, str]:
+    return {
+        "stdout": redact_text(stdout or ""),
+        "stderr": redact_text(stderr or ""),
+    }
