@@ -1,14 +1,33 @@
 # Project Overlay
 
-A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional host routing overrides.
+A consuming repository opts into EmbrAIon through files under `.embraion/`. `project.yaml` keeps framework/project identity plus validation/agents/capabilities, `knowledge.yaml` owns project knowledge references, `policy.yaml` owns sources/review/privacy policy, and `routing.yaml` owns optional host routing overrides.
 
 The project configuration currently records:
 
-- `project.yaml` — declared EmbrAIon repository/version, project identity, project knowledge locations, validation profiles, project-specific agents, and local capabilities;
+- `project.yaml` — declared EmbrAIon repository/version, project identity, validation profiles, project-specific agents, and local capabilities;
+- `knowledge.yaml` — project knowledge paths plus optional data class, trust, role, and trigger metadata;
 - `policy.yaml` — canonical/protected/generated/external source patterns, substantial-review policy, and default privacy class;
 - `routing.yaml` — optional host model/effort/options overrides;
 
 Project configuration may add stricter rules but must not silently weaken Core hard gates.
+
+## Project knowledge
+
+Project knowledge references live in `.embraion/knowledge.yaml`:
+
+```yaml
+project: knowledge/project.md
+architecture:
+  path: knowledge/architecture.md
+  data-class: PRIVATE
+  trust: project
+  roles:
+    - architect
+  triggers:
+    - architecture
+```
+
+Context selection reads only this dedicated file. Knowledge content itself remains in ordinary project files; EmbrAIon stores references and selection metadata here.
 
 ## Project policy
 
