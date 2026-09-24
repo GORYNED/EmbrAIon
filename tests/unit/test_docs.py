@@ -16,6 +16,27 @@ DOCS = ROOT / "docs"
 SITE_URL = "https://goryned.github.io/EmbrAIon/"
 
 
+class _MkDocsSafeLoader(yaml.SafeLoader):
+    pass
+
+
+def _construct_python_name(
+    loader: yaml.SafeLoader,
+    tag_suffix: str,
+    node: yaml.Node,
+) -> str:
+    # Material for MkDocs uses !!python/name references for emoji helpers.
+    # Tests only need the surrounding mapping, so preserve the reference as
+    # inert text instead of importing or executing anything.
+    return tag_suffix
+
+
+_MkDocsSafeLoader.add_multi_constructor(
+    "tag:yaml.org,2002:python/name:",
+    _construct_python_name,
+)
+
+
 def _nav_targets(value: object) -> list[str]:
     targets: list[str] = []
 
@@ -33,7 +54,10 @@ def _nav_targets(value: object) -> list[str]:
 
 class DocumentationTests(unittest.TestCase):
     def test_mkdocs_nav_targets_exist(self) -> None:
-        config = yaml.safe_load((ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+        config = yaml.load(
+            (ROOT / "mkdocs.yml").read_text(encoding="utf-8"),
+            Loader=_MkDocsSafeLoader,
+        )
         targets = _nav_targets(config["nav"])
 
         self.assertIn("index.md", targets)

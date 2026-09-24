@@ -49,13 +49,18 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         )
 
     for path in iter_text_files(root):
+        relative = path.relative_to(root)
         try:
             if path.suffix.lower() in {".yaml", ".yml"}:
-                read_yaml(path)
+                # Tool-owned configuration can use valid custom YAML tags that
+                # are intentionally outside EmbrAIon's SafeLoader contract.
+                # MkDocs validates mkdocs.yml through the strict docs build.
+                if relative.as_posix() != "mkdocs.yml":
+                    read_yaml(path)
             elif path.suffix.lower() == ".json":
                 read_json(path)
         except Exception as error:
-            add("parse", str(path.relative_to(root)), str(error))
+            add("parse", str(relative), str(error))
 
     schema_pairs = [
         (root / "framework.yaml", root / "schemas/framework.schema.json"),
