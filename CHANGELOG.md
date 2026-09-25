@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- Framework updates can now recover host-projection ownership in fresh worktrees when gitignored projection state is absent. Recovery is accepted only for files that are byte-identical to the exact previous pinned-version projection; locally modified or unproven files still fail closed as conflicts.
+- Successful projection installation promotes recovered ownership into ordinary local projection state and removes the temporary recovery evidence.
+
 ## 0.10.0 - 2026-09-25
 
 ### Breaking
