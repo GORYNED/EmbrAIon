@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.3 - 2026-09-25
+
 ### Changed
 
 - Core agent access is now a host-agnostic contract projected into enforceable host-native controls for Codex, GitHub Copilot, and Claude Code; host and organization policy may tighten access but EmbrAIon never widens it.
