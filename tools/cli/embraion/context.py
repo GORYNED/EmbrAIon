@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .common import project_root, read_json, state_root, write_json
+from .contracts import PROJECT_CONTRACT_SLOTS
 from .policy import effective_policy, read_knowledge_config
 from .security import redact_value
 
@@ -26,28 +27,77 @@ def _normalize_entry(
     knowledge_id: str,
     value: Any,
     default_data_class: str,
+    *,
+    default_triggers: list[str] | None = None,
+    slot: str | None = None,
 ) -> dict[str, Any]:
     if isinstance(value, str):
-        return {
+        item = {
             "id": knowledge_id,
             "path": value,
             "data-class": default_data_class,
             "trust": "project",
             "roles": [],
-            "triggers": [],
+            "triggers": list(default_triggers or []),
+        }
+    else:
+        if not isinstance(value, dict) or not value.get("path"):
+            raise RuntimeError(f"Invalid knowledge entry '{knowledge_id}'.")
+
+        item = {
+            "id": knowledge_id,
+            "path": str(value["path"]),
+            "data-class": str(value.get("data-class", default_data_class)),
+            "trust": str(value.get("trust", "project")),
+            "roles": [str(entry) for entry in value.get("roles", [])],
+            "triggers": [
+                str(entry)
+                for entry in (
+                    value["triggers"]
+                    if "triggers" in value
+                    else (default_triggers or [])
+                )
+            ],
         }
 
-    if not isinstance(value, dict) or not value.get("path"):
-        raise RuntimeError(f"Invalid knowledge entry '{knowledge_id}'.")
+    if slot is not None:
+        item["slot"] = slot
+    return item
 
-    return {
-        "id": knowledge_id,
-        "path": str(value["path"]),
-        "data-class": str(value.get("data-class", default_data_class)),
-        "trust": str(value.get("trust", "project")),
-        "roles": [str(item) for item in value.get("roles", [])],
-        "triggers": [str(item) for item in value.get("triggers", [])],
-    }
+
+def _knowledge_entries(
+    knowledge: dict[str, Any],
+    default_data_class: str,
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    slot_bindings = knowledge.get("slots") or {}
+
+    for slot, metadata in PROJECT_CONTRACT_SLOTS.items():
+        raw = slot_bindings.get(slot)
+        if raw is None:
+            continue
+        entries.append(
+            _normalize_entry(
+                f"slot:{slot}",
+                raw,
+                default_data_class,
+                default_triggers=list(metadata["triggers"]),
+                slot=slot,
+            )
+        )
+
+    for knowledge_id, raw in knowledge.items():
+        if knowledge_id == "slots":
+            continue
+        entries.append(
+            _normalize_entry(
+                str(knowledge_id),
+                raw,
+                default_data_class,
+            )
+        )
+
+    return entries
 
 
 def _is_inside(project: Path, target: Path) -> bool:
@@ -64,6 +114,7 @@ def build_context(
     data_class: str,
     *,
     max_chars: int = 20000,
+    slots: list[str] | None = None,
     project: Path | None = None,
     persist: bool = True,
 ) -> dict[str, Any]:
@@ -71,6 +122,16 @@ def build_context(
         raise RuntimeError(f"Unknown data class: {data_class}")
     if max_chars < 0:
         raise RuntimeError("--max-chars must be zero or greater.")
+
+    requested_slots = list(dict.fromkeys(slots or []))
+    unknown_slots = [
+        slot for slot in requested_slots
+        if slot not in PROJECT_CONTRACT_SLOTS
+    ]
+    if unknown_slots:
+        raise RuntimeError(
+            "Unknown project contract slot(s): " + ", ".join(unknown_slots)
+        )
 
     root = project_root(project)
     knowledge = read_knowledge_config(root)
@@ -82,9 +143,16 @@ def build_context(
     excluded: list[dict[str, str]] = []
     total_chars = 0
 
-    for knowledge_id, raw in knowledge.items():
-        item = _normalize_entry(str(knowledge_id), raw, default_data)
+    configured_slots = knowledge.get("slots") or {}
+    for slot in requested_slots:
+        if configured_slots.get(slot) is None:
+            excluded.append(
+                {"id": f"slot:{slot}", "reason": "unconfigured"}
+            )
+
+    for item in _knowledge_entries(knowledge, default_data):
         item_data = item["data-class"]
+        force_slot = item.get("slot") in requested_slots
 
         if item_data not in DATA_LEVEL:
             excluded.append({"id": item["id"], "reason": "unknown-data-class"})
@@ -95,7 +163,7 @@ def build_context(
         if item["roles"] and role not in item["roles"]:
             excluded.append({"id": item["id"], "reason": "role"})
             continue
-        if item["triggers"] and not any(
+        if item["triggers"] and not force_slot and not any(
             trigger.lower() in task_lower for trigger in item["triggers"]
         ):
             excluded.append({"id": item["id"], "reason": "trigger"})
@@ -133,6 +201,7 @@ def build_context(
             "role": role,
             "data-class": data_class,
             "max-chars": max_chars,
+            "requested-slots": requested_slots,
             "selected": selected,
             "excluded": excluded,
             "total-chars": total_chars,
