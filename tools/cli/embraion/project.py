@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -21,6 +23,7 @@ from .common import (
     write_yaml,
 )
 from .policy import read_agents_config
+from .versioning import ensure_cached_runtime
 
 
 HOST_SKILL_DIRECTORIES = {
@@ -371,7 +374,13 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
             "launcher version first, then run 'embraion update'."
         )
 
+    recovery = _capture_prior_projection_evidence(
+        destination,
+        source_version=str(previous or "").strip(),
+        target_version=current,
+    )
     normalize_project_config(destination, version=current)
+    _persist_projection_recovery_evidence(destination, recovery)
     return previous, current
 
 
@@ -727,6 +736,163 @@ def _projection_state_path(project: Path, host: str) -> Path:
     return state_root(project) / "projections" / f"{host}.json"
 
 
+def _projection_recovery_path(project: Path, host: str) -> Path:
+    return state_root(project) / "projections" / f"{host}.recovery.json"
+
+
+def _host_has_projection_candidates(host: str, destination: Path) -> bool:
+    hints = {
+        "codex": (
+            destination / ".codex",
+            destination / ".agents" / "skills",
+        ),
+        "copilot": (
+            destination / ".github" / "agents",
+            destination / ".github" / "skills",
+        ),
+        "claude-code": (
+            destination / ".claude" / "agents",
+            destination / ".claude" / "skills",
+        ),
+        "portable": (destination / "embraion",),
+    }
+    return any(path.exists() for path in hints.get(host, ()))
+
+
+def _generate_host_with_cached_runtime(
+    runtime_python: Path,
+    runtime_root: Path,
+    host: str,
+    output: Path,
+    project: Path,
+) -> None:
+    code = (
+        "import sys; "
+        "from pathlib import Path; "
+        "from embraion.common import framework_root; "
+        "from embraion.project import generate_host; "
+        "generate_host("
+        "framework_root(), sys.argv[1], Path(sys.argv[2]), "
+        "project=Path(sys.argv[3]))"
+    )
+    environment = os.environ.copy()
+    environment["EMBRAION_HOME"] = str(runtime_root)
+    environment["EMBRAION_DISABLE_VERSION_RESOLUTION"] = "1"
+    subprocess.run(
+        [
+            str(runtime_python),
+            "-c",
+            code,
+            host,
+            str(output),
+            str(project),
+        ],
+        cwd=str(project),
+        env=environment,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+
+
+def _capture_prior_projection_evidence(
+    project: Path,
+    *,
+    source_version: str,
+    target_version: str,
+) -> dict[str, dict[str, Any]]:
+    if not source_version or source_version == target_version:
+        return {}
+
+    candidates = [
+        host
+        for host in HOST_COMPONENTS
+        if _load_projection_state(project, host, project) is None
+        and _host_has_projection_candidates(host, project)
+    ]
+    if not candidates:
+        return {}
+
+    try:
+        runtime = ensure_cached_runtime(source_version)
+    except Exception:
+        return {}
+
+    evidence: dict[str, dict[str, Any]] = {}
+    for host in candidates:
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix=f"embraion-recovery-{host}-"
+            ) as temporary:
+                generated = Path(temporary)
+                _generate_host_with_cached_runtime(
+                    runtime.python,
+                    runtime.framework_root,
+                    host,
+                    generated,
+                    project,
+                )
+                generated_files = _file_hashes(generated)
+                matched = {
+                    relative: digest
+                    for relative, digest in generated_files.items()
+                    if (target := project / relative).is_file()
+                    and _sha256(target) == digest
+                }
+        except Exception:
+            continue
+
+        if not matched:
+            continue
+
+        evidence[host] = {
+            "schema-version": 1,
+            "source-framework-version": source_version,
+            "target-framework-version": target_version,
+            "host": host,
+            "destination": str(project.resolve()),
+            "managed-components": sorted(
+                {
+                    component
+                    for relative in matched
+                    if (component := _component_for_path(host, relative))
+                }
+            ),
+            "files": matched,
+        }
+
+    return evidence
+
+
+def _persist_projection_recovery_evidence(
+    project: Path,
+    evidence: dict[str, dict[str, Any]],
+) -> None:
+    for host, record in evidence.items():
+        write_json(_projection_recovery_path(project, host), record)
+
+
+def _load_projection_recovery(
+    project: Path,
+    host: str,
+    destination: Path,
+) -> dict[str, Any] | None:
+    path = _projection_recovery_path(project, host)
+    if not path.is_file():
+        return None
+
+    data = read_json(path) or {}
+    if data.get("destination") != str(destination.resolve()):
+        return None
+
+    manifest = read_yaml(project / ".embraion" / "project.yaml") or {}
+    current_pin = str((manifest.get("framework") or {}).get("version", ""))
+    if data.get("target-framework-version") != current_pin:
+        return None
+    return data
+
+
 def _load_projection_state(
     project: Path,
     host: str,
@@ -750,7 +916,12 @@ def _projection_plan_from_generated(
 ) -> dict[str, Any]:
     project = project_root(destination)
     previous = _load_projection_state(project, host, destination)
-    previous_files = (previous or {}).get("files") or {}
+    recovery = (
+        None
+        if previous is not None
+        else _load_projection_recovery(project, host, destination)
+    )
+    previous_files = (previous or recovery or {}).get("files") or {}
     generated_files = _file_hashes(generated)
 
     plan: dict[str, Any] = {
@@ -764,6 +935,16 @@ def _projection_plan_from_generated(
         "conflict": [],
         "obsolete-owned": [],
         "obsolete-modified": [],
+        "ownership-recovery": (
+            {
+                "source-framework-version": recovery.get(
+                    "source-framework-version"
+                ),
+                "files": sorted((recovery.get("files") or {}).keys()),
+            }
+            if recovery
+            else None
+        ),
     }
 
     for relative, generated_hash in generated_files.items():
@@ -883,7 +1064,12 @@ def install(
             shutil.copy2(source, target)
 
         previous = _load_projection_state(project, host, destination)
-        previous_files = (previous or {}).get("files") or {}
+        recovery = (
+            None
+            if previous is not None
+            else _load_projection_recovery(project, host, destination)
+        )
+        previous_files = (previous or recovery or {}).get("files") or {}
 
         if prune:
             for relative in plan["obsolete-owned"]:
@@ -916,7 +1102,7 @@ def install(
                 "host": host,
                 "destination": str(destination),
                 "managed-components": sorted(
-                    set((previous or {}).get("managed-components") or [])
+                    set((previous or recovery or {}).get("managed-components") or [])
                     | {
                         component
                         for relative in previous_files
@@ -927,4 +1113,7 @@ def install(
                 "files": current_files,
             },
         )
+        recovery_path = _projection_recovery_path(project, host)
+        if recovery_path.is_file():
+            recovery_path.unlink()
         return plan
