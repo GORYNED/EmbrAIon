@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- Canonical Project Contract Slots in `.embraion/knowledge.yaml` for constitution, architecture, source authority, compatibility, persistence, project engineering workflow, and specification bindings.
+- `embraion context slots` for inspecting configured project bindings, plus repeatable `context build --slot` requests for explicit semantic context selection.
+
+### Changed
+
+- New project configuration seeds the canonical slot catalog with unbound values while preserving arbitrary project knowledge entries.
+- Core context selection applies framework-owned default task triggers to bound contract slots and keeps project-owned metadata overrides authoritative.
+
 ## 0.9.4 - 2026-09-25
 
 ### Changed
