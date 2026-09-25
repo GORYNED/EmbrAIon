@@ -32,6 +32,8 @@ An **agent** expresses responsibility and ownership. A **skill** describes a rep
 
 Project-specific domain specialists belong in the consuming repository rather than generic Core. They are declared in `.embraion/agents.yaml` and can optionally extend a compatible non-Lead Core role while preserving its access boundary.
 
+Delegation is owned by the Lead. Every projected non-Lead Core role carries a hard `do not recursively delegate` restriction, and project specialists inherit that restriction from their Core parent. This keeps the execution tree bounded and prevents workers, reviewers, validators, or specialists from creating uncontrolled child-agent chains.
+
 A task is therefore composed from more than a persona:
 
 ```text
