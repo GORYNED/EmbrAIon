@@ -11,6 +11,7 @@ from embraion import __version__
 from embraion.common import read_json, read_yaml, write_json, write_yaml
 from embraion.policy import effective_policy
 from embraion.project import (
+    _host_access_projection,
     init_project,
     install,
     normalize_project_config,
@@ -347,6 +348,25 @@ class ProjectionPolicyTests(unittest.TestCase):
                         for path in skills_root.glob("*/SKILL.md")
                     },
                 )
+
+    def test_host_access_projection_fails_closed(self) -> None:
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "unsupported access mapping",
+        ):
+            _host_access_projection(
+                "copilot",
+                {"id": "unsafe", "access": "unrestricted"},
+            )
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "no enforceable agent access projection",
+        ):
+            _host_access_projection(
+                "portable",
+                {"id": "worker", "access": "workspace-write"},
+            )
 
     def test_project_agents_extend_core_roles_and_project_to_hosts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
