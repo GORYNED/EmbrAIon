@@ -190,6 +190,22 @@ embraion context build \
   --max-chars 20000
 ```
 
+Canonical Project Contract Slots can also be requested explicitly:
+
+```bash
+embraion context slots
+embraion context slots --json
+
+embraion context build \
+  --task "Review persistence compatibility" \
+  --role reviewer \
+  --slot persistence \
+  --slot compatibility \
+  --data PRIVATE
+```
+
+`--slot` is repeatable and accepts: `constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, and `specification`. An explicit slot request bypasses its default task-term trigger but still respects project-configured role and privacy restrictions.
+
 The saved record stores provenance metadata and hashes, not duplicated knowledge contents.
 
 ```bash
