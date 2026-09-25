@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed
+
+- Generated GitHub Copilot agents now opt into repository custom instructions when invoked as subagents, closing the default delivery gap for repository governance such as `AGENTS.md`.
+- Copilot adapter documentation now distinguishes requested tool aliases from effective host capabilities and documents skills as root/session-owned unless explicit per-subagent delivery is supported.
+- Core skill documentation no longer assumes automatic root-to-subagent skill inheritance across hosts.
+
+### Fixed
+
+- Copilot custom-agent projections now emit `include-custom-instructions: true`, with contract tests covering Core agents and inherited project agents.
+
 ## 0.9.3 - 2026-09-25
 
 ### Changed
