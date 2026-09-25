@@ -385,6 +385,7 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
 
 
 PROJECT_AGENT_ACCESS = {"read-only", "workspace-write"}
+NON_LEAD_DELEGATION_RESTRICTION = "do not recursively delegate"
 
 
 def _core_agents(root: Path) -> list[dict[str, Any]]:
@@ -485,6 +486,7 @@ def _project_agents(
                 ),
                 "restrictions": _merge_agent_items(
                     base.get("restrictions"),
+                    [NON_LEAD_DELEGATION_RESTRICTION],
                     definition.get("restrictions"),
                 ),
                 "triggers": _merge_agent_items(
