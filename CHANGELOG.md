@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Changed
+
+- Core agent access is now a host-agnostic contract projected into enforceable host-native controls for Codex, GitHub Copilot, and Claude Code; host and organization policy may tighten access but EmbrAIon never widens it.
+
+### Fixed
+
+- Claude Code agent projections now include explicit `tools` allowlists derived from Core `read-only` / `workspace-write` access instead of relying only on textual restrictions.
+- Host access projection now fails closed when a supported execution host lacks a mapping for an agent access class.
+
 ## 0.9.2 - 2026-09-25
 
 ### Added
