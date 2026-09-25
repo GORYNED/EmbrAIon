@@ -710,6 +710,22 @@ class ProjectionPolicyTests(unittest.TestCase):
                 read_yaml(knowledge_path)["architecture"]["path"],
             )
 
+    def test_slots_is_a_reserved_top_level_knowledge_key(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            write_yaml(
+                knowledge_path,
+                {"slots": "knowledge/legacy-slots.md"},
+            )
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                ".embraion/knowledge.yaml",
+            ):
+                read_knowledge_config(project)
+
     def test_project_contract_slots_select_bound_context(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
