@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.9.2 - 2026-09-25
+
+### Added
+
+- Core Artifact Authority rule: project-specific naming, layout, schema, and formatting conventions apply to project-owned surfaces, while host-, framework-, tool-, package-, external-, and vendor-owned artifacts preserve their authoritative contracts.
+
+### Fixed
+
+- GitHub Copilot projections now map Core agent access to explicit host tool permissions, keeping read-only agents limited to read/search capabilities and writable agents explicitly scoped to read/search/edit/execute.
+- Copilot projection contract tests now verify all seven projected Core agents, all eight Core skills, Lead exclusion, model-agnostic frontmatter, and inherited project-agent permissions.
+
 ## 0.9.1 - 2026-09-24
 
 ### Fixed
