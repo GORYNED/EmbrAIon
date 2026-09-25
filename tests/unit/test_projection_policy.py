@@ -9,7 +9,12 @@ import yaml
 
 from embraion import __version__
 from embraion.common import read_json, read_yaml, write_json, write_yaml
-from embraion.policy import effective_policy
+from embraion.context import build_context
+from embraion.contracts import (
+    PROJECT_CONTRACT_SLOT_NAMES,
+    project_contract_status,
+)
+from embraion.policy import effective_policy, read_knowledge_config
 from embraion.project import (
     _host_access_projection,
     init_project,
@@ -33,7 +38,13 @@ class ProjectionPolicyTests(unittest.TestCase):
             agents = read_yaml(project / ".embraion/agents.yaml")
             project_manifest = read_yaml(project / ".embraion/project.yaml")
             self.assertEqual({"overrides": {}}, routing)
-            self.assertEqual({}, knowledge)
+            self.assertEqual(
+                set(PROJECT_CONTRACT_SLOT_NAMES),
+                set(knowledge["slots"]),
+            )
+            self.assertTrue(
+                all(value is None for value in knowledge["slots"].values())
+            )
             self.assertEqual(
                 {"fast": [], "affected": [], "full": []},
                 validation["profiles"],
@@ -97,6 +108,12 @@ class ProjectionPolicyTests(unittest.TestCase):
             }
             write_yaml(routing_path, routing)
 
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            write_yaml(
+                knowledge_path,
+                {"legacy-project": "knowledge/project.md"},
+            )
+
             install("codex", project)
             projection_path = project / ".codex" / "config.toml"
             projection_before = projection_path.read_bytes()
@@ -143,6 +160,15 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertEqual(
                 __version__,
                 str(read_yaml(manifest)["framework"]["version"]),
+            )
+            updated_knowledge = read_yaml(knowledge_path)
+            self.assertEqual(
+                "knowledge/project.md",
+                updated_knowledge["legacy-project"],
+            )
+            self.assertEqual(
+                set(PROJECT_CONTRACT_SLOT_NAMES),
+                set(updated_knowledge["slots"]),
             )
 
             self.assertEqual(projection_before, projection_path.read_bytes())
@@ -683,6 +709,90 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "knowledge/architecture.md",
                 read_yaml(knowledge_path)["architecture"]["path"],
             )
+
+    def test_project_contract_slots_select_bound_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            docs = project / "docs"
+            docs.mkdir()
+            (docs / "architecture.md").write_text(
+                "project architecture",
+                encoding="utf-8",
+            )
+            (docs / "persistence.md").write_text(
+                "stable persisted identifiers",
+                encoding="utf-8",
+            )
+
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            knowledge = read_yaml(knowledge_path)
+            knowledge["slots"]["architecture"] = "docs/architecture.md"
+            knowledge["slots"]["persistence"] = {
+                "path": "docs/persistence.md",
+                "data-class": "PRIVATE",
+            }
+            write_yaml(knowledge_path, knowledge)
+
+            automatic = build_context(
+                "Review architecture ownership boundaries",
+                "architect",
+                "PRIVATE",
+                project=project,
+                persist=False,
+            )
+            self.assertEqual(
+                ["slot:architecture"],
+                [item["id"] for item in automatic["selected"]],
+            )
+            self.assertEqual(
+                "architecture",
+                automatic["selected"][0]["slot"],
+            )
+
+            forced = build_context(
+                "Review this change",
+                "reviewer",
+                "PRIVATE",
+                slots=["persistence"],
+                project=project,
+                persist=False,
+            )
+            self.assertIn(
+                "slot:persistence",
+                [item["id"] for item in forced["selected"]],
+            )
+            self.assertEqual(["persistence"], forced["requested-slots"])
+
+    def test_project_contract_status_reports_bound_and_missing_slots(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            docs = project / "docs"
+            docs.mkdir()
+            (docs / "architecture.md").write_text(
+                "architecture",
+                encoding="utf-8",
+            )
+
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            knowledge = read_yaml(knowledge_path)
+            knowledge["slots"]["architecture"] = "docs/architecture.md"
+            knowledge["slots"]["compatibility"] = "docs/missing.md"
+            write_yaml(knowledge_path, knowledge)
+
+            report = project_contract_status(
+                read_knowledge_config(project),
+                project,
+            )
+            by_id = {item["id"]: item for item in report["slots"]}
+            self.assertTrue(by_id["architecture"]["configured"])
+            self.assertTrue(by_id["architecture"]["exists"])
+            self.assertTrue(by_id["compatibility"]["configured"])
+            self.assertFalse(by_id["compatibility"]["exists"])
+            self.assertFalse(by_id["persistence"]["configured"])
+            self.assertEqual(2, report["configured"])
+            self.assertEqual(1, report["available"])
 
 
 if __name__ == "__main__":
