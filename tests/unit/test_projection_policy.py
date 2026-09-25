@@ -316,6 +316,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                     encoding="utf-8"
                 )
                 self.assertIn(f'sandbox_mode = "{access}"', text)
+                self.assertIn("do not recursively delegate", text)
                 self.assertNotIn("model =", text)
 
             copilot_tools = {
@@ -330,9 +331,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertFalse((copilot_root / "lead.agent.md").exists())
             for agent_id, access in access_by_agent.items():
                 profile = copilot_root / f"{agent_id}.agent.md"
+                profile_text = profile.read_text(encoding="utf-8")
                 frontmatter = yaml.safe_load(
-                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                    profile_text.split("---", 2)[1]
                 )
+                self.assertIn("do not recursively delegate", profile_text)
                 self.assertEqual(copilot_tools[access], frontmatter["tools"])
                 self.assertIs(True, frontmatter["include-custom-instructions"])
                 self.assertIn("name", frontmatter)
@@ -358,9 +361,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertFalse((claude_root / "lead.md").exists())
             for agent_id, access in access_by_agent.items():
                 profile = claude_root / f"{agent_id}.md"
+                profile_text = profile.read_text(encoding="utf-8")
                 frontmatter = yaml.safe_load(
-                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                    profile_text.split("---", 2)[1]
                 )
+                self.assertIn("do not recursively delegate", profile_text)
                 self.assertEqual(claude_tools[access], frontmatter["tools"])
                 self.assertNotIn("include-custom-instructions", frontmatter)
                 self.assertIn("name", frontmatter)
@@ -452,6 +457,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "focus on project-specific domain contracts",
                 codex_text,
             )
+            self.assertIn("do not recursively delegate", codex_text)
             self.assertIn(
                 "Review project-specific domain behavior.",
                 copilot.read_text(encoding="utf-8"),
