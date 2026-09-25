@@ -42,7 +42,9 @@ EmbrAIon provides seven canonical semantic slots for project-specific truth:
 | `engineering-workflow` | project-specific execution gates and delivery workflow |
 | `specification` | requirements/specification system and artifact lifecycle |
 
-The slots are built into EmbrAIon; the project supplies only its own file references:
+The slots are built into EmbrAIon; the project supplies only its own file references.
+
+Starting with EmbrAIon v0.10.0, the top-level `slots` key in `.embraion/knowledge.yaml` is framework-reserved for this contract. This is an intentional pre-1.0 breaking cleanup; do not use `slots` as an arbitrary custom knowledge ID.
 
 ```yaml
 slots:
