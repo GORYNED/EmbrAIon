@@ -341,7 +341,10 @@ def _cmd_context_slots(args: argparse.Namespace) -> int:
     print()
     for item in report["slots"]:
         if item["configured"]:
-            state = "OK" if item["exists"] else "MISSING"
+            if item.get("inside-project") is False:
+                state = "INVALID"
+            else:
+                state = "OK" if item["exists"] else "MISSING"
             print(f"[{state}] {item['id']}: {item['path']}")
         else:
             print(f"[UNBOUND] {item['id']}")
