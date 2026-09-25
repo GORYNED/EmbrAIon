@@ -14,6 +14,7 @@ Current foundation rules are intentionally split by concern:
 - `classification.md`
 - `instructions.md`
 - `integrations.md`
+- `artifact-authority.md`
 - `security.md`
 - `learning.md`
 - `spec-kit.md`
