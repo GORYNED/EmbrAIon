@@ -68,6 +68,8 @@ slots:
 
 These slot names are framework-owned semantic extension points. EmbrAIon knows the reusable responsibility of each slot; the consuming repository owns the referenced content. Unbound slots remain null and are not selected.
 
+In v0.10.0 the top-level `slots` key becomes framework-reserved. This is an intentional pre-1.0 contract cleanup rather than a compatibility shim for hypothetical earlier custom entries named `slots`.
+
 Ordinary custom knowledge remains supported alongside slots:
 
 ```yaml
