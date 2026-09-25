@@ -316,6 +316,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                     encoding="utf-8"
                 )
                 self.assertIn(f'sandbox_mode = "{access}"', text)
+                self.assertIn("do not recursively delegate", text)
                 self.assertNotIn("model =", text)
 
             copilot_tools = {
@@ -330,9 +331,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertFalse((copilot_root / "lead.agent.md").exists())
             for agent_id, access in access_by_agent.items():
                 profile = copilot_root / f"{agent_id}.agent.md"
+                profile_text = profile.read_text(encoding="utf-8")
                 frontmatter = yaml.safe_load(
-                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                    profile_text.split("---", 2)[1]
                 )
+                self.assertIn("do not recursively delegate", profile_text)
                 self.assertEqual(copilot_tools[access], frontmatter["tools"])
                 self.assertIs(True, frontmatter["include-custom-instructions"])
                 self.assertIn("name", frontmatter)
@@ -358,9 +361,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertFalse((claude_root / "lead.md").exists())
             for agent_id, access in access_by_agent.items():
                 profile = claude_root / f"{agent_id}.md"
+                profile_text = profile.read_text(encoding="utf-8")
                 frontmatter = yaml.safe_load(
-                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                    profile_text.split("---", 2)[1]
                 )
+                self.assertIn("do not recursively delegate", profile_text)
                 self.assertEqual(claude_tools[access], frontmatter["tools"])
                 self.assertNotIn("include-custom-instructions", frontmatter)
                 self.assertIn("name", frontmatter)
@@ -399,7 +404,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 {"id": "worker", "access": "workspace-write"},
             )
 
-    def test_project_agents_extend_core_roles_and_project_to_hosts(self) -> None:
+    def test_project_agents_project_to_hosts_with_delegation_guard(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="Consumer")
@@ -420,7 +425,16 @@ class ProjectionPolicyTests(unittest.TestCase):
                             "restrictions": [
                                 "do not modify project files"
                             ],
-                        }
+                        },
+                        {
+                            "id": "standalone-specialist",
+                            "title": "Standalone Specialist",
+                            "purpose": "Analyze project-specific behavior.",
+                            "access": "read-only",
+                            "responsibilities": [
+                                "analyze a bounded project concern"
+                            ],
+                        },
                     ]
                 },
             )
@@ -452,6 +466,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "focus on project-specific domain contracts",
                 codex_text,
             )
+            self.assertIn("do not recursively delegate", codex_text)
             self.assertIn(
                 "Review project-specific domain behavior.",
                 copilot.read_text(encoding="utf-8"),
@@ -482,6 +497,19 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "include-custom-instructions",
                 claude_frontmatter,
             )
+
+            standalone_paths = (
+                project / ".codex" / "agents" / "standalone-specialist.toml",
+                project / ".github" / "agents" / "standalone-specialist.agent.md",
+                project / ".claude" / "agents" / "standalone-specialist.md",
+            )
+            for standalone in standalone_paths:
+                standalone_text = standalone.read_text(encoding="utf-8")
+                self.assertIn("do not recursively delegate", standalone_text)
+                self.assertIn(
+                    "analyze a bounded project concern",
+                    standalone_text,
+                )
 
             agents = read_yaml(agents_path)
             agents["agents"][0]["title"] = "Domain: Specialist"

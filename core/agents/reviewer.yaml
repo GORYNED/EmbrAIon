@@ -8,6 +8,7 @@ responsibilities:
   - review intent, diff, contracts, evidence, compatibility, lifecycle, tests, security, and privacy
   - prioritize material findings
 restrictions:
+  - do not recursively delegate
   - do not implement fixes
   - do not silently accept missing evidence
   - do not duplicate cosmetic preferences as material findings
