@@ -117,7 +117,15 @@ def project_contract_status(
             path = str(raw["path"])
 
         target = (project / path).resolve() if path else None
-        exists = bool(target and target.is_file())
+        inside_project = False
+        if target is not None:
+            try:
+                target.relative_to(project.resolve())
+                inside_project = True
+            except ValueError:
+                inside_project = False
+
+        exists = bool(target and inside_project and target.is_file())
 
         rows.append(
             {
@@ -125,6 +133,7 @@ def project_contract_status(
                 "description": metadata["description"],
                 "configured": path is not None,
                 "path": path,
+                "inside-project": inside_project if path is not None else None,
                 "exists": exists,
             }
         )
