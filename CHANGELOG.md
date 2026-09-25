@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-09-25
+
 ### Breaking
 
 - The top-level `slots` key in `.embraion/knowledge.yaml` is now reserved for Project Contract Slots. EmbrAIon is still pre-1.0 and this change intentionally establishes the clean contract instead of carrying a compatibility shim for arbitrary legacy entries named `slots`.
