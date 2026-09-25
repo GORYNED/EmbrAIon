@@ -47,3 +47,6 @@ rules:
   - project overlays may tighten but not silently widen access
   - writable access requires explicit owned scope
   - external-read receives only policy-approved context
+  - execution-host projections enforce Core agent access with host-native controls
+  - missing or unknown host access mappings fail closed
+  - host or organization policy may tighten access but must not widen Core access

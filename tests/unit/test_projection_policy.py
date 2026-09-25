@@ -11,6 +11,7 @@ from embraion import __version__
 from embraion.common import read_json, read_yaml, write_json, write_yaml
 from embraion.policy import effective_policy
 from embraion.project import (
+    _host_access_projection,
     init_project,
     install,
     normalize_project_config,
@@ -243,42 +244,27 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertTrue((project / ".github/skills/review/SKILL.md").is_file())
             self.assertTrue((project / ".claude/skills/review/SKILL.md").is_file())
 
-    def test_copilot_projection_enforces_tools_and_core_shape(self) -> None:
+    def test_execution_host_access_contract_and_core_shape(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="Consumer")
-            install(
-                "copilot",
-                project,
-                components=["agents", "skills"],
-            )
-
-            agents_root = project / ".github" / "agents"
-            expected_tools = {
-                "analyst": ["read", "search"],
-                "architect": ["read", "search"],
-                "researcher": ["read", "search"],
-                "reviewer": ["read", "search"],
-                "steward": ["read", "search", "edit", "execute"],
-                "validator": ["read", "search", "edit", "execute"],
-                "worker": ["read", "search", "edit", "execute"],
-            }
-            self.assertEqual(
-                {f"{agent_id}.agent.md" for agent_id in expected_tools},
-                {path.name for path in agents_root.glob("*.agent.md")},
-            )
-            self.assertFalse((agents_root / "lead.agent.md").exists())
-
-            for agent_id, tools in expected_tools.items():
-                profile = agents_root / f"{agent_id}.agent.md"
-                frontmatter = yaml.safe_load(
-                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+            for host in ("codex", "copilot", "claude-code"):
+                install(
+                    host,
+                    project,
+                    components=["agents", "skills"],
                 )
-                self.assertEqual(tools, frontmatter["tools"])
-                self.assertIn("name", frontmatter)
-                self.assertIn("description", frontmatter)
-                self.assertNotIn("model", frontmatter)
 
+            access_by_agent = {
+                "analyst": "read-only",
+                "architect": "read-only",
+                "researcher": "read-only",
+                "reviewer": "read-only",
+                "steward": "workspace-write",
+                "validator": "workspace-write",
+                "worker": "workspace-write",
+            }
+            expected_agents = set(access_by_agent)
             expected_skills = {
                 "debugging",
                 "implementation",
@@ -289,12 +275,97 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "validation",
                 "verification",
             }
+
+            codex_root = project / ".codex" / "agents"
             self.assertEqual(
-                expected_skills,
-                {
-                    path.parent.name
-                    for path in (project / ".github" / "skills").glob("*/SKILL.md")
-                },
+                {f"{agent_id}.toml" for agent_id in expected_agents},
+                {path.name for path in codex_root.glob("*.toml")},
+            )
+            self.assertFalse((codex_root / "lead.toml").exists())
+            for agent_id, access in access_by_agent.items():
+                text = (codex_root / f"{agent_id}.toml").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn(f'sandbox_mode = "{access}"', text)
+                self.assertNotIn("model =", text)
+
+            copilot_tools = {
+                "read-only": ["read", "search"],
+                "workspace-write": ["read", "search", "edit", "execute"],
+            }
+            copilot_root = project / ".github" / "agents"
+            self.assertEqual(
+                {f"{agent_id}.agent.md" for agent_id in expected_agents},
+                {path.name for path in copilot_root.glob("*.agent.md")},
+            )
+            self.assertFalse((copilot_root / "lead.agent.md").exists())
+            for agent_id, access in access_by_agent.items():
+                profile = copilot_root / f"{agent_id}.agent.md"
+                frontmatter = yaml.safe_load(
+                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                )
+                self.assertEqual(copilot_tools[access], frontmatter["tools"])
+                self.assertIn("name", frontmatter)
+                self.assertIn("description", frontmatter)
+                self.assertNotIn("model", frontmatter)
+
+            claude_tools = {
+                "read-only": ["Read", "Grep", "Glob"],
+                "workspace-write": [
+                    "Read",
+                    "Grep",
+                    "Glob",
+                    "Write",
+                    "Edit",
+                    "Bash",
+                ],
+            }
+            claude_root = project / ".claude" / "agents"
+            self.assertEqual(
+                {f"{agent_id}.md" for agent_id in expected_agents},
+                {path.name for path in claude_root.glob("*.md")},
+            )
+            self.assertFalse((claude_root / "lead.md").exists())
+            for agent_id, access in access_by_agent.items():
+                profile = claude_root / f"{agent_id}.md"
+                frontmatter = yaml.safe_load(
+                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                )
+                self.assertEqual(claude_tools[access], frontmatter["tools"])
+                self.assertIn("name", frontmatter)
+                self.assertIn("description", frontmatter)
+                self.assertNotIn("model", frontmatter)
+
+            for skills_root in (
+                project / ".agents" / "skills",
+                project / ".github" / "skills",
+                project / ".claude" / "skills",
+            ):
+                self.assertEqual(
+                    expected_skills,
+                    {
+                        path.parent.name
+                        for path in skills_root.glob("*/SKILL.md")
+                    },
+                )
+
+    def test_host_access_projection_fails_closed(self) -> None:
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "unsupported access mapping",
+        ):
+            _host_access_projection(
+                "copilot",
+                {"id": "unsafe", "access": "unrestricted"},
+            )
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "no enforceable agent access projection",
+        ):
+            _host_access_projection(
+                "portable",
+                {"id": "worker", "access": "workspace-write"},
             )
 
     def test_project_agents_extend_core_roles_and_project_to_hosts(self) -> None:
@@ -357,6 +428,20 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertIn(
                 "Review project-specific domain behavior.",
                 claude.read_text(encoding="utf-8"),
+            )
+            copilot_frontmatter = yaml.safe_load(
+                copilot.read_text(encoding="utf-8").split("---", 2)[1]
+            )
+            claude_frontmatter = yaml.safe_load(
+                claude.read_text(encoding="utf-8").split("---", 2)[1]
+            )
+            self.assertEqual(
+                ["read", "search"],
+                copilot_frontmatter["tools"],
+            )
+            self.assertEqual(
+                ["Read", "Grep", "Glob"],
+                claude_frontmatter["tools"],
             )
 
             agents = read_yaml(agents_path)
