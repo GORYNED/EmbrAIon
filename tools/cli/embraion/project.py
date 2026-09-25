@@ -35,6 +35,11 @@ HOST_COMPONENTS = {
     "portable": ("bundle",),
 }
 
+COPILOT_TOOLS_BY_ACCESS = {
+    "read-only": ("read", "search"),
+    "workspace-write": ("read", "search", "edit", "execute"),
+}
+
 _LOCAL_STATE_GITIGNORE = """# Local EmbrAIon runtime state
 state/
 cache/
@@ -539,6 +544,17 @@ def _generate_codex(
         (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
 
 
+def _copilot_tools(agent: dict[str, Any]) -> tuple[str, ...]:
+    access = str(agent.get("access") or "")
+    tools = COPILOT_TOOLS_BY_ACCESS.get(access)
+    if tools is None:
+        raise RuntimeError(
+            f"Agent '{agent.get('id', '<unknown>')}' has unsupported Copilot "
+            f"access mapping '{access}'."
+        )
+    return tools
+
+
 def _generate_markdown_agents(
     root: Path,
     output: Path,
@@ -562,13 +578,20 @@ def _generate_markdown_agents(
             "---",
             f"name: {__import__('json').dumps(str(agent['title']), ensure_ascii=False)}",
             f"description: {__import__('json').dumps(agent.get('purpose', ''), ensure_ascii=False)}",
-            "---",
-            "",
-            f"# {agent['title']}",
-            "",
-            _agent_instructions(agent),
-            "",
         ]
+        if host == "copilot":
+            lines.append("tools:")
+            lines.extend(f"  - {tool}" for tool in _copilot_tools(agent))
+        lines.extend(
+            [
+                "---",
+                "",
+                f"# {agent['title']}",
+                "",
+                _agent_instructions(agent),
+                "",
+            ]
+        )
         (target / f"{agent['id']}{suffix}").write_text("\n".join(lines), encoding="utf-8")
 
 

@@ -243,6 +243,60 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertTrue((project / ".github/skills/review/SKILL.md").is_file())
             self.assertTrue((project / ".claude/skills/review/SKILL.md").is_file())
 
+    def test_copilot_projection_enforces_tools_and_core_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            install(
+                "copilot",
+                project,
+                components=["agents", "skills"],
+            )
+
+            agents_root = project / ".github" / "agents"
+            expected_tools = {
+                "analyst": ["read", "search"],
+                "architect": ["read", "search"],
+                "researcher": ["read", "search"],
+                "reviewer": ["read", "search"],
+                "steward": ["read", "search", "edit", "execute"],
+                "validator": ["read", "search", "edit", "execute"],
+                "worker": ["read", "search", "edit", "execute"],
+            }
+            self.assertEqual(
+                {f"{agent_id}.agent.md" for agent_id in expected_tools},
+                {path.name for path in agents_root.glob("*.agent.md")},
+            )
+            self.assertFalse((agents_root / "lead.agent.md").exists())
+
+            for agent_id, tools in expected_tools.items():
+                profile = agents_root / f"{agent_id}.agent.md"
+                frontmatter = yaml.safe_load(
+                    profile.read_text(encoding="utf-8").split("---", 2)[1]
+                )
+                self.assertEqual(tools, frontmatter["tools"])
+                self.assertIn("name", frontmatter)
+                self.assertIn("description", frontmatter)
+                self.assertNotIn("model", frontmatter)
+
+            expected_skills = {
+                "debugging",
+                "implementation",
+                "planning",
+                "research",
+                "review",
+                "routing-configuration",
+                "validation",
+                "verification",
+            }
+            self.assertEqual(
+                expected_skills,
+                {
+                    path.parent.name
+                    for path in (project / ".github" / "skills").glob("*/SKILL.md")
+                },
+            )
+
     def test_project_agents_extend_core_roles_and_project_to_hosts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
@@ -309,11 +363,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             agents["agents"][0]["title"] = "Domain: Specialist"
             write_yaml(agents_path, agents)
             install("copilot", project, force=True)
-            frontmatter = copilot.read_text(encoding="utf-8").split("---", 2)[1]
-            self.assertEqual(
-                "Domain: Specialist",
-                yaml.safe_load(frontmatter)["name"],
+            frontmatter = yaml.safe_load(
+                copilot.read_text(encoding="utf-8").split("---", 2)[1]
             )
+            self.assertEqual("Domain: Specialist", frontmatter["name"])
+            self.assertEqual(["read", "search"], frontmatter["tools"])
 
     def test_project_agent_cannot_shadow_or_widen_core_role(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
