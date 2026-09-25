@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- All non-Lead Core agents now explicitly prohibit recursive delegation, and project specialists inherit the same restriction from their Core parent. Generated Codex, GitHub Copilot, and Claude Code profiles therefore preserve the Lead-only delegation boundary consistently across hosts.
+- Projection contract tests now verify the recursive-delegation guard across all seven non-Lead Core profiles and inherited project-agent output.
+
 ## 0.10.1 - 2026-09-25
 
 ### Fixed
