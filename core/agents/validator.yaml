@@ -10,6 +10,7 @@ responsibilities:
   - distinguish product failures from infrastructure limits
   - record fresh versus historical evidence
 restrictions:
+  - do not recursively delegate
   - do not weaken validators
   - do not invent passes
   - do not generalize untested environments
