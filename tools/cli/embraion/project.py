@@ -35,9 +35,21 @@ HOST_COMPONENTS = {
     "portable": ("bundle",),
 }
 
-COPILOT_TOOLS_BY_ACCESS = {
-    "read-only": ("read", "search"),
-    "workspace-write": ("read", "search", "edit", "execute"),
+HOST_ACCESS_PROJECTIONS = {
+    "codex": {
+        "read-only": {"sandbox_mode": "read-only"},
+        "workspace-write": {"sandbox_mode": "workspace-write"},
+    },
+    "copilot": {
+        "read-only": {"tools": ("read", "search")},
+        "workspace-write": {"tools": ("read", "search", "edit", "execute")},
+    },
+    "claude-code": {
+        "read-only": {"tools": ("Read", "Grep", "Glob")},
+        "workspace-write": {
+            "tools": ("Read", "Grep", "Glob", "Write", "Edit", "Bash"),
+        },
+    },
 }
 
 _LOCAL_STATE_GITIGNORE = """# Local EmbrAIon runtime state
@@ -532,27 +544,36 @@ def _generate_codex(
         if agent.get("id") == "lead":
             continue
 
-        sandbox = "workspace-write" if agent.get("access") == "workspace-write" else "read-only"
+        access_projection = _host_access_projection("codex", agent)
         instructions = _agent_instructions(agent).replace('"""', '\\"\\"\\"')
 
         content = (
             f'name = "{agent["id"]}"\n'
             f'description = {__import__("json").dumps(agent.get("purpose", ""), ensure_ascii=False)}\n'
-            f'sandbox_mode = "{sandbox}"\n'
+            f'sandbox_mode = "{access_projection["sandbox_mode"]}"\n'
             f'developer_instructions = """\n{instructions}\n"""\n'
         )
         (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
 
 
-def _copilot_tools(agent: dict[str, Any]) -> tuple[str, ...]:
-    access = str(agent.get("access") or "")
-    tools = COPILOT_TOOLS_BY_ACCESS.get(access)
-    if tools is None:
+def _host_access_projection(
+    host: str,
+    agent: dict[str, Any],
+) -> dict[str, Any]:
+    host_mappings = HOST_ACCESS_PROJECTIONS.get(host)
+    if host_mappings is None:
         raise RuntimeError(
-            f"Agent '{agent.get('id', '<unknown>')}' has unsupported Copilot "
-            f"access mapping '{access}'."
+            f"Host '{host}' has no enforceable agent access projection."
         )
-    return tools
+
+    access = str(agent.get("access") or "")
+    projection = host_mappings.get(access)
+    if projection is None:
+        raise RuntimeError(
+            f"Agent '{agent.get('id', '<unknown>')}' has unsupported access "
+            f"mapping '{access}' for host '{host}'."
+        )
+    return dict(projection)
 
 
 def _generate_markdown_agents(
@@ -579,9 +600,11 @@ def _generate_markdown_agents(
             f"name: {__import__('json').dumps(str(agent['title']), ensure_ascii=False)}",
             f"description: {__import__('json').dumps(agent.get('purpose', ''), ensure_ascii=False)}",
         ]
-        if host == "copilot":
+        access_projection = _host_access_projection(host, agent)
+        tools = access_projection.get("tools")
+        if tools:
             lines.append("tools:")
-            lines.extend(f"  - {tool}" for tool in _copilot_tools(agent))
+            lines.extend(f"  - {tool}" for tool in tools)
         lines.extend(
             [
                 "---",
