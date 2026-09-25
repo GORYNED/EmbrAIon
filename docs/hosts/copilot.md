@@ -28,6 +28,14 @@ embraion install --host copilot --destination .
 
 Generated files are projections. Project policy, knowledge, validation, agents, and optional routing overrides remain canonical under `.embraion/`.
 
+## Delivery semantics
+
+Generated Copilot agent profiles opt into repository instructions with `include-custom-instructions: true`. This matters when Copilot invokes a profile as a custom subagent: repository instruction files are not inherited by custom subagents by default. The host can still disable repository instructions globally, and host-level settings take precedence over the projection.
+
+The generated `tools` field is an allowlist over tools available on the active Copilot surface. EmbrAIon can request aliases such as `read`, `search`, `edit`, and `execute`, but does not treat every requested alias as a guarantee that the host exposes a corresponding effective tool in every custom-subagent context.
+
+Skills under `.github/skills/` are projected as root/session procedural capabilities. The Copilot adapter does not promise automatic skill inheritance by every custom subagent unless GitHub exposes and EmbrAIon explicitly configures such a delivery contract.
+
 ## Routing
 
 GitHub Copilot remains authoritative for the models and options available to the current account. EmbrAIon does not maintain a Copilot model catalog.

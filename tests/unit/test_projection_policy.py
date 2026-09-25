@@ -305,6 +305,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                     profile.read_text(encoding="utf-8").split("---", 2)[1]
                 )
                 self.assertEqual(copilot_tools[access], frontmatter["tools"])
+                self.assertIs(True, frontmatter["include-custom-instructions"])
                 self.assertIn("name", frontmatter)
                 self.assertIn("description", frontmatter)
                 self.assertNotIn("model", frontmatter)
@@ -332,6 +333,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                     profile.read_text(encoding="utf-8").split("---", 2)[1]
                 )
                 self.assertEqual(claude_tools[access], frontmatter["tools"])
+                self.assertNotIn("include-custom-instructions", frontmatter)
                 self.assertIn("name", frontmatter)
                 self.assertIn("description", frontmatter)
                 self.assertNotIn("model", frontmatter)
@@ -439,9 +441,17 @@ class ProjectionPolicyTests(unittest.TestCase):
                 ["read", "search"],
                 copilot_frontmatter["tools"],
             )
+            self.assertIs(
+                True,
+                copilot_frontmatter["include-custom-instructions"],
+            )
             self.assertEqual(
                 ["Read", "Grep", "Glob"],
                 claude_frontmatter["tools"],
+            )
+            self.assertNotIn(
+                "include-custom-instructions",
+                claude_frontmatter,
             )
 
             agents = read_yaml(agents_path)
@@ -453,6 +463,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             )
             self.assertEqual("Domain: Specialist", frontmatter["name"])
             self.assertEqual(["read", "search"], frontmatter["tools"])
+            self.assertIs(True, frontmatter["include-custom-instructions"])
 
     def test_project_agent_cannot_shadow_or_widen_core_role(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

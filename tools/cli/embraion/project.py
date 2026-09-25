@@ -605,6 +605,8 @@ def _generate_markdown_agents(
         if tools:
             lines.append("tools:")
             lines.extend(f"  - {tool}" for tool in tools)
+        if host == "copilot":
+            lines.append("include-custom-instructions: true")
         lines.extend(
             [
                 "---",
