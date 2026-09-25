@@ -9,6 +9,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from . import __version__
+from .contracts import default_project_contract_slots
 from .common import (
     framework_root,
     framework_version,
@@ -124,7 +125,7 @@ def _default_routing_config() -> dict[str, Any]:
 
 
 def _default_knowledge_config() -> dict[str, Any]:
-    return {}
+    return {"slots": default_project_contract_slots()}
 
 
 def _default_validation_config() -> dict[str, Any]:
