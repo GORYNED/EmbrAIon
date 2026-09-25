@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.4 - 2026-09-25
+
 ### Changed
 
 - Generated GitHub Copilot agents now opt into repository custom instructions when invoked as subagents, closing the default delivery gap for repository governance such as `AGENTS.md`.
