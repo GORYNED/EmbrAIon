@@ -28,6 +28,57 @@ A practical rule is:
 
 Reusable engineering procedures and universal EmbrAIon safety rules belong in Core instead.
 
+## Project Contract Slots
+
+EmbrAIon provides seven canonical semantic slots for project-specific truth:
+
+| Slot | Project-owned meaning |
+| --- | --- |
+| `constitution` | durable project governance and engineering principles |
+| `architecture` | architecture, ownership boundaries, and dependency direction |
+| `source-authority` | canonical sources, source-of-truth, vendor/protected ownership |
+| `compatibility` | compatibility, migration, versioning, and schema constraints |
+| `persistence` | persisted identities, serialization, storage, and recovery semantics |
+| `engineering-workflow` | project-specific execution gates and delivery workflow |
+| `specification` | requirements/specification system and artifact lifecycle |
+
+The slots are built into EmbrAIon; the project supplies only its own file references.
+
+Starting with EmbrAIon v0.10.0, the top-level `slots` key in `.embraion/knowledge.yaml` is framework-reserved for this contract. This is an intentional pre-1.0 breaking cleanup; do not use `slots` as an arbitrary custom knowledge ID.
+
+```yaml
+slots:
+  constitution: .specify/memory/constitution.md
+  architecture: docs/architecture/current.md
+  source-authority: docs/references/project-sources.md
+  compatibility: docs/compatibility.md
+  persistence: docs/persistence.md
+  engineering-workflow: .agents/skills/engineering-workflow/SKILL.md
+  specification: .specify/integration.md
+```
+
+Unconfigured slots remain `null`. Projects do not need to invent placeholder documents just to fill every slot.
+
+Each slot has framework-owned default task triggers. A structured binding may override `data-class`, `trust`, `roles`, or `triggers` exactly like an ordinary knowledge entry. Passing `triggers: []` intentionally makes the configured slot eligible without a task-term filter.
+
+Inspect bindings with:
+
+```bash
+embraion context slots
+```
+
+Force a relevant configured slot into a context selection without depending on trigger matching:
+
+```bash
+embraion context build \
+  --task "Review a persistence migration" \
+  --role reviewer \
+  --slot persistence \
+  --data PRIVATE
+```
+
+Project/domain-specific knowledge that does not fit a reusable semantic slot remains an ordinary custom entry or scoped project instruction. The slot catalog is intentionally small so EmbrAIon stays generic.
+
 ## Keep knowledge in ordinary project files
 
 A common layout is:

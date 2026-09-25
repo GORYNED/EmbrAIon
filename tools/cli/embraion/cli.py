@@ -9,6 +9,10 @@ from pathlib import Path
 from . import __version__
 from .common import find_project_root, framework_root, project_root
 from .context import build_context, read_context
+from .contracts import (
+    PROJECT_CONTRACT_SLOT_NAMES,
+    project_contract_status,
+)
 from .evidence import complete_run, read_run, start_run
 from .enforcement import (
     check_enforcement,
@@ -18,7 +22,7 @@ from .enforcement import (
 from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
-from .policy import effective_policy
+from .policy import effective_policy, read_knowledge_config
 from .project import init_project, install, projection_plan, sync, update_project
 from .project_validation import run_validation_profile, validation_profiles
 from .runtime import create_dispatch, read_session, route, start_session, update_session
@@ -309,6 +313,7 @@ def _cmd_context_build(args: argparse.Namespace) -> int:
             args.role,
             args.data,
             max_chars=args.max_chars,
+            slots=args.slot,
         )
     )
     return 0
@@ -316,6 +321,38 @@ def _cmd_context_build(args: argparse.Namespace) -> int:
 
 def _cmd_context_show(args: argparse.Namespace) -> int:
     _print_json(read_context(args.context_id))
+    return 0
+
+
+def _cmd_context_slots(args: argparse.Namespace) -> int:
+    project = find_project_root()
+    if project is None:
+        raise RuntimeError("No EmbrAIon project detected.")
+
+    report = project_contract_status(
+        read_knowledge_config(project),
+        project,
+    )
+    if args.json:
+        _print_json(report)
+        return 0
+
+    print("Project Contract Slots")
+    print()
+    for item in report["slots"]:
+        if item["configured"]:
+            if item.get("inside-project") is False:
+                state = "INVALID"
+            else:
+                state = "OK" if item["exists"] else "MISSING"
+            print(f"[{state}] {item['id']}: {item['path']}")
+        else:
+            print(f"[UNBOUND] {item['id']}")
+    print()
+    print(
+        f"Configured: {report['configured']}/{report['total']}  "
+        f"Available: {report['available']}/{report['total']}"
+    )
     return 0
 
 
@@ -1144,7 +1181,23 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
     )
     context_build.add_argument("--max-chars", type=int, default=20000)
+    context_build.add_argument(
+        "--slot",
+        action="append",
+        choices=PROJECT_CONTRACT_SLOT_NAMES,
+        help=(
+            "Force-include a configured canonical project contract slot. "
+            "Repeat for multiple slots."
+        ),
+    )
     context_build.set_defaults(func=_cmd_context_build)
+
+    context_slots = context_sub.add_parser(
+        "slots",
+        help="Show canonical project contract slot bindings",
+    )
+    context_slots.add_argument("--json", action="store_true")
+    context_slots.set_defaults(func=_cmd_context_slots)
 
     context_show = context_sub.add_parser("show", help="Show a context selection record")
     context_show.add_argument("context_id")

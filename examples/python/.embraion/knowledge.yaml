@@ -1,2 +1,9 @@
+slots:
+  constitution:
+  architecture: knowledge/architecture.md
+  source-authority:
+  compatibility:
+  persistence:
+  engineering-workflow:
+  specification:
 project: knowledge/project.md
-architecture: knowledge/architecture.md

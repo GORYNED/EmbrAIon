@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 from embraion import __version__
 
 
@@ -171,6 +173,101 @@ class CliIntegrationTests(unittest.TestCase):
             prune_report = json.loads(pruned.stdout)
             self.assertEqual([], prune_report["candidates"])
             self.assertFalse(prune_report["apply"])
+
+    def test_context_slots_and_explicit_slot_build(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "SlotDemo", cwd=project)
+
+            docs = project / "docs"
+            docs.mkdir()
+            (docs / "architecture.md").write_text(
+                "project architecture",
+                encoding="utf-8",
+            )
+
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
+            knowledge["slots"]["architecture"] = "docs/architecture.md"
+            knowledge_path.write_text(
+                yaml.safe_dump(knowledge, sort_keys=False),
+                encoding="utf-8",
+            )
+
+            listed = self._run("context", "slots", "--json", cwd=project)
+            report = json.loads(listed.stdout)
+            by_id = {item["id"]: item for item in report["slots"]}
+            self.assertTrue(by_id["architecture"]["configured"])
+            self.assertTrue(by_id["architecture"]["inside-project"])
+            self.assertTrue(by_id["architecture"]["exists"])
+            self.assertFalse(by_id["persistence"]["configured"])
+
+            built = self._run(
+                "context",
+                "build",
+                "--task",
+                "Review this change",
+                "--role",
+                "architect",
+                "--slot",
+                "architecture",
+                "--data",
+                "PRIVATE",
+                cwd=project,
+            )
+            context = json.loads(built.stdout)
+            self.assertEqual(["architecture"], context["requested-slots"])
+            self.assertIn(
+                "slot:architecture",
+                [item["id"] for item in context["selected"]],
+            )
+
+    def test_context_slots_reject_outside_project_binding(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = root / "project"
+            project.mkdir()
+            (root / "outside.md").write_text("outside", encoding="utf-8")
+            self._run("init", ".", "--name", "SlotBoundary", cwd=project)
+
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            knowledge = yaml.safe_load(knowledge_path.read_text(encoding="utf-8"))
+            knowledge["slots"]["architecture"] = "../outside.md"
+            knowledge_path.write_text(
+                yaml.safe_dump(knowledge, sort_keys=False),
+                encoding="utf-8",
+            )
+
+            listed = self._run("context", "slots", "--json", cwd=project)
+            report = json.loads(listed.stdout)
+            architecture = next(
+                item for item in report["slots"]
+                if item["id"] == "architecture"
+            )
+            self.assertTrue(architecture["configured"])
+            self.assertFalse(architecture["inside-project"])
+            self.assertFalse(architecture["exists"])
+
+            built = self._run(
+                "context",
+                "build",
+                "--task",
+                "Review architecture",
+                "--role",
+                "architect",
+                "--slot",
+                "architecture",
+                "--data",
+                "PRIVATE",
+                cwd=project,
+            )
+            context = json.loads(built.stdout)
+            self.assertEqual([], context["selected"])
+            self.assertIn(
+                {"id": "slot:architecture", "reason": "outside-project"},
+                context["excluded"],
+            )
 
 
 if __name__ == "__main__":

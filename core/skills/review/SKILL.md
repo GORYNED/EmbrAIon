@@ -7,7 +7,7 @@ description: Independently review a completed candidate for correctness, regress
 
 ## Procedure
 
-1. Read intent, canonical contracts, candidate diff, fresh validation evidence, and known risks.
+1. Read intent, canonical contracts, candidate diff, fresh validation evidence, and known risks. Resolve configured Project Contract Slots that match the review surface, especially architecture, source authority, compatibility, persistence, and specification.
 2. Review correctness before style.
 3. Check compatibility, persistence, lifecycle, concurrency, dependency boundaries, tests, platform assumptions, security, and privacy as applicable.
 4. Rank findings by material impact.

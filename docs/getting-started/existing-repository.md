@@ -19,7 +19,7 @@ This creates `.embraion/` configuration and local state/cache ignore rules. It d
 
 Before generating host files, configure the project-owned source of truth:
 
-- `.embraion/knowledge.yaml` — architecture, product, domain, compatibility, and other knowledge files;
+- `.embraion/knowledge.yaml` — bind the built-in Project Contract Slots (`constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, `specification`) to existing project files, then add only truly project-specific extra knowledge;
 - `.embraion/policy.yaml` — canonical/protected/generated/external paths, privacy, and review policy;
 - `.embraion/validation.yaml` — real project validation commands;
 - `.embraion/agents.yaml` — only project-specific specialists you actually need.
@@ -74,6 +74,7 @@ Run:
 ```bash
 embraion doctor
 embraion status
+embraion context slots
 embraion policy show
 embraion validation list
 ```

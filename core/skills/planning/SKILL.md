@@ -7,7 +7,7 @@ description: Plan substantial or multi-step engineering work by resolving intent
 
 ## Procedure
 
-1. Resolve the requested outcome and canonical project truth.
+1. Resolve the requested outcome and canonical project truth. Use configured Project Contract Slots for constitution, architecture, source authority, and specification; add compatibility or persistence when the task touches those risks.
 2. Identify ambiguity, affected capabilities, ownership boundaries, compatibility surfaces, privacy class, and validation impact.
 3. Choose the smallest useful set of roles and skills.
 4. Decide whether structured specification work would materially improve the task.

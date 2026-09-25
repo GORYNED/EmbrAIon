@@ -42,11 +42,39 @@ At the current contract level, EmbrAIon does not use arbitrary `capabilities` va
 
 This file points EmbrAIon at project-owned knowledge.
 
-The shortest form maps an ID directly to a file:
+New projects include canonical Project Contract Slots:
 
 ```yaml
-project: knowledge/project.md
-architecture: knowledge/architecture.md
+slots:
+  constitution:
+  architecture:
+  source-authority:
+  compatibility:
+  persistence:
+  engineering-workflow:
+  specification:
+```
+
+A project binds only the slots it actually owns:
+
+```yaml
+slots:
+  architecture: docs/architecture.md
+  source-authority: docs/references/project-sources.md
+  persistence:
+    path: docs/persistence.md
+    data-class: PRIVATE
+```
+
+These slot names are framework-owned semantic extension points. EmbrAIon knows the reusable responsibility of each slot; the consuming repository owns the referenced content. Unbound slots remain null and are not selected.
+
+In v0.10.0 the top-level `slots` key becomes framework-reserved. This is an intentional pre-1.0 contract cleanup rather than a compatibility shim for hypothetical earlier custom entries named `slots`.
+
+Ordinary custom knowledge remains supported alongside slots:
+
+```yaml
+product: knowledge/project.md
+domain-video: knowledge/video.md
 ```
 
 The structured form adds context-selection metadata:
