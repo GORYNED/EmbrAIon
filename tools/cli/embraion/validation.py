@@ -350,7 +350,18 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 )
 
             project_root = manifest.parent.parent
-            for knowledge_id, value in knowledge_data.items():
+            knowledge_entries: list[tuple[str, Any]] = []
+            slot_bindings = knowledge_data.get("slots") or {}
+            for slot, value in slot_bindings.items():
+                if value is not None:
+                    knowledge_entries.append((f"slot:{slot}", value))
+            knowledge_entries.extend(
+                (str(knowledge_id), value)
+                for knowledge_id, value in knowledge_data.items()
+                if knowledge_id != "slots"
+            )
+
+            for knowledge_id, value in knowledge_entries:
                 relative = value.get("path") if isinstance(value, dict) else value
                 if not relative:
                     add(
