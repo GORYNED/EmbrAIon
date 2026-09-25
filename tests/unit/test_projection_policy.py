@@ -4,6 +4,8 @@ import hashlib
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import yaml
 
@@ -17,6 +19,7 @@ from embraion.contracts import (
 from embraion.policy import effective_policy, read_knowledge_config
 from embraion.project import (
     _host_access_projection,
+    _projection_recovery_path,
     init_project,
     install,
     normalize_project_config,
@@ -619,6 +622,152 @@ class ProjectionPolicyTests(unittest.TestCase):
                     "copilot",
                     project,
                     components=["config"],
+                )
+
+    def test_update_recovers_exact_prior_projection_in_fresh_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="Consumer")
+            project_data = read_yaml(manifest)
+            project_data["framework"]["version"] = "0.9.9"
+            write_yaml(manifest, project_data)
+
+            old_skill = project / ".github/skills/review/SKILL.md"
+            old_skill.parent.mkdir(parents=True)
+            old_skill.write_text("prior generated skill\n", encoding="utf-8")
+
+            def fake_generate(
+                runtime_python: Path,
+                runtime_root: Path,
+                host: str,
+                output: Path,
+                consumer: Path,
+            ) -> None:
+                self.assertEqual("copilot", host)
+                generated = output / ".github/skills/review/SKILL.md"
+                generated.parent.mkdir(parents=True)
+                generated.write_text(
+                    "prior generated skill\n",
+                    encoding="utf-8",
+                )
+
+            with (
+                patch(
+                    "embraion.project.ensure_cached_runtime",
+                    return_value=SimpleNamespace(
+                        python=Path("previous-python"),
+                        framework_root=Path("previous-framework"),
+                    ),
+                ),
+                patch(
+                    "embraion.project._generate_host_with_cached_runtime",
+                    side_effect=fake_generate,
+                ),
+            ):
+                previous, current = update_project(
+                    project,
+                    version=__version__,
+                )
+
+            self.assertEqual("0.9.9", previous)
+            self.assertEqual(__version__, current)
+
+            recovery_path = _projection_recovery_path(project, "copilot")
+            self.assertTrue(recovery_path.is_file())
+            recovery = read_json(recovery_path)
+            relative = ".github/skills/review/SKILL.md"
+            self.assertEqual("0.9.9", recovery["source-framework-version"])
+            self.assertEqual(__version__, recovery["target-framework-version"])
+            self.assertIn(relative, recovery["files"])
+
+            plan = projection_plan(
+                "copilot",
+                project,
+                components=["skills"],
+            )
+            self.assertIn(relative, plan["update"])
+            self.assertNotIn(relative, plan["conflict"])
+            self.assertEqual(
+                "0.9.9",
+                plan["ownership-recovery"]["source-framework-version"],
+            )
+
+            installed = install(
+                "copilot",
+                project,
+                components=["skills"],
+            )
+            self.assertIn(relative, installed["update"])
+            self.assertFalse(recovery_path.exists())
+
+            state = read_json(
+                project / ".embraion/state/projections/copilot.json"
+            )
+            self.assertIn(relative, state["files"])
+
+    def test_recovered_projection_still_fails_closed_after_local_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="Consumer")
+            project_data = read_yaml(manifest)
+            project_data["framework"]["version"] = "0.9.9"
+            write_yaml(manifest, project_data)
+
+            old_skill = project / ".github/skills/review/SKILL.md"
+            old_skill.parent.mkdir(parents=True)
+            old_skill.write_text("prior generated skill\n", encoding="utf-8")
+
+            def fake_generate(
+                runtime_python: Path,
+                runtime_root: Path,
+                host: str,
+                output: Path,
+                consumer: Path,
+            ) -> None:
+                generated = output / ".github/skills/review/SKILL.md"
+                generated.parent.mkdir(parents=True)
+                generated.write_text(
+                    "prior generated skill\n",
+                    encoding="utf-8",
+                )
+
+            with (
+                patch(
+                    "embraion.project.ensure_cached_runtime",
+                    return_value=SimpleNamespace(
+                        python=Path("previous-python"),
+                        framework_root=Path("previous-framework"),
+                    ),
+                ),
+                patch(
+                    "embraion.project._generate_host_with_cached_runtime",
+                    side_effect=fake_generate,
+                ),
+            ):
+                update_project(project, version=__version__)
+
+            old_skill.write_text(
+                "prior generated skill\n# local edit\n",
+                encoding="utf-8",
+            )
+
+            plan = projection_plan(
+                "copilot",
+                project,
+                components=["skills"],
+            )
+            relative = ".github/skills/review/SKILL.md"
+            self.assertIn(relative, plan["conflict"])
+            self.assertNotIn(relative, plan["update"])
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Projection conflicts",
+            ):
+                install(
+                    "copilot",
+                    project,
+                    components=["skills"],
                 )
 
     def test_projection_lifecycle_detects_local_modification(self) -> None:
