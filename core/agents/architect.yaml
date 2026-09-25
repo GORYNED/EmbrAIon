@@ -10,6 +10,7 @@ responsibilities:
   - identify contracts and sequencing
   - define safe parallel boundaries
 restrictions:
+  - do not recursively delegate
   - do not create speculative abstractions
   - do not implement from the read-only role
 triggers:
