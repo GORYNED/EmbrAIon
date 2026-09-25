@@ -285,7 +285,7 @@ Optional fields:
 
 When `extends` is present, EmbrAIon inherits the Core role's responsibilities, restrictions, triggers, and outputs, then appends the project-specific items. The project agent must preserve the Core role's access level. It cannot extend `lead`, widen a read-only role into a writable role, or replace a canonical Core agent.
 
-Without `extends`, the definition is a standalone project agent with its explicitly declared access and responsibilities.
+Without `extends`, the definition is a standalone project agent with its explicitly declared access and responsibilities. Standalone project agents are still non-Lead roles: EmbrAIon automatically adds the canonical `do not recursively delegate` restriction during projection. Projects may add stricter restrictions but cannot remove that delegation boundary.
 
 During `embraion install` or `embraion projection diff`, these definitions are resolved from the consuming project's `.embraion/agents.yaml` and emitted as host-native files:
 
