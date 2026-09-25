@@ -1,5 +1,5 @@
 schema-version: 1
-catalog-version: 3
+catalog-version: 4
 
 capabilities:
   - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
@@ -27,6 +27,7 @@ capabilities:
   - { id: learning, type: workflow, path: workflows/learning.md, load: conditional, triggers: [repeated-pattern, repeated-failure, capability-improvement] }
 
   - { id: integration-safety, type: rule, path: rules/integrations.md, load: conditional, triggers: [external-tool, mcp, server, integration] }
+  - { id: artifact-authority, type: rule, path: rules/artifact-authority.md, load: conditional, triggers: [generated-artifact, host-projection, tool-required, external-format, naming-contract] }
   - { id: security, type: rule, path: rules/security.md, load: conditional, triggers: [security, credential, permission, external-tool, provider] }
   - { id: learning-gate, type: rule, path: rules/learning.md, load: conditional, triggers: [learning, promotion, repeated-pattern] }
 
