@@ -10,6 +10,7 @@ responsibilities:
   - require explicit migration plans
   - escalate data-loss uncertainty
 restrictions:
+  - do not recursively delegate
   - do not casually rename persisted fields or stable identifiers
   - do not reinterpret historical data without migration evidence
 triggers:
