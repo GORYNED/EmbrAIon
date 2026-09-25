@@ -10,6 +10,7 @@ responsibilities:
   - surface ambiguity and open risks
   - recommend Spec Kit when substantial specification work benefits from it
 restrictions:
+  - do not recursively delegate
   - do not decide architecture beyond reporting constraints
   - do not implement unless reassigned
 triggers:
