@@ -14,6 +14,7 @@ from .contracts import (
     project_contract_status,
 )
 from .evidence import complete_run, read_run, start_run
+from .execution import execute
 from .enforcement import (
     check_enforcement,
     enforcement_status,
@@ -23,6 +24,7 @@ from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy, read_knowledge_config
+from .pricing import calculate_cost, pricing_status, refresh_pricing
 from .project import (
     init_project,
     install,
@@ -102,6 +104,8 @@ def _print_main_help(file: object | None = None) -> None:
         "  deployment Inspect the project-owned deployment/provider registry",
         "  route      Resolve host-default or project routing for a task route class",
         "  dispatch   Create a bounded execution plan with access and owned-path constraints",
+        "  execute    Process a versioned execution request from stdin",
+        "  pricing    Inspect or explicitly refresh approved official pricing sources",
         "  context    Select project knowledge with provenance and privacy metadata",
         "  run        Record structured execution evidence for an engineering run",
         "  session    Create, inspect, or update normalized task/session state",
@@ -380,6 +384,65 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         )
     )
     return 0
+
+
+def _cmd_pricing_status(args: argparse.Namespace) -> int:
+    report = pricing_status()
+    if args.json:
+        _print_json(report)
+    else:
+        print(f"Pricing snapshot: {'valid' if report['valid'] else 'missing/invalid'}")
+        print(f"Digest: {report['digest'] or '-'}")
+        for source in report["sources"]:
+            state = "STALE" if source["stale"] else "current"
+            print(f"{source['id']}: {state} ({', '.join(source['reasons']) or 'verified'})")
+        for deployment in report["orphanEntries"]:
+            print(f"{deployment}: STALE (source or SKU no longer configured)")
+        if report["lastRefresh"]:
+            print(f"Last refresh: {report['lastRefresh']['status']}")
+    return 1 if args.fail_on_stale and (report["stale"] or not report["valid"]) else 0
+
+
+def _cmd_pricing_refresh(args: argparse.Namespace) -> int:
+    report = refresh_pricing(source_id=args.source)
+    if args.json:
+        _print_json(report)
+    else:
+        print(f"Pricing refresh: {report['status']} ({report['digest']})")
+        for change in report["changes"]:
+            print(f"  {change['kind']}: {change['deployment']} {change['sku']}")
+    return 0
+
+
+def _cmd_pricing_calculate(args: argparse.Namespace) -> int:
+    try:
+        request = json.load(sys.stdin)
+    except (json.JSONDecodeError, UnicodeError) as error:
+        raise RuntimeError("Pricing calculation stdin is not valid JSON.") from error
+    if not isinstance(request, dict) or set(request) - {"deployment", "usage", "usageSemantics", "billing", "providerExact", "adapterCost", "reportedCurrency", "atUtc", "batch", "discount"}:
+        raise RuntimeError("Pricing calculation request has unknown fields.")
+    if not isinstance(request.get("deployment"), str) or not request["deployment"]:
+        raise RuntimeError("Pricing calculation requires a deployment ID.")
+    from datetime import datetime
+    at = datetime.fromisoformat(request["atUtc"].replace("Z", "+00:00")) if request.get("atUtc") else None
+    _print_json(calculate_cost(
+        request["deployment"], request.get("usage"), at=at,
+        billing=request.get("billing", "api"), provider_exact=request.get("providerExact"),
+        adapter_cost=request.get("adapterCost"), batch=request.get("batch", False),
+        discount=request.get("discount"), usage_semantics=request.get("usageSemantics"),
+        reported_currency=request.get("reportedCurrency"),
+    ))
+    return 0
+
+
+def _cmd_execute(args: argparse.Namespace) -> int:
+    try:
+        request = json.load(sys.stdin)
+    except (json.JSONDecodeError, UnicodeError) as error:
+        raise RuntimeError("Execution stdin is not valid JSON.") from error
+    result = execute(request)
+    _print_json(result)
+    return 0 if result["status"] in {"completed", "handoff-required"} else 1
 
 
 def _cmd_context_build(args: argparse.Namespace) -> int:
@@ -1290,6 +1353,22 @@ def build_parser() -> argparse.ArgumentParser:
     deployment_show.add_argument("deployment_id")
     deployment_show.add_argument("--json", action="store_true")
     deployment_show.set_defaults(func=_cmd_deployment_show)
+
+    pricing = sub.add_parser("pricing", help="Inspect or refresh approved official pricing")
+    pricing_sub = pricing.add_subparsers(dest="pricing-command", required=True)
+    pricing_status_parser = pricing_sub.add_parser("status", help="Inspect the offline validated pricing snapshot")
+    pricing_status_parser.add_argument("--json", action="store_true")
+    pricing_status_parser.add_argument("--fail-on-stale", action="store_true")
+    pricing_status_parser.set_defaults(func=_cmd_pricing_status)
+    pricing_refresh_parser = pricing_sub.add_parser("refresh", help="Refresh configured official pricing sources")
+    pricing_refresh_parser.add_argument("--source", help="Configured source ID; omit to refresh all sources")
+    pricing_refresh_parser.add_argument("--json", action="store_true")
+    pricing_refresh_parser.set_defaults(func=_cmd_pricing_refresh)
+    pricing_calculate_parser = pricing_sub.add_parser("calculate", help="Calculate cost offline from a JSON stdin request")
+    pricing_calculate_parser.set_defaults(func=_cmd_pricing_calculate)
+
+    execute_parser = sub.add_parser("execute", help="Execute a versioned JSON request from stdin")
+    execute_parser.set_defaults(func=_cmd_execute)
 
     route_parser = sub.add_parser("route", help="Resolve host-default or project routing", description="Resolve host-default or project routing for a host, route class, role, and data class.")
     route_parser.add_argument(

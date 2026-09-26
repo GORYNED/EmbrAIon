@@ -115,6 +115,34 @@ embraion sync --host all --output build/generated --force
 
 ## Health & runtime
 
+### `embraion pricing`
+
+Inspect the validated local pricing snapshot without network access:
+
+```bash
+embraion pricing status --json
+embraion pricing status --fail-on-stale
+```
+
+Refresh only approved official sources declared by ID in `.embraion/pricing.yaml`:
+
+```bash
+embraion pricing refresh --json
+embraion pricing refresh --source openai
+```
+
+Refresh validates every selected source and replaces the snapshot atomically. A failure leaves the previous snapshot intact; execution can continue offline, while stale or missing rates produce unknown calculated cost. Provider-specific SKU patterns and source URLs stay in the project configuration. The CLI does not accept arbitrary URLs.
+
+`embraion pricing calculate` reads a JSON request from stdin with `deployment`, nullable `usage`, `usageSemantics`, and optional `billing`, `providerExact`, `adapterCost`, `reportedCurrency`, `atUtc`, `batch`, and `discount` fields. Snapshot calculation requires explicit usage semantics: `inclusive` means cached and reasoning counts are included in input and output totals; `disjoint` means they are additional counts. Providers with different input and output conventions can supply `{"input":"inclusive","output":"disjoint"}`. It reads only the local validated snapshot; reported exact costs take precedence. A reported cost has unknown currency unless `reportedCurrency` is supplied. The response keeps unknown and stale prices distinct from zero. A scheduled rate cannot be combined with batch or discount rates in one snapshot entry.
+
+### `embraion execute`
+
+Read a versioned execution request from stdin and emit a JSON result. Executable deployments require explicit `.embraion/execution.yaml` bindings and a registered adapter. The CLI has no built-in execution adapter yet, so it returns `handoff-required` for configured host deployments. Library callers can inject an adapter. Project acceptance remains separate from transport completion.
+
+```bash
+embraion execute < request.json
+```
+
 ### `embraion doctor`
 
 Run framework and project diagnostics.
