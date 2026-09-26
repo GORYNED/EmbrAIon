@@ -70,7 +70,7 @@ def _resolve_validation_parameters(
     profile: str,
     spec: dict[str, Any],
     supplied: dict[str, str] | None,
-) -> tuple[dict[str, str], list[tuple[str, dict[str, str]]]]:
+) -> tuple[dict[str, str], list[tuple[str, dict[str, Any]]]]:
     supplied_values = dict(supplied or {})
     definitions = spec.get("parameters") or {}
     unknown = sorted(set(supplied_values) - set(definitions))
@@ -82,7 +82,7 @@ def _resolve_validation_parameters(
 
     resolved: dict[str, str] = {}
     command_count = len(spec.get("commands") or [])
-    normalized_definitions: list[tuple[str, dict[str, str]]] = []
+    normalized_definitions: list[tuple[str, dict[str, Any]]] = []
 
     for name, raw_definition in definitions.items():
         definition = dict(raw_definition or {})
@@ -121,7 +121,7 @@ def _prepare_validation_command(
     command: str,
     index: int,
     resolved: dict[str, str],
-    definitions: list[tuple[str, dict[str, str]]],
+    definitions: list[tuple[str, dict[str, Any]]],
 ) -> tuple[str, dict[str, str]]:
     prepared = command
     environment = os.environ.copy()
