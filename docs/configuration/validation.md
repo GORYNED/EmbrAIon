@@ -63,9 +63,9 @@ parameters:
     commands: [1]
 ```
 
-Values passed as command-line arguments are shell-quoted for the current platform. Environment parameters are added only to the child validation process. Unknown parameters, missing required values, invalid command indexes, and malformed configuration fail closed.
+Values passed as command-line arguments are shell-quoted for the current platform. On Windows, argument values containing `cmd.exe` metacharacters are rejected instead of being interpolated into a shell command; use an environment parameter when such a value is required. Environment parameters are added only to the child validation process. Unknown parameters, missing required values, invalid command indexes, unsafe Windows argument values, and malformed configuration fail closed.
 
-Structured validation evidence records which parameter names were used, but never persists their raw values. Child stdout/stderr still passes through normal EmbrAIon redaction. Do not use validation parameters as a substitute for a secret manager.
+Structured validation evidence records which parameter names were used, but never persists their raw values or the expanded command containing them. Known runtime parameter values are also scrubbed from captured child stdout/stderr in addition to normal EmbrAIon redaction. Do not use validation parameters as a substitute for a secret manager.
 
 ## Choosing profiles
 
