@@ -238,6 +238,17 @@ def _merge_codex_config_text(existing: str) -> str:
             "settings are not effective after merge."
         )
 
+    existing_agents = dict(parsed_existing.get("agents") or {})
+    merged_agents = dict(agents)
+    for key in CODEX_CONFIG_MANAGED_KEYS:
+        existing_agents.pop(key, None)
+        merged_agents.pop(key, None)
+    if merged_agents != existing_agents:
+        raise RuntimeError(
+            "Cannot safely merge .codex/config.toml: project-owned [agents] "
+            "settings changed."
+        )
+
     # Ensure we never silently erase existing non-managed tables or values.
     for key, value in parsed_existing.items():
         if key == "agents":
