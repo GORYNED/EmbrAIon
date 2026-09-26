@@ -27,13 +27,17 @@ class _Response:
 
 
 class LiteLLMHostTests(unittest.TestCase):
-    def _call(self, reported_provider: str | None):
+    def _call(self, reported_provider: str | None, error_status: int | None = None):
         captured = []
         stub = types.ModuleType("litellm")
         stub.num_retries = 7
 
         def respond(**kwargs):
             captured.append(kwargs)
+            if error_status is not None:
+                error = RuntimeError("provider response")
+                error.status_code = error_status
+                raise error
             return _Response(reported_provider)
 
         stub.responses = respond
@@ -89,6 +93,14 @@ class LiteLLMHostTests(unittest.TestCase):
         self.assertEqual(400, status)
         self.assertEqual(1, len(calls))
         self.assertEqual("invalid-request", payload["failure"])
+
+    def test_provider_quota_and_missing_model_statuses_are_normalized(self):
+        for http_status, expected in ((402, "quota-exhausted"), (404, "provider-unavailable")):
+            with self.subTest(http_status=http_status):
+                status, payload, calls, _ = self._call("openai", error_status=http_status)
+                self.assertEqual(502, status)
+                self.assertEqual(expected, payload["failure"])
+                self.assertEqual(1, len(calls))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,8 @@ def normalize_failure(value: str | None = None, *, http_status: int | None = Non
     if value in FAILURES:
         return value
     return {
-        400: "invalid-request", 401: "authentication", 403: "authorization",
+        400: "invalid-request", 401: "authentication", 402: "quota-exhausted",
+        403: "authorization", 404: "provider-unavailable",
         408: "timeout", 413: "context-limit", 429: "rate-limited",
         500: "provider-error", 502: "provider-unavailable",
         503: "provider-unavailable", 504: "timeout",
