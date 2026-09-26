@@ -23,7 +23,14 @@ from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy, read_knowledge_config
-from .project import init_project, install, projection_plan, sync, update_project
+from .project import (
+    init_project,
+    install,
+    projection_is_verified,
+    projection_plan,
+    sync,
+    update_project,
+)
 from .project_validation import (
     run_validation_profile,
     validation_profile_specs,
@@ -201,6 +208,8 @@ def _print_projection_plan(plan: dict[str, object]) -> None:
     print(f"Projection: {plan['host']}")
     print(f"Destination: {plan['destination']}")
     print(f"Components: {', '.join(plan.get('components', []))}")
+    if plan.get("config-mode"):
+        print(f"Codex config mode: {plan['config-mode']}")
     for key in (
         "create",
         "update",
@@ -223,6 +232,7 @@ def _cmd_install(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         prune=args.prune,
         components=args.component,
+        config_mode=args.config_mode,
     )
     if args.json:
         _print_json(plan)
@@ -242,12 +252,29 @@ def _cmd_projection_diff(args: argparse.Namespace) -> int:
         args.host,
         Path(args.destination or "."),
         components=args.component,
+        config_mode=args.config_mode,
     )
     if args.json:
         _print_json(plan)
     else:
         _print_projection_plan(plan)
     return 1 if plan["conflict"] or plan["obsolete-modified"] else 0
+
+
+def _cmd_projection_verify(args: argparse.Namespace) -> int:
+    plan = projection_plan(
+        args.host,
+        Path(args.destination or "."),
+        components=args.component,
+        config_mode=args.config_mode,
+    )
+    verified = projection_is_verified(plan)
+    if args.json:
+        _print_json({**plan, "verified": verified})
+    else:
+        _print_projection_plan(plan)
+        print(f"verified: {'yes' if verified else 'no'}")
+    return 0 if verified else 1
 
 
 def _cmd_policy_show(args: argparse.Namespace) -> int:
@@ -1047,6 +1074,16 @@ def build_parser() -> argparse.ArgumentParser:
             "Omit to install the complete host projection."
         ),
     )
+    install_parser.add_argument(
+        "--config-mode",
+        choices=["replace", "merge"],
+        default="replace",
+        help=(
+            "Codex config ownership mode. 'replace' keeps whole-file projection "
+            "semantics; 'merge' manages only EmbrAIon's [agents] keys and "
+            "preserves project-owned Codex settings."
+        ),
+    )
     install_parser.add_argument("--force", action="store_true")
     install_parser.add_argument("--dry-run", action="store_true")
     install_parser.add_argument("--prune", action="store_true")
@@ -1082,8 +1119,46 @@ def build_parser() -> argparse.ArgumentParser:
             "Omit to diff the complete host projection."
         ),
     )
+    projection_diff.add_argument(
+        "--config-mode",
+        choices=["replace", "merge"],
+        default="replace",
+        help="Use the selected Codex config ownership mode while diffing.",
+    )
     projection_diff.add_argument("--json", action="store_true")
     projection_diff.set_defaults(func=_cmd_projection_diff)
+
+    projection_verify = projection_sub.add_parser(
+        "verify",
+        help="Fail unless the installed projection matches canonical output",
+        description=(
+            "Verify that the selected host projection is fully current: no "
+            "create/update/conflict/obsolete drift is allowed."
+        ),
+    )
+    projection_verify.add_argument(
+        "--host",
+        required=True,
+        choices=["codex", "copilot", "claude-code", "portable"],
+    )
+    projection_verify.add_argument("--destination", default=".")
+    projection_verify.add_argument(
+        "--component",
+        action="append",
+        choices=["config", "agents", "skills", "bundle"],
+        help=(
+            "Verify only this projection component; repeat to select multiple. "
+            "Omit to verify the complete host projection."
+        ),
+    )
+    projection_verify.add_argument(
+        "--config-mode",
+        choices=["replace", "merge"],
+        default="replace",
+        help="Use the selected Codex config ownership mode while verifying.",
+    )
+    projection_verify.add_argument("--json", action="store_true")
+    projection_verify.set_defaults(func=_cmd_projection_verify)
 
     validation = sub.add_parser(
         "validation",
