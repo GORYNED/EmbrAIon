@@ -294,6 +294,64 @@ class CliIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(1, drift.returncode)
 
+    def test_projection_verify_detects_copilot_agent_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "CopilotProjectionVerify", cwd=project)
+
+            self._run(
+                "install",
+                "--host",
+                "copilot",
+                "--component",
+                "agents",
+                "--component",
+                "skills",
+                cwd=project,
+            )
+            clean = self._run(
+                "projection",
+                "verify",
+                "--host",
+                "copilot",
+                "--component",
+                "agents",
+                "--component",
+                "skills",
+                "--json",
+                cwd=project,
+                check=False,
+            )
+            self.assertEqual(0, clean.returncode)
+            self.assertTrue(json.loads(clean.stdout)["verified"])
+
+            reviewer = project / ".github" / "agents" / "reviewer.agent.md"
+            reviewer.write_text(
+                reviewer.read_text(encoding="utf-8") + "\nlocal drift\n",
+                encoding="utf-8",
+            )
+            drift = self._run(
+                "projection",
+                "verify",
+                "--host",
+                "copilot",
+                "--component",
+                "agents",
+                "--component",
+                "skills",
+                "--json",
+                cwd=project,
+                check=False,
+            )
+            self.assertEqual(1, drift.returncode)
+            report = json.loads(drift.stdout)
+            self.assertFalse(report["verified"])
+            self.assertIn(
+                ".github/agents/reviewer.agent.md",
+                report["conflict"],
+            )
+
     def test_context_slots_and_explicit_slot_build(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary) / "project"
