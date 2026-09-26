@@ -128,6 +128,12 @@ class PricingTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             fetch_and_parse("openai", source, b"openai input=1")
 
+    def test_pathological_source_pattern_times_out(self) -> None:
+        source = config()["sources"]["openai"]
+        source["skus"]["openai-api"]["patterns"] = {"input": r"(a+)+(?P<rate>0)"}
+        with self.assertRaisesRegex(RuntimeError, "timed-out"):
+            fetch_and_parse("openai", source, b"a" * 10_000)
+
     def test_schedule_and_batch_require_identified_category(self) -> None:
         refresh_pricing(self.project, fetcher=fixture_fetch)
         path = self.project / ".embraion" / "pricing.snapshot.json"
