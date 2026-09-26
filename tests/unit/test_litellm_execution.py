@@ -78,7 +78,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
     def test_one_shot_child_scopes_credentials_and_returns_evidence(self) -> None:
         self.adapter.preflight(self.request, self.deployment, self.binding)
         raw = self.adapter.execute(self.request, self.deployment, self.binding, None)
-        self.assertEqual("completed", raw["status"])
+        self.assertEqual("completed", raw["status"], raw)
         self.assertEqual("worker answer", raw["outputText"])
         self.assertEqual("call-1", raw["callId"])
         self.assertEqual({"inputTokens": 100, "outputTokens": 20, "cachedInputTokens": 10}, raw["usage"])
@@ -107,7 +107,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
     def test_reviewed_version_tied_usage_fixture_enables_only_its_semantics(self) -> None:
         self._write_usage_evidence()
         raw = self.adapter.execute(self.request, self.deployment, self.binding, None)
-        self.assertEqual("completed", raw["status"])
+        self.assertEqual("completed", raw["status"], raw)
         self.assertEqual({"input": "inclusive", "output": "inclusive"}, raw["usageSemantics"])
 
     def test_expired_or_mismatched_usage_evidence_remains_unknown(self) -> None:
@@ -158,7 +158,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
         evidence = []
         result = execute(request, project=self.project, adapters={"litellm-loopback": self.adapter},
                          evidence_sink=evidence.append)
-        self.assertEqual("completed", result["status"])
+        self.assertEqual("completed", result["status"], result)
         self.assertEqual("worker answer", result["outputText"])
         self.assertEqual("call-1", result["attempts"][0]["callId"])
         self.assertEqual("pending", result["attempts"][0]["validationState"])
