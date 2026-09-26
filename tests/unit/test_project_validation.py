@@ -145,12 +145,12 @@ class ProjectValidationTests(unittest.TestCase):
             record = run_validation_profile(
                 "affected",
                 project=project,
-                parameters={"base-ref": "origin/main"},
+                parameters={"base-ref": "origin/main with space"},
             )
 
             self.assertEqual("passed", record["status"])
             self.assertIn("--base-ref", record["commands"][0]["stdout"])
-            self.assertIn("origin/main", record["commands"][0]["stdout"])
+            self.assertIn("origin/main with space", record["commands"][0]["stdout"])
             self.assertIn("env=repository", record["commands"][0]["stdout"])
             self.assertEqual(["base-ref", "scope"], record["parameters"])
 
