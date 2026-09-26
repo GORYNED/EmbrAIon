@@ -213,6 +213,11 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
     project_schema = root / "schemas/project.schema.json"
     routing_schema = root / "schemas/routing.schema.json"
     deployments_schema = root / "schemas/deployments.schema.json"
+    optional_project_schemas = {
+        "execution.yaml": root / "schemas/execution-config.schema.json",
+        "pricing.yaml": root / "schemas/pricing-config.schema.json",
+        "pricing.snapshot.json": root / "schemas/pricing-snapshot.schema.json",
+    }
     policy_schema = root / "schemas/policy.schema.json"
     knowledge_schema = root / "schemas/knowledge.schema.json"
     validation_config_schema = root / "schemas/validation.schema.json"
@@ -273,6 +278,14 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                         str(deployments_manifest.relative_to(root)),
                         message,
                     )
+
+            for optional_name, optional_schema in optional_project_schemas.items():
+                optional_manifest = manifest.parent / optional_name
+                if optional_manifest.is_file() and optional_schema.is_file():
+                    optional_data = (read_json(optional_manifest) if optional_name.endswith(".json")
+                                     else read_yaml(optional_manifest))
+                    for message in _schema_errors(optional_data, optional_schema):
+                        add("project-schema", str(optional_manifest.relative_to(root)), message)
 
             policy_manifest = manifest.parent / "policy.yaml"
             if not policy_manifest.is_file():

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/execution-result.schema.json",
+  "title": "EmbrAIon execution result v1",
+  "type": "object", "required": ["schemaVersion", "runId", "workItemId", "status", "attempts"], "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {"const": 1}, "runId": {"type": "string"}, "workItemId": {"type": "string"},
+    "status": {"enum": ["completed", "failed", "cancelled", "handoff-required"]},
+    "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}},
+    "outputText": {"type": ["string", "null"]}
+  },
+  "$defs": {
+    "attempt": {"type": "object", "additionalProperties": false,
+      "required": ["deployment", "requestedModel", "observedModel", "startedUtc", "finishedUtc", "status", "failure", "usage", "cost", "terminationConfirmed", "mutationConfirmed", "fallbackFrom"],
+      "properties": {
+        "deployment": {"type": "string"}, "requestedModel": {"type": "string"},
+        "observedModel": {"type": ["string", "null"]},
+        "startedUtc": {"type": "string", "format": "date-time"},
+        "finishedUtc": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["completed", "failed", "cancelled"]},
+        "failure": {"type": ["string", "null"]},
+        "usage": {"type": ["object", "null"]},
+        "cost": {"type": ["object", "null"]},
+        "terminationConfirmed": {"type": "boolean"},
+        "mutationConfirmed": {"type": "boolean"},
+        "fallbackFrom": {"type": ["string", "null"]},
+        "fallbackReason": {"type": ["string", "null"]},
+        "correlationId": {"type": ["string", "null"]},
+        "callId": {"type": ["string", "null"]},
+        "requestedProvider": {"type": ["string", "null"]},
+        "observedProvider": {"type": ["string", "null"]},
+        "usageState": {"enum": ["complete", "partial", "upstream-unavailable"]},
+        "validationState": {"enum": ["pending", "rejected"]}
+      }
+    }
+  }
+}

@@ -57,7 +57,12 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             project = self._copy_reference(name, temporary_root)
             environment = self._environment(cache)
             if name == "python":
-                environment["PYTHONPATH"] = str(project / "src")
+                # Preserve the source checkout's CLI package while adding the
+                # reference consumer package to subprocess imports.
+                environment["PYTHONPATH"] = os.pathsep.join(
+                    [str(Path(__file__).resolve().parents[2] / "tools" / "cli"),
+                     str(project / "src")]
+                )
 
             manifest = yaml.safe_load(
                 (project / ".embraion" / "project.yaml").read_text(encoding="utf-8")

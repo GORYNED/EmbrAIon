@@ -115,6 +115,36 @@ embraion sync --host all --output build/generated --force
 
 ## Health & runtime
 
+### `embraion pricing`
+
+Inspect the validated local pricing snapshot without network access:
+
+```bash
+embraion pricing status --json
+embraion pricing status --fail-on-stale
+```
+
+Refresh only approved official sources declared by ID in `.embraion/pricing.yaml`:
+
+```bash
+embraion pricing refresh --json
+embraion pricing refresh --source openai
+```
+
+Refresh validates every selected source and replaces the snapshot atomically. A failure leaves the previous snapshot intact; execution can continue offline, while stale or missing rates produce unknown calculated cost. Provider-specific SKU patterns and source URLs stay in the project configuration. The CLI does not accept arbitrary URLs.
+
+`embraion pricing calculate` reads a JSON request from stdin with `deployment`, nullable `usage`, `usageSemantics`, and optional `billing`, `providerExact`, `adapterCost`, `reportedCurrency`, `atUtc`, `batch`, and `discount` fields. Snapshot calculation requires explicit usage semantics: `inclusive` means cached and reasoning counts are included in input and output totals; `disjoint` means they are additional counts. Providers with different input and output conventions can supply `{"input":"inclusive","output":"disjoint"}`. It reads only the local validated snapshot; reported exact costs take precedence. A reported cost has unknown currency unless `reportedCurrency` is supplied. The response keeps unknown and stale prices distinct from zero. A scheduled rate cannot be combined with batch or discount rates in one snapshot entry.
+
+### `embraion execute`
+
+Read a versioned execution request from stdin and emit a JSON result. Executable deployments require explicit `.embraion/execution.yaml` bindings. Install the optional `embraion[litellm]` extra for the `litellm-loopback` adapter. It runs one bounded request in a short-lived local child, using only the selected credential reference. Bindings declare the exact upstream selector and provider, approved context boundary, source/trust/task ceilings, and exact or anchored observed-model evidence. The request supplies approved input for each candidate in `payload.inputsByDeployment`; worker text appears only in the result, never in attempt evidence. Unbound host deployments return `handoff-required`. Project acceptance remains separate from transport completion.
+
+Snapshot cost from LiteLLM usage requires separately reviewed overlap evidence. An optional binding `usageSemanticsEvidence` contains a project-relative `.embraion/usage-evidence/*.json` path and its SHA-256 digest. That checked-in, sanitized JSON records schema version 1, `transport: litellm-responses`, exact LiteLLM `adapterVersion`, provider, selector, official `sourceUrl`, verification and validity timestamps, explicit input/output `usageSemantics`, and a representative `sampleUsage`. The adapter accepts it only when the file digest, running LiteLLM version (currently 1.77.7), provider, selector, dates, and sample shape agree. Missing, expired, or mismatched evidence leaves usage semantics unknown, so snapshot-derived cost remains unknown; it does not block execution. A provider-reported exact cost or LiteLLM normalized cost retains its separate priority. Record evidence only after reviewing real normalized Responses usage against the provider's official billing semantics; a synthetic test fixture does not establish that contract.
+
+```bash
+embraion execute < request.json
+```
+
 ### `embraion doctor`
 
 Run framework and project diagnostics.
