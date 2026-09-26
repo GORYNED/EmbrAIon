@@ -302,7 +302,7 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
         reasoning = Decimal(str(usage.get("reasoningTokens", 0)))
         if ("cachedInput" in rates and "cachedInputTokens" not in usage) or ("reasoning" in rates and "reasoningTokens" not in usage):
             raise ValueError("Ambiguous usage categories")
-        if usage_semantics == "disjoint" and ((cached and "cachedInput" not in rates) or (reasoning and "reasoning" not in rates)):
+        if (cached and "cachedInput" not in rates) or (reasoning and "reasoning" not in rates):
             return {"state": "unknown-pricing", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
         counts = {"input": input_total - cached if "cachedInput" in rates and usage_semantics == "inclusive" else input_total,
                   "cachedInput": cached if "cachedInput" in rates else Decimal(0),

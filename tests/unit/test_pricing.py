@@ -99,6 +99,10 @@ class PricingTests(unittest.TestCase):
         self.assertEqual("changed", result["changes"][0]["kind"])
         self.assertEqual({"input": "1"}, result["changes"][0]["after"]["batch"])
         self.assertEqual(272000, result["changes"][0]["after"]["maxInputTokens"])
+        missing_cached = calculate_cost("openai-api", {"inputTokens": 10, "cachedInputTokens": 1,
+                                                       "outputTokens": 0, "reasoningTokens": 0},
+                                        project=self.project, batch=True, usage_semantics="inclusive")
+        self.assertEqual("unknown-pricing", missing_cached["state"])
 
     def test_removed_source_is_reported_and_pruned_by_full_refresh(self) -> None:
         refresh_pricing(self.project, fetcher=fixture_fetch)
