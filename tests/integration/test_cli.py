@@ -188,7 +188,7 @@ class CliIntegrationTests(unittest.TestCase):
             validation["profiles"]["affected"] = {
                 "commands": [
                     f'"{sys.executable}" -c "import os; '
-                    "print(os.environ['VALIDATION_SCOPE'])""
+                    'print(os.environ[\'VALIDATION_SCOPE\'])"'
                 ],
                 "parameters": {
                     "scope": {
