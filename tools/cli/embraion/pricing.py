@@ -241,7 +241,7 @@ def refresh_pricing(project: Path | None = None, *, source_id: str | None = None
 def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Path | None = None,
                    at: datetime | None = None, billing: str = "api", provider_exact: str | None = None,
                    adapter_cost: str | None = None, batch: bool = False,
-                   discount: str | None = None, usage_semantics: str | None = None,
+                   discount: str | None = None, usage_semantics: str | dict[str, str] | None = None,
                    reported_currency: str | None = None) -> dict[str, Any]:
     if billing == "subscription":
         return {"state": "subscription-quota", "amount": None, "currency": None, "provenance": None}
@@ -276,7 +276,12 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
         return {"state": "unknown-stale-pricing", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
     if usage is None:
         return {"state": "unknown-provider", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
-    if usage_semantics not in {"inclusive", "disjoint"}:
+    if isinstance(usage_semantics, str) and usage_semantics in {"inclusive", "disjoint"}:
+        semantics = {"input": usage_semantics, "output": usage_semantics}
+    elif (isinstance(usage_semantics, dict) and set(usage_semantics) == {"input", "output"} and
+          all(isinstance(value, str) and value in {"inclusive", "disjoint"} for value in usage_semantics.values())):
+        semantics = usage_semantics
+    else:
         return {"state": "unknown-provider", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
     if "maxInputTokens" in row and isinstance(usage.get("inputTokens"), int) and usage["inputTokens"] > row["maxInputTokens"]:
         return {"state": "unknown-pricing", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
@@ -304,9 +309,9 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
             raise ValueError("Ambiguous usage categories")
         if (cached and "cachedInput" not in rates) or (reasoning and "reasoning" not in rates):
             return {"state": "unknown-pricing", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
-        counts = {"input": input_total - cached if "cachedInput" in rates and usage_semantics == "inclusive" else input_total,
+        counts = {"input": input_total - cached if "cachedInput" in rates and semantics["input"] == "inclusive" else input_total,
                   "cachedInput": cached if "cachedInput" in rates else Decimal(0),
-                  "output": output_total - reasoning if "reasoning" in rates and usage_semantics == "inclusive" else output_total,
+                  "output": output_total - reasoning if "reasoning" in rates and semantics["output"] == "inclusive" else output_total,
                   "reasoning": reasoning if "reasoning" in rates else Decimal(0)}
         if any(value < 0 or not value.is_finite() for value in counts.values()):
             raise ValueError("Overlapping usage totals are invalid")

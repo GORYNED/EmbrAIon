@@ -58,6 +58,8 @@ class PricingTests(unittest.TestCase):
         self.assertEqual("3.75", first["amount"])
         self.assertEqual(first, calculate_cost("openai-api", usage, project=self.project, usage_semantics="inclusive"))
         self.assertEqual("4.65", calculate_cost("openai-api", usage, project=self.project, usage_semantics="disjoint")["amount"])
+        self.assertEqual("4.15", calculate_cost("openai-api", usage, project=self.project,
+                                                usage_semantics={"input": "inclusive", "output": "disjoint"})["amount"])
         self.assertEqual("unknown-provider", calculate_cost("openai-api", usage, project=self.project)["state"])
 
     def test_malformed_and_network_failure_keep_last_good_bytes(self) -> None:
