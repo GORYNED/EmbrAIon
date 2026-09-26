@@ -12,7 +12,7 @@ from typing import Any, Iterable
 import yaml
 
 TEXT_SUFFIXES = {".md", ".yaml", ".yml", ".json", ".toml", ".txt", ".py", ".ps1", ".sh"}
-SKIP_PARTS = {".git", ".venv", "node_modules", "dist", "build", "__pycache__"}
+SKIP_PARTS = {".git", ".venv", "node_modules", "dist", "build", "__pycache__", "Library"}
 
 
 def utc_now() -> str:

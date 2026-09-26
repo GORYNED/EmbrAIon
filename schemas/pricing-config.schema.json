@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/pricing-config.schema.json",
+  "title": "EmbrAIon project pricing sources",
+  "type": "object",
+  "required": ["schemaVersion", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "sources": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z][a-z0-9-]*$"},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["url", "adapter", "currency", "freshnessDays", "skus"],
+        "additionalProperties": false,
+        "properties": {
+          "url": {"type": "string", "pattern": "^https://[^/?#]+/[^#]*$"},
+          "adapter": {"enum": ["openai", "anthropic", "gemini", "deepseek"]},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "freshnessDays": {"type": "integer", "minimum": 1},
+          "skus": {
+            "type": "object", "minProperties": 1,
+            "additionalProperties": {
+              "type": "object", "required": ["sku", "patterns"], "additionalProperties": false,
+              "properties": {
+                "sku": {"type": "string", "minLength": 1},
+                "patterns": {
+                  "type": "object", "minProperties": 1,
+                  "propertyNames": {"enum": ["input", "cachedInput", "output", "reasoning"]},
+                  "additionalProperties": {"type": "string", "minLength": 1}
+                },
+                "effectiveDate": {"type": "string", "format": "date"},
+                "validThrough": {"type": "string", "format": "date"},
+                "maxInputTokens": {"type": "integer", "minimum": 1},
+                "batchPatterns": {"$ref": "#/$defs/patterns"},
+                "discountPatterns": {"type": "object", "additionalProperties": {"$ref": "#/$defs/patterns"}},
+                "schedule": {"$ref": "#/$defs/schedule"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "patterns": {"type": "object", "minProperties": 1, "propertyNames": {"enum": ["input", "cachedInput", "output", "reasoning"]}, "additionalProperties": {"type": "string", "minLength": 1}},
+    "schedule": {
+      "type": "object", "required": ["kind", "peakUtcHours", "peakPatterns", "offPeakPatterns"], "additionalProperties": false,
+      "properties": {
+        "kind": {"enum": ["utc-weekday", "utc-weekday-with-holidays"]},
+        "holidaysUnverified": {"type": "boolean"},
+        "peakUtcHours": {"type": "array", "minItems": 1, "items": {"type": "array", "prefixItems": [{"type": "integer", "minimum": 0, "maximum": 23}, {"type": "integer", "minimum": 1, "maximum": 24}], "items": false, "minItems": 2, "maxItems": 2}},
+        "peakPatterns": {"$ref": "#/$defs/patterns"}, "offPeakPatterns": {"$ref": "#/$defs/patterns"}
+      }
+    }
+  }
+}

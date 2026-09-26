@@ -1,6 +1,7 @@
 schema-version: 1
 defaults:
   states:
+    - unknown
     - healthy
     - degraded
     - unavailable
