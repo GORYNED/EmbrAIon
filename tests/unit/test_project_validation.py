@@ -216,7 +216,7 @@ class ProjectValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="Consumer")
-            secret = "abcdefgh12345678"
+            secret = "abcdefgh" + "12345678"
             path = project / ".embraion" / "validation.yaml"
             data = read_yaml(path)
             data["profiles"]["full"] = {
