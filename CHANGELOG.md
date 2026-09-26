@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 - 2026-09-26
+
 ### Added
 
 - Parameterized project validation profiles: structured `.embraion/validation.yaml` entries can declare required/default runtime parameters projected as safely quoted command arguments or child-process environment variables and supplied with repeatable `embraion validation run --param NAME=VALUE`.
