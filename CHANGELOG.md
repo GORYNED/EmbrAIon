@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.0 - 2026-09-26
+
 ### Added
 
 - Project-owned deployment/provider registries in `.embraion/deployments.yaml`, keeping EmbrAIon Core model-agnostic while giving consuming projects a canonical place for reusable host/model selections, supported effort, billing metadata, capabilities, and non-secret metadata.
