@@ -152,8 +152,7 @@ class ProjectValidationTests(unittest.TestCase):
             self.assertIn("--base-ref", record["commands"][0]["stdout"])
             self.assertIn("origin/main", record["commands"][0]["stdout"])
             self.assertIn("env=repository", record["commands"][0]["stdout"])
-            self.assertEqual("origin/main", record["parameters"]["base-ref"])
-            self.assertEqual("repository", record["parameters"]["scope"])
+            self.assertEqual(["base-ref", "scope"], record["parameters"])
 
     def test_parameterized_profile_fails_closed_for_missing_or_unknown_values(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
