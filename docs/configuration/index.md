@@ -10,6 +10,7 @@ The easiest way to understand it is by **question**, not by schema:
 | What facts and architecture should the AI know? | `knowledge.yaml` |
 | Which paths are canonical, protected, generated, or external? | `policy.yaml` |
 | What privacy/review/enforcement rules apply? | `policy.yaml` |
+| Which concrete execution/model choices does this project reuse? | `deployments.yaml` |
 | Should this project override the AI client's model selection? | `routing.yaml` |
 | Which commands prove a change works? | `validation.yaml` |
 | Does this project need domain-specific AI specialists? | `agents.yaml` |
@@ -24,6 +25,7 @@ The easiest way to understand it is by **question**, not by schema:
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
@@ -47,8 +49,9 @@ Do not configure everything at once. A normal project usually benefits from this
 4. **Validation** — add the commands that actually prove changes work.
 5. **Host projection** — install the AI client(s) you use.
 6. **Agents** — add project specialists only when Core roles are not enough.
-7. **Routing** — leave host-default unless explicit model selection is useful.
-8. **Enforcement** — enable only after policy and validation are trustworthy.
+7. **Deployments** — register reusable project-owned execution choices only when needed.
+8. **Routing** — leave host-default unless explicit project selection is useful.
+9. **Enforcement** — enable only after policy and validation are trustworthy.
 
 ## Baseline configuration
 
@@ -90,6 +93,13 @@ enforcement:
   enabled: false
   validation-profile: affected
   require-review: false
+```
+
+### `deployments.yaml`
+
+```yaml
+providers: {}
+deployments: {}
 ```
 
 ### `routing.yaml`
@@ -134,6 +144,7 @@ embraion status
 - [Policy & protected paths](policy.md)
 - [Validation profiles](validation.md)
 - [Project agents](agents.md)
+- [Project deployments](deployments.md)
 - [Model routing](../model-routing.md)
 - [Configure with your AI client](ai-hosts.md)
 - [Full `.embraion/` file reference](project-files.md)

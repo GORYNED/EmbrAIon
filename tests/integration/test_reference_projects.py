@@ -216,6 +216,7 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
 
             self.assertTrue((project / ".embraion" / "knowledge.yaml").is_file())
+            self.assertTrue((project / ".embraion" / "deployments.yaml").is_file())
             self.assertTrue((project / ".embraion" / "validation.yaml").is_file())
             self.assertTrue((project / ".embraion" / "agents.yaml").is_file())
             self.assertTrue((project / ".embraion" / "policy.yaml").is_file())
@@ -223,6 +224,17 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 self._run(project, environment, "policy", "show", "--json").stdout
             )
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
+
+            deployments = json.loads(
+                self._run(
+                    project,
+                    environment,
+                    "deployment",
+                    "list",
+                    "--json",
+                ).stdout
+            )
+            self.assertEqual(0, deployments["deployment-count"])
 
             validation = json.loads(
                 self._run(
@@ -303,6 +315,9 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            deployments_path = project / ".embraion" / "deployments.yaml"
+            deployments_path.unlink()
+
             policy_path = project / ".embraion" / "policy.yaml"
             policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
             policy.pop("enforcement", None)
@@ -351,6 +366,11 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             self.assertEqual(
                 projection_before,
                 existing_projection.read_bytes(),
+            )
+            self.assertTrue(deployments_path.is_file())
+            self.assertEqual(
+                {"providers": {}, "deployments": {}},
+                yaml.safe_load(deployments_path.read_text(encoding="utf-8")),
             )
             self.assertTrue((project / ".embraion" / ".gitignore").is_file())
 

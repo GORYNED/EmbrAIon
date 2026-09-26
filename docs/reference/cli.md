@@ -183,6 +183,19 @@ Pruning is dry-run unless `--apply` is supplied.
 
 ## AI execution
 
+### `embraion deployment`
+
+Inspect the consuming project's `.embraion/deployments.yaml` registry:
+
+```bash
+embraion deployment list
+embraion deployment list --json
+embraion deployment show DEPLOYMENT_ID
+embraion deployment show DEPLOYMENT_ID --json
+```
+
+The registry is project-owned. EmbrAIon validates it but does not ship a global model/provider catalog.
+
 ### `embraion route`
 
 Resolve host-default or project-overridden routing. EmbrAIon does not select a model unless the project explicitly overrides the route or role.
@@ -192,7 +205,7 @@ embraion route --host codex --route-class substantial --data PRIVATE
 embraion route --host codex --route-class substantial --role reviewer --data PRIVATE
 ```
 
-The result reports `resolution: host-default` with `model: null` when the host should choose automatically, or `resolution: project-override` when `.embraion/routing.yaml` supplies a selector.
+The result reports `resolution: host-default` with `model: null` when the host should choose automatically, `resolution: project-override` for a direct project selector, or `resolution: project-deployment` when routing references `.embraion/deployments.yaml`. Deployment routes also report the resolved provider, billing metadata, and ordered fallback plan.
 
 ### `embraion dispatch`
 

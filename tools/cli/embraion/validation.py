@@ -117,6 +117,7 @@ def find_model_agnostic_semantic_violations(
             elif (
                 ".embraion/project.yaml" in lowered
                 and ".embraion/routing.yaml" not in lowered
+                and ".embraion/deployments.yaml" not in lowered
                 and re.search(
                     r"\b(model|routing|override|selector|effort)\b",
                     lowered,
@@ -124,8 +125,9 @@ def find_model_agnostic_semantic_violations(
                 )
             ):
                 reason = (
-                    "model-routing overrides belong in .embraion/routing.yaml, "
-                    "not .embraion/project.yaml"
+                    "model-routing choices belong in .embraion/routing.yaml or "
+                    "project deployments in .embraion/deployments.yaml, not "
+                    ".embraion/project.yaml"
                 )
 
             if reason:
@@ -167,9 +169,9 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
             "model-agnostic-invariant",
             str(path.relative_to(root)),
             (
-                "EmbrAIon must not own model catalogs or adapter route-to-model "
-                "maps; keep model availability with the execution host and "
-                "project choices under routing.overrides"
+                "EmbrAIon Core must not own model catalogs or adapter route-to-model "
+                "maps; keep reusable model/deployment choices in the consuming "
+                "project's .embraion configuration"
             ),
         )
 
@@ -210,6 +212,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
 
     project_schema = root / "schemas/project.schema.json"
     routing_schema = root / "schemas/routing.schema.json"
+    deployments_schema = root / "schemas/deployments.schema.json"
     policy_schema = root / "schemas/policy.schema.json"
     knowledge_schema = root / "schemas/knowledge.schema.json"
     validation_config_schema = root / "schemas/validation.schema.json"
@@ -250,6 +253,24 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     add(
                         "routing-schema",
                         str(routing_manifest.relative_to(root)),
+                        message,
+                    )
+
+            deployments_manifest = manifest.parent / "deployments.yaml"
+            if not deployments_manifest.is_file():
+                add(
+                    "deployments-schema",
+                    str(deployments_manifest.relative_to(root)),
+                    "Missing deployments.yaml",
+                )
+            elif deployments_schema.exists():
+                for message in _schema_errors(
+                    read_yaml(deployments_manifest) or {},
+                    deployments_schema,
+                ):
+                    add(
+                        "deployments-schema",
+                        str(deployments_manifest.relative_to(root)),
                         message,
                     )
 

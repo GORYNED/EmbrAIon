@@ -84,6 +84,7 @@ nav:
       - Policy & protected paths: configuration/policy.md
       - Validation profiles: configuration/validation.md
       - Project agents: configuration/agents.md
+      - Project deployments: configuration/deployments.md
       - Model routing: model-routing.md
       - Configure with your AI client: configuration/ai-hosts.md
   - AI Clients:
