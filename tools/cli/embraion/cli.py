@@ -396,6 +396,8 @@ def _cmd_pricing_status(args: argparse.Namespace) -> int:
         for source in report["sources"]:
             state = "STALE" if source["stale"] else "current"
             print(f"{source['id']}: {state} ({', '.join(source['reasons']) or 'verified'})")
+        for deployment in report["orphanEntries"]:
+            print(f"{deployment}: STALE (source or SKU no longer configured)")
         if report["lastRefresh"]:
             print(f"Last refresh: {report['lastRefresh']['status']}")
     return 1 if args.fail_on_stale and (report["stale"] or not report["valid"]) else 0

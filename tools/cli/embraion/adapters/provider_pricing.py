@@ -7,6 +7,7 @@ import html
 import http.client
 import ipaddress
 import re
+import regex as bounded_regex
 import socket
 import ssl
 import urllib.parse
@@ -137,10 +138,14 @@ def fetch_and_parse(source_id: str, config: dict[str, Any], body: bytes | None =
     def extract(patterns: dict[str, str], deployment: str, lane: str) -> dict[str, str]:
         rates: dict[str, str] = {}
         for category, expression in patterns.items():
+            if len(expression) > 2048:
+                raise RuntimeError(f"Pricing pattern for {deployment}.{lane}.{category} exceeds length limit.")
             try:
-                matches = list(re.finditer(expression, page, flags=re.IGNORECASE | re.DOTALL))
-            except re.error as error:
-                raise RuntimeError(f"Invalid pricing pattern for {deployment}.{lane}.{category}.") from error
+                matches = list(bounded_regex.finditer(expression, page,
+                                                       flags=bounded_regex.IGNORECASE | bounded_regex.DOTALL,
+                                                       timeout=2.0))
+            except (bounded_regex.error, TimeoutError) as error:
+                raise RuntimeError(f"Invalid or timed-out pricing pattern for {deployment}.{lane}.{category}.") from error
             if len(matches) != 1 or "rate" not in matches[0].groupdict():
                 raise RuntimeError(f"Pricing source has no unique {deployment}.{lane}.{category} rate.")
             raw = matches[0].group("rate").replace(",", "").strip()

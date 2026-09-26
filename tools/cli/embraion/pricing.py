@@ -137,7 +137,8 @@ def pricing_status(project: Path | None = None, *, at: datetime | None = None) -
         entries = []
         for deployment, sku in source["skus"].items():
             row = lookup.get(deployment)
-            if row is None or row["sku"] != sku["sku"] or row["sourceId"] != source_id or row["sourceUrl"] != source["url"]:
+            if (row is None or row["sku"] != sku["sku"] or row["sourceId"] != source_id or
+                    row["sourceUrl"] != source["url"] or row["currency"] != source["currency"]):
                 reasons.append(f"missing-or-mismatched:{deployment}")
             else:
                 entries.append(row)
@@ -147,10 +148,19 @@ def pricing_status(project: Path | None = None, *, at: datetime | None = None) -
         sources.append({"id": source_id, "url": source["url"], "stale": bool(reasons),
                         "reasons": reasons, "entries": entries})
     outcome_path = root / ".embraion" / "state" / "pricing-refresh.json"
-    outcome = read_json(outcome_path) if outcome_path.is_file() else None
+    try:
+        outcome = read_json(outcome_path) if outcome_path.is_file() else None
+    except (OSError, ValueError, TypeError):
+        outcome = {"status": "unavailable"}
+    expected = {(identifier, deployment, sku["sku"])
+                for identifier, source in config["sources"].items()
+                for deployment, sku in source["skus"].items()}
+    orphan_entries = [row["deployment"] for row in snapshot["entries"]
+                      if (row["sourceId"], row["deployment"], row["sku"]) not in expected] if snapshot else []
     return {"valid": snapshot is not None, "error": error, "digest": snapshot["digest"] if snapshot else None,
             "verifiedUtc": snapshot["verifiedUtc"] if snapshot else None,
-            "stale": any(item["stale"] for item in sources), "sources": sources,
+            "stale": bool(orphan_entries) or any(item["stale"] for item in sources), "sources": sources,
+            "orphanEntries": orphan_entries,
             "lastRefresh": outcome}
 
 
@@ -191,7 +201,7 @@ def refresh_pricing(project: Path | None = None, *, source_id: str | None = None
             # A complete approved-source refresh can recover a corrupt snapshot.
             # No partial refresh may retain entries from invalid data.
             previous = None
-        retained = [row for row in previous["entries"] if row["sourceId"] not in selected] if previous else []
+        retained = [row for row in previous["entries"] if row["sourceId"] in config["sources"] and row["sourceId"] not in selected] if previous else []
         fetched: list[dict[str, Any]] = []
         for identifier in selected:
             source = config["sources"][identifier]
@@ -258,7 +268,8 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
         return {"state": "unknown-pricing", "amount": None, "currency": None, "provenance": snapshot["digest"]}
     row = matches[0]
     source = config["sources"].get(row["sourceId"])
-    if source is None or source["url"] != row["sourceUrl"] or source["skus"].get(deployment, {}).get("sku") != row["sku"]:
+    if (source is None or source["url"] != row["sourceUrl"] or source["currency"] != row["currency"] or
+            source["skus"].get(deployment, {}).get("sku") != row["sku"]):
         return {"state": "unknown-pricing", "amount": None, "currency": None, "provenance": snapshot["digest"]}
     current = (at or datetime.now(timezone.utc)).astimezone(timezone.utc)
     if _entry_stale(row, source["freshnessDays"], current):

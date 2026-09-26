@@ -100,6 +100,18 @@ class PricingTests(unittest.TestCase):
         self.assertEqual({"input": "1"}, result["changes"][0]["after"]["batch"])
         self.assertEqual(272000, result["changes"][0]["after"]["maxInputTokens"])
 
+    def test_removed_source_is_reported_and_pruned_by_full_refresh(self) -> None:
+        refresh_pricing(self.project, fetcher=fixture_fetch)
+        configuration = config()
+        del configuration["sources"]["deepseek"]
+        (self.project / ".embraion" / "pricing.yaml").write_text(
+            yaml.safe_dump(configuration), encoding="utf-8")
+        self.assertEqual(["deepseek-api"], pricing_status(self.project)["orphanEntries"])
+        self.assertTrue(pricing_status(self.project)["stale"])
+        result = refresh_pricing(self.project, fetcher=fixture_fetch)
+        self.assertIn("removed", [change["kind"] for change in result["changes"]])
+        self.assertFalse(pricing_status(self.project)["stale"])
+
     def test_unknown_price_and_usage_are_not_zero(self) -> None:
         refresh_pricing(self.project, fetcher=fixture_fetch)
         self.assertEqual("unknown-pricing", calculate_cost("unmapped", {}, project=self.project)["state"])

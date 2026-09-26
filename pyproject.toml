@@ -12,6 +12,7 @@ requires-python = ">=3.11"
 dependencies = [
   "PyYAML>=6.0,<7",
   "jsonschema>=4.22,<5",
+  "regex>=2024.0,<2027",
 ]
 
 [project.urls]
