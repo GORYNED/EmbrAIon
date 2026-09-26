@@ -7,7 +7,6 @@ import html
 import http.client
 import ipaddress
 import re
-import regex as bounded_regex
 import socket
 import ssl
 import urllib.parse
@@ -96,6 +95,10 @@ def fetch_official(config: dict[str, Any], timeout: float = 15.0) -> bytes:
 
 def fetch_and_parse(source_id: str, config: dict[str, Any], body: bytes | None = None) -> list[dict[str, Any]]:
     """Parse only exact configured SKU/rate captures; ambiguity aborts refresh."""
+    try:
+        import regex as bounded_regex
+    except ImportError as error:
+        raise RuntimeError("Bounded pricing parser dependency is unavailable for refresh.") from error
     if body is None:
         body = fetch_official(config)
     else:
