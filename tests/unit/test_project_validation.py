@@ -266,7 +266,7 @@ class ProjectValidationTests(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "targets command\(s\) outside 1\.\.1",
+                r"targets command\(s\) outside 1\.\.1",
             ):
                 run_validation_profile(
                     "affected",
