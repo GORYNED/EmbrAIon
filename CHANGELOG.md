@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.13.1 - 2026-09-26
+
+### Fixed
+
+- Provider-origin HTTP 402 now maps to quota exhaustion so consuming projects can retain non-operational billing health semantics.
+- Provider-origin HTTP 404 now maps to provider unavailability for correct bounded fallback and availability observations.
+
 ## 0.13.0 - 2026-09-26
 
 ### Added
