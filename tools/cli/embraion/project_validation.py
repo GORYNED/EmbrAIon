@@ -287,7 +287,7 @@ def run_validation_profile(
             "fail-fast": fail_fast,
             "timeout-seconds": timeout,
             "run-id": run_id,
-            "parameters": resolved_parameters,
+            "parameters": sorted(resolved_parameters),
             "commands": command_results,
             "started-utc": started,
             "completed-utc": completed,
