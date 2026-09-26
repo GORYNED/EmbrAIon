@@ -19,6 +19,7 @@ class CliIntegrationTests(unittest.TestCase):
         *args: str,
         cwd: Path | None = None,
         env: dict[str, str] | None = None,
+        check: bool = True,
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, "-m", "embraion.cli", *args],
@@ -26,7 +27,7 @@ class CliIntegrationTests(unittest.TestCase):
             env=env,
             text=True,
             capture_output=True,
-            check=True,
+            check=check,
         )
 
     def test_cli_version(self) -> None:
@@ -173,6 +174,125 @@ class CliIntegrationTests(unittest.TestCase):
             prune_report = json.loads(pruned.stdout)
             self.assertEqual([], prune_report["candidates"])
             self.assertFalse(prune_report["apply"])
+
+    def test_validation_run_accepts_declared_runtime_parameters(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "ParameterizedValidation", cwd=project)
+
+            validation_path = project / ".embraion" / "validation.yaml"
+            validation = yaml.safe_load(
+                validation_path.read_text(encoding="utf-8")
+            )
+            validation["profiles"]["affected"] = {
+                "commands": [
+                    f'"{sys.executable}" -c "import os; '
+                    "print(os.environ['VALIDATION_SCOPE'])""
+                ],
+                "parameters": {
+                    "scope": {
+                        "environment": "VALIDATION_SCOPE",
+                        "required": True,
+                    }
+                },
+            }
+            validation_path.write_text(
+                yaml.safe_dump(validation, sort_keys=False),
+                encoding="utf-8",
+            )
+
+            result = self._run(
+                "validation",
+                "run",
+                "affected",
+                "--param",
+                "scope=cli",
+                "--json",
+                cwd=project,
+            )
+            record = json.loads(result.stdout)
+            self.assertEqual("passed", record["status"])
+            self.assertEqual("cli", record["parameters"]["scope"])
+            self.assertIn("cli", record["commands"][0]["stdout"])
+
+    def test_projection_verify_supports_codex_config_merge_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "ProjectionVerify", cwd=project)
+
+            config = project / ".codex" / "config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                "[agents]\n"
+                'default_subagent_model = "project-owned"\n'
+                "\n"
+                "[mcp_servers.unity]\n"
+                'command = "unity"\n',
+                encoding="utf-8",
+            )
+
+            before = self._run(
+                "projection",
+                "verify",
+                "--host",
+                "codex",
+                "--component",
+                "config",
+                "--config-mode",
+                "merge",
+                cwd=project,
+                check=False,
+            )
+            self.assertEqual(1, before.returncode)
+
+            self._run(
+                "install",
+                "--host",
+                "codex",
+                "--component",
+                "config",
+                "--config-mode",
+                "merge",
+                cwd=project,
+            )
+            clean = self._run(
+                "projection",
+                "verify",
+                "--host",
+                "codex",
+                "--component",
+                "config",
+                "--config-mode",
+                "merge",
+                "--json",
+                cwd=project,
+                check=False,
+            )
+            self.assertEqual(0, clean.returncode)
+            self.assertTrue(json.loads(clean.stdout)["verified"])
+
+            config.write_text(
+                config.read_text(encoding="utf-8").replace(
+                    "enabled = true",
+                    "enabled = false",
+                ),
+                encoding="utf-8",
+            )
+            drift = self._run(
+                "projection",
+                "verify",
+                "--host",
+                "codex",
+                "--component",
+                "config",
+                "--config-mode",
+                "merge",
+                cwd=project,
+                check=False,
+            )
+            self.assertEqual(1, drift.returncode)
 
     def test_context_slots_and_explicit_slot_build(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
