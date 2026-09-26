@@ -186,6 +186,25 @@ def _merge_codex_config_text(existing: str) -> str:
             raise RuntimeError(
                 "Cannot safely merge .codex/config.toml: managed markers are out of order."
             )
+
+        active_table = None
+        begin_table = None
+        end_table = None
+        for index, line in enumerate(lines):
+            match = _TOML_TABLE.match(line)
+            if match:
+                active_table = match.group(1).strip()
+            if index == begin:
+                begin_table = active_table
+            if index == end:
+                end_table = active_table
+
+        if begin_table != "agents" or end_table != "agents":
+            raise RuntimeError(
+                "Cannot safely merge .codex/config.toml: EmbrAIon managed "
+                "markers must be contained entirely within [agents]."
+            )
+
         lines = lines[:begin] + managed + lines[end + 1 :]
     else:
         agents_header = None
