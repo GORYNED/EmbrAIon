@@ -24,7 +24,11 @@ from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy, read_knowledge_config
 from .project import init_project, install, projection_plan, sync, update_project
-from .project_validation import run_validation_profile, validation_profiles
+from .project_validation import (
+    run_validation_profile,
+    validation_profile_specs,
+    validation_profiles,
+)
 from .runtime import create_dispatch, read_session, route, start_session, update_session
 from .security import (
     SEVERITY_ORDER,
@@ -434,17 +438,37 @@ def _cmd_session_set(args: argparse.Namespace) -> int:
     return 0
 
 
+def _named_values(
+    values: list[str] | None,
+    *,
+    option: str,
+) -> dict[str, str]:
+    parsed: dict[str, str] = {}
+    for item in values or []:
+        if "=" not in item:
+            raise RuntimeError(f"{option} must use NAME=VALUE.")
+        name, value = item.split("=", 1)
+        name = name.strip()
+        if not name:
+            raise RuntimeError(f"{option} requires a non-empty parameter name.")
+        if name in parsed:
+            raise RuntimeError(f"Duplicate {option} parameter: {name}")
+        parsed[name] = value
+    return parsed
+
+
 def _cmd_validation_list(args: argparse.Namespace) -> int:
-    profiles = validation_profiles()
+    specs = validation_profile_specs()
     if args.json:
         _print_json(
             {
                 "profiles": {
                     name: {
-                        "commands": commands,
-                        "command-count": len(commands),
+                        "commands": list(spec["commands"]),
+                        "command-count": len(spec["commands"]),
+                        "parameters": spec.get("parameters") or {},
                     }
-                    for name, commands in profiles.items()
+                    for name, spec in specs.items()
                 }
             }
         )
@@ -452,14 +476,27 @@ def _cmd_validation_list(args: argparse.Namespace) -> int:
 
     print("EmbrAIon Project Validation Profiles")
     print()
-    if not profiles:
+    if not specs:
         print("No validation profiles configured.")
         return 0
 
-    for name, commands in profiles.items():
-        print(f"{name}: {len(commands)} command(s)")
+    for name, spec in specs.items():
+        commands = list(spec["commands"])
+        parameters = spec.get("parameters") or {}
+        print(
+            f"{name}: {len(commands)} command(s), "
+            f"{len(parameters)} parameter(s)"
+        )
         for command in commands:
             print(f"  {command}")
+        for parameter, definition in parameters.items():
+            target = (
+                f"argument {definition['argument']}"
+                if definition.get("argument")
+                else f"environment {definition['environment']}"
+            )
+            required = "required" if definition.get("required") else "optional"
+            print(f"  param {parameter}: {target} ({required})")
     return 0
 
 
@@ -469,6 +506,7 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
         run_id=args.run_id,
         fail_fast=args.fail_fast,
         timeout=args.timeout,
+        parameters=_named_values(args.param, option="--param"),
     )
 
     if args.json:
@@ -1079,6 +1117,15 @@ def build_parser() -> argparse.ArgumentParser:
     validation_run.add_argument("--run-id")
     validation_run.add_argument("--fail-fast", action="store_true")
     validation_run.add_argument("--timeout", type=float)
+    validation_run.add_argument(
+        "--param",
+        action="append",
+        metavar="NAME=VALUE",
+        help=(
+            "Supply one declared runtime parameter; repeat for multiple values. "
+            "Unknown or missing required parameters fail closed."
+        ),
+    )
     validation_run.add_argument("--json", action="store_true")
     validation_run.set_defaults(func=_cmd_validation_run)
 
