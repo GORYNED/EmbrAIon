@@ -214,7 +214,11 @@ class CliIntegrationTests(unittest.TestCase):
             record = json.loads(result.stdout)
             self.assertEqual("passed", record["status"])
             self.assertEqual(["scope"], record["parameters"])
-            self.assertIn("cli", record["commands"][0]["stdout"])
+            self.assertNotIn("cli", record["commands"][0]["stdout"])
+            self.assertIn(
+                "<REDACTED:validation-parameter>",
+                record["commands"][0]["stdout"],
+            )
 
     def test_projection_verify_supports_codex_config_merge_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
