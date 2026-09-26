@@ -56,6 +56,23 @@ embraion install \
 
 Repeat `--component` when you intentionally want EmbrAIon to own more components.
 
+
+If a mature Codex repository already owns `.codex/config.toml`, use partial config ownership instead of replacing the file:
+
+```bash
+embraion projection diff \
+  --host codex \
+  --component config \
+  --config-mode merge
+
+embraion install \
+  --host codex \
+  --component config \
+  --config-mode merge
+```
+
+This preserves project-owned Codex settings while EmbrAIon manages only its required `[agents]` keys.
+
 ## 4. Resolve conflicts deliberately
 
 EmbrAIon distinguishes generated files that can be safely updated from files that are user-owned or locally modified.
@@ -83,11 +100,20 @@ embraion policy show
 embraion validation list
 ```
 
-If validation profiles contain real commands, execute the profile appropriate for the repository:
+If validation profiles contain real commands, execute the profile appropriate for the repository. Structured profiles can declare runtime parameters when values such as a base ref, head ref, filter, or justification are task-specific:
 
 ```bash
-embraion validation run affected
+embraion validation run affected --param base-ref=origin/main
 ```
+
+After installing host projections, add a strict parity gate:
+
+```bash
+embraion projection verify --host codex --component agents --component skills
+embraion projection verify --host copilot
+```
+
+A clean verification exits zero. Any create/update/conflict/obsolete drift exits non-zero, making the command suitable for CI.
 
 ## 6. Add enforcement last
 
