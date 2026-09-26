@@ -6,7 +6,8 @@
   "properties": {
     "schemaVersion": {"const": 1}, "runId": {"type": "string"}, "workItemId": {"type": "string"},
     "status": {"enum": ["completed", "failed", "cancelled", "handoff-required"]},
-    "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}}
+    "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}},
+    "outputText": {"type": ["string", "null"]}
   },
   "$defs": {
     "attempt": {"type": "object", "additionalProperties": false,
@@ -22,7 +23,14 @@
         "cost": {"type": ["object", "null"]},
         "terminationConfirmed": {"type": "boolean"},
         "mutationConfirmed": {"type": "boolean"},
-        "fallbackFrom": {"type": ["string", "null"]}
+        "fallbackFrom": {"type": ["string", "null"]},
+        "fallbackReason": {"type": ["string", "null"]},
+        "correlationId": {"type": ["string", "null"]},
+        "callId": {"type": ["string", "null"]},
+        "requestedProvider": {"type": ["string", "null"]},
+        "observedProvider": {"type": ["string", "null"]},
+        "usageState": {"enum": ["complete", "partial", "upstream-unavailable"]},
+        "validationState": {"enum": ["pending", "rejected"]}
       }
     }
   }

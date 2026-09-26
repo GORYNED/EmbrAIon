@@ -440,7 +440,8 @@ def _cmd_execute(args: argparse.Namespace) -> int:
         request = json.load(sys.stdin)
     except (json.JSONDecodeError, UnicodeError) as error:
         raise RuntimeError("Execution stdin is not valid JSON.") from error
-    result = execute(request)
+    from .adapters.litellm_execution import LiteLLMLoopbackAdapter
+    result = execute(request, adapters={"litellm-loopback": LiteLLMLoopbackAdapter()})
     _print_json(result)
     return 0 if result["status"] in {"completed", "handoff-required"} else 1
 

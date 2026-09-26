@@ -47,14 +47,20 @@ def _now() -> str:
 
 def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> bool:
     capabilities = deployment.get("capabilities") or {}
+    bound_class = (binding.get("dataClassAliases") or {}).get(request["dataClass"], request["dataClass"])
+    route_class = request["routeClass"]
+    task_class = (binding.get("taskClassAliases") or {}).get(route_class, route_class)
+    permitted_classes = binding.get("taskClasses")
     return bool(
         deployment.get("enabled", True)
         and deployment["host"] == request["host"]
-        and all(capabilities.get(key) for key in ("data-classes", "access-modes", "roles", "task-classes"))
-        and request["dataClass"] in capabilities["data-classes"]
+        and all(capabilities.get(key) for key in ("data-classes", "access-modes", "roles"))
+        and bool(capabilities.get("task-classes"))
+        and bound_class in capabilities["data-classes"]
         and request["access"] in capabilities["access-modes"]
         and request["role"] in capabilities["roles"]
-        and request["routeClass"] in capabilities["task-classes"]
+        and (permitted_classes is None or route_class in permitted_classes)
+        and task_class in capabilities["task-classes"]
         and set(request["sourceIds"]).issubset(binding["sourceIds"])
         and request["trustLevel"] in binding["trustLevels"]
         and (request["access"] != "workspace-write" or bool(request["ownedPaths"]))
@@ -85,7 +91,18 @@ def execute(
     attempts: list[dict[str, Any]] = []
     seen: set[str] = set()
     status = "failed"
-    for candidate in request["candidates"][: request["maxAttempts"]]:
+    output_text: str | None = None
+    observations = health_observations if health_observations is not None else request.get("healthObservations")
+    policy = health_policy if health_policy is not None else request.get("healthPolicy")
+    states = ({identifier: evaluate_health(observations.get(identifier, []), **(policy or {}))["state"]
+               for identifier in identities} if observations is not None else {})
+    candidates = list(request["candidates"])
+    if not request.get("preserveCandidateOrder", False):
+        candidates.sort(key=lambda item: 1 if states.get(item["deployment"]) == "degraded" else
+                        2 if states.get(item["deployment"]) == "unavailable" else 0)
+    for candidate in candidates:
+        if len(attempts) >= request["maxAttempts"]:
+            break
         identifier = candidate["deployment"]
         if identifier in seen:
             raise RuntimeError("Execution candidate repeats a deployment.")
@@ -107,10 +124,8 @@ def execute(
             raise RuntimeError("Execution candidate contains an unapproved option.")
         if request["timeoutSeconds"] > binding.get("maxTimeoutSeconds", 3600):
             raise RuntimeError("Execution timeout exceeds the project binding limit.")
-        if health_observations is not None:
-            health = evaluate_health(health_observations.get(identifier, []), **(health_policy or {}))
-            if health["state"] == "unavailable":
-                continue
+        if states.get(identifier) == "unavailable":
+            continue
         adapter = adapter_map.get(binding["adapter"])
         if adapter is None:
             status = "handoff-required"
@@ -122,7 +137,10 @@ def execute(
             attempt_request = {**request, "selected": {"deployment": identifier, "effort": effort,
                                                         "options": candidate.get("options") or {}}}
             adapter.preflight(attempt_request, deployment, binding)
-            credential = credential_resolver.resolve(binding["credentialRef"], identifier, binding["adapter"]) if binding.get("credentialRef") else None
+            test_host = (binding["adapter"] == "litellm-loopback" and os.environ.get("EMBRAION_TEST_MODE") == "1"
+                         and bool(os.environ.get("EMBRAION_LITELLM_TEST_SERVER_SCRIPT")))
+            credential = (credential_resolver.resolve(binding["credentialRef"], identifier, binding["adapter"])
+                          if binding.get("credentialRef") and not test_host else None)
             raw = adapter.execute(attempt_request, deployment, binding, credential)
         except Exception:
             raw = {"status": "failed", "failure": "unknown", "terminationConfirmed": False,
@@ -135,6 +153,8 @@ def execute(
             failure = "unknown"
         observed = raw.get("observedModel")
         if attempt_status == "completed" and (not isinstance(observed, str) or not observed):
+            attempt_status, failure = "failed", "unknown"
+        if attempt_status == "completed" and raw.get("observedProvider") is not None and binding.get("expectedProvider") is not None and raw["observedProvider"] != binding["expectedProvider"]:
             attempt_status, failure = "failed", "unknown"
         raw_usage = raw.get("usage")
         usage = ({key: value for key, value in raw_usage.items()
@@ -151,6 +171,13 @@ def execute(
             "terminationConfirmed": raw.get("terminationConfirmed") is True,
             "mutationConfirmed": raw.get("mutationConfirmed") is True,
             "fallbackFrom": attempts[-1]["deployment"] if attempts else None,
+            "fallbackReason": attempts[-1]["failure"] if attempts else None,
+            "correlationId": raw.get("correlationId") if isinstance(raw.get("correlationId"), str) else None,
+            "callId": raw.get("callId") if isinstance(raw.get("callId"), str) else None,
+            "requestedProvider": binding.get("expectedProvider"),
+            "observedProvider": raw.get("observedProvider") if isinstance(raw.get("observedProvider"), str) else None,
+            "usageState": "upstream-unavailable" if usage is None else ("complete" if "inputTokens" in usage and "outputTokens" in usage else "partial"),
+            "validationState": "pending" if attempt_status == "completed" else "rejected",
         }
         # Validate before sending to the durable sink. No raw adapter output is persisted.
         _validate({"schemaVersion": 1, "runId": request["runId"], "workItemId": request["workItemId"],
@@ -161,6 +188,7 @@ def execute(
             evidence_sink(attempt)
         if attempt_status == "completed":
             status = "completed"
+            output_text = raw.get("outputText") if isinstance(raw.get("outputText"), str) else None
             break
         if attempt_status == "cancelled" or failure == "cancelled":
             status = "cancelled"
@@ -170,6 +198,6 @@ def execute(
             status = "failed"
             break
     result = {"schemaVersion": 1, "runId": request["runId"], "workItemId": request["workItemId"],
-              "status": status, "attempts": attempts}
+              "status": status, "attempts": attempts, "outputText": output_text}
     _validate(result, "execution-result.schema.json")
     return result

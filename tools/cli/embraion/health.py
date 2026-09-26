@@ -28,6 +28,8 @@ def evaluate_health(observations: list[dict[str, Any]], *, at: datetime | None =
         state = "unknown"
     elif success and (not failures or success[-1]["_at"] > failures[-1]["_at"]):
         state = "healthy"
+    elif failures and now >= failures[-1]["_at"] + timedelta(minutes=cooldown_minutes):
+        state = "healthy"
     elif len(failures) >= unavailable_failures:
         state = "unavailable"
     elif len(failures) >= degraded_failures:

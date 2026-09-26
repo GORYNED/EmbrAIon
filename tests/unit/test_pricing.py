@@ -104,7 +104,28 @@ class PricingTests(unittest.TestCase):
         missing_cached = calculate_cost("openai-api", {"inputTokens": 10, "cachedInputTokens": 1,
                                                        "outputTokens": 0, "reasoningTokens": 0},
                                         project=self.project, batch=True, usage_semantics="inclusive")
-        self.assertEqual("unknown-pricing", missing_cached["state"])
+        self.assertEqual("snapshot-computed", missing_cached["state"])
+        self.assertEqual("0.00001", missing_cached["amount"])
+        self.assertEqual("unknown-pricing", calculate_cost("openai-api", {"inputTokens": 10, "cachedInputTokens": 1,
+                                                               "outputTokens": 0, "reasoningTokens": 0},
+            project=self.project, batch=True, usage_semantics="disjoint")["state"])
+
+    def test_inclusive_output_uses_ordinary_rate_when_reasoning_is_not_separate(self) -> None:
+        refresh_pricing(self.project, fetcher=fixture_fetch)
+        path = self.project / ".embraion" / "pricing.snapshot.json"
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+        row = next(item for item in snapshot["entries"] if item["deployment"] == "openai-api")
+        del row["rates"]["reasoning"]
+        from embraion.pricing import _digest
+        snapshot["digest"] = _digest(snapshot["entries"])
+        path.write_text(json.dumps(snapshot), encoding="utf-8")
+        usage = {"inputTokens": 0, "cachedInputTokens": 0, "outputTokens": 100, "reasoningTokens": 25}
+        result = calculate_cost("openai-api", usage, project=self.project,
+                                usage_semantics={"input": "inclusive", "output": "inclusive"})
+        self.assertEqual("snapshot-computed", result["state"])
+        self.assertEqual("0.0004", result["amount"])
+        self.assertEqual("unknown-pricing", calculate_cost("openai-api", usage, project=self.project,
+            usage_semantics={"input": "inclusive", "output": "disjoint"})["state"])
 
     def test_removed_source_is_reported_and_pruned_by_full_refresh(self) -> None:
         refresh_pricing(self.project, fetcher=fixture_fetch)

@@ -16,6 +16,8 @@ class HealthTests(unittest.TestCase):
         result = evaluate_health(failures, at=now)
         self.assertEqual("unavailable", result["state"])
         self.assertIsNotNone(result["cooldownUntilUtc"])
+        self.assertEqual("unavailable", evaluate_health(failures, at=now + timedelta(minutes=11))["state"])
+        self.assertEqual("healthy", evaluate_health(failures, at=now + timedelta(minutes=12))["state"])
         self.assertEqual("unknown", evaluate_health(failures, at=now + timedelta(minutes=31))["state"])
 
     def test_policy_denial_does_not_affect_host_health(self) -> None:

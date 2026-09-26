@@ -26,5 +26,12 @@
         "properties": {"deployment": {"type": "string", "minLength": 1}, "effort": {"type": "string"}, "options": {"type": "object"}}}
     },
     "payload": {"type": "object"}
+    ,"preserveCandidateOrder": {"type": "boolean"}
+    ,"healthObservations": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "object"}}}
+    ,"healthPolicy": {"type": "object", "additionalProperties": false,
+      "properties": {"window_minutes": {"type": "integer", "minimum": 1},
+                     "degraded_failures": {"type": "integer", "minimum": 1},
+                     "unavailable_failures": {"type": "integer", "minimum": 1},
+                     "cooldown_minutes": {"type": "integer", "minimum": 1}}}
   }
 }

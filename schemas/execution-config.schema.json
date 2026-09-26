@@ -15,6 +15,19 @@
         "trustLevels": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "optionAllowlist": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "maxTimeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 3600}
+        ,"taskClasses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        ,"taskClassAliases": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}}
+        ,"dataClassAliases": {"type": "object", "additionalProperties": false,
+          "properties": {"CONFIDENTIAL": {"type": "string", "pattern": "^(?!PUBLIC$|PRIVATE$|CONFIDENTIAL$)[A-Z][A-Z0-9_]*$"}}}
+        ,"expectedProvider": {"type": "string", "minLength": 1}
+        ,"contextBoundary": {"type": "string", "minLength": 1}
+        ,"expectedResponseModels": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        ,"expectedResponseModelPattern": {"type": "string", "minLength": 3, "maxLength": 512}
+        ,"usageSemanticsEvidence": {"type": "object", "required": ["path", "sha256"],
+          "additionalProperties": false, "properties": {
+            "path": {"type": "string", "pattern": "^\\.embraion/usage-evidence/[a-z0-9][a-z0-9._-]*\\.json$"},
+            "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }}
       }
     }}
   }
