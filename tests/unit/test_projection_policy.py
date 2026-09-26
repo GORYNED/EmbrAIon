@@ -909,7 +909,7 @@ class ProjectionPolicyTests(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 RuntimeError,
-                "markers must be contained entirely within \\[agents\\]",
+                "Cannot safely merge .codex/config.toml",
             ):
                 install(
                     "codex",
