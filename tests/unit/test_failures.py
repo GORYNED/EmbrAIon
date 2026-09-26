@@ -8,6 +8,8 @@ from embraion.failures import may_fallback, normalize_failure
 class FailureTests(unittest.TestCase):
     def test_http_mapping_is_closed_and_unknown_terminal(self) -> None:
         self.assertEqual("authentication", normalize_failure(http_status=401))
+        self.assertEqual("quota-exhausted", normalize_failure(http_status=402))
+        self.assertEqual("provider-unavailable", normalize_failure(http_status=404))
         self.assertEqual("rate-limited", normalize_failure(http_status=429))
         self.assertEqual("unknown", normalize_failure("new-provider-code", http_status=418))
         self.assertFalse(may_fallback("unknown", termination_confirmed=True, mutation_confirmed=True))

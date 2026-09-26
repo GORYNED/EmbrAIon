@@ -21,7 +21,8 @@ def _provider_failure(error: Exception) -> str:
     status = getattr(error, "status_code", None)
     if status is None:
         status = getattr(error, "http_status", None)
-    mapped = {400: "invalid-request", 401: "authentication", 403: "authorization",
+    mapped = {400: "invalid-request", 401: "authentication", 402: "quota-exhausted",
+              403: "authorization", 404: "provider-unavailable",
               408: "timeout", 413: "context-limit", 429: "rate-limited",
               500: "provider-error", 502: "provider-unavailable", 503: "provider-unavailable",
               504: "timeout"}
