@@ -34,7 +34,6 @@ from .project import (
 from .project_validation import (
     run_validation_profile,
     validation_profile_specs,
-    validation_profiles,
 )
 from .runtime import create_dispatch, read_session, route, start_session, update_session
 from .security import (
@@ -289,8 +288,12 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             "Substantial review required: "
             f"{policy['review']['substantial-required']}"
         )
-        for name, commands in policy["validation"]["profiles"].items():
-            print(f"Validation {name}: {len(commands)} command(s)")
+        validation_specs = validation_profile_specs()
+        for name, spec in validation_specs.items():
+            print(
+                f"Validation {name}: {len(spec['commands'])} command(s), "
+                f"{len(spec.get('parameters') or {})} parameter(s)"
+            )
         for category, patterns in policy["sources"].items():
             print(f"Sources {category}: {len(patterns)} pattern(s)")
         print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
