@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from embraion.common import read_json, read_yaml, write_yaml
@@ -114,6 +116,163 @@ class ProjectValidationTests(unittest.TestCase):
                 record["evidence-id"],
                 run["validation"][0]["evidence-id"],
             )
+
+    def test_parameterized_profile_applies_argument_and_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["affected"] = {
+                "commands": [
+                    self._command(
+                        "import os,sys; "
+                        "print('args=' + '|'.join(sys.argv[1:])); "
+                        "print('env=' + os.environ['VALIDATION_SCOPE'])"
+                    )
+                ],
+                "parameters": {
+                    "base-ref": {
+                        "argument": "--base-ref",
+                        "required": True,
+                    },
+                    "scope": {
+                        "environment": "VALIDATION_SCOPE",
+                        "default": "repository",
+                    },
+                },
+            }
+            write_yaml(path, data)
+
+            record = run_validation_profile(
+                "affected",
+                project=project,
+                parameters={"base-ref": "origin/main with space"},
+            )
+
+            self.assertEqual("passed", record["status"])
+            self.assertNotIn(
+                "origin/main with space",
+                record["commands"][0]["stdout"],
+            )
+            self.assertNotIn("repository", record["commands"][0]["stdout"])
+            self.assertIn(
+                "<REDACTED:validation-parameter>",
+                record["commands"][0]["stdout"],
+            )
+            self.assertNotIn(
+                "origin/main with space",
+                record["commands"][0]["command"],
+            )
+            self.assertEqual(["base-ref", "scope"], record["parameters"])
+
+    def test_parameterized_profile_fails_closed_for_missing_or_unknown_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["full"] = {
+                "commands": [self._command("print('full')")],
+                "parameters": {
+                    "justification": {
+                        "environment": "VALIDATION_JUSTIFICATION",
+                        "required": True,
+                    }
+                },
+            }
+            write_yaml(path, data)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Missing required validation parameter 'justification'",
+            ):
+                run_validation_profile("full", project=project)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Unknown validation parameter",
+            ):
+                run_validation_profile(
+                    "full",
+                    project=project,
+                    parameters={
+                        "justification": "approved",
+                        "unexpected": "value",
+                    },
+                )
+
+    def test_windows_argument_parameter_rejects_cmd_metacharacters(self) -> None:
+        with mock.patch("embraion.project_validation.os.name", "nt"):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "unsafe for cmd.exe",
+            ):
+                from embraion.project_validation import _quote_validation_argument
+
+                _quote_validation_argument("safe&echo injected")
+
+    def test_parameter_values_are_not_persisted_in_validation_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            secret = "abcdefgh" + "12345678"
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["full"] = {
+                "commands": [
+                    self._command(
+                        "import os; print(os.environ['VALIDATION_SECRET'])"
+                    )
+                ],
+                "parameters": {
+                    "token": {
+                        "environment": "VALIDATION_SECRET",
+                        "required": True,
+                    }
+                },
+            }
+            write_yaml(path, data)
+
+            record = run_validation_profile(
+                "full",
+                project=project,
+                parameters={"token": secret},
+            )
+            serialized = json.dumps(record)
+            self.assertNotIn(secret, serialized)
+            self.assertEqual(["token"], record["parameters"])
+            self.assertIn(
+                "<REDACTED:validation-parameter>",
+                record["commands"][0]["stdout"],
+            )
+
+    def test_parameter_command_target_must_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["affected"] = {
+                "commands": [self._command("print('one')")],
+                "parameters": {
+                    "scope": {
+                        "argument": "--scope",
+                        "commands": [2],
+                    }
+                },
+            }
+            write_yaml(path, data)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                r"targets command\(s\) outside 1\.\.1",
+            ):
+                run_validation_profile(
+                    "affected",
+                    project=project,
+                    parameters={"scope": "all"},
+                )
 
     def test_invalid_validation_config_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import tempfile
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +63,18 @@ state/
 cache/
 """
 
+CODEX_CONFIG_MODES = {"replace", "merge"}
+CODEX_CONFIG_MANAGED_BEGIN = "# >>> EmbrAIon managed: agents"
+CODEX_CONFIG_MANAGED_END = "# <<< EmbrAIon managed: agents"
+CODEX_CONFIG_MANAGED_KEYS = {
+    "enabled": "enabled = true",
+    "max_concurrent_threads_per_session": "max_concurrent_threads_per_session = 3",
+}
+_TOML_TABLE = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
+_CODEX_MANAGED_ASSIGNMENT = re.compile(
+    r"^\s*(enabled|max_concurrent_threads_per_session)\s*="
+)
+
 
 def _normalize_components(
     host: str,
@@ -110,6 +124,173 @@ def _component_for_path(host: str, relative: str) -> str | None:
         return "bundle"
 
     return None
+
+
+def _validate_codex_config_mode(
+    host: str,
+    components: tuple[str, ...],
+    mode: str,
+) -> str:
+    if mode not in CODEX_CONFIG_MODES:
+        raise RuntimeError(
+            f"Unsupported Codex config mode '{mode}'. "
+            f"Expected one of: {', '.join(sorted(CODEX_CONFIG_MODES))}."
+        )
+    if mode == "merge" and (host != "codex" or "config" not in components):
+        raise RuntimeError(
+            "--config-mode merge is only valid for the Codex config component."
+        )
+    return mode
+
+
+def _codex_managed_block() -> list[str]:
+    return [
+        CODEX_CONFIG_MANAGED_BEGIN,
+        CODEX_CONFIG_MANAGED_KEYS["enabled"],
+        CODEX_CONFIG_MANAGED_KEYS["max_concurrent_threads_per_session"],
+        CODEX_CONFIG_MANAGED_END,
+    ]
+
+
+def _merge_codex_config_text(existing: str) -> str:
+    try:
+        parsed_existing = tomllib.loads(existing) if existing.strip() else {}
+    except tomllib.TOMLDecodeError as error:
+        raise RuntimeError(
+            f"Cannot safely merge .codex/config.toml: invalid TOML: {error}"
+        ) from error
+
+    lines = existing.splitlines()
+    begin_indexes = [
+        index for index, line in enumerate(lines)
+        if line.strip() == CODEX_CONFIG_MANAGED_BEGIN
+    ]
+    end_indexes = [
+        index for index, line in enumerate(lines)
+        if line.strip() == CODEX_CONFIG_MANAGED_END
+    ]
+    if len(begin_indexes) > 1 or len(end_indexes) > 1:
+        raise RuntimeError(
+            "Cannot safely merge .codex/config.toml: duplicate EmbrAIon managed markers."
+        )
+    if bool(begin_indexes) != bool(end_indexes):
+        raise RuntimeError(
+            "Cannot safely merge .codex/config.toml: incomplete EmbrAIon managed markers."
+        )
+
+    managed = _codex_managed_block()
+    if begin_indexes:
+        begin = begin_indexes[0]
+        end = end_indexes[0]
+        if end < begin:
+            raise RuntimeError(
+                "Cannot safely merge .codex/config.toml: managed markers are out of order."
+            )
+
+        active_table = None
+        begin_table = None
+        end_table = None
+        for index, line in enumerate(lines):
+            match = _TOML_TABLE.match(line)
+            if match:
+                active_table = match.group(1).strip()
+            if index == begin:
+                begin_table = active_table
+            if index == end:
+                end_table = active_table
+
+        if begin_table != "agents" or end_table != "agents":
+            raise RuntimeError(
+                "Cannot safely merge .codex/config.toml: EmbrAIon managed "
+                "markers must be contained entirely within [agents]."
+            )
+
+        lines = lines[:begin] + managed + lines[end + 1 :]
+    else:
+        agents_header = None
+        agents_end = len(lines)
+        for index, line in enumerate(lines):
+            match = _TOML_TABLE.match(line)
+            if not match:
+                continue
+            table_name = match.group(1).strip()
+            if table_name == "agents":
+                agents_header = index
+                continue
+            if agents_header is not None and index > agents_header:
+                agents_end = index
+                break
+
+        if agents_header is None:
+            if lines and lines[-1].strip():
+                lines.append("")
+            lines.extend(["[agents]", *managed])
+        else:
+            body = lines[agents_header + 1 : agents_end]
+            body = [
+                line
+                for line in body
+                if not _CODEX_MANAGED_ASSIGNMENT.match(line)
+            ]
+            lines = (
+                lines[: agents_header + 1]
+                + managed
+                + body
+                + lines[agents_end:]
+            )
+
+    merged = "\n".join(lines).rstrip() + "\n"
+    try:
+        parsed = tomllib.loads(merged)
+    except tomllib.TOMLDecodeError as error:
+        raise RuntimeError(
+            f"Cannot safely merge .codex/config.toml: merged TOML is invalid: {error}"
+        ) from error
+
+    agents = parsed.get("agents") or {}
+    if (
+        agents.get("enabled") is not True
+        or agents.get("max_concurrent_threads_per_session") != 3
+    ):
+        raise RuntimeError(
+            "Cannot safely merge .codex/config.toml: EmbrAIon managed agents "
+            "settings are not effective after merge."
+        )
+
+    existing_agents = dict(parsed_existing.get("agents") or {})
+    merged_agents = dict(agents)
+    for key in CODEX_CONFIG_MANAGED_KEYS:
+        existing_agents.pop(key, None)
+        merged_agents.pop(key, None)
+    if merged_agents != existing_agents:
+        raise RuntimeError(
+            "Cannot safely merge .codex/config.toml: project-owned [agents] "
+            "settings changed."
+        )
+
+    # Ensure we never silently erase existing non-managed tables or values.
+    for key, value in parsed_existing.items():
+        if key == "agents":
+            continue
+        if parsed.get(key) != value:
+            raise RuntimeError(
+                f"Cannot safely merge .codex/config.toml: non-managed table '{key}' changed."
+            )
+
+    return merged
+
+
+def projection_is_verified(plan: dict[str, Any]) -> bool:
+    return not any(
+        plan.get(key)
+        for key in (
+            "create",
+            "update",
+            "conflict",
+            "obsolete-owned",
+            "obsolete-modified",
+        )
+    )
 
 
 def _default_project_overlay(name: str) -> dict[str, Any]:
@@ -915,6 +1096,8 @@ def _projection_plan_from_generated(
     generated: Path,
     destination: Path,
     components: tuple[str, ...],
+    *,
+    config_mode: str = "replace",
 ) -> dict[str, Any]:
     project = project_root(destination)
     previous = _load_projection_state(project, host, destination)
@@ -931,6 +1114,11 @@ def _projection_plan_from_generated(
         "host": host,
         "destination": str(destination.resolve()),
         "components": list(components),
+        "config-mode": (
+            config_mode
+            if host == "codex" and "config" in components
+            else None
+        ),
         "create": [],
         "update": [],
         "unchanged": [],
@@ -951,6 +1139,27 @@ def _projection_plan_from_generated(
 
     for relative, generated_hash in generated_files.items():
         target = destination / relative
+
+        if (
+            host == "codex"
+            and relative == ".codex/config.toml"
+            and config_mode == "merge"
+        ):
+            if not target.exists():
+                plan["create"].append(relative)
+                continue
+            try:
+                current_text = target.read_text(encoding="utf-8")
+                merged_text = _merge_codex_config_text(current_text)
+            except (OSError, UnicodeError, RuntimeError):
+                plan["conflict"].append(relative)
+                continue
+            if current_text == merged_text:
+                plan["unchanged"].append(relative)
+            else:
+                plan["update"].append(relative)
+            continue
+
         if not target.exists():
             plan["create"].append(relative)
             continue
@@ -1000,10 +1209,12 @@ def projection_plan(
     destination: Path,
     *,
     components: list[str] | tuple[str, ...] | None = None,
+    config_mode: str = "replace",
 ) -> dict[str, Any]:
     root = framework_root()
     destination = destination.resolve()
     selected = _normalize_components(host, components)
+    config_mode = _validate_codex_config_mode(host, selected, config_mode)
 
     with tempfile.TemporaryDirectory(prefix="embraion-projection-") as temporary:
         generated = Path(temporary)
@@ -1013,6 +1224,7 @@ def projection_plan(
             generated,
             destination,
             selected,
+            config_mode=config_mode,
         )
 
 
@@ -1024,11 +1236,13 @@ def install(
     dry_run: bool = False,
     prune: bool = False,
     components: list[str] | tuple[str, ...] | None = None,
+    config_mode: str = "replace",
 ) -> dict[str, Any]:
     root = framework_root()
     destination = destination.resolve()
     project = project_root(destination)
     selected = _normalize_components(host, components)
+    config_mode = _validate_codex_config_mode(host, selected, config_mode)
 
     with tempfile.TemporaryDirectory(prefix="embraion-install-") as temporary:
         generated = Path(temporary)
@@ -1038,12 +1252,22 @@ def install(
             generated,
             destination,
             selected,
+            config_mode=config_mode,
         )
 
         if dry_run:
             return plan
 
         conflicts = list(plan["conflict"])
+        if (
+            config_mode == "merge"
+            and ".codex/config.toml" in conflicts
+        ):
+            raise RuntimeError(
+                "Cannot safely merge .codex/config.toml. Fix the TOML/managed "
+                "markers, or use --config-mode replace --force only when full "
+                "replacement is explicitly intended."
+            )
         if conflicts and not force:
             joined = ", ".join(conflicts[:5])
             suffix = "" if len(conflicts) <= 5 else f" (+{len(conflicts) - 5} more)"
@@ -1063,7 +1287,22 @@ def install(
             source = generated / relative
             target = destination / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
+            if (
+                host == "codex"
+                and relative == ".codex/config.toml"
+                and config_mode == "merge"
+            ):
+                existing = (
+                    target.read_text(encoding="utf-8")
+                    if target.is_file()
+                    else ""
+                )
+                target.write_text(
+                    _merge_codex_config_text(existing),
+                    encoding="utf-8",
+                )
+            else:
+                shutil.copy2(source, target)
 
         previous = _load_projection_state(project, host, destination)
         recovery = (
@@ -1086,6 +1325,14 @@ def install(
             if _component_for_path(host, relative) not in selected_components
         }
         current_files.update(_file_hashes(generated))
+        if (
+            host == "codex"
+            and "config" in selected
+            and config_mode == "merge"
+        ):
+            merged_config = destination / ".codex/config.toml"
+            if merged_config.is_file():
+                current_files[".codex/config.toml"] = _sha256(merged_config)
         preserved_obsolete = list(plan["obsolete-modified"])
         if not prune:
             preserved_obsolete += list(plan["obsolete-owned"])
@@ -1103,6 +1350,11 @@ def install(
                 "framework-version": framework_version(root),
                 "host": host,
                 "destination": str(destination),
+                "config-mode": (
+                    config_mode
+                    if host == "codex" and "config" in selected
+                    else None
+                ),
                 "managed-components": sorted(
                     set((previous or recovery or {}).get("managed-components") or [])
                     | {

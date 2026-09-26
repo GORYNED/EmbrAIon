@@ -52,6 +52,18 @@ embraion install --host codex --destination . --component agents --component ski
 
 Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot and Claude Code support `agents` and `skills`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
 
+
+For a mature Codex repository that already owns `.codex/config.toml`, use merge ownership for only the EmbrAIon-required `[agents]` keys:
+
+```bash
+embraion install \
+  --host codex \
+  --component config \
+  --config-mode merge
+```
+
+`--config-mode replace` remains the default. Merge mode preserves project-owned `[agents]` keys and other TOML tables and fails closed when the file cannot be merged safely.
+
 ### `embraion projection`
 
 Preview ownership-aware projection changes:
@@ -61,6 +73,15 @@ embraion projection diff --host codex --destination .
 embraion projection diff --host codex --destination . --component skills
 embraion projection diff --host codex --destination . --json
 ```
+
+Verify an installed projection as a strict CI gate:
+
+```bash
+embraion projection verify --host codex --destination .
+embraion projection verify --host copilot --component agents --component skills
+```
+
+`projection verify` exits zero only when every selected projection file is already canonical and there is no create, update, conflict, or obsolete managed output. With partial Codex config ownership, pass `--config-mode merge` to both `projection diff` and `projection verify`.
 
 ### `embraion policy`
 
@@ -134,6 +155,16 @@ embraion validation run full --run-id task-001
 ```
 
 `validation run` executes commands from the project root, persists redacted evidence under `.embraion/state/validation/`, and exits non-zero when the profile fails. Empty profiles report `skipped`. Use `--fail-fast` to stop after the first failing command and `--timeout SECONDS` for a per-command timeout.
+
+Structured validation profiles can declare runtime parameters. Supply them with repeatable `--param NAME=VALUE`:
+
+```bash
+embraion validation run affected \
+  --param base-ref=origin/main \
+  --param head-ref=HEAD
+```
+
+Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
 `--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually.
 

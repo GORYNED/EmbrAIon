@@ -10,11 +10,78 @@
     "profiles": {
       "type": "object",
       "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string",
-          "minLength": 1
-        }
+        "oneOf": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "commands"
+            ],
+            "properties": {
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "parameters": {
+                "type": "object",
+                "propertyNames": {
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "argument": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "environment": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "default": {
+                      "type": "string"
+                    },
+                    "commands": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "uniqueItems": true,
+                      "minItems": 1
+                    }
+                  },
+                  "oneOf": [
+                    {
+                      "required": [
+                        "argument"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "environment"
+                      ]
+                    }
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
       }
     }
   },

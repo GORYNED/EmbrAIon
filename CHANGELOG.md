@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- Parameterized project validation profiles: structured `.embraion/validation.yaml` entries can declare required/default runtime parameters projected as safely quoted command arguments or child-process environment variables and supplied with repeatable `embraion validation run --param NAME=VALUE`.
+- Safe partial ownership for Codex `.codex/config.toml` through `--config-mode merge`, allowing EmbrAIon to manage its required `[agents]` settings while preserving project-owned agent settings and other Codex tables.
+- `embraion projection verify` as a fail-closed CI gate that exits non-zero for missing, stale, conflicting, or obsolete managed projection output.
+
+
 ## 0.10.2 - 2026-09-25
 
 ### Fixed

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -23,6 +24,7 @@ from embraion.project import (
     init_project,
     install,
     normalize_project_config,
+    projection_is_verified,
     projection_plan,
     update_project,
 )
@@ -796,6 +798,152 @@ class ProjectionPolicyTests(unittest.TestCase):
                     "copilot",
                     project,
                     components=["skills"],
+                )
+
+    def test_codex_config_merge_preserves_project_owned_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            config = project / ".codex" / "config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                "[agents]\n"
+                'default_subagent_model = "project-owned-model"\n'
+                "\n"
+                "[mcp_servers.unity]\n"
+                'command = "unity"\n'
+                'args = ["mcp", "--project-path", "."]\n',
+                encoding="utf-8",
+            )
+
+            install(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+
+            merged_text = config.read_text(encoding="utf-8")
+            merged = tomllib.loads(merged_text)
+            self.assertTrue(merged["agents"]["enabled"])
+            self.assertEqual(
+                3,
+                merged["agents"]["max_concurrent_threads_per_session"],
+            )
+            self.assertEqual(
+                "project-owned-model",
+                merged["agents"]["default_subagent_model"],
+            )
+            self.assertEqual("unity", merged["mcp_servers"]["unity"]["command"])
+            self.assertIn("# >>> EmbrAIon managed: agents", merged_text)
+            self.assertIn("# <<< EmbrAIon managed: agents", merged_text)
+
+            clean = projection_plan(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            self.assertTrue(projection_is_verified(clean))
+            self.assertIn(".codex/config.toml", clean["unchanged"])
+
+            config.write_text(
+                merged_text.replace("enabled = true", "enabled = false"),
+                encoding="utf-8",
+            )
+            drift = projection_plan(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            self.assertFalse(projection_is_verified(drift))
+            self.assertIn(".codex/config.toml", drift["update"])
+
+            install(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            repaired = tomllib.loads(config.read_text(encoding="utf-8"))
+            self.assertTrue(repaired["agents"]["enabled"])
+            self.assertEqual(
+                "project-owned-model",
+                repaired["agents"]["default_subagent_model"],
+            )
+            self.assertEqual(
+                "unity",
+                repaired["mcp_servers"]["unity"]["command"],
+            )
+
+    def test_codex_config_merge_rejects_markers_outside_agents_table(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            config = project / ".codex" / "config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                "[agents]\n"
+                "enabled = true\n"
+                "max_concurrent_threads_per_session = 3\n"
+                'default_subagent_model = "project-owned"\n'
+                "\n"
+                "[mcp_servers.fake]\n"
+                '"# not a TOML key" = "kept"\n'
+                "# >>> EmbrAIon managed: agents\n"
+                "enabled = true\n"
+                "max_concurrent_threads_per_session = 3\n"
+                "# <<< EmbrAIon managed: agents\n"
+                'command = "fake"\n',
+                encoding="utf-8",
+            )
+
+            plan = projection_plan(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            self.assertIn(".codex/config.toml", plan["conflict"])
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot safely merge .codex/config.toml",
+            ):
+                install(
+                    "codex",
+                    project,
+                    components=["config"],
+                    config_mode="merge",
+                )
+
+    def test_codex_config_merge_fails_closed_on_invalid_toml(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            config = project / ".codex" / "config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text("[agents\n", encoding="utf-8")
+
+            plan = projection_plan(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            self.assertIn(".codex/config.toml", plan["conflict"])
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Cannot safely merge .codex/config.toml",
+            ):
+                install(
+                    "codex",
+                    project,
+                    components=["config"],
+                    config_mode="merge",
+                    force=True,
                 )
 
     def test_projection_lifecycle_detects_local_modification(self) -> None:
