@@ -877,6 +877,47 @@ class ProjectionPolicyTests(unittest.TestCase):
                 repaired["mcp_servers"]["unity"]["command"],
             )
 
+    def test_codex_config_merge_rejects_markers_outside_agents_table(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            config = project / ".codex" / "config.toml"
+            config.parent.mkdir(parents=True)
+            config.write_text(
+                "[agents]\n"
+                "enabled = true\n"
+                "max_concurrent_threads_per_session = 3\n"
+                'default_subagent_model = "project-owned"\n'
+                "\n"
+                "[mcp_servers.fake]\n"
+                '"# not a TOML key" = "kept"\n'
+                "# >>> EmbrAIon managed: agents\n"
+                "enabled = true\n"
+                "max_concurrent_threads_per_session = 3\n"
+                "# <<< EmbrAIon managed: agents\n"
+                'command = "fake"\n',
+                encoding="utf-8",
+            )
+
+            plan = projection_plan(
+                "codex",
+                project,
+                components=["config"],
+                config_mode="merge",
+            )
+            self.assertIn(".codex/config.toml", plan["conflict"])
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "markers must be contained entirely within \\[agents\\]",
+            ):
+                install(
+                    "codex",
+                    project,
+                    components=["config"],
+                    config_mode="merge",
+                )
+
     def test_codex_config_merge_fails_closed_on_invalid_toml(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
