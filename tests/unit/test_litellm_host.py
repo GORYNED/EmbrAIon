@@ -38,7 +38,7 @@ class LiteLLMHostTests(unittest.TestCase):
             return _Response(reported_provider)
 
         stub.responses = respond
-        token = "test-session-token"
+        token = "fixture"
         key = "aa" * 32
         selector = "openai/gpt-6-luna"
         context = "reviewed fixture envelope"
