@@ -171,6 +171,19 @@ This creates `.github/workflows/embraion-enforcement.yml`, enables the policy ga
 
 EmbrAIon does not silently install host-native hooks. `harness audit` continues to report native hook capability, while enforcement installation remains an explicit project action.
 
+## `.embraion/deployments.yaml`
+
+This file defines reusable project-owned execution deployments without creating a framework-owned model catalog.
+
+```yaml
+providers: {}
+deployments: {}
+```
+
+A deployment names a concrete host/model choice and may declare provider identity, supported/default effort, billing metadata, eligibility capabilities, host options, and non-secret metadata. Routes and roles can reference the deployment id from `.embraion/routing.yaml`.
+
+See [Project deployments](deployments.md) for the full contract.
+
 ## `.embraion/routing.yaml`
 
 This file contains optional model-selection overrides for specific AI hosts.

@@ -105,6 +105,148 @@ class CoreTests(unittest.TestCase):
             self.assertEqual("deep", reviewed["effort"])
             self.assertEqual({"thinking": "maximum"}, reviewed["options"])
 
+    def test_project_deployment_registry_resolves_route_and_fallbacks(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="DeploymentConsumer")
+            deployments_path = manifest.with_name("deployments.yaml")
+            routing_path = manifest.with_name("routing.yaml")
+
+            write_yaml(
+                deployments_path,
+                {
+                    "providers": {"example": {"display-name": "Example Provider"}},
+                    "deployments": {
+                        "primary": {
+                            "host": "codex",
+                            "provider": "example",
+                            "model": "future-primary",
+                            "efforts": ["medium", "high"],
+                            "default-effort": "medium",
+                            "billing": {"mode": "subscription"},
+                            "capabilities": {
+                                "data-classes": ["PRIVATE"],
+                                "access-modes": ["read-only", "workspace-write"],
+                                "roles": ["worker"],
+                                "task-classes": ["substantial"],
+                            },
+                            "options": {"temperature": 0},
+                        },
+                        "fallback": {
+                            "host": "codex",
+                            "provider": "example",
+                            "model": "future-fallback",
+                            "efforts": ["low"],
+                            "default-effort": "low",
+                            "billing": {"mode": "api"},
+                            "capabilities": {
+                                "data-classes": ["PRIVATE"],
+                                "access-modes": ["workspace-write"],
+                                "roles": ["worker"],
+                                "task-classes": ["substantial"],
+                            },
+                        },
+                    },
+                },
+            )
+            write_yaml(
+                routing_path,
+                {
+                    "overrides": {
+                        "codex": {
+                            "routes": {
+                                "substantial": {
+                                    "deployment": "primary",
+                                    "effort": "high",
+                                    "options": {"thinking": "deep"},
+                                    "fallbacks": [
+                                        {"deployment": "fallback", "effort": "low"}
+                                    ],
+                                }
+                            }
+                        }
+                    }
+                },
+            )
+
+            routed = route(
+                "codex",
+                "substantial",
+                "PRIVATE",
+                role="worker",
+                access="write",
+                project=project,
+            )
+            self.assertEqual("project-deployment", routed["resolution"])
+            self.assertEqual("primary", routed["deployment"])
+            self.assertEqual("example", routed["provider"])
+            self.assertEqual("future-primary", routed["model"])
+            self.assertEqual("high", routed["effort"])
+            self.assertEqual(
+                {"temperature": 0, "thinking": "deep"},
+                routed["options"],
+            )
+            self.assertEqual(1, len(routed["fallbacks"]))
+            self.assertEqual("future-fallback", routed["fallbacks"][0]["model"])
+            self.assertEqual("low", routed["fallbacks"][0]["effort"])
+
+    def test_project_deployment_registry_fails_closed_on_invalid_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            manifest = init_project(project, name="DeploymentBoundary")
+            deployments_path = manifest.with_name("deployments.yaml")
+            routing_path = manifest.with_name("routing.yaml")
+
+            write_yaml(
+                deployments_path,
+                {
+                    "providers": {},
+                    "deployments": {
+                        "read-only": {
+                            "host": "codex",
+                            "model": "future-model",
+                            "efforts": ["low"],
+                            "capabilities": {
+                                "data-classes": ["PUBLIC"],
+                                "access-modes": ["read-only"],
+                            },
+                        }
+                    },
+                },
+            )
+            write_yaml(
+                routing_path,
+                {
+                    "overrides": {
+                        "codex": {
+                            "routes": {
+                                "substantial": {
+                                    "deployment": "read-only",
+                                    "effort": "high",
+                                }
+                            }
+                        }
+                    }
+                },
+            )
+
+            with self.assertRaisesRegex(RuntimeError, "does not support effort"):
+                route(
+                    "codex",
+                    "substantial",
+                    "PUBLIC",
+                    access="review",
+                    project=project,
+                )
+
+            routing = read_yaml(routing_path)
+            routing["overrides"]["codex"]["routes"]["substantial"] = {
+                "deployment": "missing"
+            }
+            write_yaml(routing_path, routing)
+            with self.assertRaisesRegex(RuntimeError, "Unknown project deployment"):
+                route("codex", "substantial", "PUBLIC", project=project)
+
     def test_model_agnostic_invariant_rejects_framework_model_registries(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

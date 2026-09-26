@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Added
+
+- Project-owned deployment/provider registries in `.embraion/deployments.yaml`, keeping EmbrAIon Core model-agnostic while giving consuming projects a canonical place for reusable host/model selections, supported effort, billing metadata, capabilities, and non-secret metadata.
+- Deployment-aware routing and ordered fallback plans: `.embraion/routing.yaml` can reference deployment IDs, and `embraion route` fails closed on unknown, disabled, host-mismatched, effort-incompatible, or capability-ineligible deployments.
+- `embraion deployment list/show` for human- and machine-readable inspection of the project deployment registry.
+
+### Changed
+
+- Compatible projects created before `deployments.yaml` existed are upgraded safely by creating only the new empty registry; missing older canonical modular configuration files still fail closed.
+- Route/dispatch host names are now project-extensible rather than limited by CLI parser choices, while host projection installation remains limited to supported EmbrAIon adapters.
+
 ## 0.11.0 - 2026-09-26
 
 ### Added

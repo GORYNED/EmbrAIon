@@ -35,7 +35,15 @@ from .project_validation import (
     run_validation_profile,
     validation_profile_specs,
 )
-from .runtime import create_dispatch, read_session, route, start_session, update_session
+from .runtime import (
+    create_dispatch,
+    get_deployment,
+    list_deployments,
+    read_session,
+    route,
+    start_session,
+    update_session,
+)
 from .security import (
     SEVERITY_ORDER,
     collect_findings,
@@ -91,6 +99,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  cache      Inspect or clean cached project-pinned EmbrAIon runtimes",
         "",
         "AI execution",
+        "  deployment Inspect the project-owned deployment/provider registry",
         "  route      Resolve host-default or project routing for a task route class",
         "  dispatch   Create a bounded execution plan with access and owned-path constraints",
         "  context    Select project knowledge with provenance and privacy metadata",
@@ -317,6 +326,39 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     for path in generated:
         print(f"Generated {path}")
 
+    return 0
+
+
+def _cmd_deployment_list(args: argparse.Namespace) -> int:
+    report = list_deployments()
+    if args.json:
+        _print_json(report)
+        return 0
+    print("EmbrAIon Project Deployments")
+    print()
+    print(f"Providers: {report['provider-count']}")
+    print(f"Deployments: {report['deployment-count']}")
+    for deployment_id, definition in report["deployments"].items():
+        state = "enabled" if definition.get("enabled", True) else "disabled"
+        print(
+            f"  {deployment_id}: host={definition['host']} "
+            f"model={definition['model']} ({state})"
+        )
+    return 0
+
+
+def _cmd_deployment_show(args: argparse.Namespace) -> int:
+    deployment = get_deployment(args.deployment_id)
+    if args.json:
+        _print_json(deployment)
+        return 0
+    print(f"Deployment: {deployment['id']}")
+    print(f"Host: {deployment['host']}")
+    print(f"Provider: {deployment.get('provider') or '-'}")
+    print(f"Model: {deployment['model']}")
+    print(f"Enabled: {deployment.get('enabled', True)}")
+    print(f"Efforts: {', '.join(deployment.get('efforts') or []) or '-'}")
+    print(f"Default effort: {deployment.get('default-effort') or '-'}")
     return 0
 
 
@@ -1232,11 +1274,28 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.add_argument("--force", action="store_true")
     sync_parser.set_defaults(func=_cmd_sync)
 
+    deployment = sub.add_parser(
+        "deployment",
+        help="Inspect project deployment registry",
+        description="Inspect project-owned providers and reusable execution deployments.",
+    )
+    deployment_sub = deployment.add_subparsers(
+        dest="deployment-command",
+        required=True,
+    )
+    deployment_list = deployment_sub.add_parser("list", help="List project deployments")
+    deployment_list.add_argument("--json", action="store_true")
+    deployment_list.set_defaults(func=_cmd_deployment_list)
+    deployment_show = deployment_sub.add_parser("show", help="Show one project deployment")
+    deployment_show.add_argument("deployment_id")
+    deployment_show.add_argument("--json", action="store_true")
+    deployment_show.set_defaults(func=_cmd_deployment_show)
+
     route_parser = sub.add_parser("route", help="Resolve host-default or project routing", description="Resolve host-default or project routing for a host, route class, role, and data class.")
     route_parser.add_argument(
         "--host",
         required=True,
-        choices=["codex", "copilot", "claude-code"],
+        help="Execution host/surface name. Project deployments may use custom hosts.",
     )
     route_parser.add_argument(
         "--route-class",
@@ -1264,7 +1323,7 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument(
         "--host",
         required=True,
-        choices=["codex", "copilot", "claude-code"],
+        help="Execution host/surface name. Project deployments may use custom hosts.",
     )
     dispatch.add_argument(
         "--route-class",

@@ -93,6 +93,18 @@ def read_routing_config(project: Path | None = None) -> dict[str, Any]:
     )
 
 
+def read_deployments_config(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    path = root / ".embraion" / "deployments.yaml"
+    if not path.is_file():
+        return {"providers": {}, "deployments": {}}
+    return _validated_config_mapping(
+        path,
+        schema_name="deployments.schema.json",
+        label=".embraion/deployments.yaml",
+    )
+
+
 def read_knowledge_config(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     path = root / ".embraion" / "knowledge.yaml"

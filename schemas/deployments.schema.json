@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/deployments.schema.json",
+  "title": "EmbrAIon Project Deployments",
+  "type": "object",
+  "required": [
+    "providers",
+    "deployments"
+  ],
+  "properties": {
+    "providers": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/provider"
+      }
+    },
+    "deployments": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/deployment"
+      }
+    }
+  },
+  "$defs": {
+    "stringList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "display-name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "homepage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "billing": {
+      "type": "object",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "plan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "data-classes": {
+          "$ref": "#/$defs/stringList"
+        },
+        "access-modes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "read-only",
+              "workspace-write"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "roles": {
+          "$ref": "#/$defs/stringList"
+        },
+        "task-classes": {
+          "$ref": "#/$defs/stringList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "required": [
+        "host",
+        "model"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "efforts": {
+          "$ref": "#/$defs/stringList"
+        },
+        "default-effort": {
+          "type": "string",
+          "minLength": 1
+        },
+        "billing": {
+          "$ref": "#/$defs/billing"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/capabilities"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

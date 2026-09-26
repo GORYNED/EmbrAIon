@@ -45,23 +45,50 @@ New models can appear in a host without requiring an EmbrAIon release.
 
 ## Optional project overrides
 
-A project may override a route or role in `.embraion/routing.yaml`:
+A project may define reusable execution choices in `.embraion/deployments.yaml` and reference them from `.embraion/routing.yaml`:
+
+```yaml
+# .embraion/deployments.yaml
+providers:
+  example:
+    display-name: Example Provider
+
+deployments:
+  complex-main:
+    host: codex
+    provider: example
+    model: any-host-model-selector
+    efforts: [medium, high]
+    default-effort: high
+```
+
+```yaml
+# .embraion/routing.yaml
+overrides:
+  codex:
+    routes:
+      complex:
+        deployment: complex-main
+        effort: high
+    roles:
+      reviewer:
+        deployment: complex-main
+        options:
+          thinking: maximum
+```
+
+The registry is project-owned, not an EmbrAIon Core model catalog. Model/provider strings remain intentionally open-ended.
+
+For simple one-off choices, direct `model`, `effort`, and `options` overrides remain supported:
 
 ```yaml
 overrides:
   codex:
     routes:
-      complex:
+      ordinary:
         model: any-host-model-selector
-        effort: high
-    roles:
-      reviewer:
-        model: any-review-model-selector
-        options:
-          thinking: maximum
+        effort: medium
 ```
-
-The strings are intentionally open-ended. EmbrAIon validates the structure, not a global model catalog.
 
 Resolution precedence is:
 
@@ -96,7 +123,7 @@ EmbrAIon can deterministically validate:
 - role/route precedence;
 - access and privacy policy that is independent from model identity.
 
-The execution host remains authoritative for whether a particular selector or option is actually available to the current user/account.
+The execution host remains authoritative for whether a particular selector or option is actually available to the current user/account. EmbrAIon can additionally validate project-deployment references, enabled state, host matching, supported effort, and declared data/role/access/task capabilities.
 
 This separation keeps Core usable with future models and hosts that did not exist when the current EmbrAIon release was published.
 
