@@ -115,6 +115,109 @@ class ProjectValidationTests(unittest.TestCase):
                 run["validation"][0]["evidence-id"],
             )
 
+    def test_parameterized_profile_applies_argument_and_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["affected"] = {
+                "commands": [
+                    self._command(
+                        "import os,sys; "
+                        "print('args=' + '|'.join(sys.argv[1:])); "
+                        "print('env=' + os.environ['VALIDATION_SCOPE'])"
+                    )
+                ],
+                "parameters": {
+                    "base-ref": {
+                        "argument": "--base-ref",
+                        "required": True,
+                    },
+                    "scope": {
+                        "environment": "VALIDATION_SCOPE",
+                        "default": "repository",
+                    },
+                },
+            }
+            write_yaml(path, data)
+
+            record = run_validation_profile(
+                "affected",
+                project=project,
+                parameters={"base-ref": "origin/main"},
+            )
+
+            self.assertEqual("passed", record["status"])
+            self.assertIn("--base-ref", record["commands"][0]["stdout"])
+            self.assertIn("origin/main", record["commands"][0]["stdout"])
+            self.assertIn("env=repository", record["commands"][0]["stdout"])
+            self.assertEqual("origin/main", record["parameters"]["base-ref"])
+            self.assertEqual("repository", record["parameters"]["scope"])
+
+    def test_parameterized_profile_fails_closed_for_missing_or_unknown_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["full"] = {
+                "commands": [self._command("print('full')")],
+                "parameters": {
+                    "justification": {
+                        "environment": "VALIDATION_JUSTIFICATION",
+                        "required": True,
+                    }
+                },
+            }
+            write_yaml(path, data)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Missing required validation parameter 'justification'",
+            ):
+                run_validation_profile("full", project=project)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Unknown validation parameter",
+            ):
+                run_validation_profile(
+                    "full",
+                    project=project,
+                    parameters={
+                        "justification": "approved",
+                        "unexpected": "value",
+                    },
+                )
+
+    def test_parameter_command_target_must_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            path = project / ".embraion" / "validation.yaml"
+            data = read_yaml(path)
+            data["profiles"]["affected"] = {
+                "commands": [self._command("print('one')")],
+                "parameters": {
+                    "scope": {
+                        "argument": "--scope",
+                        "commands": [2],
+                    }
+                },
+            }
+            write_yaml(path, data)
+
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "targets command\(s\) outside 1\.\.1",
+            ):
+                run_validation_profile(
+                    "affected",
+                    project=project,
+                    parameters={"scope": "all"},
+                )
+
     def test_invalid_validation_config_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
