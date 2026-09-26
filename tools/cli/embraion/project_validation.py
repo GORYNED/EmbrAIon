@@ -61,7 +61,7 @@ def validation_profiles(project: Path | None = None) -> dict[str, list[str]]:
     }
 
 
-_WINDOWS_SHELL_UNSAFE = re.compile(r'[\\r\\n&|<>^()%!"]')
+_WINDOWS_SHELL_UNSAFE = re.compile(r'[\r\n&|<>^()%!"]')
 
 
 def _quote_validation_argument(value: str) -> str:
