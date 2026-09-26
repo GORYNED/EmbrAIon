@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import subprocess
 import time
@@ -60,10 +61,36 @@ def validation_profiles(project: Path | None = None) -> dict[str, list[str]]:
     }
 
 
+_WINDOWS_SHELL_UNSAFE = re.compile(r'[\\r\\n&|<>^()%!"]')
+
+
 def _quote_validation_argument(value: str) -> str:
     if os.name == "nt":
+        if _WINDOWS_SHELL_UNSAFE.search(value):
+            raise RuntimeError(
+                "Validation argument value contains characters that are unsafe "
+                "for cmd.exe shell execution on Windows. Use an environment "
+                "parameter or a safer value."
+            )
         return subprocess.list2cmdline([value])
     return shlex.quote(value)
+
+
+def _redact_validation_parameter_values(
+    text: str,
+    resolved: dict[str, str],
+) -> str:
+    redacted = text
+    for value in sorted(
+        {item for item in resolved.values() if item},
+        key=len,
+        reverse=True,
+    ):
+        redacted = redacted.replace(
+            value,
+            "<REDACTED:validation-parameter>",
+        )
+    return redacted
 
 
 def _resolve_validation_parameters(
@@ -233,12 +260,22 @@ def run_validation_profile(
             status = "passed" if result.returncode == 0 else "failed"
             row = {
                 "index": index,
-                "command": prepared_command,
+                "command": command,
                 "status": status,
                 "exit-code": result.returncode,
                 "duration-ms": duration_ms,
-                "stdout": _captured_tail(output["stdout"]),
-                "stderr": _captured_tail(output["stderr"]),
+                "stdout": _captured_tail(
+                    _redact_validation_parameter_values(
+                        output["stdout"],
+                        resolved_parameters,
+                    )
+                ),
+                "stderr": _captured_tail(
+                    _redact_validation_parameter_values(
+                        output["stderr"],
+                        resolved_parameters,
+                    )
+                ),
             }
         except subprocess.TimeoutExpired as error:
             duration_ms = int((time.monotonic() - began) * 1000)
@@ -251,12 +288,22 @@ def run_validation_profile(
             output = redact_child_output(stdout, stderr)
             row = {
                 "index": index,
-                "command": prepared_command,
+                "command": command,
                 "status": "timed-out",
                 "exit-code": None,
                 "duration-ms": duration_ms,
-                "stdout": _captured_tail(output["stdout"]),
-                "stderr": _captured_tail(output["stderr"]),
+                "stdout": _captured_tail(
+                    _redact_validation_parameter_values(
+                        output["stdout"],
+                        resolved_parameters,
+                    )
+                ),
+                "stderr": _captured_tail(
+                    _redact_validation_parameter_values(
+                        output["stderr"],
+                        resolved_parameters,
+                    )
+                ),
             }
 
         command_results.append(row)
