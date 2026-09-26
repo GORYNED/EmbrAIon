@@ -65,7 +65,7 @@ parameters:
 
 Values passed as command-line arguments are shell-quoted for the current platform. Environment parameters are added only to the child validation process. Unknown parameters, missing required values, invalid command indexes, and malformed configuration fail closed.
 
-Parameter values are included in structured validation evidence after normal EmbrAIon redaction. Do not use validation parameters as a substitute for a secret manager.
+Structured validation evidence records which parameter names were used, but never persists their raw values. Child stdout/stderr still passes through normal EmbrAIon redaction. Do not use validation parameters as a substitute for a secret manager.
 
 ## Choosing profiles
 
