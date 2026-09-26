@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.13.0 - 2026-09-26
+
+### Added
+
+- Provider-neutral execution request/result, failure, health, bounded-attempt, fallback, and adapter contracts that preserve the original privacy, access, role, task, source/trust, and ownership ceilings.
+- An optional LiteLLM loopback execution adapter with scoped credential resolution, signed context provenance, no internal retry or model substitution, provider/model and correlation evidence, bounded output, and child-process cleanup.
+- Project-owned pricing configuration with approved official-source refresh, validated atomic snapshots, offline status, stale/diff reporting, and deterministic cost calculation without execution-time network dependency.
+- Version-tied provider/adapter usage-overlap evidence for snapshot-derived token costing; ambiguous usage remains unknown instead of being guessed or treated as zero.
+
+### Changed
+
+- Execution and pricing remain opt-in project capabilities, so existing 0.12 projects retain their routing behavior unless they explicitly adopt the new contracts.
+- Concrete provider/model selectors, pricing sources, SKU mappings, rates, and freshness policy remain project-owned; EmbrAIon Core remains model-, provider-, and project-agnostic.
+- Pricing parser dependencies are required only for explicit refresh; offline pricing status and calculation use the last validated local snapshot.
+
 ## 0.12.0 - 2026-09-26
 
 ### Added
