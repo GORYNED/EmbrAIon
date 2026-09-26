@@ -22,6 +22,7 @@ from embraion.pricing import refresh_pricing
 _FIXTURE = r'''
 import hashlib, hmac, json, os, sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import TCPServer
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_): pass
     def do_POST(self):
@@ -41,7 +42,12 @@ class Handler(BaseHTTPRequestHandler):
         encoded = json.dumps(value).encode()
         self.send_response(200); self.send_header("Content-Length", str(len(encoded))); self.end_headers()
         self.wfile.write(encoded)
-server = HTTPServer(("127.0.0.1", 0), Handler)
+class LoopbackServer(HTTPServer):
+    def server_bind(self):
+        TCPServer.server_bind(self)
+        self.server_name = "127.0.0.1"
+        self.server_port = self.server_address[1]
+server = LoopbackServer(("127.0.0.1", 0), Handler)
 print(server.server_port, flush=True)
 server.handle_request()
 server.server_close()

@@ -12,7 +12,6 @@ import types
 import unittest
 import urllib.error
 import urllib.request
-from http.server import HTTPServer
 from unittest.mock import patch
 
 from embraion.adapters import litellm_host
@@ -56,7 +55,7 @@ class LiteLLMHostTests(unittest.TestCase):
                        "EMBRAION_UPSTREAM_MODEL": selector, "EMBRAION_PROVIDER_KEY": "scoped-key"}
         with (patch.dict(os.environ, environment), patch.dict(sys.modules, {"litellm": stub}),
               patch.object(litellm_host.importlib.metadata, "version", return_value="1.77.7")):
-            server = HTTPServer(("127.0.0.1", 0), litellm_host._Handler)
+            server = litellm_host._LoopbackServer(("127.0.0.1", 0), litellm_host._Handler)
             thread = threading.Thread(target=server.handle_request, daemon=True)
             thread.start()
             request = urllib.request.Request(f"http://127.0.0.1:{server.server_port}/v1/responses", body,

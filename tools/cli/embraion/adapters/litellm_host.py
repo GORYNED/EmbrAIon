@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import TCPServer
 
 
 _LIMIT = 1_048_576
@@ -125,6 +126,15 @@ class _Handler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
 
+class _LoopbackServer(HTTPServer):
+    def server_bind(self) -> None:
+        # HTTPServer's reverse-DNS lookup is unnecessary for a fixed loopback host
+        # and can delay readiness on isolated CI and offline machines.
+        TCPServer.server_bind(self)
+        self.server_name = "127.0.0.1"
+        self.server_port = self.server_address[1]
+
+
 def _exit_on_parent_eof() -> None:
     sys.stdin.buffer.read()
     os._exit(0)
@@ -139,7 +149,7 @@ def main() -> None:
     lifetime = int(os.environ["EMBRAION_LIFETIME_SECONDS"])
     if not 1 <= lifetime <= 3605:
         raise RuntimeError("invalid lifetime")
-    server = HTTPServer(("127.0.0.1", 0), _Handler)
+    server = _LoopbackServer(("127.0.0.1", 0), _Handler)
     threading.Thread(target=_exit_on_parent_eof, daemon=True).start()
     threading.Thread(target=_exit_at_deadline, args=(lifetime,), daemon=True).start()
     print(server.server_port, flush=True)
