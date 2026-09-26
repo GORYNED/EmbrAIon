@@ -17,7 +17,7 @@ from .common import (
     state_root,
     write_json,
 )
-from .policy import read_routing_config
+from .policy import read_deployments_config, read_routing_config
 
 
 def _append_event(project: Path, event: dict[str, Any]) -> None:
@@ -58,11 +58,183 @@ def _routing_override(
     roles = host_overrides.get("roles") or {}
     route_override = routes.get(route_class) or {}
     role_override = (roles.get(role) or {}) if role else {}
-
     if not isinstance(route_override, dict) or not isinstance(role_override, dict):
         raise RuntimeError("Routing route/role overrides must be mappings.")
 
-    return {**route_override, **role_override}
+    merged = {**route_override, **role_override}
+    if "deployment" in role_override:
+        merged.pop("model", None)
+        if "fallbacks" not in role_override:
+            merged.pop("fallbacks", None)
+    elif "model" in role_override:
+        merged.pop("deployment", None)
+        if "fallbacks" not in role_override:
+            merged.pop("fallbacks", None)
+    return merged
+
+
+def _deployment_registry(project: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    config = read_deployments_config(project)
+    providers = dict(config.get("providers") or {})
+    deployments = dict(config.get("deployments") or {})
+    for deployment_id, raw in deployments.items():
+        definition = dict(raw or {})
+        provider = definition.get("provider")
+        if provider and provider not in providers:
+            raise RuntimeError(
+                f"Deployment '{deployment_id}' references unknown provider '{provider}'."
+            )
+        efforts = [str(value) for value in (definition.get("efforts") or [])]
+        default_effort = definition.get("default-effort")
+        if default_effort and efforts and str(default_effort) not in efforts:
+            raise RuntimeError(
+                f"Deployment '{deployment_id}' default effort '{default_effort}' "
+                "is not listed in its supported efforts."
+            )
+    return providers, deployments
+
+
+def list_deployments(project: Path | None = None) -> dict[str, Any]:
+    project_path = project_root(project)
+    providers, deployments = _deployment_registry(project_path)
+    return {
+        "providers": providers,
+        "deployments": deployments,
+        "provider-count": len(providers),
+        "deployment-count": len(deployments),
+    }
+
+
+def get_deployment(deployment_id: str, project: Path | None = None) -> dict[str, Any]:
+    project_path = project_root(project)
+    providers, deployments = _deployment_registry(project_path)
+    if deployment_id not in deployments:
+        raise RuntimeError(f"Unknown project deployment: {deployment_id}")
+    definition = dict(deployments[deployment_id])
+    provider_id = definition.get("provider")
+    return {
+        "id": deployment_id,
+        **definition,
+        "provider-definition": providers.get(str(provider_id)) if provider_id else None,
+    }
+
+
+def _normalized_access_mode(access: str | None) -> str | None:
+    if access is None:
+        return None
+    if access == "write":
+        return "workspace-write"
+    if access in {"inspect", "plan", "review", "external-read"}:
+        return "read-only"
+    return access
+
+
+def _resolve_deployment(
+    deployment_id: str,
+    *,
+    registry: tuple[dict[str, Any], dict[str, Any]],
+    host: str,
+    route_class: str,
+    data_class: str,
+    role: str | None,
+    access: str | None,
+    effort: str | None,
+    options: dict[str, Any] | None,
+) -> dict[str, Any]:
+    providers, deployments = registry
+    if deployment_id not in deployments:
+        raise RuntimeError(f"Unknown project deployment: {deployment_id}")
+    definition = dict(deployments[deployment_id])
+    if definition.get("enabled", True) is not True:
+        raise RuntimeError(f"Project deployment '{deployment_id}' is disabled.")
+    deployment_host = str(definition["host"])
+    if deployment_host != host:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' belongs to host "
+            f"'{deployment_host}', not '{host}'."
+        )
+    provider = definition.get("provider")
+    if provider and provider not in providers:
+        raise RuntimeError(
+            f"Deployment '{deployment_id}' references unknown provider '{provider}'."
+        )
+    selected_effort = effort or definition.get("default-effort")
+    supported_efforts = {str(value) for value in (definition.get("efforts") or [])}
+    if selected_effort and supported_efforts and str(selected_effort) not in supported_efforts:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' does not support effort "
+            f"'{selected_effort}'."
+        )
+    capabilities = dict(definition.get("capabilities") or {})
+    data_classes = {str(value) for value in (capabilities.get("data-classes") or [])}
+    if data_classes and data_class not in data_classes:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' does not allow data class '{data_class}'."
+        )
+    task_classes = {str(value) for value in (capabilities.get("task-classes") or [])}
+    if task_classes and route_class not in task_classes:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' does not allow route class '{route_class}'."
+        )
+    allowed_roles = {str(value) for value in (capabilities.get("roles") or [])}
+    if role and allowed_roles and role not in allowed_roles:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' does not allow role '{role}'."
+        )
+    access_mode = _normalized_access_mode(access)
+    access_modes = {str(value) for value in (capabilities.get("access-modes") or [])}
+    if access_mode and access_modes and access_mode not in access_modes:
+        raise RuntimeError(
+            f"Project deployment '{deployment_id}' does not allow access mode '{access_mode}'."
+        )
+    resolved_options = dict(definition.get("options") or {})
+    resolved_options.update(options or {})
+    return {
+        "deployment": deployment_id,
+        "provider": provider,
+        "model": definition["model"],
+        "effort": selected_effort,
+        "options": resolved_options,
+        "billing": definition.get("billing"),
+    }
+
+
+def _resolve_fallbacks(
+    values: list[dict[str, Any]],
+    *,
+    primary_deployment: str | None,
+    registry: tuple[dict[str, Any], dict[str, Any]],
+    host: str,
+    route_class: str,
+    data_class: str,
+    role: str | None,
+    access: str | None,
+) -> list[dict[str, Any]]:
+    resolved: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for value in values:
+        deployment_id = str(value["deployment"])
+        if deployment_id == primary_deployment:
+            raise RuntimeError(
+                f"Project deployment '{deployment_id}' cannot fall back to itself."
+            )
+        if deployment_id in seen:
+            raise RuntimeError(f"Duplicate fallback deployment: {deployment_id}")
+        seen.add(deployment_id)
+        resolved.append(
+            _resolve_deployment(
+                deployment_id,
+                registry=registry,
+                host=host,
+                route_class=route_class,
+                data_class=data_class,
+                role=role,
+                access=access,
+                effort=value.get("effort"),
+                options=value.get("options") or {},
+            )
+        )
+    return resolved
 
 
 def route(
@@ -71,6 +243,7 @@ def route(
     data_class: str,
     *,
     role: str | None = None,
+    access: str | None = None,
     project: Path | None = None,
 ) -> dict[str, Any]:
     if route_class not in _known_route_classes():
@@ -84,17 +257,58 @@ def route(
     if not isinstance(options, dict):
         raise RuntimeError("Routing override options must be a mapping.")
 
+    registry = _deployment_registry(project_path)
+    deployment_id = override.get("deployment")
+    if deployment_id:
+        primary = _resolve_deployment(
+            str(deployment_id),
+            registry=registry,
+            host=host,
+            route_class=route_class,
+            data_class=data_class,
+            role=role,
+            access=access,
+            effort=override.get("effort"),
+            options=options,
+        )
+        resolution = "project-deployment"
+        model = primary["model"]
+        effort = primary["effort"]
+        resolved_options = primary["options"]
+        provider = primary["provider"]
+        billing = primary["billing"]
+    else:
+        resolution = "project-override" if override else "host-default"
+        model = override.get("model")
+        effort = override.get("effort")
+        resolved_options = options
+        provider = None
+        billing = None
+
+    fallbacks = _resolve_fallbacks(
+        list(override.get("fallbacks") or []),
+        primary_deployment=str(deployment_id) if deployment_id else None,
+        registry=registry,
+        host=host,
+        route_class=route_class,
+        data_class=data_class,
+        role=role,
+        access=access,
+    )
     result = {
         "host": host,
         "route": route_class,
         "role": role,
-        "resolution": "project-override" if override else "host-default",
-        "model": override.get("model"),
-        "effort": override.get("effort"),
-        "options": options,
+        "resolution": resolution,
+        "deployment": str(deployment_id) if deployment_id else None,
+        "provider": provider,
+        "model": model,
+        "effort": effort,
+        "options": resolved_options,
+        "fallbacks": fallbacks,
+        "billing": billing,
         "data": data_class,
     }
-
     _append_event(
         project_path,
         {
@@ -103,12 +317,14 @@ def route(
             "route": route_class,
             "role": role,
             "resolution": result["resolution"],
+            "deployment": result["deployment"],
+            "provider": result["provider"],
             "model": result["model"],
             "effort": result["effort"],
+            "fallback-count": len(fallbacks),
             "data-class": data_class,
         },
     )
-
     return result
 
 
@@ -148,6 +364,7 @@ def create_dispatch(
         route_class,
         data_class,
         role=role,
+        access=access,
         project=project,
     )
     dispatch_id = uuid.uuid4().hex
@@ -160,9 +377,12 @@ def create_dispatch(
         "host": host,
         "route": route_class,
         "resolution": selected["resolution"],
+        "deployment": selected.get("deployment"),
+        "provider": selected.get("provider"),
         "model": selected["model"],
         "effort": selected.get("effort"),
         "options": selected.get("options") or {},
+        "fallbacks": selected.get("fallbacks") or [],
         "data-class": data_class,
         "access": access,
         "owned-paths": owned_paths,
@@ -182,8 +402,11 @@ def create_dispatch(
             "role": role,
             "host": host,
             "resolution": selected["resolution"],
+            "deployment": selected.get("deployment"),
+            "provider": selected.get("provider"),
             "model": selected["model"],
             "effort": selected.get("effort"),
+            "fallback-count": len(selected.get("fallbacks") or []),
             "data-class": data_class,
             "access": access,
             "owned-path-count": len(owned_paths),

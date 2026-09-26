@@ -308,6 +308,10 @@ def _default_routing_config() -> dict[str, Any]:
     return {"overrides": {}}
 
 
+def _default_deployments_config() -> dict[str, Any]:
+    return {"providers": {}, "deployments": {}}
+
+
 def _default_knowledge_config() -> dict[str, Any]:
     return {"slots": default_project_contract_slots()}
 
@@ -348,6 +352,7 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
     destination = path.resolve()
     manifest = destination / ".embraion" / "project.yaml"
     routing = destination / ".embraion" / "routing.yaml"
+    deployments = destination / ".embraion" / "deployments.yaml"
     policy = destination / ".embraion" / "policy.yaml"
     knowledge = destination / ".embraion" / "knowledge.yaml"
     validation = destination / ".embraion" / "validation.yaml"
@@ -358,6 +363,9 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
 
     if routing.exists() and not force:
         raise RuntimeError(f"{routing} already exists; use --force to replace it.")
+
+    if deployments.exists() and not force:
+        raise RuntimeError(f"{deployments} already exists; use --force to replace it.")
 
     if policy.exists() and not force:
         raise RuntimeError(f"{policy} already exists; use --force to replace it.")
@@ -373,6 +381,7 @@ def init_project(path: Path, name: str | None = None, force: bool = False) -> Pa
 
     write_yaml(manifest, _default_project_overlay(name or destination.name))
     write_yaml(routing, _default_routing_config())
+    write_yaml(deployments, _default_deployments_config())
     write_yaml(policy, _default_policy_config())
     write_yaml(knowledge, _default_knowledge_config())
     write_yaml(validation, _default_validation_config())
@@ -428,6 +437,10 @@ def _config_upgrade_inputs(
             _default_routing_config(),
             Path("schemas/routing.schema.json"),
         ),
+        config_root / "deployments.yaml": (
+            _default_deployments_config(),
+            Path("schemas/deployments.schema.json"),
+        ),
         config_root / "policy.yaml": (
             _default_policy_config(),
             Path("schemas/policy.schema.json"),
@@ -446,7 +459,13 @@ def _config_upgrade_inputs(
         ),
     }
 
-    missing = [path for path in definitions if not path.is_file()]
+    # deployments.yaml is a new canonical modular file and can be created
+    # empty when upgrading an otherwise-complete older overlay.
+    required_existing = [
+        path for path in definitions
+        if path.name != "deployments.yaml"
+    ]
+    missing = [path for path in required_existing if not path.is_file()]
     if missing:
         relative = ", ".join(
             path.relative_to(destination).as_posix()
@@ -501,7 +520,7 @@ def normalize_project_config(
     originals: dict[Path, dict[str, Any]] = {}
 
     for config_path, (defaults, schema_path) in definitions.items():
-        loaded = read_yaml(config_path)
+        loaded = read_yaml(config_path) if config_path.is_file() else {}
         if loaded is None:
             loaded = {}
         if not isinstance(loaded, dict):
