@@ -38,7 +38,7 @@ Host не должен переписывать `.embraion/` только пот
 
 Generated host files — это projections, а не второй configuration authority.
 
-![Каноническая конфигурация и AI host projections](../assets/diagrams/ru/10-ai-host-projections.svg){ loading=lazy }
+![Каноническая конфигурация и AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
 ## Общий запрос на настройку
 
