@@ -90,16 +90,43 @@ embraion policy show --json
 
 ### `embraion update`
 
-Безопасно нормализовать совместимую modular project configuration и изменить framework pin текущего проекта.
+Безопасно нормализует project configuration и атомарно синхронизирует framework pin с точным lock опубликованного release artifact.
 
 ```bash
 embraion update
 embraion update --framework-version <published-version>
 ```
 
-Safe configuration normalization сейчас целится только в установленную EmbrAIon launcher version. Чтобы перевести проект на другую published version, сначала установите/upgrade/downgrade launcher до неё, затем запустите `embraion update`. Это не позволяет текущему launcher записывать configuration release contract, которым он не владеет.
+Безопасная нормализация конфигурации ориентируется только на установленную версию EmbrAIon launcher. Чтобы перевести проект на другую опубликованную версию, сначала установите или обновите/понизьте launcher до этой версии, затем запустите `embraion update`.
 
-Перед записью EmbrAIon строит и валидирует target configuration всех canonical `.embraion/` files. Он добавляет только missing defaults, сохраняет existing project values и не трогает generated host projections и projection state. Incompatible values или incomplete legacy layout fail до перезаписи configuration files.
+До изменения pin EmbrAIon разрешает canonical GitHub Release и требует ровно один ожидаемый wheel с именем `embraion-<version>-py3-none-any.whl` и валидным server-side GitHub digest формата `sha256:`. Команда проверяет release tag, identity asset, URL, формат digest и всю candidate canonical-конфигурацию `.embraion/`.
+
+Project manifest записывается атомарно сразу с двумя частями:
+
+- `framework.version`
+- `framework.artifact.{schema,source,release,asset,digest}`
+
+Отсутствующий release asset, некорректный digest, mismatch version/lock или несовместимая конфигурация приводят к fail-closed. Существующие проекты только с version обновляются автоматически; отсутствующие modular config files создаются из совместимых defaults без ручной миграции. Generated host projections и projection state не меняются.
+
+### `embraion framework`
+
+Используйте framework-owned artifact lock вместо consumer-specific download/checksum logic.
+
+Проверить точный locked release asset без установки:
+
+```bash
+embraion framework verify
+embraion framework verify --json
+```
+
+Установить точный locked wheel в изолированный EmbrAIon runtime cache:
+
+```bash
+embraion framework install
+embraion framework install --json
+```
+
+Обе команды читают `.embraion/project.yaml`, требуют валидный artifact lock, скачивают точный canonical GitHub Release asset и проверяют его SHA-256 до успешного завершения. `framework install` выполняет проверку до вызова pip и записывает identity lock в runtime cache marker. Cached runtimes с другой artifact identity или digest отклоняются.
 
 ### `embraion sync`
 
