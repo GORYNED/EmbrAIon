@@ -4,7 +4,7 @@ Routing EmbrAIon model-agnostic.
 
 Он классифицирует **работу и риск**, а не силу модели, цену, provider или marketing tier. Model availability меняется быстро; project architecture и safety constraints — значительно медленнее.
 
-![Маршрутизация моделей](assets/diagrams/ru/12-model-routing.svg){ loading=lazy }
+![Маршрутизация моделей](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
 
 ## Route classes
 
