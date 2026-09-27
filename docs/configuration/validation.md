@@ -1,6 +1,6 @@
-# Validation Profiles
+# Validation Configuration
 
-`.embraion/validation.yaml` declares the commands that provide real project evidence.
+`.embraion/validation.yaml` declares the **configuration** for commands that provide real project evidence. This page explains how to define profiles; [Validation & Evidence](../validation.md) explains what happens when they run and how evidence is used.
 
 Simple profiles remain valid and backwards compatible:
 

@@ -1,30 +1,26 @@
-# Configure with Your AI Client
+# Conversational Project Configuration
 
 You do not have to hand-edit every `.embraion/` file. The AI client already working in the repository can help configure project-owned EmbrAIon settings.
 
-The important point is **how** this works:
+This page is about **changing the project contract through natural-language intent**. Host installation, generated file locations, and host-specific ownership rules live under [Host Integrations](../hosts/index.md).
 
 > EmbrAIon does not intercept your prompt. The installed host projection teaches the AI client where the repository's canonical EmbrAIon configuration lives and which reusable roles/skills are available.
 
-The AI client still performs the conversation and reasoning. EmbrAIon supplies the project contract.
+## Ordinary engineering vs configuration
 
-## Two kinds of requests
-
-### Ordinary engineering
-
-You can ask for the engineering outcome directly:
+An ordinary engineering request:
 
 > Fix the retry behavior when the service connection fails.
 
-Once the host projection is installed, you should not need to restate the whole EmbrAIon workflow in every prompt. The host can use the repository's project knowledge, policy, roles, routing, validation, and review contract.
+should use the existing project contract.
 
-### Configuring the AI-First system
-
-You can also ask the host to change how AI-assisted engineering works in this repository:
+A configuration request:
 
 > Configure routing so bounded work uses inexpensive models, complex architecture uses stronger reasoning, and the critical route is reserved for exceptional risk.
 
-The host should translate that intent into the correct canonical `.embraion/` files, validate the result, and avoid duplicating the rule elsewhere.
+should intentionally change the canonical project contract.
+
+The host should not rewrite `.embraion/` merely because an ordinary product task was requested.
 
 ## Canonical ownership
 
@@ -44,11 +40,9 @@ Generated host files are projections, not a second configuration authority.
 
 ![Canonical configuration to AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
-You can use one host or several in the same repository.
+## General setup request
 
-## A general conversational request
-
-A useful project-setup request is:
+A useful request is:
 
 > Review this repository and configure its EmbrAIon project contract. Keep project facts in the canonical `.embraion/` files, preserve Core safety gates, do not invent model selectors or secrets, and explain which project settings you changed and why.
 
@@ -57,199 +51,37 @@ After customization:
 ```bash
 embraion doctor
 embraion policy show
+embraion validation list
 embraion status
 ```
 
-For routing, verify the routes you changed with `embraion route`. For generated host files, preview with `embraion projection diff`.
+For routing, verify the changed routes with `embraion route`. For generated host files, preview with `embraion projection diff`.
 
-## Codex
+## Routing request
 
-Install the Codex projection:
+> Configure EmbrAIon routing for this repository using only model selectors and reasoning settings actually available to this host. Keep host-default where an explicit override is unnecessary. Put reusable concrete choices in `.embraion/deployments.yaml` and route/role selection in `.embraion/routing.yaml`. Do not weaken privacy, access, ownership, validation, or review policy.
 
-```bash
-embraion install --host codex --destination .
-```
+## Knowledge request
 
-Typical generated files include:
+> Register the current architecture and compatibility documents as EmbrAIon project knowledge. Prefer Project Contract Slots when they match an existing source of truth. Do not duplicate the documents into YAML.
 
-```text
-.codex/
-├── config.toml
-└── agents/
-    ├── analyst.toml
-    ├── architect.toml
-    ├── reviewer.toml
-    └── ...
+## Policy request
 
-.agents/
-└── skills/
-    ├── implementation/
-    ├── review/
-    ├── routing-configuration/
-    └── ...
-```
+> Review this repository's source ownership. Mark first-party source as canonical, generated artifacts as generated, vendor-managed code as external or protected as appropriate, and preserve any stricter existing restrictions.
 
-If you want Codex to configure model routing for you, ask it in the repository:
+## Validation request
 
-> Configure EmbrAIon routing for this repository using only models and reasoning settings currently available to me in Codex. Keep host-default where an explicit override is unnecessary. Use the existing EmbrAIon route classes and role overrides. Write model, effort, or Codex-specific options only to `.embraion/routing.yaml` under `overrides.codex`. Do not change privacy, access, ownership, source protection, validation, or review rules to make a model fit. Verify the resulting routes with `embraion route`.
+> Add deterministic project validation commands to the appropriate EmbrAIon profiles. Keep fast inexpensive, affected scoped to normal changes, and full reserved for the broad project gate. Do not treat an empty profile as a pass.
 
-A resulting project override can look like:
+## Project-agent request
 
-```yaml
-overrides:
-  codex:
-    routes:
-      complex:
-        model: "<Codex selector confirmed by Codex>"
-        effort: "<Codex-supported effort>"
-      critical:
-        model: "<Codex selector confirmed by Codex>"
-        effort: "<Codex-supported effort>"
-    roles:
-      reviewer:
-        model: "<Codex selector confirmed by Codex>"
-```
+> Add a project-specific read-only specialist for this domain only if the existing Core roles are not sufficient. Reuse a compatible Core role where possible and do not widen its access boundary.
 
-The values inside angle brackets are intentionally not owned by EmbrAIon. Codex should replace them with selectors actually available to the current account.
+## Host-specific setup
 
-Verify a route:
+Use the dedicated host pages for installation and projection ownership:
 
-```bash
-embraion route \
-  --host codex \
-  --route-class complex \
-  --data PRIVATE
-```
-
-For a reviewer-specific resolution:
-
-```bash
-embraion route \
-  --host codex \
-  --route-class substantial \
-  --role reviewer \
-  --data PRIVATE
-```
-
-If the repository already owns its Codex config, install only the EmbrAIon components you want:
-
-```bash
-embraion projection diff --host codex --destination . --component skills
-embraion install --host codex --destination . --component skills
-```
-
-## GitHub Copilot
-
-Install the Copilot projection:
-
-```bash
-embraion install --host copilot --destination .
-```
-
-Typical generated files include:
-
-```text
-.github/
-├── agents/
-│   ├── analyst.agent.md
-│   ├── architect.agent.md
-│   ├── reviewer.agent.md
-│   └── ...
-└── skills/
-    ├── implementation/
-    ├── review/
-    ├── routing-configuration/
-    └── ...
-```
-
-Ask Copilot to customize its EmbrAIon routing:
-
-> Configure EmbrAIon routing for this repository using only model selectors and settings currently available to me in GitHub Copilot. Keep host-default unless there is a clear reason to override it. Write only to `.embraion/routing.yaml` under `overrides.copilot`. Do not weaken privacy, access, ownership, source protection, validation, or review policy. Verify any changed route with `embraion route`.
-
-Example shape:
-
-```yaml
-overrides:
-  copilot:
-    routes:
-      complex:
-        model: "<Copilot selector confirmed by Copilot>"
-    roles:
-      reviewer:
-        model: "<Copilot selector confirmed by Copilot>"
-```
-
-If Copilot exposes additional supported settings, they can be stored as `effort` or inside `options`; EmbrAIon treats those values as host-owned.
-
-Verify:
-
-```bash
-embraion route \
-  --host copilot \
-  --route-class complex \
-  --data PRIVATE
-```
-
-For selective adoption:
-
-```bash
-embraion projection diff --host copilot --destination . --component skills
-embraion install --host copilot --destination . --component skills
-```
-
-## Claude Code
-
-Install the Claude Code projection:
-
-```bash
-embraion install --host claude-code --destination .
-```
-
-Typical generated files include:
-
-```text
-.claude/
-├── agents/
-│   ├── analyst.md
-│   ├── architect.md
-│   ├── reviewer.md
-│   └── ...
-└── skills/
-    ├── implementation/
-    ├── review/
-    ├── routing-configuration/
-    └── ...
-```
-
-Ask Claude Code to configure its routing:
-
-> Configure EmbrAIon routing for this repository using only models and settings currently available to me in Claude Code. Preserve host-default for routes that do not need an explicit selection. Write only to `.embraion/routing.yaml` under `overrides.claude-code`. Do not weaken privacy, access, ownership, source protection, validation, or review policy. Verify the changed routes with `embraion route`.
-
-Example shape:
-
-```yaml
-overrides:
-  claude-code:
-    routes:
-      complex:
-        model: "<Claude Code selector confirmed by Claude Code>"
-    roles:
-      reviewer:
-        model: "<Claude Code selector confirmed by Claude Code>"
-```
-
-Verify:
-
-```bash
-embraion route \
-  --host claude-code \
-  --route-class complex \
-  --data PRIVATE
-```
-
-For selective adoption:
-
-```bash
-embraion projection diff --host claude-code --destination . --component skills
-embraion install --host claude-code --destination . --component skills
-```
+- [Codex](../hosts/codex.md)
+- [GitHub Copilot](../hosts/copilot.md)
+- [Claude Code](../hosts/claude-code.md)
+- [Portable bundle](../hosts/portable.md)

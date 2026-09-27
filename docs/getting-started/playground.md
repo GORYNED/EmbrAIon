@@ -1,0 +1,100 @@
+# Five-Minute Sandbox
+
+You can try EmbrAIon without touching an existing codebase.
+
+This sandbox creates a new empty Git repository, initializes the project contract, installs one host projection, and lets you inspect routing and validation behavior.
+
+## 1. Create a disposable repository
+
+```bash
+mkdir embraion-playground
+cd embraion-playground
+git init
+```
+
+## 2. Initialize EmbrAIon
+
+```bash
+embraion init --name EmbrAIonPlayground
+```
+
+Inspect what was created:
+
+```text
+.embraion/
+├── project.yaml
+├── knowledge.yaml
+├── policy.yaml
+├── deployments.yaml
+├── routing.yaml
+├── validation.yaml
+└── agents.yaml
+```
+
+Runtime-only `.embraion/state/` and `.embraion/cache/` stay ignored.
+
+## 3. Install one host projection
+
+For Codex:
+
+```bash
+embraion install --host codex --destination .
+```
+
+Or use:
+
+```bash
+embraion install --host copilot --destination .
+embraion install --host claude-code --destination .
+```
+
+## 4. Inspect the project
+
+```bash
+embraion doctor
+embraion status
+embraion policy show
+embraion validation list
+```
+
+A fresh project's validation profiles may be empty. If so, running them reports `skipped`, not a false pass.
+
+## 5. Inspect routing without calling a model
+
+```bash
+embraion route   --host codex   --route-class substantial   --data PRIVATE
+```
+
+With no project override, the result should resolve to `host-default`: EmbrAIon classifies the work, while the host remains responsible for its actual model selection.
+
+## 6. Ask the AI to configure the sandbox
+
+Open the repository with your installed AI client and try a natural-language configuration request:
+
+> Configure this sandbox so `docs/**` is canonical project content, `vendor/**` is protected, and add a simple validation command appropriate for this empty repository. Keep model routing on host-default. Explain every project setting you change.
+
+Then inspect the canonical diff under `.embraion/`.
+
+## What this proves
+
+The sandbox lets you see the core lifecycle without risking production code:
+
+```text
+init
+ ↓
+project-owned .embraion/ contract
+ ↓
+host projection
+ ↓
+normal AI conversation
+ ↓
+routing / validation / policy inspection
+```
+
+It intentionally does not simulate paid provider calls or complex application validation.
+
+For a checked-in example, use the [Minimal reference project](../examples/minimal.md).
+
+## Clean up
+
+Delete the `embraion-playground` directory whenever you are finished.

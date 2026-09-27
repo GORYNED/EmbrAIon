@@ -4,75 +4,47 @@
 
 <div class="embraion-lead" markdown>
 
-**EmbrAIon** is a portable **AI-First Engineering System** that gives a repository a reusable operating model for AI-assisted development.
+**One repository-owned engineering contract for AI context, safety policy, model routing, validation, and review — projected into Codex, GitHub Copilot, Claude Code, and portable integrations.**
 
-It turns project knowledge, AI roles, routing, permissions, validation, review, and evidence into one repository-owned contract instead of leaving those rules scattered across prompts and AI-client configuration.
+EmbrAIon keeps project rules with the repository instead of scattering them across prompts, AI-client settings, CI scripts, and individual sessions.
 
 </div>
 
-## Why EmbrAIon exists
-
-AI coding is easy when the important context fits in one chat. Real repositories are different: they have architecture rules, private or protected sources, project-specific specialists, model choices, validation requirements, and review gates that must survive across sessions and across AI clients.
-
-EmbrAIon makes that engineering contract explicit.
-
-> **Mental model:** EmbrAIon is the operating system for AI-assisted engineering; `.embraion/` is the Settings for this repository.
-
-Your AI client still receives your prompt and performs the reasoning. EmbrAIon does not sit in the middle of every conversation. It gives Codex, Copilot, Claude Code, and other hosts the repository-specific rules and reusable engineering behavior they need to work consistently.
-
-## What normal use feels like
-
-Once the host projection is installed, ordinary work can remain ordinary:
-
-> Add a retry action when the connection fails.
-
-The repository already tells the AI what knowledge to use, what it may touch, which roles or specialists exist, how routing works, and which validation proves the change.
-
-Configuration can be conversational too:
-
-> Configure model routing for this project. Keep simple work inexpensive, use stronger reasoning for complex architecture, and reserve critical routing for exceptional risk.
-
-The host should update the canonical `.embraion/` settings for that intent instead of creating a new parallel source of truth.
-
-## Start with what you want to do
+## What it gives your repository
 
 <div class="grid cards" markdown>
 
--   :material-help-circle-outline:{ .lg .middle } **I want to understand why this exists**
+-   :material-source-repository:{ .lg .middle } **One project contract**
 
     ---
 
-    See the problem EmbrAIon solves, what it owns, and what remains project-owned.
+    Keep architecture knowledge, source ownership, privacy, review, routing, and validation in canonical project-owned configuration.
 
-    [Why EmbrAIon?](getting-started/what-is-embraion.md)
-
--   :material-source-repository:{ .lg .middle } **I have an existing repository**
+-   :material-swap-horizontal:{ .lg .middle } **Multiple AI hosts**
 
     ---
 
-    Adopt EmbrAIon conservatively without replacing host files you already own.
+    Project the same reusable roles and skills into Codex, GitHub Copilot, Claude Code, or a host-neutral Portable bundle.
 
-    [Adopt an existing repo](getting-started/existing-repository.md)
-
--   :material-tune-variant:{ .lg .middle } **I need to configure my project**
+-   :material-shield-check:{ .lg .middle } **Deterministic controls**
 
     ---
 
-    Configure knowledge, policy, validation, agents, deployments, and optional model routing.
+    Combine AI guidance with executable validation, protected-path checks, review evidence, and optional merge enforcement.
 
-    [Configure EmbrAIon](configuration/index.md)
-
--   :material-shield-check:{ .lg .middle } **I want validation or CI enforcement**
+-   :material-routes:{ .lg .middle } **Model-agnostic routing**
 
     ---
 
-    Run project validation, collect evidence, and optionally install explicit merge-time enforcement.
-
-    [Use validation & enforcement](guides/enforcement.md)
+    Classify work by risk and complexity while letting the host choose models by default or applying explicit project-owned overrides.
 
 </div>
 
-## The shortest working path
+> **Mental model:** EmbrAIon is the operating system for AI-assisted engineering; `.embraion/` is the Settings for this repository.
+
+EmbrAIon does **not** replace your AI client and does not intercept every prompt. The host still performs the conversation, reasoning, edits, searches, and tool use.
+
+## Quick start
 
 ```bash
 pipx install embraion
@@ -84,73 +56,65 @@ embraion doctor
 embraion status
 ```
 
-Use `copilot` or `claude-code` when that is your AI client.
+Use `copilot` or `claude-code` instead of `codex` when that is the host you use.
 
-Then continue with [Your First AI Task](getting-started/first-ai-task.md).
+Not ready to touch a real repository? [Try EmbrAIon in a five-minute sandbox](getting-started/playground.md).
 
-## How the pieces fit
+## How it fits
 
-```text
-Human intent
-    │
-    ▼
-AI client
-    │
-    ├── host-native projections
-    ▼
-EmbrAIon Core ───── reusable mechanisms
-    +
-.embraion/ ───────── project facts and settings
-    │
-    ▼
-engineering work
-    │
-    ▼
-validation → review → evidence → human merge
-```
+![How EmbrAIon fits into your project](assets/diagrams/en/01-how-embraion-fits.svg){ loading=lazy }
 
-EmbrAIon does **not** run inside the finished application. It is used while the repository is being engineered.
+The project owns its facts and preferences under `.embraion/`. EmbrAIon Core owns reusable mechanisms. Generated host files are projections of that contract, not a second configuration authority.
 
-## Core owns mechanisms; the project owns facts
+[See the full execution model](getting-started/how-it-works.md).
 
-EmbrAIon Core owns reusable roles, skills, routing/execution mechanics, security contracts, validation/review behavior, and projection rules.
+## Why not just use a native instruction file?
 
-The consuming repository owns the settings that make those mechanisms correct for this project:
+Native files such as repository instructions or `AGENTS.md` remain useful. EmbrAIon does not require you to abandon them; it adds a shared engineering contract and deterministic tooling around host-native instructions.
 
-```text
-.embraion/
-├── .gitignore
-├── project.yaml      # identity + exact EmbrAIon pin
-├── knowledge.yaml    # architecture/domain knowledge references
-├── policy.yaml       # source classes, privacy, review, enforcement
-├── deployments.yaml  # reusable concrete execution choices
-├── routing.yaml      # optional host/model routing overrides
-├── validation.yaml   # commands that prove changes work
-└── agents.yaml       # project-specific specialists
-```
+| Native instruction file | EmbrAIon project contract |
+| --- | --- |
+| Usually scoped to one host or instruction surface | Can project shared behavior into multiple supported hosts |
+| Primarily text guidance | Guidance **plus** deterministic CLI/runtime surfaces |
+| Project rules can drift between clients | Canonical project-owned settings under `.embraion/` |
+| Validation is typically separate/ad hoc | Executable validation profiles with structured evidence |
+| Model selection is usually host-specific | Stable route classes plus optional project overrides |
+| No shared generated-file ownership model | Ownership-aware host projections and verification |
+| Merge policy is separate | Optional enforcement can combine protected paths, validation, and review |
 
-Optional execution/pricing configuration can be added by projects that use EmbrAIon's provider-neutral execution runtime.
+EmbrAIon is therefore not “a bigger prompt file.” It coordinates host-native instructions from a common project contract and adds the deterministic parts that plain instructions cannot provide by themselves.
 
-Generated Codex/Copilot/Claude files are projections of the canonical contract, not a second place to maintain the same policy.
+[Read the detailed comparison and practical use cases](getting-started/what-is-embraion.md).
 
-## Important defaults
+## Choose your next step
 
-- **Model selection is host-owned by default.** You do not need to configure model names.
-- **Normal prompts stay normal.** You do not need to mention EmbrAIon in every task once the host projection is installed.
-- **Configuration can be conversational.** The host can update the appropriate `.embraion/` file from natural-language intent.
-- **Validation runs only when requested.** Put real commands in `validation.yaml` and invoke them explicitly.
-- **Enforcement is opt-in.** `init` and host installation do not silently add executable CI or hooks.
-- **Project updates are intentional.** Projects pin exact releases and update only when you run `embraion update`.
-- **State/cache stay local.** `.embraion/state/` and `.embraion/cache/` are ignored by the project-local `.gitignore`.
+<div class="grid cards" markdown>
 
-## Recommended next steps
+-   :material-help-circle-outline:{ .lg .middle } **Understand the idea**
 
-1. [Why EmbrAIon?](getting-started/what-is-embraion.md)
-2. [Install EmbrAIon](getting-started/installation.md)
-3. [Add it to a project](getting-started/first-project.md)
-4. [Configure the project](configuration/index.md)
-5. [Run your first AI task](getting-started/first-ai-task.md)
-6. [Use the daily workflow](guides/daily-workflow.md)
+    ---
+
+    [Why EmbrAIon?](getting-started/what-is-embraion.md)
+
+-   :material-flask-outline:{ .lg .middle } **Try it safely**
+
+    ---
+
+    [Five-minute sandbox](getting-started/playground.md)
+
+-   :material-source-repository:{ .lg .middle } **Adopt an existing repository**
+
+    ---
+
+    [Existing-repository workflow](getting-started/existing-repository.md)
+
+-   :material-tune-variant:{ .lg .middle } **Configure the project**
+
+    ---
+
+    [Project configuration](configuration/index.md)
+
+</div>
 
 [Start here](getting-started/what-is-embraion.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/GORYNED/EmbrAIon){ .md-button }
