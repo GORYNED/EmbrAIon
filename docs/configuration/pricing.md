@@ -131,6 +131,8 @@ Synthetic fixtures are useful for tests but do not prove real provider billing s
 
 ## Pricing configuration shape
 
+The following is a **schema illustration**, not a refresh-ready provider fixture. Replace the URL, SKU, and extraction patterns with reviewed values from an approved official source for the selected parser adapter.
+
 A project source can look like:
 
 ```yaml
