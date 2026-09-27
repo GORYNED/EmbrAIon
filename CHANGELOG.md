@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.15.1 - 2026-09-27
+
+### Fixed
+
+- Routing-authority audit now distinguishes active concrete routing mappings from schema and telemetry field names, generic code, unrelated comments, and historical prose.
+- Explicit audit paths are canonicalized before project-root comparison, fixing Windows/macOS path-alias false negatives while preserving fail-closed generated-projection ownership checks.
+
 ## 0.15.0 - 2026-09-27
 
 ### Added
