@@ -2,7 +2,7 @@
 
 `.embraion/policy.yaml` содержит safety policy, которой владеет проект.
 
-![Модель ownership и защиты sources](../assets/diagrams/ru/13-source-ownership-protection.svg){ loading=lazy }
+![Модель ownership и защиты sources](../assets/diagrams/en/13-source-ownership-protection.svg){ loading=lazy }
 
 Пример:
 
