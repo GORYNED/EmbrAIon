@@ -106,7 +106,7 @@ AI должен записать это в канонические `.embraion/`
 
 ## Быстрый старт
 
-Если не хочется сразу трогать рабочий проект, создайте пустую папку с `git init` и выполните те же команды там — это безопасная песочница для изучения `.embraion/`, projections, routing и validation.
+Если не хочется сразу трогать рабочий проект, создайте пустую папку с `git init` и выполните команды в [песочнице Five-Minute Sandbox](../docs/getting-started/playground.md) — это безопасный способ изучить `.embraion/`, projections, routing и validation.
 
 ```bash
 pipx install embraion
