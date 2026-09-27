@@ -8,9 +8,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from embraion.artifacts import FrameworkArtifactLock
 from embraion.versioning import (
     CachedRuntime,
     find_project_manifest,
+    install_project_runtime,
     package_version_for_pin,
     read_project_pin,
     resolve_project_runtime,
@@ -47,6 +49,44 @@ class VersioningTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             manifest = self._manifest(Path(temporary), "1.2.3")
             self.assertEqual("1.2.3", read_project_pin(manifest))
+
+    def test_framework_install_passes_exact_project_lock_to_cache_installer(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = root / ".embraion" / "project.yaml"
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(
+                "framework:\n"
+                "  repository: GORYNED/EmbrAIon\n"
+                "  version: 1.2.3\n"
+                "  artifact:\n"
+                "    schema: 1\n"
+                "    source: github-release\n"
+                "    release: v1.2.3\n"
+                "    asset: embraion-1.2.3-py3-none-any.whl\n"
+                f"    digest: sha256:{'a' * 64}\n"
+                "project:\n"
+                "  name: Demo\n",
+                encoding="utf-8",
+            )
+            cached = CachedRuntime(
+                python=Path(sys.executable),
+                framework_root=root / "framework",
+            )
+
+            with patch(
+                "embraion.versioning.ensure_cached_runtime",
+                return_value=cached,
+            ) as ensure:
+                result = install_project_runtime(manifest)
+
+            self.assertEqual(cached, result)
+            args, kwargs = ensure.call_args
+            self.assertEqual(("1.2.3",), args)
+            lock = kwargs["artifact_lock"]
+            self.assertIsInstance(lock, FrameworkArtifactLock)
+            self.assertEqual("v1.2.3", lock.release)
+            self.assertEqual("sha256:" + ("a" * 64), lock.digest)
 
     def test_same_version_does_not_delegate(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
