@@ -32,10 +32,28 @@ embraion install --host codex --destination .
 embraion doctor
 ```
 
-После этого откройте репозиторий в своём AI-клиенте и пишите обычную задачу.
+После этого откройте репозиторий в своём AI-клиенте и пишите обычную инженерную задачу.
 
-Канонический сайт документации: **https://embraion.goryned.com/**
+## Документация
+
+Канонический сайт: **https://embraion.goryned.com/**
+
+Рекомендуемый путь:
+
+1. [Зачем нужен EmbrAIon?](docs/getting-started/what-is-embraion.ru.md)
+2. [EmbrAIon за 60 секунд](docs/getting-started/in-60-seconds.ru.md)
+3. [Песочница за пять минут](docs/getting-started/playground.ru.md)
+4. [Установка](docs/getting-started/installation.ru.md)
+5. Выберите путь репозитория:
+   - [Добавить EmbrAIon в проект](docs/getting-started/first-project.ru.md) — для нового или простого репозитория.
+   - [Подключить существующий репозиторий](docs/getting-started/existing-repository.ru.md) — для зрелого проекта с существующей конфигурацией AI-клиента.
+6. [Первая задача для AI](docs/getting-started/first-ai-task.ru.md)
+7. [Как это работает](docs/getting-started/how-it-works.ru.md)
+
+Если непонятен термин или нужен прямой ответ, откройте [Глоссарий](docs/glossary.ru.md), [FAQ](docs/faq.ru.md) или [Безопасность и поток данных](docs/security-data-flow.ru.md).
+
+Для подробной инженерной модели см. [Engineering Model Deep Dive](docs/reference/engineering-model.ru.md).
 
 ---
 
-<sub>Последнее обновление: 2026-09-27 10:20 UTC</sub>
+<sub>Последнее обновление: 2026-09-27 16:22 UTC</sub>

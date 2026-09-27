@@ -66,6 +66,8 @@ plugins:
             Adopt an existing repository: Подключить существующий репозиторий
             Your first AI task: Первая задача для AI
             How it works: Как это работает
+            FAQ: FAQ
+            Glossary: Глоссарий
             Configure: Настройка
             Overview: Обзор
             Basics: Основы
@@ -91,6 +93,7 @@ plugins:
             Engineering model: Инженерная модель
             CLI: CLI
             Runtime & version resolution: Runtime и разрешение версий
+            Security & data flow: Безопасность и поток данных
             Security model: Модель безопасности
             Architecture: Архитектура
             Capability model: Модель возможностей
@@ -144,6 +147,8 @@ nav:
       - Adopt an existing repository: getting-started/existing-repository.md
       - Your first AI task: getting-started/first-ai-task.md
       - How it works: getting-started/how-it-works.md
+      - FAQ: faq.md
+      - Glossary: glossary.md
   - Configure:
       - Overview: configuration/index.md
       - Basics:
@@ -179,6 +184,7 @@ nav:
       - Engineering model: reference/engineering-model.md
       - CLI: reference/cli.md
       - Runtime & version resolution: reference/runtime-version-resolution.md
+      - Security & data flow: security-data-flow.md
       - Security model: security.md
       - Architecture: architecture.md
       - Capability model: capability-model.md

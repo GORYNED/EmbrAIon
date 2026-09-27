@@ -74,8 +74,13 @@ Recommended onboarding:
 2. [EmbrAIon in 60 Seconds](docs/getting-started/in-60-seconds.md)
 3. [Five-Minute Sandbox](docs/getting-started/playground.md)
 4. [Installation](docs/getting-started/installation.md)
-5. [Your First AI Task](docs/getting-started/first-ai-task.md)
-6. [How It Works](docs/getting-started/how-it-works.md)
+5. Choose the repository path:
+   - [Add EmbrAIon to a Project](docs/getting-started/first-project.md) for a new or simple repository.
+   - [Adopt an Existing Repository](docs/getting-started/existing-repository.md) for a mature repository with existing AI-client configuration.
+6. [Your First AI Task](docs/getting-started/first-ai-task.md)
+7. [How It Works](docs/getting-started/how-it-works.md)
+
+Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs/faq.md), and [Security & Data Flow](docs/security-data-flow.md).
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
@@ -95,4 +100,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-09-27 10:20 UTC</sub>
+<sub>Last updated: 2026-09-27 16:22 UTC</sub>
