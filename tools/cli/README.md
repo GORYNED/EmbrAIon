@@ -95,4 +95,4 @@ For framework development from a source checkout, `EMBRAION_HOME` may point the 
 
 Python source modules use standard `snake_case` naming as an ecosystem-specific exception to the repository's general kebab-case convention.
 
-<sub>Last updated: 2026-09-23 22:00 UTC</sub>
+<sub>Last updated: 2026-09-27 16:58 UTC</sub>
