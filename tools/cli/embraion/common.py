@@ -92,10 +92,12 @@ def read_yaml(path: Path) -> Any:
 
 def write_yaml(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
         yaml.safe_dump(data, sort_keys=False, allow_unicode=True),
         encoding="utf-8",
     )
+    temporary.replace(path)
 
 
 def read_json(path: Path) -> Any:
