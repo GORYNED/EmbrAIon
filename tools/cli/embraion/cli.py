@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .artifacts import read_project_artifact_lock, verify_project_artifact
 from .common import find_project_root, framework_root, project_root
 from .context import build_context, read_context
 from .contracts import (
@@ -57,6 +58,7 @@ from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_wor
 from .versioning import (
     cache_home,
     find_project_manifest,
+    install_project_runtime,
     list_cached_runtimes,
     package_version_for_pin,
     project_runtime_status,
@@ -91,7 +93,8 @@ def _print_main_help(file: object | None = None) -> None:
         "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
         "  projection Preview ownership-aware projection changes",
         "  policy     Inspect the effective project policy overlay",
-        "  update     Change the current project's pinned EmbrAIon version",
+        "  update     Sync the project pin with a verified release artifact lock",
+        "  framework  Install or verify the project-pinned framework artifact",
         "  sync       Generate disposable host projections without installing them",
         "",
         "Health & runtime",
@@ -314,11 +317,68 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
+    destination = Path(args.path or ".")
     previous, current = update_project(
-        Path(args.path or "."),
+        destination,
         version=args.framework_version,
     )
+    manifest = find_project_manifest(destination)
+    if manifest is None:
+        raise RuntimeError("Updated project manifest could not be located.")
+    artifact_lock = read_project_artifact_lock(manifest, required=True)
+    assert artifact_lock is not None
+
     print(f"Updated framework version: {previous} -> {current}")
+    print(
+        f"Locked artifact: {artifact_lock.release}/{artifact_lock.asset} "
+        f"({artifact_lock.digest})"
+    )
+    return 0
+
+
+def _cmd_framework_install(args: argparse.Namespace) -> int:
+    manifest = find_project_manifest(Path(args.path or "."))
+    if manifest is None:
+        raise RuntimeError("No .embraion/project.yaml found.")
+
+    runtime = install_project_runtime(manifest)
+    artifact_lock = read_project_artifact_lock(manifest, required=True)
+    assert artifact_lock is not None
+
+    report = {
+        "version": artifact_lock.version,
+        "release": artifact_lock.release,
+        "asset": artifact_lock.asset,
+        "digest": artifact_lock.digest,
+        "runtime": str(runtime.framework_root),
+        "python": str(runtime.python),
+    }
+    if args.json:
+        _print_json(report)
+    else:
+        print(
+            f"Installed verified EmbrAIon {artifact_lock.version} from "
+            f"{artifact_lock.release}/{artifact_lock.asset}"
+        )
+        print(f"Digest: {artifact_lock.digest}")
+        print(f"Runtime: {runtime.framework_root}")
+    return 0
+
+
+def _cmd_framework_verify(args: argparse.Namespace) -> int:
+    manifest = find_project_manifest(Path(args.path or "."))
+    if manifest is None:
+        raise RuntimeError("No .embraion/project.yaml found.")
+
+    report = verify_project_artifact(manifest)
+    if args.json:
+        _print_json(report)
+    else:
+        print(
+            f"Verified EmbrAIon {report['version']} release artifact "
+            f"{report['release']}/{report['asset']}"
+        )
+        print(f"Digest: {report['digest']}")
     return 0
 
 
@@ -1323,10 +1383,53 @@ def build_parser() -> argparse.ArgumentParser:
     policy_show.add_argument("--json", action="store_true")
     policy_show.set_defaults(func=_cmd_policy_show)
 
-    update = sub.add_parser("update", help="Change the project version pin", description="Update the EmbrAIon version recorded by the current project.")
+    update = sub.add_parser(
+        "update",
+        help="Update the project version pin and release artifact lock",
+        description=(
+            "Atomically synchronize framework.version with the exact published "
+            "wheel identity and verified GitHub SHA-256 digest."
+        ),
+    )
     update.add_argument("path", nargs="?")
     update.add_argument("--framework-version")
     update.set_defaults(func=_cmd_update)
+
+    framework_parser = sub.add_parser(
+        "framework",
+        help="Install or verify the pinned framework artifact",
+        description=(
+            "Use the framework-owned release lock in .embraion/project.yaml "
+            "instead of consumer-specific download/checksum logic."
+        ),
+    )
+    framework_sub = framework_parser.add_subparsers(
+        dest="framework-command",
+        required=True,
+    )
+    framework_install = framework_sub.add_parser(
+        "install",
+        help="Install the exact digest-verified pinned release",
+        description=(
+            "Download the exact locked wheel, verify SHA-256, and install it "
+            "into the isolated EmbrAIon runtime cache."
+        ),
+    )
+    framework_install.add_argument("path", nargs="?")
+    framework_install.add_argument("--json", action="store_true")
+    framework_install.set_defaults(func=_cmd_framework_install)
+
+    framework_verify = framework_sub.add_parser(
+        "verify",
+        help="Verify the exact pinned release artifact and digest",
+        description=(
+            "Download the exact locked wheel and fail unless its SHA-256 "
+            "matches the project lock."
+        ),
+    )
+    framework_verify.add_argument("path", nargs="?")
+    framework_verify.add_argument("--json", action="store_true")
+    framework_verify.set_defaults(func=_cmd_framework_verify)
 
     sync_parser = sub.add_parser("sync", help="Generate disposable host projections", description="Generate one or all supported host projections into an output directory.")
     sync_parser.add_argument(
