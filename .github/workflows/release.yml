@@ -375,7 +375,7 @@ jobs:
 
   pypi-publish:
     name: Publish to PyPI
-    needs: build
+    needs: consumer-artifact-lock-smoke
     runs-on: ubuntu-latest
     environment:
       name: pypi
