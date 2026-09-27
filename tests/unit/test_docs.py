@@ -13,7 +13,7 @@ from embraion.cli import build_parser
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
-SITE_URL = "https://goryned.github.io/EmbrAIon/"
+SITE_URL = "https://embraion.goryned.com/"
 
 
 class _MkDocsSafeLoader(yaml.SafeLoader):
