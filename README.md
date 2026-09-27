@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="brand/assets/readme/hero-dark.png" alt="EmbrAIon — AI-First Engineering System by GORYNED" width="100%">
+</p>
+
+<p align="center">
+  <strong>English</strong> ·
+  <a href="localization/README.ru.md">Русский</a> ·
+  <a href="localization/README.zh-CN.md">简体中文</a> ·
+  <a href="localization/README.es.md">Español</a> ·
+  <a href="localization/README.hi.md">हिन्दी</a>
+</p>
+
 # EmbrAIon
 
 **AI-First Engineering System [by GORYNED](https://goryned.com)**
