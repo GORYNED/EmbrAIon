@@ -1,0 +1,124 @@
+# FAQ
+
+Direct answers to the conceptual questions that commonly appear after the quick start.
+
+## Do I have to mention EmbrAIon in every prompt?
+
+No.
+
+After the project contract and host projection are installed, ordinary work should sound like ordinary engineering:
+
+> Add retry behavior and regression coverage.
+
+Think about EmbrAIon again when you intentionally change project knowledge, policy, validation, routing, agents, execution, or enforcement.
+
+## Does EmbrAIon intercept my prompts?
+
+No.
+
+For host-native work, you talk directly to Codex, GitHub Copilot, Claude Code, or another supported host. EmbrAIon supplies generated host-native instructions and repository-owned project rules.
+
+The optional `embraion execute` path is separate.
+
+## Does routing actually change the model in the AI client's UI?
+
+Not necessarily.
+
+By default, routing resolves to `host-default`, so the host keeps control of its current model selection.
+
+A project can record explicit model/effort/options overrides, but EmbrAIon does not transparently take over a host UI model picker. Use `embraion route` to inspect the project routing result.
+
+## Why are deployment and routing separate?
+
+Because they answer different questions:
+
+- **Deployment:** what reusable concrete choice exists?
+- **Routing:** when should a route or role select it?
+
+For provider-neutral execution there is a third question:
+
+- **Execution binding:** how may that deployment be invoked safely?
+
+See the [Glossary](glossary.md) or [Engineering Model Deep Dive](reference/engineering-model.md).
+
+## Do I need `.embraion/execution.yaml`?
+
+Usually no.
+
+You need it only when the project opts into the provider-neutral `embraion execute` path. Ordinary Codex/Copilot/Claude work does not require it.
+
+## Are generated host files the source of truth?
+
+No.
+
+The canonical project contract lives in project-owned EmbrAIon configuration/knowledge. Generated host files are projections of that contract.
+
+If a generated file drifts, use projection diff/verify and reinstall intentionally rather than maintaining a second policy copy by hand.
+
+## Does a protected path mean the AI physically cannot edit it?
+
+Not by text guidance alone.
+
+Host projections tell the AI what it should respect. Deterministic protection comes from validation/enforcement and, where applicable, host/repository controls.
+
+That distinction is intentional: **guidance is not enforcement**.
+
+## Is `skipped` validation a pass?
+
+No.
+
+`skipped` means the profile has no executable commands. Configure real validation before relying on it as evidence or a merge gate.
+
+## Do I need to configure every `.embraion/` file?
+
+No.
+
+Start with three questions:
+
+1. What should the AI know? → `knowledge.yaml`
+2. What should it respect? → `policy.yaml`
+3. What proves the change works? → `validation.yaml`
+
+Leave deployments, routing, execution, pricing, custom agents, and enforcement at their defaults until the project needs them.
+
+## Can one repository use more than one AI host?
+
+Yes.
+
+A project can install multiple projections while keeping one canonical project contract.
+
+## Does EmbrAIon run inside my finished application?
+
+No.
+
+EmbrAIon is an engineering layer around the repository. Your finished Python, Unity, web, or other application does not need EmbrAIon as an application runtime dependency.
+
+## Does provider-neutral mean every provider or local model is supported automatically?
+
+No.
+
+Provider-neutral means Core does not hard-code one provider/model catalog. Concrete provider/model support still depends on a host or an intentionally configured and validated execution adapter/binding.
+
+See [Security & Data Flow](security-data-flow.md) for the local-model/data-boundary implications.
+
+## Can I use EmbrAIon in CI?
+
+Yes.
+
+Project validation and projection verification are CLI-friendly. EmbrAIon can also explicitly install a GitHub Actions enforcement surface:
+
+```bash
+embraion enforcement install \
+  --surface github-actions \
+  --validation-profile affected
+```
+
+Installing the workflow does not silently make the status check required; repository branch/ruleset administration remains an explicit decision.
+
+## What should I read next?
+
+- New to the system: [EmbrAIon in 60 Seconds](getting-started/in-60-seconds.md)
+- Unfamiliar term: [Glossary](glossary.md)
+- Security/privacy question: [Security & Data Flow](security-data-flow.md)
+- Configuration problem: [Troubleshooting](guides/troubleshooting.md)
+- Precise architecture: [Engineering Model Deep Dive](reference/engineering-model.md)

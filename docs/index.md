@@ -96,3 +96,5 @@ Native instructions remain useful. EmbrAIon adds the parts that should be shared
 - [EmbrAIon in 60 Seconds](getting-started/in-60-seconds.md)
 - [Five-Minute Sandbox](getting-started/playground.md)
 - [Installation](getting-started/installation.md)
+- [FAQ](faq.md) — direct answers to common conceptual questions.
+- [Glossary](glossary.md) — short definitions for EmbrAIon terminology.

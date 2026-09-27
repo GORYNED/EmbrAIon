@@ -96,3 +96,5 @@ Native-инструкции остаются полезными. EmbrAIon доб
 - [EmbrAIon за 60 секунд](getting-started/in-60-seconds.md)
 - [Песочница за пять минут](getting-started/playground.md)
 - [Установка](getting-started/installation.md)
+- [FAQ](faq.md) — прямые ответы на частые концептуальные вопросы.
+- [Глоссарий](glossary.md) — короткие определения терминов EmbrAIon.
