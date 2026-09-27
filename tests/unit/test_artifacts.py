@@ -13,6 +13,7 @@ from embraion.artifacts import (
     download_locked_artifact,
     read_project_artifact_lock,
     resolve_release_artifact,
+    verify_project_artifact,
 )
 
 
@@ -149,6 +150,23 @@ class ArtifactLockTests(unittest.TestCase):
                 f"{lock.release}/{lock.asset}",
                 artifact_download_url(lock),
             )
+
+    def test_verify_project_artifact_uses_locked_digest(self) -> None:
+        payload = b"verified-release-wheel"
+        digest = "sha256:" + hashlib.sha256(payload).hexdigest()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = self._manifest(root, digest=digest)
+            with patch(
+                "embraion.artifacts.urlopen",
+                return_value=io.BytesIO(payload),
+            ):
+                report = verify_project_artifact(manifest)
+
+        self.assertEqual("1.2.3", report["version"])
+        self.assertEqual("v1.2.3", report["release"])
+        self.assertEqual(digest, report["digest"])
+        self.assertNotIn("path", report)
 
     def test_download_digest_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
