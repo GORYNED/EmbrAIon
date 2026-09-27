@@ -73,7 +73,7 @@ embraion doctor
 
 ## Как это вписывается в проект
 
-![Как EmbrAIon вписывается в проект](assets/diagrams/ru/01-how-embraion-fits.svg){ loading=lazy }
+![Как EmbrAIon вписывается в проект](assets/diagrams/en/01-how-embraion-fits.svg){ loading=lazy }
 
 !!! tip "Простыми словами"
     Вы по-прежнему общаетесь напрямую с Codex, Copilot или Claude Code. EmbrAIon даёт выбранному host общий инженерный контракт репозитория и реальные команды для validation, enforcement и других детерминированных проверок.
