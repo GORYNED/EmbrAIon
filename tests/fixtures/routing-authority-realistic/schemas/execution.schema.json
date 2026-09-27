@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "model": {"type": "string"},
+    "provider": {"type": "string"},
+    "effort": {"type": "string"},
+    "fallbacks": {"type": "array", "items": {"type": "string"}},
+    "capabilities": {"type": "object", "properties": {"data-classes": {"type": "array"}}}
+  }
+}

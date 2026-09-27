@@ -17,6 +17,7 @@ from embraion.runtime import classify_review_assignment, resolve_task_route, rou
 
 
 FIXTURE = framework_root() / "tests/fixtures/routing-consumer"
+REALISTIC = framework_root() / "tests/fixtures/routing-authority-realistic"
 
 
 class RoutingAuthorityTests(unittest.TestCase):
@@ -26,6 +27,13 @@ class RoutingAuthorityTests(unittest.TestCase):
         self.project = Path(temporary.name)
         init_project(self.project, name="Routing Consumer")
         shutil.copytree(FIXTURE, self.project, dirs_exist_ok=True)
+        shutil.copytree(REALISTIC, self.project, dirs_exist_ok=True)
+
+    def _write_case(self, relative: str, contents: str) -> Path:
+        path = self.project / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(contents, encoding="utf-8")
+        return path
 
     def test_effective_routes_and_fallbacks_use_only_project_config(self) -> None:
         self.assertTrue(validate_task_routes(self.project)["valid"])
@@ -110,6 +118,83 @@ class RoutingAuthorityTests(unittest.TestCase):
                 findings = audit_routing_authority(self.project)
                 self.assertIn(relative, {finding["path"] for finding in findings})
                 path.write_text(original, encoding="utf-8")
+
+    def test_realistic_schema_code_and_historical_prose_are_not_authority(self) -> None:
+        self.assertEqual([], audit_routing_authority(self.project))
+        self._write_case("tools/property-names.py", "model = request.model\nprovider: Provider\neffort = selection.effort\n")
+        self._write_case("tools/comments.py", "value = 1  # model: example-basic-v1\n")
+        self._write_case("docs/old-decision.md",
+                         "# Old routing architecture\nThe old example-basic-v1 selector was discussed historically.\n"
+                         "Fallback: alphabetical directory order\n")
+        self.assertEqual([], audit_routing_authority(self.project))
+
+    def test_concrete_identity_and_new_literals_are_authority(self) -> None:
+        cases = (
+            ("tools/model.py", 'model = "example-basic-v1"\n'),
+            ("schemas/provider.yaml", "provider: example-provider\n"),
+            ("docs/deployment.md", "deployment: native-main\n"),
+            ("tools/new-model.py", 'model = "project-new-model"\n'),
+            ("policy/new-provider.yaml", "provider: project-new-provider\n"),
+            ("runtime/new-deployment.json", '{"deployment":"project-new-deployment"}\n'),
+            ("tests/selected.py", 'selected_model = "example-main-v1"\n'),
+        )
+        for relative, contents in cases:
+            with self.subTest(relative=relative):
+                path = self._write_case(relative, contents)
+                self.assertEqual(relative, audit_routing_authority(
+                    self.project, paths=[path])[0]["path"])
+
+    def test_concrete_effort_fallback_capability_billing_and_binding(self) -> None:
+        cases = (
+            ("docs/effort.md", "effort: high\n"),
+            ("tests/fallback.json", '{"fallback":"native-spare"}\n'),
+            ("schemas/capability.yaml", 'capabilities: {"data-classes": ["PRIVATE"]}\n'),
+            ("policy/billing.json", '{"billing":{"plan":"example-plan"}}\n'),
+            ("policy/sku.yaml", "sku: example-review-sku\n"),
+            ("runtime/binding.json", '{"selector":"example/review-v1",'
+             '"credentialRef":"env:EXAMPLE_ROUTING_TOKEN"}\n'),
+        )
+        for relative, contents in cases:
+            with self.subTest(relative=relative):
+                path = self._write_case(relative, contents)
+                self.assertEqual(relative, audit_routing_authority(
+                    self.project, paths=[path])[0]["path"])
+
+    def test_generated_projection_exemption_requires_verified_ownership(self) -> None:
+        install("codex", self.project)
+        projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
+        self.assertEqual([], audit_routing_authority(self.project, paths=[projected]))
+        projected.write_text(projected.read_text(encoding="utf-8") +
+                             "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
+        findings = audit_routing_authority(self.project, paths=[projected])
+        self.assertIn(projected.relative_to(self.project).as_posix(),
+                      {finding["path"] for finding in findings})
+
+    def test_byte_identical_unowned_projection_is_not_exempt(self) -> None:
+        install("codex", self.project)
+        projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
+        state = self.project / ".embraion/state/projections/codex.json"
+        state.unlink()
+        findings = audit_routing_authority(self.project, paths=[projected])
+        self.assertIn(projected.relative_to(self.project).as_posix(),
+                      {finding["path"] for finding in findings})
+
+    def test_invalid_projection_ownership_fails_closed(self) -> None:
+        install("codex", self.project)
+        projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
+        state = self.project / ".embraion/state/projections/codex.json"
+        state.write_text("{invalid json", encoding="utf-8")
+        findings = audit_routing_authority(self.project, paths=[projected])
+        self.assertIn(projected.relative_to(self.project).as_posix(),
+                      {finding["path"] for finding in findings})
+
+    def test_generated_evidence_is_exempt_only_inside_canonical_state(self) -> None:
+        self._write_case(".embraion/state/reports/route.json", '{"model":"example-basic-v1"}\n')
+        manual = self._write_case("reports/route.json", '{"model":"example-basic-v1"}\n')
+        self.assertEqual(["reports/route.json"], [finding["path"] for finding in
+                         audit_routing_authority(self.project, paths=[manual])])
+        self.assertEqual([], audit_routing_authority(
+            self.project, paths=[self.project / ".embraion/state/reports/route.json"]))
 
     def test_execution_uses_task_route_without_binding_aliases_and_hands_off(self) -> None:
         class FailingAdapter:
