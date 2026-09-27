@@ -534,10 +534,19 @@ def normalize_project_config(
         if candidate != originals[config_path]
     ]
 
-    for config_path in changed:
+    # Treat project.yaml as the update commit point: write any compatible
+    # modular defaults first, then atomically replace the manifest containing
+    # framework.version and framework.artifact together.
+    ordered_changed = [
+        config_path for config_path in changed if config_path != manifest
+    ]
+    if manifest in changed:
+        ordered_changed.append(manifest)
+
+    for config_path in ordered_changed:
         write_yaml(config_path, candidates[config_path])
 
-    return changed
+    return ordered_changed
 
 
 def update_project(path: Path, version: str | None = None) -> tuple[str | None, str]:
