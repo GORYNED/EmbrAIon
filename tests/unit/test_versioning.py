@@ -102,6 +102,52 @@ class VersioningTests(unittest.TestCase):
             self.assertIsNone(result)
             ensure.assert_not_called()
 
+    def test_same_version_lock_delegates_to_digest_bound_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = root / ".embraion" / "project.yaml"
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(
+                "framework:\n"
+                "  repository: GORYNED/EmbrAIon\n"
+                "  version: 1.2.3\n"
+                "  artifact:\n"
+                "    schema: 1\n"
+                "    source: github-release\n"
+                "    release: v1.2.3\n"
+                "    asset: embraion-1.2.3-py3-none-any.whl\n"
+                f"    digest: sha256:{'a' * 64}\n"
+                "project:\n"
+                "  name: Locked\n",
+                encoding="utf-8",
+            )
+            framework = root / "cached-framework"
+            framework.mkdir()
+            cached = CachedRuntime(
+                python=Path(sys.executable),
+                framework_root=framework,
+            )
+            completed = subprocess.CompletedProcess(args=[], returncode=0)
+
+            with patch(
+                "embraion.versioning.ensure_cached_runtime",
+                return_value=cached,
+            ) as ensure:
+                with patch(
+                    "embraion.versioning.subprocess.run",
+                    return_value=completed,
+                ):
+                    result = resolve_project_runtime(
+                        ["validate"],
+                        "1.2.3",
+                        start=root,
+                    )
+
+            self.assertEqual(0, result)
+            args, kwargs = ensure.call_args
+            self.assertEqual(("1.2.3",), args)
+            self.assertEqual("sha256:" + ("a" * 64), kwargs["artifact_lock"].digest)
+
     def test_update_bypasses_pinned_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
