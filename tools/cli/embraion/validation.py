@@ -491,41 +491,48 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
             except Exception as error:
                 add("skill-frontmatter", str(entry.relative_to(root)), str(error))
 
-    docs = {path.name for path in (root / "docs").glob("*.md")}
-    site_only_docs = {"index.md"}
-    localized_index_docs = {"README.md"}
-    canonical_docs = docs - site_only_docs
+    # Public documentation is bilingual: English is canonical and every
+    # canonical page must have a Russian suffix translation next to it.
+    docs_root = root / "docs"
+    english_docs = {
+        path.relative_to(docs_root)
+        for path in docs_root.rglob("*.md")
+        if not path.name.endswith(".ru.md")
+    }
+    russian_docs = {
+        Path(str(path.relative_to(docs_root)).replace(".ru.md", ".md"))
+        for path in docs_root.rglob("*.ru.md")
+    }
 
-    for locale in ("ru", "zh-CN", "hi", "es"):
-        local = root / "localization" / "docs" / locale
-        names = {path.name for path in local.glob("*.md")} if local.exists() else set()
-        localized_docs = names - localized_index_docs
+    for relative in sorted(english_docs - russian_docs):
+        add(
+            "localization",
+            str(docs_root / relative),
+            "Missing Russian translation (.ru.md)",
+        )
 
-        for name in sorted(canonical_docs - localized_docs):
-            add("localization", f"localization/docs/{locale}", f"Missing {name}")
+    for relative in sorted(russian_docs - english_docs):
+        add(
+            "localization",
+            str(docs_root / relative),
+            "Russian translation has no canonical English source",
+        )
 
-        for name in sorted(localized_docs - canonical_docs):
+    legacy_localization = root / "localization"
+    if legacy_localization.exists():
+        add(
+            "localization",
+            "localization",
+            "Legacy localization/ tree must not exist; use docs/*.ru.md and root README.ru.md / TRADEMARKS.ru.md",
+        )
+
+    for required in (root / "README.ru.md", root / "TRADEMARKS.ru.md"):
+        if not required.is_file():
             add(
                 "localization",
-                f"localization/docs/{locale}",
-                f"Extra localized document {name}",
-                "warning",
+                str(required.relative_to(root)),
+                "Missing required Russian translation",
             )
-
-    required_localized_readmes = {
-        "ru": root / "localization" / "README.ru.md",
-        "zh-CN": root / "localization" / "README.zh-CN.md",
-        "hi": root / "localization" / "README.hi.md",
-        "es": root / "localization" / "README.es.md",
-    }
-    for locale, path in required_localized_readmes.items():
-        if not path.exists():
-            add("localization", f"localization/{locale}", "Missing localized root README")
-
-    for locale in ("ru", "zh-CN", "hi", "es"):
-        legal = root / "localization" / "legal" / locale / "trademarks.md"
-        if not legal.exists():
-            add("localization", f"localization/legal/{locale}", "Missing trademark localization")
 
     for path in root.rglob("README*.md"):
         if ".git" in path.parts:
