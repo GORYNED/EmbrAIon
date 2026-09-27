@@ -1,6 +1,10 @@
 # Project Configuration Files
 
-This page describes every file created by `embraion init` under `.embraion/`.
+This page describes the canonical project-owned configuration under `.embraion/`.
+
+A useful rule is: **store project facts and preferences here; keep reusable engineering mechanisms in EmbrAIon Core.** Generated host files should project this contract rather than become a second place to maintain it.
+
+Most files below are created by `embraion init`. Projects that opt into provider-neutral execution or pricing may add the optional runtime configuration described near the end of this page.
 
 ## `.embraion/project.yaml`
 
@@ -309,6 +313,56 @@ Claude Code    .claude/agents/<id>.md
 ```
 
 Framework-only `embraion sync` remains deterministic and generates Core agents only; project agents belong to a consuming repository and are resolved during project projection.
+
+## Optional `.embraion/execution.yaml`
+
+Projects that use `embraion execute` can declare reviewed executable bindings in `.embraion/execution.yaml`.
+
+These bindings connect project-owned deployments to an execution adapter and may constrain:
+
+- the exact upstream selector/provider expected by the project;
+- credential **references** such as environment-variable names, never credential values;
+- allowed source IDs and trust levels;
+- task-class or data-class aliases;
+- timeout and option ceilings;
+- observed model/provider evidence.
+
+The project owns those concrete bindings because they describe project-approved external execution. EmbrAIon Core owns the generic execution, fallback, failure, health, and evidence mechanics.
+
+If a project does not use executable provider bindings, it does not need this file.
+
+## Optional `.embraion/pricing.yaml`
+
+Projects that want deterministic provider cost calculation can declare approved official pricing sources and SKU mappings in `.embraion/pricing.yaml`.
+
+Pricing refresh is explicit:
+
+```bash
+embraion pricing refresh
+```
+
+Runtime calculation uses the validated local snapshot rather than fetching prices during execution. Concrete rates, provider URLs, SKU mappings, freshness policy, and applicability dates remain project-owned facts.
+
+Use:
+
+```bash
+embraion pricing status
+```
+
+to inspect the current validated snapshot.
+
+## Project settings should not reimplement Core
+
+Do not copy generic EmbrAIon mechanisms into project configuration just to customize a repository.
+
+For example:
+
+- the project may choose **which** deployment should handle complex work, but Core owns the routing contract;
+- the project may declare **which** paths are protected, but Core owns generic policy/enforcement mechanics;
+- the project may define **which** validation commands prove correctness, but Core owns validation execution/evidence behavior;
+- the project may add a domain specialist, but generic Architect/Reviewer/Validator roles remain Core concerns.
+
+This boundary is what makes a project overlay portable instead of becoming another framework.
 
 ## `.embraion/.gitignore`
 

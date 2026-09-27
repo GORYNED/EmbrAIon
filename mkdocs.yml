@@ -1,5 +1,5 @@
 site_name: EmbrAIon
-site_description: Portable AI-First Engineering System for structured, reviewable AI-assisted software engineering.
+site_description: AI-First Engineering System that gives software repositories a reusable project contract for structured, reviewable AI-assisted development.
 site_author: GORYNED
 site_url: https://embraion.goryned.com/
 repo_url: https://github.com/GORYNED/EmbrAIon
@@ -72,7 +72,7 @@ copyright: EmbrAIon · AI-First Engineering System · by GORYNED
 nav:
   - Home: index.md
   - Start Here:
-      - What is EmbrAIon?: getting-started/what-is-embraion.md
+      - Why EmbrAIon?: getting-started/what-is-embraion.md
       - Installation: getting-started/installation.md
       - Add EmbrAIon to a project: getting-started/first-project.md
       - Adopt an existing repository: getting-started/existing-repository.md

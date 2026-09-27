@@ -1,12 +1,12 @@
 # Daily Workflow
 
-EmbrAIon should make ordinary AI-assisted engineering more disciplined, not more ceremonial.
+EmbrAIon should make ordinary AI-assisted engineering more disciplined, **not more ceremonial**.
 
-A typical day can stay simple.
+After setup, most days should start with the product or engineering outcome you want, not with framework administration.
 
 ![Daily AI-First workflow](../assets/diagrams/en/05-daily-workflow.svg){ loading=lazy }
 
-## Before work
+## Before substantial work
 
 ```bash
 embraion doctor
@@ -17,13 +17,42 @@ For a repository you use every day, you do not need to run every diagnostic befo
 
 ## Describe the task normally
 
-Ask your AI client for the actual engineering outcome you want.
+Ask your AI client for the actual engineering outcome:
 
-For substantial work, it is useful to include intent such as:
+> Fix the retry flow and add regression coverage.
 
-> Follow the repository's EmbrAIon project knowledge and safety policy. Use relevant projected roles/skills, stay inside owned source boundaries, run affected validation, request independent review, and report residual risk.
+You should not need to manually select every model, agent, or validation command. The host can use the repository's projected EmbrAIon roles and skills plus the project-owned `.embraion/` contract.
 
-The host performs the AI work. EmbrAIon supplies the surrounding contract.
+For high-risk or ambiguous work, being explicit about the expected outcome or evidence is still useful. EmbrAIon reduces repeated setup; it does not replace clear requirements.
+
+## Let the project contract guide the work
+
+The project contract can supply:
+
+- architecture and source-of-truth knowledge;
+- protected/private path rules;
+- project-specific specialists;
+- optional model/deployment routing;
+- validation profiles;
+- substantial-review requirements.
+
+The AI client still performs the reasoning and tool use. EmbrAIon makes the surrounding engineering rules durable.
+
+## Change configuration only when the intent is configuration
+
+If you say:
+
+> Configure routing so ordinary work stays on the host default but complex architecture uses our reviewed deployment.
+
+the host should change the relevant `.embraion/` configuration.
+
+If you say:
+
+> Fix the reconnect bug.
+
+the host should use the existing project contract, not casually rewrite it.
+
+This distinction keeps ordinary product work separate from changes to the AI-First operating model.
 
 ## During implementation
 
