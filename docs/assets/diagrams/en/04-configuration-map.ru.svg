@@ -1,0 +1,127 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_7_108)">
+<rect width="1280" height="780" rx="28" fill="#0E1420"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">&#x41a;&#x430;&#x440;&#x442;&#x430; &#x43a;&#x43e;&#x43d;&#x444;&#x438;&#x433;&#x443;&#x440;&#x430;&#x446;&#x438;&#x438; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x430;</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">&#x414;&#x43b;&#x44f; &#x43a;&#x430;&#x436;&#x434;&#x43e;&#x439; &#x437;&#x430;&#x434;&#x430;&#x447;&#x438; &#x435;&#x441;&#x442;&#x44c; &#x43e;&#x434;&#x438;&#x43d; &#x43a;&#x430;&#x43d;&#x43e;&#x43d;&#x438;&#x447;&#x435;&#x441;&#x43a;&#x438;&#x439; &#x444;&#x430;&#x439;&#x43b; &#x432; .embraion/</tspan></text>
+<path d="M470 343L440 326M445.365 334.787L440 326L450.295 326.087M640 343V236M635 245L640 236L645 245M810 343L840 326M829.705 326.087L840 326L834.635 334.787M470 443L440 480M449.552 476.158L440 480L441.784 469.86M640 443V570M645 561L640 570L635 561M810 443L840 480M838.216 469.86L840 480L830.448 476.158" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="470.75" y="343.75" width="338.5" height="98.5" rx="17.25" fill="#151D2A"/>
+<rect x="470.75" y="343.75" width="338.5" height="98.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip1_7_108)">
+<circle cx="509.5" cy="393" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M512.5 392.25V396.75M510.25 394.5H514.75M503.5 388.5H508L509.5 390H515.5V397.5C515.5 397.898 515.342 398.279 515.061 398.561C514.779 398.842 514.398 399 514 399H505C504.602 399 504.221 398.842 503.939 398.561C503.658 398.279 503.5 397.898 503.5 397.5V388.5Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip2_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="543.5" y="381.273">.embraion/</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="543.5" y="403.591">&#x43a;&#x430;&#x43d;&#x43e;&#x43d;&#x438;&#x447;&#x435;&#x441;&#x43a;&#x430;&#x44f; &#x43a;&#x43e;&#x43d;&#x444;&#x438;&#x433;&#x443;&#x440;&#x430;&#x446;&#x438;&#x44f; </tspan><tspan x="543.5" y="420.591">&#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x430;</tspan></text>
+</g>
+<rect x="40.75" y="240.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="40.75" y="240.75" width="398.5" height="84.5" rx="17.25" stroke="#4C8DFF" stroke-width="1.5"/>
+<g clip-path="url(#clip3_7_108)">
+<circle cx="79.5" cy="283" r="17" fill="#4C8DFF" fill-opacity="0.16" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M81 276.25H75V289.75H84V279.25L81 276.25ZM81 276.25V280H84.75M77.25 283H81.75M77.25 286H81.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip4_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="113.5" y="279.773">project.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="113.5" y="302.091">&#x438;&#x434;&#x435;&#x43d;&#x442;&#x438;&#x447;&#x43d;&#x43e;&#x441;&#x442;&#x44c; + &#x444;&#x438;&#x43a;&#x441;&#x430;&#x446;&#x438;&#x44f; &#x432;&#x435;&#x440;&#x441;&#x438;&#x438;</tspan></text>
+</g>
+<rect x="440.75" y="150.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="440.75" y="150.75" width="398.5" height="84.5" rx="17.25" stroke="#4FD1A3" stroke-width="1.5"/>
+<g clip-path="url(#clip5_7_108)">
+<circle cx="479.5" cy="193" r="17" fill="#4FD1A3" fill-opacity="0.16" stroke="#4FD1A3" stroke-width="2"/>
+<path d="M479.5 186.25H475.75C475.263 186.222 474.78 186.354 474.375 186.624C473.969 186.895 473.662 187.29 473.5 187.75V200.5C473.662 200.04 473.969 199.645 474.375 199.374C474.78 199.104 475.263 198.972 475.75 199H479.5M479.5 186.25V199M479.5 186.25H483.25C483.737 186.222 484.22 186.354 484.625 186.624C485.031 186.895 485.338 187.29 485.5 187.75V200.5C485.338 200.04 485.031 199.645 484.625 199.374C484.22 199.104 483.737 198.972 483.25 199H479.5" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip6_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="513.5" y="189.773">knowledge.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="513.5" y="212.091">&#x441;&#x441;&#x44b;&#x43b;&#x43a;&#x438; &#x43d;&#x430; &#x437;&#x43d;&#x430;&#x43d;&#x438;&#x44f; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x430;</tspan></text>
+</g>
+<rect x="840.75" y="240.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="840.75" y="240.75" width="398.5" height="84.5" rx="17.25" stroke="#FF6B7A" stroke-width="1.5"/>
+<g clip-path="url(#clip7_7_108)">
+<circle cx="879.5" cy="283" r="17" fill="#FF6B7A" fill-opacity="0.16" stroke="#FF6B7A" stroke-width="2"/>
+<path d="M877.25 283L878.75 284.5L881.75 281.5M879.5 276.25L884.75 278.5V282.25C884.75 285.625 882.65 288.1 879.5 289.75C876.35 288.1 874.25 285.625 874.25 282.25V278.5L879.5 276.25Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip8_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="913.5" y="279.773">policy.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="913.5" y="302.091">&#x43f;&#x443;&#x442;&#x438; + &#x43f;&#x440;&#x438;&#x432;&#x430;&#x442;&#x43d;&#x43e;&#x441;&#x442;&#x44c; + &#x440;&#x435;&#x432;&#x44c;&#x44e;</tspan></text>
+</g>
+<rect x="40.75" y="480.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="40.75" y="480.75" width="398.5" height="84.5" rx="17.25" stroke="#9C7CFF" stroke-width="1.5"/>
+<g clip-path="url(#clip9_7_108)">
+<circle cx="79.5" cy="523" r="17" fill="#9C7CFF" fill-opacity="0.16" stroke="#9C7CFF" stroke-width="2"/>
+<path d="M74.25 517.75H78.75C79.3467 517.75 79.919 517.987 80.341 518.409C80.7629 518.831 81 519.403 81 520V526M83.25 523.75L81 526L78.75 523.75M84.75 517.75H83.25" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="113.5" y="511.273">routing.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="113.5" y="533.591">&#x43d;&#x435;&#x43e;&#x431;&#x44f;&#x437;&#x430;&#x442;&#x435;&#x43b;&#x44c;&#x43d;&#x44b;&#x435; &#x43f;&#x435;&#x440;&#x435;&#x43e;&#x43f;&#x440;&#x435;&#x434;&#x435;&#x43b;&#x435;&#x43d;&#x438;&#x44f; </tspan><tspan x="113.5" y="550.591">&#x43c;&#x43e;&#x434;&#x435;&#x43b;&#x435;&#x439;</tspan></text>
+</g>
+<rect x="440.75" y="570.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="440.75" y="570.75" width="398.5" height="84.5" rx="17.25" stroke="#43C7E8" stroke-width="1.5"/>
+<g clip-path="url(#clip11_7_108)">
+<circle cx="479.5" cy="613" r="17" fill="#43C7E8" fill-opacity="0.16" stroke="#43C7E8" stroke-width="2"/>
+<path d="M476.5 613L478.375 614.875L482.5 610.75M479.5 619.75C480.386 619.75 481.264 619.575 482.083 619.236C482.902 618.897 483.646 618.4 484.273 617.773C484.9 617.146 485.397 616.402 485.736 615.583C486.075 614.764 486.25 613.886 486.25 613C486.25 612.114 486.075 611.236 485.736 610.417C485.397 609.598 484.9 608.854 484.273 608.227C483.646 607.6 482.902 607.103 482.083 606.764C481.264 606.425 480.386 606.25 479.5 606.25C477.71 606.25 475.993 606.961 474.727 608.227C473.461 609.493 472.75 611.21 472.75 613C472.75 614.79 473.461 616.507 474.727 617.773C475.993 619.039 477.71 619.75 479.5 619.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="513.5" y="609.773">validation.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="513.5" y="632.091">&#x438;&#x441;&#x43f;&#x43e;&#x43b;&#x43d;&#x44f;&#x435;&#x43c;&#x44b;&#x435; &#x43f;&#x440;&#x43e;&#x444;&#x438;&#x43b;&#x438;</tspan></text>
+</g>
+<rect x="840.75" y="480.75" width="398.5" height="84.5" rx="17.25" fill="#151D2A"/>
+<rect x="840.75" y="480.75" width="398.5" height="84.5" rx="17.25" stroke="#F5B942" stroke-width="1.5"/>
+<g clip-path="url(#clip13_7_108)">
+<circle cx="879.5" cy="523" r="17" fill="#F5B942" fill-opacity="0.16" stroke="#F5B942" stroke-width="2"/>
+<path d="M872 529.75V528.25C872 527.057 872.474 525.912 873.318 525.068C874.162 524.224 875.307 523.75 876.5 523.75H878C879.193 523.75 880.338 524.224 881.182 525.068C882.026 525.912 882.5 527.057 882.5 528.25V529.75M883.25 519.25C883.545 519.25 883.838 519.192 884.111 519.079C884.384 518.966 884.632 518.8 884.841 518.591C885.05 518.382 885.216 518.134 885.329 517.861C885.442 517.588 885.5 517.295 885.5 517C885.5 516.705 885.442 516.412 885.329 516.139C885.216 515.866 885.05 515.618 884.841 515.409C884.632 515.2 884.384 515.034 884.111 514.921C883.838 514.808 883.545 514.75 883.25 514.75M883.25 523.75C884.245 523.75 885.198 524.145 885.902 524.848C886.605 525.552 887 526.505 887 527.5V529M877.25 522.25C878.046 522.25 878.809 521.934 879.371 521.371C879.934 520.809 880.25 520.046 880.25 519.25C880.25 518.454 879.934 517.691 879.371 517.129C878.809 516.566 878.046 516.25 877.25 516.25C876.454 516.25 875.691 516.566 875.129 517.129C874.566 517.691 874.25 518.454 874.25 519.25C874.25 520.046 874.566 520.809 875.129 521.371C875.691 521.934 876.454 522.25 877.25 522.25Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip14_7_108)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="913.5" y="519.773">agents.yaml</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="913.5" y="542.091">&#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x43d;&#x44b;&#x435; &#x441;&#x43f;&#x435;&#x446;&#x438;&#x430;&#x43b;&#x438;&#x441;&#x442;&#x44b;</tspan></text>
+</g>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="190" y="715.318">&#x41c;&#x435;&#x43d;&#x44f;&#x439;&#x442;&#x435; &#x43a;&#x430;&#x43d;&#x43e;&#x43d;&#x438;&#x447;&#x435;&#x441;&#x43a;&#x438;&#x439; &#x444;&#x430;&#x439;&#x43b; &#x43d;&#x443;&#x436;&#x43d;&#x43e;&#x439; &#x43e;&#x431;&#x43b;&#x430;&#x441;&#x442;&#x438;. &#x421;&#x433;&#x435;&#x43d;&#x435;&#x440;&#x438;&#x440;&#x43e;&#x432;&#x430;&#x43d;&#x43d;&#x44b;&#x435; &#x444;&#x430;&#x439;&#x43b;&#x44b; AI-&#x43a;&#x43b;&#x438;&#x435;&#x43d;&#x442;&#x430; &#x2014; &#x44d;&#x442;&#x43e; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x446;&#x438;&#x438;, &#x430; &#x43d;&#x435; </tspan><tspan x="190" y="734.318">&#x43f;&#x43e;&#x43b;&#x438;&#x442;&#x438;&#x43a;&#x430;.</tspan></text>
+</g>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<defs>
+<clipPath id="clip0_7_108">
+<rect width="1280" height="780" rx="28" fill="white"/>
+</clipPath>
+<clipPath id="clip1_7_108">
+<rect width="36" height="36" fill="white" transform="translate(491.5 375)"/>
+</clipPath>
+<clipPath id="clip2_7_108">
+<rect width="245" height="62" fill="white" transform="translate(543.5 362)"/>
+</clipPath>
+<clipPath id="clip3_7_108">
+<rect width="36" height="36" fill="white" transform="translate(61.5 265)"/>
+</clipPath>
+<clipPath id="clip4_7_108">
+<rect width="305" height="45" fill="white" transform="translate(113.5 260.5)"/>
+</clipPath>
+<clipPath id="clip5_7_108">
+<rect width="36" height="36" fill="white" transform="translate(461.5 175)"/>
+</clipPath>
+<clipPath id="clip6_7_108">
+<rect width="305" height="45" fill="white" transform="translate(513.5 170.5)"/>
+</clipPath>
+<clipPath id="clip7_7_108">
+<rect width="36" height="36" fill="white" transform="translate(861.5 265)"/>
+</clipPath>
+<clipPath id="clip8_7_108">
+<rect width="305" height="45" fill="white" transform="translate(913.5 260.5)"/>
+</clipPath>
+<clipPath id="clip9_7_108">
+<rect width="36" height="36" fill="white" transform="translate(61.5 505)"/>
+</clipPath>
+<clipPath id="clip10_7_108">
+<rect width="305" height="62" fill="white" transform="translate(113.5 492)"/>
+</clipPath>
+<clipPath id="clip11_7_108">
+<rect width="36" height="36" fill="white" transform="translate(461.5 595)"/>
+</clipPath>
+<clipPath id="clip12_7_108">
+<rect width="305" height="45" fill="white" transform="translate(513.5 590.5)"/>
+</clipPath>
+<clipPath id="clip13_7_108">
+<rect width="36" height="36" fill="white" transform="translate(861.5 505)"/>
+</clipPath>
+<clipPath id="clip14_7_108">
+<rect width="305" height="45" fill="white" transform="translate(913.5 500.5)"/>
+</clipPath>
+</defs>
+</svg>
