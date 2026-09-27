@@ -2,7 +2,7 @@
 
 В EmbrAIon есть два связанных, но разных понятия validation.
 
-![Validation, evidence, runs и review](assets/diagrams/ru/09-validation-evidence-run-review.svg){ loading=lazy }
+![Validation, evidence, runs и review](assets/diagrams/en/09-validation-evidence-run-review.svg){ loading=lazy }
 
 ## Framework validation
 
