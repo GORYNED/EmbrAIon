@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import venv
 from dataclasses import dataclass
@@ -13,6 +14,12 @@ from pathlib import Path
 from typing import Sequence
 
 import yaml
+
+from .artifacts import (
+    FrameworkArtifactLock,
+    download_locked_artifact,
+    read_project_artifact_lock,
+)
 
 CANONICAL_REPOSITORY = "GORYNED/EmbrAIon"
 PROJECT_MANIFEST = Path(".embraion") / "project.yaml"
@@ -23,7 +30,7 @@ RESOLUTION_GUARD_ENV = "EMBRAION_VERSION_RESOLVED"
 RESOLVED_VERSION_ENV = "EMBRAION_RESOLVED_VERSION"
 RESOLVED_PROJECT_ENV = "EMBRAION_RESOLVED_PROJECT"
 
-_BYPASS_COMMANDS = {"init", "update", "status", "cache", "help"}
+_BYPASS_COMMANDS = {"init", "update", "status", "cache", "help", "framework"}
 _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
 _LEGACY_DEV_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 
@@ -105,6 +112,7 @@ def _load_cached_runtime(
     environment: Path,
     package_version: str,
     *,
+    artifact_lock: FrameworkArtifactLock | None = None,
     touch: bool = False,
 ) -> CachedRuntime | None:
     python = _runtime_python(environment)
@@ -120,6 +128,8 @@ def _load_cached_runtime(
         return None
 
     if data.get("version") != package_version:
+        return None
+    if artifact_lock is not None and data.get("artifact") != artifact_lock.marker_mapping():
         return None
     if not (framework / "framework.yaml").is_file():
         return None
@@ -173,13 +183,28 @@ def _probe_runtime(python: Path, environment: Path) -> CachedRuntime:
     )
 
 
-def ensure_cached_runtime(package_version: str) -> CachedRuntime:
+def ensure_cached_runtime(
+    package_version: str,
+    *,
+    artifact_lock: FrameworkArtifactLock | None = None,
+) -> CachedRuntime:
     package_version = package_version_for_pin(package_version)
+    if artifact_lock is not None and artifact_lock.version != package_version:
+        raise RuntimeError(
+            f"framework.version/lock mismatch: requested {package_version}, "
+            f"lock is for {artifact_lock.version}."
+        )
+
     versions = cache_home() / "versions"
     versions.mkdir(parents=True, exist_ok=True)
 
     environment = versions / package_version
-    cached = _load_cached_runtime(environment, package_version, touch=True)
+    cached = _load_cached_runtime(
+        environment,
+        package_version,
+        artifact_lock=artifact_lock,
+        touch=True,
+    )
     if cached is not None:
         return cached
 
@@ -191,7 +216,12 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
             lock.mkdir()
             break
         except FileExistsError:
-            cached = _load_cached_runtime(environment, package_version, touch=True)
+            cached = _load_cached_runtime(
+                environment,
+                package_version,
+                artifact_lock=artifact_lock,
+                touch=True,
+            )
             if cached is not None:
                 return cached
 
@@ -205,7 +235,12 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
             time.sleep(0.2)
 
     try:
-        cached = _load_cached_runtime(environment, package_version, touch=True)
+        cached = _load_cached_runtime(
+            environment,
+            package_version,
+            artifact_lock=artifact_lock,
+            touch=True,
+        )
         if cached is not None:
             return cached
 
@@ -219,21 +254,42 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
         venv.EnvBuilder(with_pip=True).create(environment)
         python = _runtime_python(environment)
 
-        subprocess.run(
-            [
-                str(python),
-                "-m",
-                "pip",
-                "install",
-                "--disable-pip-version-check",
-                "--no-input",
-                f"embraion=={package_version}",
-            ],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
-        )
+        if artifact_lock is None:
+            install_target = f"embraion=={package_version}"
+            subprocess.run(
+                [
+                    str(python),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "--no-input",
+                    install_target,
+                ],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+            )
+        else:
+            with tempfile.TemporaryDirectory(prefix="embraion-artifact-") as temporary:
+                wheel = Path(temporary) / artifact_lock.asset
+                download_locked_artifact(artifact_lock, wheel)
+                subprocess.run(
+                    [
+                        str(python),
+                        "-m",
+                        "pip",
+                        "install",
+                        "--disable-pip-version-check",
+                        "--no-input",
+                        str(wheel),
+                    ],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=True,
+                )
 
         runtime = _probe_runtime(python, environment)
         version_probe = subprocess.run(
@@ -254,17 +310,20 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
                 f"Expected EmbrAIon {package_version}, installed {installed_version or 'unknown'}."
             )
 
-        _runtime_marker(environment).write_text(
-            json.dumps(
-                {
-                    "version": package_version,
-                    "framework-root": str(runtime.framework_root),
-                },
-                indent=2,
-            )
-            + "\n",
+        marker_data: dict[str, object] = {
+            "version": package_version,
+            "framework-root": str(runtime.framework_root),
+        }
+        if artifact_lock is not None:
+            marker_data["artifact"] = artifact_lock.marker_mapping()
+
+        marker = _runtime_marker(environment)
+        temporary_marker = marker.with_suffix(marker.suffix + ".tmp")
+        temporary_marker.write_text(
+            json.dumps(marker_data, indent=2) + "\n",
             encoding="utf-8",
         )
+        temporary_marker.replace(marker)
 
         return runtime
     except Exception:
@@ -273,6 +332,15 @@ def ensure_cached_runtime(package_version: str) -> CachedRuntime:
     finally:
         shutil.rmtree(lock, ignore_errors=True)
 
+
+def install_project_runtime(manifest: Path) -> CachedRuntime:
+    package_version = package_version_for_pin(read_project_pin(manifest))
+    artifact_lock = read_project_artifact_lock(manifest, required=True)
+    assert artifact_lock is not None
+    return ensure_cached_runtime(
+        package_version,
+        artifact_lock=artifact_lock,
+    )
 
 def _command_name(argv: Sequence[str]) -> str | None:
     for token in argv:
@@ -312,11 +380,15 @@ def resolve_project_runtime(
     pin = read_project_pin(manifest)
     package_version = package_version_for_pin(pin)
     active_version = package_version_for_pin(current_version)
+    artifact_lock = read_project_artifact_lock(manifest, required=False)
 
     if package_version == active_version:
         return None
 
-    runtime = ensure_cached_runtime(package_version)
+    runtime = ensure_cached_runtime(
+        package_version,
+        artifact_lock=artifact_lock,
+    )
 
     environment = os.environ.copy()
     environment[RESOLUTION_GUARD_ENV] = "1"
@@ -335,10 +407,22 @@ def cached_runtime_path(version: str) -> Path:
     return cache_home() / "versions" / package_version_for_pin(version)
 
 
-def cached_runtime_ready(version: str) -> bool:
+def cached_runtime_ready(
+    version: str,
+    *,
+    artifact_lock: FrameworkArtifactLock | None = None,
+) -> bool:
     package_version = package_version_for_pin(version)
     environment = cached_runtime_path(package_version)
-    return _load_cached_runtime(environment, package_version, touch=False) is not None
+    return (
+        _load_cached_runtime(
+            environment,
+            package_version,
+            artifact_lock=artifact_lock,
+            touch=False,
+        )
+        is not None
+    )
 
 
 def list_cached_runtimes() -> list[dict[str, object]]:
@@ -402,6 +486,7 @@ def project_runtime_status(
     pin = read_project_pin(manifest)
     resolved = package_version_for_pin(pin)
     active = package_version_for_pin(current_version)
+    artifact_lock = read_project_artifact_lock(manifest, required=False)
     project = manifest.parent.parent
 
     if resolved == active:
@@ -410,7 +495,7 @@ def project_runtime_status(
         ready = False
     else:
         path = cached_runtime_path(resolved)
-        ready = cached_runtime_ready(resolved)
+        ready = cached_runtime_ready(resolved, artifact_lock=artifact_lock)
         source = "cache" if ready else "download-on-demand"
         runtime_cache = str(path)
 
@@ -423,6 +508,8 @@ def project_runtime_status(
         "runtime-source": source,
         "runtime-cache": runtime_cache,
         "runtime-cached": ready,
+        "artifact-locked": artifact_lock is not None,
+        "artifact-digest": artifact_lock.digest if artifact_lock is not None else None,
         "cache-root": str(root),
         "cached-versions": len(list_cached_runtimes()),
     }
