@@ -200,10 +200,19 @@ def artifact_lock_from_framework(
 
     version = _validate_stable_version(version)
     schema = artifact.get("schema")
-    source = str(artifact.get("source") or "").strip()
-    release = str(artifact.get("release") or "").strip()
-    asset = str(artifact.get("asset") or "").strip()
-    digest = str(artifact.get("digest") or "").strip().lower()
+
+    def canonical_lock_string(name: str) -> str:
+        value = artifact.get(name)
+        if not isinstance(value, str) or value != value.strip():
+            raise RuntimeError(
+                f"Malformed framework.artifact {name}; expected a canonical string."
+            )
+        return value
+
+    source = canonical_lock_string("source")
+    release = canonical_lock_string("release")
+    asset = canonical_lock_string("asset")
+    digest = canonical_lock_string("digest")
 
     if type(schema) is not int or schema != ARTIFACT_SCHEMA_VERSION:
         raise RuntimeError(
