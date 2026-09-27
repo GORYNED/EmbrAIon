@@ -66,6 +66,8 @@ Main commands:
 embraion init
 embraion install
 embraion update
+embraion framework verify
+embraion framework install
 embraion sync
 embraion validate
 embraion doctor
@@ -82,6 +84,8 @@ embraion worktree
 embraion learning
 embraion eval
 ```
+
+Starting with v0.14.0, `embraion update` also writes a framework-owned release artifact lock into `.embraion/project.yaml`. `embraion framework verify` re-downloads the exact locked GitHub Release wheel and verifies its SHA-256; `embraion framework install` performs the same verification before installing the wheel into the isolated runtime cache. Consumer CI does not need its own wheel SHA variable or checksum parser.
 
 `v0.2.0` resolves project pins automatically: ordinary commands find the nearest `.embraion/project.yaml`, install an exact pinned release into `~/.embraion/versions/<version>/` when necessary, and delegate to that cached runtime. `init`, `update`, `status`, and `cache` intentionally stay on the global launcher.
 
