@@ -100,6 +100,31 @@ class ArtifactLockTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "version/lock mismatch"):
                 read_project_artifact_lock(manifest)
 
+    def test_noncanonical_lock_strings_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest = self._manifest(
+                Path(temporary),
+                digest="SHA256:" + ("A" * 64),
+            )
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Malformed framework.artifact digest",
+            ):
+                read_project_artifact_lock(manifest)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest = self._manifest(Path(temporary))
+            text = manifest.read_text(encoding="utf-8").replace(
+                "source: github-release",
+                'source: " github-release"',
+            )
+            manifest.write_text(text, encoding="utf-8")
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "Malformed framework.artifact source",
+            ):
+                read_project_artifact_lock(manifest)
+
     def test_malformed_digest_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             manifest = self._manifest(Path(temporary), digest="sha256:not-a-digest")
