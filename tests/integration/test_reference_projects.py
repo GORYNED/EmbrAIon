@@ -8,11 +8,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import yaml
 
 from embraion import __version__
 from embraion.common import framework_root
+from embraion.project import update_project
 
 
 REFERENCE_PROJECTS = ("minimal", "python", "unity")
@@ -341,18 +343,29 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             projection_before = existing_projection.read_bytes()
 
             target_version = __version__
-            updated = self._run(
-                project,
-                environment,
-                "update",
-            )
-            self.assertIn(f"0.8.1 -> {target_version}", updated.stdout)
+            locked_digest = "sha256:" + ("a" * 64)
+            artifact = {
+                "schema": 1,
+                "source": "github-release",
+                "release": f"v{target_version}",
+                "asset": f"embraion-{target_version}-py3-none-any.whl",
+                "digest": locked_digest,
+            }
+            with mock.patch(
+                "embraion.project.resolve_release_artifact",
+                return_value=artifact,
+            ):
+                previous, updated_version = update_project(project)
+
+            self.assertEqual("0.8.1", previous)
+            self.assertEqual(target_version, updated_version)
 
             current = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
             self.assertEqual(
                 target_version,
                 str(current["framework"]["version"]),
             )
+            self.assertEqual(artifact, current["framework"]["artifact"])
             upgraded_policy = yaml.safe_load(
                 policy_path.read_text(encoding="utf-8")
             )
