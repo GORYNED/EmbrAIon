@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "observedModel": {"type": "string"},
+    "provider": {"type": "string"},
+    "effort": {"type": "string"},
+    "fallback": {"type": "string"},
+    "billing": {"type": "object", "properties": {"mode": {"type": "string"}}}
+  }
+}
