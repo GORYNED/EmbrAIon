@@ -1,49 +1,45 @@
-# Localization Strategy
+# Localization
 
-English documentation under `docs/` is the canonical and complete public documentation for the current EmbrAIon release.
+English is the **original, canonical, and release-authoritative** EmbrAIon documentation.
 
-Localized material is maintained in tiers so translations do not pretend to be complete when they are not.
+Russian is the only maintained translation. The public documentation site builds both languages from the same navigation and exposes a language switcher.
 
-## Current policy
+## Policy
 
-- **English** — canonical, complete, and release-authoritative.
-- **Russian** — primary maintained translation for the product overview and core runtime/configuration concepts.
-- **Simplified Chinese, Spanish, and Hindi** — curated translated subsets. Their index pages link only to pages that actually exist and point readers to canonical English documentation for newly added capabilities.
+- **English (`en`)** — original source and canonical contract.
+- **Russian (`ru`)** — complete maintained translation of every public documentation page.
+- No other public documentation languages are maintained.
 
-A translated page must not invent a different contract. When it disagrees with current English documentation or machine-readable schemas, the English canonical documentation and schemas control.
+Technical identifiers stay unchanged inside Russian prose when translating them would make commands or configuration ambiguous. Examples include `.embraion/routing.yaml`, `bounded-write`, `CONFIDENTIAL`, and `embraion validation run`.
 
-## When English documentation changes
+## File structure
 
-A documentation PR should ask:
+The site uses the suffix structure from `mkdocs-static-i18n`:
 
-1. Is this a user-facing contract change or only wording?
-2. Does the Russian primary translation need a matching update?
-3. Do curated localization indexes still link only to existing pages?
-4. Should the other translated subsets gain the new topic now, or explicitly continue pointing to English?
+```text
+docs/
+├── index.md
+├── index.ru.md
+├── configuration/
+│   ├── policy.md
+│   └── policy.ru.md
+└── ...
+```
 
-Do not add placeholder links to translations that do not exist.
+English files keep their normal `.md` names. Russian translations use `.ru.md`.
 
-## Terminology
+## Completeness
 
-Technical identifiers such as command names, file paths, route classes, data classes, schema keys, and host names should normally remain unchanged inside localized prose.
+Every canonical English Markdown page under `docs/` must have a matching Russian `.ru.md` page.
 
-Examples:
+The build uses `fallback_to_default: false`, and repository validation checks translation parity so an untranslated Russian page is not silently replaced by English.
 
-- `.embraion/routing.yaml`
-- `bounded-write`
-- `CONFIDENTIAL`
-- `embraion validation run`
+## Contribution workflow
 
-Translate the explanation, not the executable identifier.
+1. Update the English source first.
+2. Update the matching Russian translation in the same PR.
+3. Keep technical identifiers, commands, paths, schema keys, and host names exact.
+4. Run the strict documentation build and `embraion validate`.
+5. Review both language versions before merge.
 
-## Completeness claims
-
-Localized indexes should clearly say when they are a subset.
-
-Do not describe a partial translation as the complete documentation for a release.
-
-## Contributing translations
-
-Prefer updating the canonical English page first, then translate from that reviewed state. Keep links relative and verify that every linked localized page exists.
-
-The strict documentation build validates the canonical MkDocs site. Repository validation additionally checks localization contracts, but human review remains responsible for semantic translation quality.
+When English and Russian differ in meaning, the English source and machine-readable framework contracts remain authoritative.

@@ -105,6 +105,45 @@ embraion route --host codex --route-class substantial --data PRIVATE
 
 Only add `.embraion/routing.yaml` overrides when explicit host-specific selection is actually needed.
 
+## AI still changed a protected path
+
+A host projection is guidance delivered to the AI client; it is not a filesystem sandbox.
+
+If a host-native agent writes a protected path anyway, the deterministic protection point is validation/enforcement:
+
+```bash
+embraion enforcement status
+embraion enforcement check --base-ref origin/main
+```
+
+Configure branch rules if the enforcement status check must block merge.
+
+## A routing override did not switch the model in the UI
+
+That can be expected for host-native work.
+
+`.embraion/routing.yaml` expresses the project routing contract. EmbrAIon does not transparently take control of the Codex/Copilot/Claude UI model picker. The host remains authoritative for actual host-native model availability and execution.
+
+Use `embraion route` to inspect what the project contract resolves:
+
+```bash
+embraion route --host codex --route-class complex --data PRIVATE
+```
+
+Provider-neutral execution through `embraion execute` is a separate path where EmbrAIon owns the bounded attempt loop.
+
+## After `embraion update`
+
+Run:
+
+```bash
+embraion doctor
+embraion status
+embraion projection diff --host codex --destination .
+```
+
+`embraion update` changes the project configuration/pin but does not silently reinstall generated host projections. Reinstall a projection only when the diff shows an intentional update you want to adopt.
+
 ## Runtime cache problems
 
 Inspect:

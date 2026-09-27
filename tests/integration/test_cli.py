@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 from embraion import __version__
+from embraion.common import framework_root
 
 
 class CliIntegrationTests(unittest.TestCase):
@@ -33,6 +34,11 @@ class CliIntegrationTests(unittest.TestCase):
     def test_cli_version(self) -> None:
         result = self._run("--version")
         self.assertEqual(__version__, result.stdout.strip())
+
+    def test_packaged_framework_includes_russian_root_docs(self) -> None:
+        root = framework_root()
+        self.assertTrue((root / "README.ru.md").is_file())
+        self.assertTrue((root / "TRADEMARKS.ru.md").is_file())
 
     def test_main_help_is_structured_and_descriptive(self) -> None:
         result = self._run("--help")

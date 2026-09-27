@@ -15,6 +15,35 @@ After `embraion init`, your repository owns a small configuration surface under 
 
 Everything else can stay at its safe default until the project actually needs it.
 
+### What a minimal result can look like
+
+After conversational setup, the useful diff can be very small:
+
+```yaml
+# .embraion/knowledge.yaml
+slots:
+  architecture:
+    path: docs/architecture.md
+```
+
+```yaml
+# .embraion/policy.yaml
+sources:
+  protected:
+    - vendor/**
+```
+
+```yaml
+# .embraion/validation.yaml
+profiles:
+  affected:
+    - python -m pytest
+```
+
+You can edit these files directly, but the intended workflow is often simpler:
+
+> Register our architecture document, protect `vendor/**`, and make `python -m pytest` the affected validation command.
+
 !!! tip "Or just tell your AI"
     > Review this repository and configure the minimum useful EmbrAIon project contract: bind the existing architecture/source-of-truth knowledge, classify important source paths, and add real validation commands. Leave model routing on host-default unless there is a clear project requirement.
 

@@ -64,9 +64,12 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("reference/cli.md", targets)
         self.assertIn("examples/unity.md", targets)
         self.assertIn("configuration/index.md", targets)
-        self.assertIn("configuration/project-files.md", targets)
+        self.assertNotIn("configuration/project-files.md", targets)
+        self.assertTrue((DOCS / "configuration" / "project-files.md").is_file())
         self.assertIn("configuration/ai-hosts.md", targets)
         self.assertIn("oss/security-reporting.md", targets)
+        self.assertIn("getting-started/in-60-seconds.md", targets)
+        self.assertIn("reference/engineering-model.md", targets)
 
         for target in targets:
             if not target.endswith(".md"):
@@ -91,6 +94,52 @@ class DocumentationTests(unittest.TestCase):
                 resolved = (path.parent / target).resolve()
                 with self.subTest(path=path.relative_to(ROOT), target=target):
                     self.assertTrue(resolved.exists(), resolved)
+
+    def test_only_english_and_russian_site_languages_are_configured(self) -> None:
+        config = yaml.load(
+            (ROOT / "mkdocs.yml").read_text(encoding="utf-8"),
+            Loader=_MkDocsSafeLoader,
+        )
+        i18n = next(
+            item["i18n"]
+            for item in config["plugins"]
+            if isinstance(item, dict) and "i18n" in item
+        )
+        locales = [item["locale"] for item in i18n["languages"]]
+        self.assertEqual(["en", "ru"], locales)
+        self.assertFalse(i18n["fallback_to_default"])
+
+    def test_every_english_doc_has_russian_translation(self) -> None:
+        english = {
+            path.relative_to(DOCS)
+            for path in DOCS.rglob("*.md")
+            if not path.name.endswith(".ru.md")
+        }
+        russian = {
+            Path(str(path.relative_to(DOCS)).replace(".ru.md", ".md"))
+            for path in DOCS.rglob("*.ru.md")
+        }
+        self.assertEqual(english, russian)
+
+    def test_localized_diagrams_use_suffix_assets(self) -> None:
+        diagrams = DOCS / "assets" / "diagrams" / "en"
+        english = {
+            path.name
+            for path in diagrams.glob("*.svg")
+            if not path.name.endswith(".ru.svg")
+        }
+        russian = {
+            path.name.removesuffix(".ru.svg") + ".svg"
+            for path in diagrams.glob("*.ru.svg")
+        }
+        self.assertEqual(english, russian)
+
+        for path in DOCS.rglob("*.ru.md"):
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertNotIn(
+                    "assets/diagrams/ru/",
+                    path.read_text(encoding="utf-8"),
+                )
 
     def test_cli_reference_covers_top_level_commands(self) -> None:
         parser = build_parser()

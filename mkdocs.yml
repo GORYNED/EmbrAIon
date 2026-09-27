@@ -40,6 +40,70 @@ theme:
 
 plugins:
   - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: false
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+          site_name: EmbrAIon
+        - locale: ru
+          name: Русский
+          build: true
+          site_name: EmbrAIon — документация
+          nav_translations:
+            Home: Главная
+            Start Here: Начало работы
+            Why EmbrAIon?: Зачем нужен EmbrAIon?
+            EmbrAIon in 60 seconds: EmbrAIon за 60 секунд
+            Five-minute sandbox: Песочница за пять минут
+            Installation: Установка
+            Add EmbrAIon to a project: Добавить EmbrAIon в проект
+            Adopt an existing repository: Подключить существующий репозиторий
+            Your first AI task: Первая задача для AI
+            How it works: Как это работает
+            Configure: Настройка
+            Overview: Обзор
+            Basics: Основы
+            Project knowledge: Знания проекта
+            Policy & protected paths: Политика и защищённые пути
+            Validation configuration: Настройка валидации
+            Project agents: Агенты проекта
+            Conversational configuration: Разговорная настройка
+            Advanced: Расширенная настройка
+            Project deployments: Deployments проекта
+            Model routing: Маршрутизация моделей
+            Execution & providers: Execution и провайдеры
+            Pricing & cost: Pricing и стоимость
+            Hosts: AI-хосты
+            Portable bundle: Portable bundle
+            Use: Использование
+            Daily workflow: Ежедневный процесс
+            Validation & evidence: Валидация и evidence
+            Runs & review: Runs и ревью
+            Troubleshooting: Решение проблем
+            Examples: Примеры
+            Reference: Справочник
+            Engineering model: Инженерная модель
+            CLI: CLI
+            Runtime & version resolution: Runtime и разрешение версий
+            Security model: Модель безопасности
+            Architecture: Архитектура
+            Capability model: Модель возможностей
+            Updating safely: Безопасное обновление
+            Project: Проект
+            Contributing: Участие в разработке
+            Support: Поддержка
+            Governance: Управление проектом
+            Licensing: Лицензирование
+            Maintainer reference: Для мейнтейнеров
+            Security reporting: Сообщение об уязвимостях
+            Release process: Процесс релиза
+            Localization: Локализация
 
 markdown_extensions:
   - admonition
@@ -80,52 +144,54 @@ nav:
       - Adopt an existing repository: getting-started/existing-repository.md
       - Your first AI task: getting-started/first-ai-task.md
       - How it works: getting-started/how-it-works.md
-      - Updating safely: getting-started/updating.md
   - Configure:
       - Overview: configuration/index.md
-      - Project files: configuration/project-files.md
-      - Project knowledge: configuration/knowledge.md
-      - Policy & protected paths: configuration/policy.md
-      - Validation configuration: configuration/validation.md
-      - Project agents: configuration/agents.md
-      - Project deployments: configuration/deployments.md
-      - Execution & providers: configuration/execution.md
-      - Pricing & cost: configuration/pricing.md
-      - Model routing: model-routing.md
-      - Conversational configuration: configuration/ai-hosts.md
-  - Host Integrations:
+      - Basics:
+          - Project knowledge: configuration/knowledge.md
+          - Policy & protected paths: configuration/policy.md
+          - Validation configuration: configuration/validation.md
+          - Project agents: configuration/agents.md
+          - Conversational configuration: configuration/ai-hosts.md
+      - Advanced:
+          - Project deployments: configuration/deployments.md
+          - Model routing: model-routing.md
+          - Execution & providers: configuration/execution.md
+          - Pricing & cost: configuration/pricing.md
+  - Hosts:
       - Overview: hosts/index.md
       - Codex: hosts/codex.md
       - GitHub Copilot: hosts/copilot.md
       - Claude Code: hosts/claude-code.md
       - Portable bundle: hosts/portable.md
-  - Use & Automate:
+  - Use:
       - Overview: guides/index.md
       - Daily workflow: guides/daily-workflow.md
       - Validation & evidence: validation.md
       - Runs & review: guides/runs-review.md
       - Enforcement: guides/enforcement.md
       - Troubleshooting: guides/troubleshooting.md
-  - Guides & Examples:
-      - Examples overview: examples/index.md
-      - Minimal: examples/minimal.md
-      - Python: examples/python.md
-      - Unity: examples/unity.md
-      - Spec Kit: spec-kit.md
+      - Examples:
+          - Overview: examples/index.md
+          - Minimal: examples/minimal.md
+          - Python: examples/python.md
+          - Unity: examples/unity.md
   - Reference:
-      - Engineering model deep dive: reference/engineering-model.md
-      - CLI reference: reference/cli.md
+      - Engineering model: reference/engineering-model.md
+      - CLI: reference/cli.md
       - Runtime & version resolution: reference/runtime-version-resolution.md
       - Security model: security.md
       - Architecture: architecture.md
       - Capability model: capability-model.md
-  - Maintainers & Project:
+      - Updating safely: getting-started/updating.md
+      - Spec Kit: spec-kit.md
+  - Project:
       - Overview: oss/index.md
       - Contributing: oss/contributing.md
       - Support: oss/support.md
-      - Security reporting: oss/security-reporting.md
       - Governance: oss/governance.md
-      - Localization strategy: oss/localization.md
       - Licensing: licensing.md
-      - Release process: release-process.md
-      - Learning: learning.md
+      - Maintainer reference:
+          - Security reporting: oss/security-reporting.md
+          - Release process: release-process.md
+          - Learning: learning.md
+          - Localization: oss/localization.md

@@ -4,10 +4,7 @@
 
 <p align="center">
   <strong>English</strong> ·
-  <a href="localization/README.ru.md">Русский</a> ·
-  <a href="localization/README.zh-CN.md">简体中文</a> ·
-  <a href="localization/README.es.md">Español</a> ·
-  <a href="localization/README.hi.md">हिन्दी</a>
+  <a href="README.ru.md">Русский</a>
 </p>
 
 # EmbrAIon
@@ -98,4 +95,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-09-27 02:20 UTC</sub>
+<sub>Last updated: 2026-09-27 10:20 UTC</sub>

@@ -1,0 +1,107 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Deployment &#x2192; Routing &#x2192; Execution &#x2192; Pricing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">&#x427;&#x435;&#x442;&#x44b;&#x440;&#x435; &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442;&#x43d;&#x44b;&#x445; &#x43f;&#x43e;&#x43d;&#x44f;&#x442;&#x438;&#x44f; &#x43e;&#x442;&#x432;&#x435;&#x447;&#x430;&#x44e;&#x442; &#x43d;&#x430; &#x447;&#x435;&#x442;&#x44b;&#x440;&#x435; &#x440;&#x430;&#x437;&#x43d;&#x44b;&#x445; &#x432;&#x43e;&#x43f;&#x440;&#x43e;&#x441;&#x430;.</tspan></text>
+<rect x="46" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="46" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip0_77_1333)">
+<circle cx="85" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M85 322.75L91 319.75V312.25L85 309.25L79 312.25V319.75L85 322.75ZM79 312.25L85 315.25M91 312.25L85 315.25M85 315.25V322.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_77_1333)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="119" y="304.273">Deployment</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="119" y="326.591">&#x427;&#x422;&#x41e; &#x43c;&#x43e;&#x436;&#x43d;&#x43e; </tspan><tspan x="119" y="343.591">&#x438;&#x441;&#x43f;&#x43e;&#x43b;&#x44c;&#x437;&#x43e;&#x432;&#x430;&#x442;&#x44c;</tspan></text>
+</g>
+<rect x="341" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="341" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip2_77_1333)">
+<circle cx="380" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M374.75 310.75H379.25C379.847 310.75 380.419 310.987 380.841 311.409C381.263 311.831 381.5 312.403 381.5 313V319M383.75 316.75L381.5 319L379.25 316.75M385.25 310.75H383.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_77_1333)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="414" y="312.773">Routing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="414" y="335.091">&#x41a;&#x41e;&#x413;&#x414;&#x410; &#x44d;&#x442;&#x43e; &#x432;&#x44b;&#x431;&#x438;&#x440;&#x430;&#x442;&#x44c;</tspan></text>
+</g>
+<rect x="636" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="636" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip4_77_1333)">
+<circle cx="675" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M671.25 313.75L673.5 316L671.25 318.25M675 318.25H678.75M669 310.75H681V321.25H669V310.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_77_1333)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="709" y="304.273">Execution</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="709" y="326.591">&#x41a;&#x410;&#x41a; &#x44d;&#x442;&#x43e; &#x431;&#x435;&#x437;&#x43e;&#x43f;&#x430;&#x441;&#x43d;&#x43e; </tspan><tspan x="709" y="343.591">&#x432;&#x44b;&#x437;&#x432;&#x430;&#x442;&#x44c;</tspan></text>
+</g>
+<rect x="931" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="931" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip6_77_1333)">
+<circle cx="970" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M971.5 309.25H965.5V322.75H974.5V312.25L971.5 309.25ZM971.5 309.25V313H975.25M967.75 316H972.25M967.75 319H970.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_77_1333)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="1004" y="304.273">Pricing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="1004" y="326.591">&#x41a;&#x410;&#x41a; &#x43e;&#x43f;&#x440;&#x435;&#x434;&#x435;&#x43b;&#x44f;&#x435;&#x442;&#x441;&#x44f; </tspan><tspan x="1004" y="343.591">&#x441;&#x442;&#x43e;&#x438;&#x43c;&#x43e;&#x441;&#x442;&#x44c;</tspan></text>
+</g>
+<g clip-path="url(#clip8_77_1333)">
+<path d="M305 316H336M330 322L336 316L330 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_77_1333)">
+<path d="M600 316H631M625 322L631 316L625 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_77_1333)">
+<path d="M895 316H926M920 322L926 316L920 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<rect x="291" y="471" width="698" height="98" rx="15" fill="#1B2533"/>
+<rect x="291" y="471" width="698" height="98" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip11_77_1333)">
+<circle cx="330" cy="520" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M330 526.75L336 523.75V516.25L330 513.25L324 516.25V523.75L330 526.75ZM324 516.25L330 519.25M336 516.25L330 519.25M330 519.25V526.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_77_1333)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="364" y="516.773">&#x41f;&#x440;&#x438;&#x43c;&#x435;&#x440;: analysis-api</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="364" y="539.091">substantial &#x2192; &#x440;&#x430;&#x437;&#x440;&#x435;&#x448;&#x451;&#x43d;&#x43d;&#x44b;&#x439; binding &#x2192; &#x43f;&#x440;&#x43e;&#x432;&#x435;&#x440;&#x435;&#x43d;&#x43d;&#x44b;&#x439; &#x441;&#x43d;&#x438;&#x43c;&#x43e;&#x43a; &#x446;&#x435;&#x43d;&#x44b;</tspan></text>
+</g>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="160" y="665.318">Host-native &#x43f;&#x440;&#x43e;&#x435;&#x43a;&#x442; &#x43c;&#x43e;&#x436;&#x435;&#x442; &#x438;&#x441;&#x43f;&#x43e;&#x43b;&#x44c;&#x437;&#x43e;&#x432;&#x430;&#x442;&#x44c; &#x442;&#x43e;&#x43b;&#x44c;&#x43a;&#x43e; Deployment + Routing; Execution &#x438; Pricing &#x43f;&#x43e;&#x434;&#x43a;&#x43b;&#x44e;&#x447;&#x430;&#x44e;&#x442;&#x441;&#x44f; &#x43f;&#x440;&#x438; </tspan><tspan x="160" y="684.318">&#x43d;&#x435;&#x43e;&#x431;&#x445;&#x43e;&#x434;&#x438;&#x43c;&#x43e;&#x441;&#x442;&#x438;.</tspan></text>
+<defs>
+<clipPath id="clip0_77_1333">
+<rect width="36" height="36" fill="white" transform="translate(67 298)"/>
+</clipPath>
+<clipPath id="clip1_77_1333">
+<rect width="164" height="62" fill="white" transform="translate(119 285)"/>
+</clipPath>
+<clipPath id="clip2_77_1333">
+<rect width="36" height="36" fill="white" transform="translate(362 298)"/>
+</clipPath>
+<clipPath id="clip3_77_1333">
+<rect width="164" height="45" fill="white" transform="translate(414 293.5)"/>
+</clipPath>
+<clipPath id="clip4_77_1333">
+<rect width="36" height="36" fill="white" transform="translate(657 298)"/>
+</clipPath>
+<clipPath id="clip5_77_1333">
+<rect width="164" height="62" fill="white" transform="translate(709 285)"/>
+</clipPath>
+<clipPath id="clip6_77_1333">
+<rect width="36" height="36" fill="white" transform="translate(952 298)"/>
+</clipPath>
+<clipPath id="clip7_77_1333">
+<rect width="164" height="62" fill="white" transform="translate(1004 285)"/>
+</clipPath>
+<clipPath id="clip8_77_1333">
+<rect width="32" height="16" fill="white" transform="translate(305 308)"/>
+</clipPath>
+<clipPath id="clip9_77_1333">
+<rect width="32" height="16" fill="white" transform="translate(600 308)"/>
+</clipPath>
+<clipPath id="clip10_77_1333">
+<rect width="32" height="16" fill="white" transform="translate(895 308)"/>
+</clipPath>
+<clipPath id="clip11_77_1333">
+<rect width="36" height="36" fill="white" transform="translate(312 502)"/>
+</clipPath>
+<clipPath id="clip12_77_1333">
+<rect width="604" height="45" fill="white" transform="translate(364 497.5)"/>
+</clipPath>
+</defs>
+</svg>
