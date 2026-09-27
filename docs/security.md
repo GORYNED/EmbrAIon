@@ -39,10 +39,18 @@ embraion mcp inventory
 
 to inspect deterministic security and integration surfaces.
 
+## Canonical data classes and compatibility aliases
+
+Core policy uses exactly `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`.
+
+A project may preserve historical vocabulary at an **execution boundary** through an explicit `dataClassAliases` mapping in `.embraion/execution.yaml`. For example, mapping `CONFIDENTIAL` to a project-specific legacy label does not create a new Core class and does not weaken privacy policy.
+
+Aliases exist for compatibility, not for inventing weaker classifications. New projects should normally use the canonical classes directly.
+
 ## Project policy and enforcement
 
 Project-owned source classes, privacy defaults, review rules, and enforcement settings live in `.embraion/policy.yaml`.
 
 A green test or behavioral eval cannot override privacy, protected-source, permission, or security failures. Likewise, model routing cannot widen these boundaries.
 
-See [Policy & Protected Paths](configuration/policy.md) and [Enforcement](guides/enforcement.md).
+See [Policy & Protected Paths](configuration/policy.md), [Execution & providers](configuration/execution.md), and [Enforcement](guides/enforcement.md).

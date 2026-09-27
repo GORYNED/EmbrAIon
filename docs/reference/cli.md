@@ -117,6 +117,8 @@ embraion sync --host all --output build/generated --force
 
 ### `embraion pricing`
 
+For the conceptual model, see [Pricing & cost](../configuration/pricing.md).
+
 Inspect the validated local pricing snapshot without network access:
 
 ```bash
@@ -136,6 +138,8 @@ Refresh validates every selected source and replaces the snapshot atomically. A 
 `embraion pricing calculate` reads a JSON request from stdin with `deployment`, nullable `usage`, `usageSemantics`, and optional `billing`, `providerExact`, `adapterCost`, `reportedCurrency`, `atUtc`, `batch`, and `discount` fields. Snapshot calculation requires explicit usage semantics: `inclusive` means cached and reasoning counts are included in input and output totals; `disjoint` means they are additional counts. Providers with different input and output conventions can supply `{"input":"inclusive","output":"disjoint"}`. It reads only the local validated snapshot; reported exact costs take precedence. A reported cost has unknown currency unless `reportedCurrency` is supplied. The response keeps unknown and stale prices distinct from zero. A scheduled rate cannot be combined with batch or discount rates in one snapshot entry.
 
 ### `embraion execute`
+
+For execution ownership, bindings, aliases, fallback, and handoff behavior, see [Execution & providers](../configuration/execution.md).
 
 Read a versioned execution request from stdin and emit a JSON result. Executable deployments require explicit `.embraion/execution.yaml` bindings. Install the optional `embraion[litellm]` extra for the `litellm-loopback` adapter. It runs one bounded request in a short-lived local child, using only the selected credential reference. Bindings declare the exact upstream selector and provider, approved context boundary, source/trust/task ceilings, and exact or anchored observed-model evidence. The request supplies approved input for each candidate in `payload.inputsByDeployment`; worker text appears only in the result, never in attempt evidence. Unbound host deployments return `handoff-required`. Project acceptance remains separate from transport completion.
 

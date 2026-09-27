@@ -15,6 +15,7 @@ This creates the canonical project-owned configuration:
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
@@ -25,6 +26,7 @@ The files have focused ownership:
 - `project.yaml` — project identity, framework pin, and open capability metadata;
 - `knowledge.yaml` — project knowledge references;
 - `policy.yaml` — source classes, privacy, review, and enforcement policy;
+- `deployments.yaml` — reusable project-owned model/provider choices when the project needs them;
 - `routing.yaml` — optional host-specific model/effort/options overrides;
 - `validation.yaml` — executable project validation profiles;
 - `agents.yaml` — project-specific agent declarations;

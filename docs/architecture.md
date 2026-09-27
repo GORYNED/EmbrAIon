@@ -73,6 +73,24 @@ The host receives the user's request normally. Installed projections teach that 
 
 This is why ordinary tasks can remain ordinary natural-language requests while configuration changes still land in deterministic project-owned files.
 
+## Projected guidance vs deterministic execution
+
+Not every EmbrAIon surface has the same enforcement power.
+
+| Surface | Nature |
+| --- | --- |
+| Generated agents and skills | Host-native instructions/procedures |
+| Routing resolution | Deterministic framework decision |
+| Dispatch plan | Deterministic bounded plan |
+| Host-native AI work | Executed by Codex/Copilot/Claude under host controls |
+| `embraion execute` | Deterministic provider-neutral execution path |
+| Project validation | Real project command execution with evidence |
+| Enforcement | Deterministic policy/validation/review gate |
+
+This distinction prevents a generated instruction file from being mistaken for a security boundary that only the host or an executable EmbrAIon gate can enforce.
+
+See [How EmbrAIon works](getting-started/how-it-works.md) for the user-facing execution model.
+
 ## State and learning
 
 Runtime state is normalized into privacy-safe session, context, validation, and run records. Repeated outcomes may create learning candidates, but canonical capability promotion is always reviewed, validated, and explicitly approved.

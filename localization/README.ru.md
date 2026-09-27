@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">Английский</a> ·
+  <a href="../README.md">English</a> ·
   <strong>Русский</strong> ·
   <a href="README.zh-CN.md">简体中文</a> ·
   <a href="README.es.md">Español</a> ·
@@ -14,475 +14,197 @@
 
 **AI-First Engineering System [от GORYNED](https://goryned.com)**
 
-> Where sparks become AI-built products *(Где искры превращаются в продукты, созданные ИИ)*
+> Where sparks become AI-built products
 
-EmbrAIon — переносимая AI-First Engineering System для организации разработки программного обеспечения с ИИ: с явными ролями, переиспользуемыми навыками, рабочими процессами, маршрутизацией задач, контролем доступа, валидацией, независимым ревью, безопасностью, обучением системы и настройками конкретного проекта.
+EmbrAIon даёт программному репозиторию переиспользуемую **операционную модель AI-разработки**.
 
-Система не привязана к одному языку программирования или фреймворку. Unity/C#-проект, Python-сервис, веб-приложение или другой программный репозиторий могут использовать одно и то же ядро EmbrAIon и добавлять только свои проектные знания и правила.
+Вместо того чтобы хранить знания проекта, роли ИИ, model routing, protected paths, тестовые команды, review rules и host-specific prompt-файлы в разных местах, EmbrAIon собирает их в один проектный контракт, который могут использовать Codex, GitHub Copilot, Claude Code и другие интеграции.
 
-## Что делает EmbrAIon
+EmbrAIon **не работает внутри готового приложения** и **не перехватывает каждый prompt**. Unity-игра, Python-сервис, сайт или библиотека остаются обычным проектом. EmbrAIon организует процесс инженерной работы человека и ИИ вокруг репозитория.
 
-EmbrAIon разделяет инженерную систему на независимые составляющие:
+## Зачем он нужен
 
-- **[Agent (Агент)](../core/agents/)** — кто отвечает за работу: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher или Steward.
-- **[Skill (Навык)](../core/skills/)** — как выполнять повторяемый тип работы.
-- **[Rule (Правило)](../core/rules/)** — что обязательно, запрещено или защищено.
-- **[Workflow (Рабочий процесс)](../core/workflows/)** — в каком порядке объединяются возможности системы.
-- **[Routing (Маршрутизация)](../core/routing/)** — какой класс задачи, профиль доступа и AI-клиент используются; конкретную модель выбирает сам host или проектный override.
-- **[Adapter (Адаптер)](../adapters/)** — как канонические возможности EmbrAIon представляются в Codex, GitHub Copilot, Claude Code, у API-провайдеров или в нейтральном пакете Portable.
-- **[Tool (Инструмент)](../tools/)** — детерминированная исполняемая логика: валидация, проверка безопасности, управление Git worktree, синхронизация и диагностика.
-- **[Eval (Поведенческая проверка)](../evals/)** — проверка того, действительно ли ИИ следует заданному инженерному контракту.
+AI coding хорошо работает, пока задача маленькая и все правила помещаются в один разговор. В реальном проекте ИИ должен стабильно учитывать:
 
-`core/catalog.yaml` — индекс возможностей системы. Вместо загрузки всего EmbrAIon для каждой задачи система может подключать только те правила, роли, навыки и процессы, которые нужны для текущей работы.
+- архитектуру и project truth;
+- protected/private sources;
+- разные роли и project-specific специалистов;
+- model/provider choices;
+- validation и independent review;
+- generated host files;
+- правила, которые должны переживать новые сессии и смену AI-клиента.
 
-## Классы данных
+Без системы это быстро превращается в набор разрозненных prompt'ов, инструкций, CI-скриптов и ручных договорённостей.
 
-EmbrAIon использует три канонических класса данных:
+> **Ментальная модель:** EmbrAIon — операционная система AI-разработки, а `.embraion/` — Settings конкретного проекта.
 
-| Класс | Значение |
-| --- | --- |
-| `PUBLIC` | Публичная информация, которую можно передавать разрешённым внешним системам |
-| `PRIVATE` | Внутренняя или проприетарная информация проекта; внешняя передача требует явно разрешённого маршрута |
-| `CONFIDENTIAL` | Самый защищённый уровень; внешняя передача запрещена, если конкретный маршрут явно её не разрешает |
+## Core и проект
 
-Неизвестная или неоднозначная классификация приводит к безопасному отказу. Выбор более мощной модели никогда не расширяет разрешённый доступ к данным.
+**EmbrAIon Core владеет механизмами:**
 
-## Поддерживаемые адаптеры
+- generic roles и skills;
+- routing/execution/fallback/health contracts;
+- validation/review/security/evidence mechanics;
+- host projections.
 
-Сейчас поддерживаются:
+**Проект владеет фактами и настройками:**
 
-- **[Codex](https://openai.com/codex/)** — генерация проектной конфигурации, агентов и skills; доступными моделями и default/automatic выбором владеет Codex.
-- **[GitHub Copilot](https://github.com/features/copilot)** — генерация custom agents и skills; доступными моделями и default/automatic выбором владеет Copilot.
-- **[Claude Code](https://code.claude.com/docs/en/overview)** — генерация agents и skills; доступными моделями и default выбором владеет Claude Code.
-- **[Portable](../adapters/portable/)** — переносимый пакет возможностей, не привязанный к конкретному AI-клиенту.
-- **[Providers (Провайдеры)](../adapters/providers/)** — необязательные provider/transport integration surfaces без общего каталога моделей EmbrAIon.
+- identity и точным framework pin;
+- knowledge и architecture;
+- protected paths, privacy/review/enforcement policy;
+- deployments и routing preferences;
+- validation commands;
+- project-specific agents;
+- optional execution bindings и pricing sources.
 
-EmbrAIon полностью агностичен к моделям и не хранит канонический список моделей. По умолчанию AI-клиент использует собственный default/automatic выбор. Если нужен override, пользователь может просто попросить ИИ в репозитории настроить EmbrAIon под доступные ему модели; установленный skill `routing-configuration` запишет настройки только в `.embraion/routing.yaml` → `overrides`.
-
-## Установка
-
-### Один раз на компьютер
-
-EmbrAIon распространяется через [PyPI](https://pypi.org/project/embraion/). Для обычного использования установите CLI один раз на каждом компьютере Windows или macOS через `pipx`. Локально клонировать репозиторий или выполнять `git clone` не нужно.
-
-Обычная установка через `pip` тоже поддерживается, если вы сами управляете Python-окружением, но для CLI рекомендуется `pipx`.
-
-#### Windows
-
-Для EmbrAIon требуется Python 3.11 или новее.
-
-1. Проверьте установленный Python:
-
-```powershell
-py --version
-```
-
-Если команда `py` недоступна или версия ниже 3.11, установите актуальный Python 3 с [официальной страницы Python для Windows](https://www.python.org/downloads/windows/), затем заново откройте PowerShell.
-
-2. Установите [pipx](https://pipx.pypa.io/latest/how-to/install-pipx.html) и добавьте его каталог команд в `PATH`:
-
-```powershell
-py -m pip install --user pipx
-py -m pipx ensurepath
-```
-
-3. Закройте и заново откройте PowerShell, затем установите EmbrAIon:
-
-```powershell
-pipx install embraion
-```
-
-Если вы намеренно используете собственное управляемое Python-окружение вместо `pipx`, поддерживается и такой вариант:
-
-```powershell
-py -m pip install embraion
-```
-
-#### macOS
-
-Если уже установлен [Homebrew](https://brew.sh/), самый простой вариант:
-
-```bash
-brew install pipx
-pipx ensurepath
-```
-
-Откройте новое окно Terminal и установите EmbrAIon:
-
-```bash
-pipx install embraion
-```
-
-Если Homebrew не используется, сначала проверьте Python:
-
-```bash
-python3 --version
-```
-
-Если Python отсутствует или версия ниже 3.11, установите актуальный Python 3 с [официальной страницы Python для macOS](https://www.python.org/downloads/macos/). Затем установите `pipx`:
-
-```bash
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-```
-
-Откройте новое окно Terminal и выполните:
-
-```bash
-pipx install embraion
-```
-
-Обычная команда `python3 -m pip install embraion` также поддерживается, если вы самостоятельно управляете Python-окружением.
-
-#### Проверка
-
-```bash
-embraion --version
-embraion validate
-embraion doctor
-```
-
-`embraion validate` проверяет данные системы, входящие в активную установку EmbrAIon. `embraion doctor` по умолчанию выводит понятный человеку диагностический отчёт и автоматически определяет, находится ли текущая папка внутри Git-репозитория или проекта EmbrAIon. Вне проекта выполняются только диагностика установки и системы — домашняя папка или другая случайная директория рекурсивно не сканируется. Для структурированного машинного вывода используйте `embraion doctor --json`.
-
-#### Обновление
-
-```bash
-pipx upgrade embraion
-```
-
-Глобальная установка через `pipx` делает команду `embraion` доступной из любого проекта на этом компьютере. Она **не подключает EmbrAIon автоматически ко всем репозиториям** и не изменяет их в фоне.
-
-## Подключение EmbrAIon к каждому проекту
-
-Каждый репозиторий подключается явно. Из корня проекта выполните:
-
-```bash
-cd /path/to/your/project
-embraion init
-```
-
-По умолчанию `init` использует имя папки как имя проекта. Параметр `--name MyProject` нужен только если вы хотите задать другое имя.
-
-Будет создан:
+## Как выглядит проект
 
 ```text
 .embraion/
+├── .gitignore
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
 ```
 
-Project Overlay (Проектный слой) хранит конфигурацию в отдельных файлах: `project.yaml` — версия, идентичность и `capabilities`, `knowledge.yaml` — ссылки на project knowledge, `policy.yaml` — sources/review/privacy, `routing.yaml` — model/effort overrides, `validation.yaml` — validation profiles, `agents.yaml` — project-specific agents.
-
-### Установить представление для нужного клиента
-
-Установите представление для каждого AI-клиента, используемого в репозитории.
-
-[Codex](https://openai.com/codex/):
-
-```bash
-embraion install --host codex --destination .
-```
-
-[GitHub Copilot](https://github.com/features/copilot):
-
-```bash
-embraion install --host copilot --destination .
-```
-
-[Claude Code](https://code.claude.com/docs/en/overview):
-
-```bash
-embraion install --host claude-code --destination .
-```
-
-Portable-пакет:
-
-```bash
-embraion install --host portable --destination ./vendor/embraion
-```
-
-Если проект используется в нескольких клиентах, выполните соответствующую команду `install` по одному разу для каждого. Существующие сгенерированные файлы по умолчанию защищены от перезаписи; используйте `--force` только намеренно.
-
-### Автоматический выбор версии проекта
-
-`v0.2.0` добавляет автоматический выбор версии EmbrAIon для каждого проекта.
-
-Для обычных команд глобальный `embraion` поднимается вверх от текущей папки, находит ближайший `.embraion/project.yaml` и читает `framework.version`. Если эта версия отличается от версии глобального launcher, EmbrAIon устанавливает точный пакет из PyPI в изолированный кэш:
+Опционально для provider-neutral runtime:
 
 ```text
-~/.embraion/versions/<version>/
+execution.yaml
+pricing.yaml
+pricing.snapshot.json
+usage-evidence/
 ```
 
-При первом запуске конкретной версии может потребоваться загрузка из PyPI. Следующие команды используют уже подготовленный кэш. Поэтому разные проекты на одном Windows PC или Mac могут использовать разные версии EmbrAIon при одной глобальной установке CLI.
+Generated `.codex/**`, `.github/agents/**`, `.github/skills/**`, `.claude/**` — это projections, а не второй source of truth.
 
-Старые Project Overlay (Проектные слои), созданные `v0.1.0`, могут содержать `0.1.0-dev`. Новый resolver автоматически сопоставляет такой legacy pin с опубликованным пакетом `0.1.0`.
+## Обычная работа остаётся обычной
 
-Команды `embraion init` и `embraion update` намеренно выполняются глобальным launcher и не передаются старой версии проекта:
+После установки projection пользователь может просто написать:
 
-- `embraion init` подключает новый репозиторий к версии глобального launcher;
-- после `pipx upgrade embraion` команда `embraion update` обновляет только текущий проект;
-- `embraion update --framework-version X.Y.Z` явно фиксирует выбранный релиз, который следующая обычная команда разрешит автоматически.
+> Исправь reconnect при потере соединения и добавь regression test.
 
-Для разработки самого EmbrAIon переменная `EMBRAION_HOME` остаётся явным выбором исходного framework checkout. Автоматический resolver также можно отключить через `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
+AI host получает prompt напрямую и использует проектный контракт EmbrAIon.
 
-### Проверка состояния и кэша
+Настройки тоже можно задавать человеческим языком:
 
-Показать версию глобального launcher, текущий проект, зафиксированную версию, выбранный runtime, состояние кэша и обнаруженные представления клиентов:
+> Настрой routing: bounded work держи дешёвым, complex отправляй на более сильный deployment, critical оставь для исключительного риска.
+
+AI должен записать это в канонические `.embraion/` файлы, а не создавать ещё одну routing-таблицу где-то ещё.
+
+## Быстрый старт
 
 ```bash
+pipx install embraion
+
+cd MyProject
+embraion init
+embraion install --host codex --destination .
+embraion doctor
 embraion status
 ```
 
-Для машинного вывода используйте `embraion status --json`.
+Для других клиентов используйте `copilot` или `claude-code`.
 
-Посмотреть закэшированные runtime:
-
-```bash
-embraion cache list
-```
-
-Проверить, что можно удалить, без фактического удаления:
-
-```bash
-embraion cache prune
-```
-
-Для удаления используйте `--apply`. Старые runtime можно включить по сроку неиспользования:
-
-```bash
-embraion cache prune --older-than 90
-embraion cache prune --older-than 90 --apply
-```
-
-Текущая версия launcher и runtime текущего проекта защищены от удаления по возрасту.
-
-## Как задача проходит через EmbrAIon
-
-Для существенной инженерной задачи поток выглядит примерно так:
+## Как это работает
 
 ```text
-Цель пользователя
-  ↓
-Проектный overlay + каталог ядра
-  ↓
-Нужные правила / агенты / навыки / рабочие процессы
-  ↓
-Класс данных + профиль доступа + сложность
-  ↓
-Адаптер клиента + host-default/project routing
-  ↓
-Реализация
-  ↓
-Валидация
-  ↓
-Независимое ревью
-  ↓
-Финальная проверка
-  ↓
-Передача результата / ручной merge
+Вы формулируете задачу
+        ↓
+Codex / Copilot / Claude Code
+        ↓
+host-native projections
+        +
+project .embraion/
+        ↓
+roles / knowledge / routing / policy / validation
+        ↓
+engineering work
+        ↓
+validation → review → evidence → human merge
 ```
 
-Для существенной работы, где нужна формальная спецификация, рекомендуется использовать [Spec Kit](https://github.com/github/spec-kit) как независимое дополнение. Он помогает со спецификацией и планированием, но не заменяет правила EmbrAIon, архитектуру проекта, продуктовую истину, контракты совместимости или результаты валидации.
+Для обычной host-native работы host сам выполняет reasoning/tools.
 
-## CLI
+Для опционального API/provider lane можно использовать `embraion execute`, где EmbrAIon уже детерминированно владеет bounded attempts, normalized failures/health и eligible fallback по утверждённым project bindings.
 
-### Framework и проект
+## Execution и Pricing
 
-```text
-embraion init
-embraion install
+Четыре понятия отвечают на разные вопросы:
+
+| Понятие | Вопрос |
+| --- | --- |
+| Deployment | **Что** можно использовать |
+| Routing | **Когда** это выбирать |
+| Execution | **Как** это безопасно вызвать |
+| Pricing | **Как** получить и интерпретировать стоимость |
+
+Provider execution настраивается отдельным `.embraion/execution.yaml`; credentials хранятся как references, а не значения секретов.
+
+Pricing обновляется только явно через `embraion pricing refresh`. EmbrAIon валидирует официальный источник и локальный snapshot; failed refresh не уничтожает last-known-good данные, а неизвестная стоимость остаётся `unknown`, а не превращается в ноль.
+
+## Routing
+
+EmbrAIon использует стабильные классы работы:
+
+- `bounded-read`
+- `bounded-write`
+- `ordinary`
+- `substantial`
+- `complex`
+- `critical`
+
+Они описывают работу и риск, а не конкретную модель. По умолчанию модель выбирает host. Проект может явно настроить deployment/routing.
+
+## Validation и enforcement
+
+Проект объявляет реальные команды в `.embraion/validation.yaml`:
+
+```bash
+embraion validation run affected
+```
+
+Enforcement включается только явно:
+
+```bash
+embraion enforcement install \
+  --surface github-actions \
+  --validation-profile affected
+```
+
+EmbrAIon не устанавливает merge gate или hooks молча.
+
+## Обновление
+
+```bash
+pipx upgrade embraion
+cd MyProject
 embraion update
-embraion sync
-embraion validate
 embraion doctor
-embraion help
 ```
 
-Для полного каталога команд используйте `embraion help`. Для подробной справки по конкретной команде используйте `embraion help <command>` или `embraion <command> --help`.
-
-### Маршрутизация и состояние выполнения
-
-Определить маршрут:
-
-```bash
-embraion route --host codex --route-class substantial --data PRIVATE
-```
-
-Создать ограниченный план выполнения:
-
-```bash
-embraion dispatch \
-  --task "Implement feature" \
-  --role worker \
-  --host codex \
-  --route-class bounded-write \
-  --data PRIVATE \
-  --access write \
-  --owned-path "src/**"
-```
-
-Для выполнения с правом записи необходимо явно указать принадлежащие задаче пути через `--owned-path`. Такое выполнение запрещено из стабильной ветки `main`/`master`. План и безопасная телеметрия маршрутизации сохраняются в `.embraion/state/`.
-
-Запустить нормализованное состояние сессии:
-
-```bash
-embraion session start \
-  --session-id task-001 \
-  --task "Implement feature" \
-  --role lead \
-  --host codex \
-  --access plan
-```
-
-Посмотреть или обновить состояние:
-
-```bash
-embraion session show
-embraion session set --state review --validation passed
-```
-
-Фактическое выполнение ИИ происходит в выбранном клиенте. EmbrAIon отвечает за классы задач и политику маршрутизации, сгенерированные определения агентов, границы доступа и владения файлами, планы выполнения, нормализованное состояние и безопасную операционную телеметрию.
-
-### Безопасность
-
-```bash
-embraion security scan --path .
-```
-
-Проверка безопасности ищет высокорисковые проблемы конфигурации, например возможные встроенные секреты, слишком широкие разрешения и расхождение с политиками EmbrAIon.
-
-### Инвентаризация MCP
-
-```bash
-embraion mcp inventory
-```
-
-Команда создаёт нормализованный и безопасный список MCP-серверов в `.embraion/state/`. Имена переменных окружения могут сохраняться, но значения секретов намеренно не записываются.
-
-### Git worktree
-
-```bash
-embraion worktree list
-embraion worktree create ai/my-task
-embraion worktree gc
-embraion worktree salvage /path/to/worktree
-```
-
-`gc` по умолчанию работает только в режиме предварительного просмотра и рассматривает лишь worktree, для которых доказано, что они чистые, не заблокированы и безопасны для удаления. Для фактического удаления необходимо явно добавить `--apply`.
-
-### Обучение системы
-
-Записать повторяющееся наблюдение:
-
-```bash
-embraion learning observe \
-  --id repeated-review-gap \
-  --kind repeated-failure \
-  --target-type skill \
-  --target-id review \
-  --summary "Repeated review gap"
-```
-
-Продвижение нового знания проходит через обязательные этапы:
-
-```text
-наблюдение → накопление доказательств → предложение → одобрение → продвижение
-```
-
-Даже одобренное предложение никогда не изменяет ядро автоматически. Изменение всё равно должно пройти обычный инженерный процесс с ревью и валидацией.
-
-### Поведенческие проверки
-
-Запустить проверочный сценарий:
-
-```bash
-embraion eval run \
-  --case reviewer-readonly \
-  --record path/to/execution-record.json
-```
-
-Создать эталонный результат и сравнить с ним новую версию:
-
-```bash
-embraion eval baseline --reports build/evals --output baseline.json
-embraion eval compare --baseline baseline.json --reports build/evals
-```
-
-## Генерация представлений адаптеров
-
-Сгенерировать все поддерживаемые представления, не устанавливая их в проект:
-
-```bash
-embraion sync --host all --output build/generated --force
-```
-
-Сгенерированные файлы являются производными и могут быть пересозданы в любой момент. Каноническая политика всегда остаётся в `core/`.
-
-## Reference projects (Эталонные проекты)
-
-В репозитории есть три публичных эталонных проекта: [Minimal](../examples/minimal/README.md), [Python](../examples/python/README.md) и [Unity/C#](../examples/unity/README.md). CI копирует каждый пример во временную директорию и реально проверяет жизненный цикл EmbrAIon, включая диагностику, host projections и защиту от случайной перезаписи.
-
-## Структура репозитория
-
-```text
-brand/         бренд, тексты и материалы для README
-core/          канонические правила, агенты, навыки, процессы, маршрутизация и знания
-adapters/      интеграции Codex, Copilot, Claude Code, Portable и API-провайдеров
-tools/         CLI, runtime, обучение, безопасность, MCP, worktree, валидация и синхронизация
-schemas/       машиночитаемые контракты
-templates/     шаблоны проектного overlay
-docs/          каноническая английская документация
-localization/  русская и китайская локализации
-tests/         детерминированные модульные и интеграционные тесты
-evals/         поведенческие сценарии, эталоны, проверки, фикстуры и отчёты
-examples/      примеры интеграции
-```
-
-## Валидация и CI
-
-Каждый push и pull request должен запускать:
-
-- проверку схем и каталога;
-- проверку соответствия локализаций;
-- модульные и интеграционные тесты;
-- проверку совместимости на Linux, Windows и macOS с Python 3.11 и 3.14;
-- E2E-проверку выбора project-pinned runtime на каждой поддерживаемой ОС;
-- проверку безопасности;
-- генерацию всех представлений для поддерживаемых клиентов;
-- базовые поведенческие проверки.
-
-Релизы по Git tag создают архивы исходного кода, Codex, Copilot, Claude Code и Portable.
+Глобальный launcher и project pin разделены: каждый проект может оставаться на своей точной опубликованной версии.
 
 ## Документация
 
-Каноническая документация: [docs/](../docs/README.md)
+Каноническая документация: **https://embraion.goryned.com/**
 
-Русская документация: [localization/docs/ru/](docs/ru/README.md)
+Русский набор ключевых страниц: [localization/docs/ru/](docs/ru/README.md)
 
-Китайская документация: [localization/docs/zh-CN/](docs/zh-CN/README.md)
+Полная текущая документация на английском: [docs/](../docs/index.md)
 
-Документация на хинди: [localization/docs/hi/](docs/hi/README.md)
+## Статус
 
-Испанская документация: [localization/docs/es/](docs/es/README.md)
+EmbrAIon находится в pre-1.0 стадии. Patch-релизы предназначены для совместимых исправлений и улучшений; minor-релизы могут развивать публичные framework contracts. Проекты фиксируют точную опубликованную версию, поэтому обновления остаются намеренными.
 
 ## Лицензия и бренд
 
-Исходный код и документация EmbrAIon распространяются по [MIT License](../LICENSE), если для конкретного файла или каталога явно не указано иное.
-
-Названия **EmbrAIon** и **GORYNED**, логотипы, текстовые логотипы, визуальные знаки и файлы в `brand/assets/` **не предоставляются по MIT**. MIT License не предоставляет права на товарные знаки или фирменный стиль. Каноническая политика: [TRADEMARKS.md](../TRADEMARKS.md).
-
-## Текущий статус
-
-EmbrAIon находится в **предстабильной** стадии. Архитектура и первая исполняемая версия CLI уже существуют, но публичный контракт совместимости ещё не зафиксирован окончательно.
-
-До первой стабильной версии ещё могут меняться routing overrides, сгенерированные представления клиентов, покрытие валидации, правила безопасности, установка и упаковка релизов.
+Исходный код и документация лицензируются по [MIT License](../LICENSE), если явно не указано иное. Имена и визуальные материалы **EmbrAIon** и **GORYNED** регулируются отдельно через [TRADEMARKS.md](../TRADEMARKS.md).
 
 ---
 
-**EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
-
-<sub>Последнее обновление: 2026-09-24 13:55 UTC</sub>
+<sub>Последнее обновление: 2026-09-27 01:52 UTC</sub>

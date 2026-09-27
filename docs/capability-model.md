@@ -15,4 +15,6 @@ EmbrAIon uses explicit capability types to avoid mixing policy, responsibility, 
 
 A canonical capability should have one primary type. Cross-references are preferred over duplicating the same content in several types.
 
-Routing is intentionally model-agnostic. Model names, pricing, lifecycle, and availability are not canonical EmbrAIon capabilities.
+Routing is intentionally model-agnostic. Concrete model names, provider rates, lifecycle state, and host availability are not canonical Core capabilities.
+
+EmbrAIon does provide reusable **mechanisms** for deployment eligibility, provider-neutral execution, pricing refresh/snapshots, health, and evidence. The concrete models, providers, rates, source URLs, and availability facts remain project- or host-owned.

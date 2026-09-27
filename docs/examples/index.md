@@ -11,3 +11,6 @@ EmbrAIon ships with three public reference projects. They exist to show how the 
 CI copies these examples into temporary directories and exercises the real consuming-project lifecycle. Generated host projections are recreated instead of being treated as canonical source.
 
 Choose [Minimal](minimal.md), [Python](python.md), or [Unity](unity.md).
+
+
+The three baseline examples intentionally stay small and do not simulate paid provider calls. For advanced provider-neutral runtime configuration, use [Execution & providers](../configuration/execution.md) and [Pricing & cost](../configuration/pricing.md).

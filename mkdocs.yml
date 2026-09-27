@@ -73,6 +73,7 @@ nav:
   - Home: index.md
   - Start Here:
       - Why EmbrAIon?: getting-started/what-is-embraion.md
+      - How it works: getting-started/how-it-works.md
       - Installation: getting-started/installation.md
       - Add EmbrAIon to a project: getting-started/first-project.md
       - Adopt an existing repository: getting-started/existing-repository.md
@@ -85,6 +86,8 @@ nav:
       - Validation profiles: configuration/validation.md
       - Project agents: configuration/agents.md
       - Project deployments: configuration/deployments.md
+      - Execution & providers: configuration/execution.md
+      - Pricing & cost: configuration/pricing.md
       - Model routing: model-routing.md
       - Configure with your AI client: configuration/ai-hosts.md
   - AI Clients:
@@ -118,6 +121,7 @@ nav:
       - Support: oss/support.md
       - Security reporting: oss/security-reporting.md
       - Governance: oss/governance.md
+      - Localization strategy: oss/localization.md
       - Licensing: licensing.md
       - Release process: release-process.md
       - Learning: learning.md

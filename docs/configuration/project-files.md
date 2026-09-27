@@ -331,6 +331,17 @@ The project owns those concrete bindings because they describe project-approved 
 
 If a project does not use executable provider bindings, it does not need this file.
 
+A `dataClassAliases` entry is a compatibility mapping at the execution boundary. For example:
+
+```yaml
+dataClassAliases:
+  CONFIDENTIAL: PROJECT_SECRET
+```
+
+does **not** create a new Core data class. EmbrAIon requests still use the canonical `PUBLIC`, `PRIVATE`, or `CONFIDENTIAL` vocabulary; the alias only maps that canonical class to an intentional project-specific capability label.
+
+See [Execution & providers](execution.md) for the full contract.
+
 ## Optional `.embraion/pricing.yaml`
 
 Projects that want deterministic provider cost calculation can declare approved official pricing sources and SKU mappings in `.embraion/pricing.yaml`.
@@ -350,6 +361,8 @@ embraion pricing status
 ```
 
 to inspect the current validated snapshot.
+
+See [Pricing & cost](pricing.md) for refresh, snapshot, staleness, usage-semantics, and cost-evidence behavior.
 
 ## Project settings should not reimplement Core
 

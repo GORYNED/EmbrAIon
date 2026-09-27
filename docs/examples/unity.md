@@ -25,6 +25,7 @@ Alongside `Assets/`, `Packages/`, and `ProjectSettings/`, the example uses the f
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml

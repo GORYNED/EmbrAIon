@@ -2,25 +2,62 @@
 
 ## Слои
 
-1. **Core (Ядро)** — независимые от моделей и конкретного поставщика правила, агенты, навыки, рабочие процессы, маршрутизация и знания.
-2. **Adapters (Адаптеры)** — представления для конкретных AI-клиентов, transport-механизмов и переносимых пакетов.
-3. **Tools (Инструменты)** — детерминированная исполняемая логика: состояние выполнения, обучение, безопасность, MCP, Git worktree, валидация, синхронизация, установка, диагностика и CLI.
-4. **Project Overlay (Проектный слой)** — специфичные для проекта знания, ограничения и необязательные routing overrides.
-5. **External Capabilities (Внешние возможности)** — рекомендуемые или необязательные дополнительные системы и интеграции.
-6. **Evidence (Доказательства)** — тесты, поведенческие проверки, эталонные результаты и отчёты.
+1. **Core** — переиспользуемые правила, роли, skills, workflows, routing/execution contracts.
+2. **Adapters** — интеграция с AI hosts и transport/provider surfaces.
+3. **Tools** — CLI, validation, security, worktree, evidence, execution, pricing и диагностика.
+4. **Project Overlay** — проектные факты и настройки в `.embraion/`.
+5. **External capabilities** — необязательные внешние системы и интеграции.
+6. **Evidence** — тесты, validation records, reviews, evals и отчёты.
 
-## Модель агентов
+## Механизмы vs факты проекта
 
-Агенты Core называются как роли-должности: Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher и Steward. Выбор роли не определяет конкретную модель.
+| EmbrAIon Core | Проект |
+| --- | --- |
+| Core roles и skills | архитектура и domain knowledge |
+| route/execution contracts | deployments и routing preferences |
+| generic privacy/security mechanics | protected paths и project policy |
+| validation/review mechanics | реальные команды validation |
+| host projections | project-specific agents |
+| generic execution/fallback/health | execution bindings, credential references, pricing sources |
 
-## Владение выбором модели
+Проект может делать правила строже, но не должен молча ослаблять hard gates Core.
 
-Core классифицирует работу по task-oriented route classes. EmbrAIon не хранит глобальный каталог моделей, цен или lifecycle. AI host владеет доступностью моделей и default/automatic selection. Проект при необходимости хранит только свои host-specific overrides в `.embraion/routing.yaml`.
+## Prompt не проходит через обязательный proxy
 
-## State и Learning
+Обычный поток:
 
-Состояние выполнения нормализуется в privacy-safe записи. Повторяющиеся результаты могут создавать кандидатов на улучшение, но изменение Core требует ревью и явного одобрения.
+```text
+пользователь
+  ↓
+Codex / Copilot / Claude Code
+  ↓
+host-native EmbrAIon projections
++
+.embraion/ проекта
+  ↓
+работа
+  ↓
+validation → review → evidence → human merge
+```
 
-## Spec Kit
+EmbrAIon не стоит перед host как обязательный перехватчик prompt.
 
-Spec Kit подключается как внешняя возможность и не заменяет правила Core, проектную истину или validation evidence.
+## Instruction vs deterministic enforcement
+
+| Surface | Что это |
+| --- | --- |
+| agents / skills projections | инструкции AI host |
+| `route` | детерминированное разрешение routing contract |
+| `dispatch` | bounded execution plan |
+| host-native работа | выполняет AI host |
+| `execute` | реальное provider-neutral выполнение |
+| `validation run` | реальные project commands |
+| `enforcement check` | детерминированный gate |
+
+Это различие важно: текстовая инструкция не равна исполняемому security boundary.
+
+## Model ownership
+
+Core классифицирует работу по стабильным route classes. EmbrAIon не хранит глобальный каталог актуальных моделей.
+
+По умолчанию конкретную модель выбирает host. Проект может явно настроить deployment/routing, не расширяя privacy/access/review границы.
