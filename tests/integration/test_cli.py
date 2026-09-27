@@ -73,9 +73,11 @@ class CliIntegrationTests(unittest.TestCase):
         verify = self._run("help", "framework", "verify")
 
         self.assertIn("usage: embraion framework install", install.stdout)
-        self.assertIn("digest-verified pinned release", install.stdout)
+        self.assertIn("exact locked wheel", install.stdout)
+        self.assertIn("SHA-256", install.stdout)
         self.assertIn("usage: embraion framework verify", verify.stdout)
-        self.assertIn("pinned release artifact and digest", verify.stdout)
+        self.assertIn("exact locked wheel", verify.stdout)
+        self.assertIn("SHA-256", verify.stdout)
 
     def test_help_is_launcher_owned_inside_older_pinned_project(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
