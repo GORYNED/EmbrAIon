@@ -387,8 +387,9 @@ class CoreTests(unittest.TestCase):
     def test_security_scanner_flags_undeclared_legacy_data_class(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
+            legacy = "COMPANY" + "_SECRET"
             (root / "policy.txt").write_text(
-                "data-class=COMPANY_SECRET",
+                "data-class=" + legacy,
                 encoding="utf-8",
             )
             findings = collect_findings(root)
@@ -405,6 +406,7 @@ class CoreTests(unittest.TestCase):
             root = Path(temporary)
             config = root / ".embraion" / "execution.yaml"
             config.parent.mkdir(parents=True)
+            legacy = "COMPANY" + "_SECRET"
             write_yaml(
                 config,
                 {
@@ -416,14 +418,14 @@ class CoreTests(unittest.TestCase):
                             "sourceIds": ["Project"],
                             "trustLevels": ["verified"],
                             "dataClassAliases": {
-                                "CONFIDENTIAL": "COMPANY_SECRET"
+                                "CONFIDENTIAL": legacy
                             },
                         }
                     },
                 },
             )
             (root / "policy.txt").write_text(
-                "data-class=COMPANY_SECRET",
+                "data-class=" + legacy,
                 encoding="utf-8",
             )
             findings = collect_findings(root)
