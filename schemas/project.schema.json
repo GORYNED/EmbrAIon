@@ -22,6 +22,37 @@
         "version": {
           "type": "string",
           "minLength": 1
+        },
+        "artifact": {
+          "type": "object",
+          "required": [
+            "schema",
+            "source",
+            "release",
+            "asset",
+            "digest"
+          ],
+          "properties": {
+            "schema": {
+              "const": 1
+            },
+            "source": {
+              "const": "github-release"
+            },
+            "release": {
+              "type": "string",
+              "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "asset": {
+              "type": "string",
+              "pattern": "^embraion-[0-9]+\\.[0-9]+\\.[0-9]+-py3-none-any\\.whl$"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": true
