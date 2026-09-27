@@ -69,7 +69,7 @@ profiles:
 | Используется ли provider-neutral execution? | опциональный `execution.yaml` |
 | Нужны ли проверенные pricing sources? | опциональный `pricing.yaml` |
 
-![Карта конфигурации проекта](../assets/diagrams/ru/04-configuration-map.svg){ loading=lazy }
+![Карта конфигурации проекта](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
 
 ## Правило ownership
 
