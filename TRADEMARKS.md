@@ -1,10 +1,8 @@
 # Trademarks and Brand Assets
 
 <p align="center">
-  <a href="localization/legal/ru/trademarks.md">Русский</a> ·
-  <a href="localization/legal/zh-CN/trademarks.md">简体中文</a> ·
-  <a href="localization/legal/es/trademarks.md">Español</a> ·
-  <a href="localization/legal/hi/trademarks.md">हिन्दी</a>
+  <strong>English</strong> ·
+  <a href="TRADEMARKS.ru.md">Русский</a>
 </p>
 
 The MIT License in this repository applies to EmbrAIon source code and documentation except where a file or directory explicitly states otherwise.
