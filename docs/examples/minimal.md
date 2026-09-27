@@ -9,6 +9,7 @@ examples/minimal/
 │   ├── project.yaml
 │   ├── knowledge.yaml
 │   ├── policy.yaml
+│   ├── deployments.yaml
 │   ├── routing.yaml
 │   ├── validation.yaml
 │   └── agents.yaml
@@ -22,7 +23,7 @@ It demonstrates:
 - an exact framework pin;
 - project identity;
 - project knowledge;
-- focused policy/routing/validation/agent configuration files;
+- focused policy/deployment/routing/validation/agent configuration files;
 - no committed generated host projection.
 
 Try the lifecycle from the example directory:
