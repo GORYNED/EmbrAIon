@@ -9,6 +9,8 @@
 2. **Project policy** — classify canonical, protected, generated, and external paths.
 3. **Validation** — define real commands that prove a change works.
 4. **Host projections** — generate native agent/skill files understood by Codex, Copilot, or Claude Code.
+
+> **Host projection** = generated native files for your AI client. They deliver EmbrAIon instructions to the host; they are **not** a second source of truth.
 5. **Optional routing** — classify work by complexity/risk and keep host-default model selection unless the project intentionally overrides it.
 6. **Optional enforcement** — make protected-path, validation, and review requirements deterministic at delivery/merge time.
 
