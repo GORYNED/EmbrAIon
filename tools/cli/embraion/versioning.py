@@ -382,7 +382,10 @@ def resolve_project_runtime(
     active_version = package_version_for_pin(current_version)
     artifact_lock = read_project_artifact_lock(manifest, required=False)
 
-    if package_version == active_version:
+    # A framework artifact lock is stronger than launcher-version equality.
+    # Locked projects always execute from the digest-bound cached runtime so an
+    # arbitrary same-version launcher cannot bypass the project artifact identity.
+    if artifact_lock is None and package_version == active_version:
         return None
 
     runtime = ensure_cached_runtime(
@@ -489,7 +492,7 @@ def project_runtime_status(
     artifact_lock = read_project_artifact_lock(manifest, required=False)
     project = manifest.parent.parent
 
-    if resolved == active:
+    if resolved == active and artifact_lock is None:
         source = "launcher"
         runtime_cache: str | None = None
         ready = False
