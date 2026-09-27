@@ -25,13 +25,17 @@ For a small task in a repository you already trust, you do not need to run diagn
 
 ## 2. Ask for the outcome
 
+After setup, prefer the normal engineering request:
+
 > Add a retry action when the connection fails and add regression coverage.
 
-You should not need to say:
+Avoid framework-heavy prompts like:
 
-> Use EmbrAIon, select this agent, select this model, load these files...
+> Use EmbrAIon, load the right agent, choose the model, read these files, run these checks, and then implement retry behavior.
 
 That setup should already belong to the repository.
+
+**After installation, you should barely think about EmbrAIon during ordinary product work.** Think about EmbrAIon again when you intentionally change the project contract itself — knowledge, policy, validation, routing, agents, or enforcement.
 
 ## 3. What happens behind the scenes
 
