@@ -16,6 +16,8 @@
 
 > Where sparks become AI-built products *(जहाँ चिंगारियाँ AI द्वारा बनाए गए उत्पादों में बदलती हैं)*
 
+> **अनुवाद स्थिति:** यह एक स्थानीयकृत परिचय है। वर्तमान release की पूर्ण और canonical documentation [English](../docs/index.md) में है; हिन्दी documentation एक चयनित अनुवाद subset है।
+
 EmbrAIon एक पोर्टेबल AI-First Engineering System है, जो AI-सहायित सॉफ़्टवेयर इंजीनियरिंग को स्पष्ट भूमिकाओं, पुन: उपयोग योग्य कौशलों, कार्यप्रवाहों, task routing, पहुँच नियंत्रण, सत्यापन, स्वतंत्र समीक्षा, सुरक्षा, सिस्टम सीखने और प्रोजेक्ट-विशिष्ट परतों के आधार पर व्यवस्थित करता है।
 
 यह किसी एक प्रोग्रामिंग भाषा या सिस्टम ढाँचे से बँधा नहीं है। Unity/C# प्रोजेक्ट, Python सेवा, वेब अनुप्रयोग या कोई अन्य सॉफ़्टवेयर रिपॉजिटरी एक ही EmbrAIon Core का उपयोग कर सकती है और केवल अपने प्रोजेक्ट-विशिष्ट ज्ञान व नियम जोड़ सकती है।
@@ -168,6 +170,7 @@ embraion init
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
@@ -417,7 +420,7 @@ Git tag वाले रिलीज़ स्रोत, Codex, Copilot, Claude 
 
 ## दस्तावेज़
 
-मानक अंग्रेज़ी दस्तावेज़: [docs/](../docs/README.md)
+मानक अंग्रेज़ी दस्तावेज़: [docs/](../docs/index.md)
 
 हिन्दी दस्तावेज़: [localization/docs/hi/](docs/hi/README.md)
 
@@ -437,4 +440,4 @@ EmbrAIon अभी **पूर्व-स्थिर** अवस्था मे
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>अंतिम अपडेट: 2026-09-24 13:55 UTC</sub>
+<sub>अंतिम अपडेट: 2026-09-27 01:48 UTC</sub>
