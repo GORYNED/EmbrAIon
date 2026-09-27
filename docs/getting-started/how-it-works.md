@@ -23,6 +23,8 @@ project validation
 review / evidence / human merge
 ```
 
+![Host-native vs provider execution](../assets/diagrams/en/14-host-native-vs-provider-execution.svg){ loading=lazy }
+
 For the first useful setup, focus on:
 
 - **Knowledge** — what the AI should know.
@@ -35,6 +37,8 @@ Routing, custom deployments, provider execution, pricing, and enforcement can st
 
 !!! note "For engineers"
     Generated agents and skills are host-native instructions. They guide the AI client. They are not the same thing as executable framework checks.
+
+![Guidance vs enforcement](../assets/diagrams/en/16-guidance-vs-enforcement.svg){ loading=lazy }
 
 ```bash
 embraion validation run affected

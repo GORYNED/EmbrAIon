@@ -1,70 +1,72 @@
 # Инженерная модель
 
-Эта страница описывает точную инженерную модель за упрощённым Getting Started flow.
+Эта страница описывает точную инженерную модель, которая стоит за упрощённым Getting Started flow.
 
-## Projected guidance vs deterministic surfaces
+## Инструкции хоста и детерминированные механизмы
 
-| Surface | Значение | Кто выполняет |
+| Механизм | Значение | Кто выполняет |
 | --- | --- | --- |
-| Generated agents / skills | Host-native instructions и procedures | AI host |
-| `embraion route` | Разрешить routing policy | EmbrAIon CLI |
-| `embraion dispatch` | Построить bounded plan | EmbrAIon CLI |
-| Host-native edits/search/tools | Фактическая инженерная работа | AI host |
-| `embraion execute` | Bounded provider-neutral request | EmbrAIon runtime |
-| `embraion validation run` | Реальные project commands + evidence | EmbrAIon CLI + project commands |
-| `embraion enforcement check` | Protected-path / validation / review gate | EmbrAIon CLI |
-| GitHub enforcement workflow | Merge-time CI surface | GitHub Actions |
+| Сгенерированные agents / skills | Host-native инструкции и процедуры | AI-хост |
+| `embraion route` | Разрешает routing policy | EmbrAIon CLI |
+| `embraion dispatch` | Строит ограниченный план | EmbrAIon CLI |
+| Host-native edits/search/tools | Фактическая инженерная работа | AI-хост |
+| `embraion execute` | Ограниченный provider-neutral запрос | EmbrAIon runtime |
+| `embraion validation run` | Реальные команды проекта + evidence | EmbrAIon CLI + команды проекта |
+| `embraion enforcement check` | Gate для protected paths / validation / review | EmbrAIon CLI |
+| GitHub enforcement workflow | CI-механизм при merge | GitHub Actions |
 
-Instruction delivery и deterministic enforcement — разные механизмы.
+Доставка инструкций и детерминированный enforcement — разные механизмы.
 
-## Core vs project ownership
+## Владение: EmbrAIon Core и проект
 
-| EmbrAIon Core владеет | Проект владеет |
+| EmbrAIon Core отвечает за | Проект отвечает за |
 | --- | --- |
-| generic roles и skills | architecture/domain knowledge |
-| route/execution contracts | deployments и routing preferences |
-| generic privacy/security mechanics | protected paths и project policy |
-| validation/review mechanics | реальные validation commands |
-| host projection behavior | project-specific agents |
-| provider-neutral fallback/health | execution bindings и pricing sources |
+| общие roles и skills | знания об архитектуре и предметной области |
+| contracts для route/execution | deployments и routing preferences |
+| общие privacy/security-механизмы | protected paths и policy проекта |
+| механизмы validation/review | реальные validation commands |
+| поведение host projections | project-specific agents |
+| provider-neutral fallback/health | execution bindings и источники pricing |
 
-## Deployment vs Routing vs Execution vs Pricing
+## Deployment → Routing → Execution → Pricing
 
-| Concept | Вопрос | Project file |
+| Понятие | Вопрос | Файл проекта |
 | --- | --- | --- |
-| Deployment | **Что** за reusable concrete choice существует? | `.embraion/deployments.yaml` |
-| Routing | **Когда** route/role должна выбрать его? | `.embraion/routing.yaml` |
-| Execution binding | **Как** его безопасно вызвать? | `.embraion/execution.yaml` |
-| Pricing | **Как** интерпретировать/обновлять стоимость? | `.embraion/pricing.yaml` |
+| Deployment | **Что** за повторно используемый конкретный вариант существует? | `.embraion/deployments.yaml` |
+| Routing | **Когда** route/role должна его выбирать? | `.embraion/routing.yaml` |
+| Execution binding | **Как** его можно безопасно вызвать? | `.embraion/execution.yaml` |
+| Pricing | **Как** определяется и обновляется стоимость? | `.embraion/pricing.yaml` |
 
-## Route classes
+![Deployment → Routing → Execution → Pricing](../assets/diagrams/en/15-deployment-routing-execution-pricing.svg){ loading=lazy }
+
+## Классы маршрутов
 
 | Route | Значение |
 | --- | --- |
-| `bounded-read` | narrow read-only discovery/research |
-| `bounded-write` | mechanical/tightly bounded writable work |
-| `ordinary` | limited ordinary engineering |
-| `substantial` | substantial engineering + standard review |
-| `complex` | cross-domain, lifecycle, concurrency или difficult review |
-| `critical` | exceptional protected-decision risk |
+| `bounded-read` | узкое read-only исследование |
+| `bounded-write` | механическая или жёстко ограниченная работа с записью |
+| `ordinary` | ограниченная обычная инженерная задача |
+| `substantial` | существенная инженерная работа + стандартное review |
+| `complex` | кросс-доменная работа, lifecycle/concurrency или сложное review |
+| `critical` | исключительный риск для защищённых решений |
 
 Route classes описывают работу и риск, а не постоянные model tiers.
 
-## Host-native vs provider-neutral execution
+## Host-native и provider-neutral execution
 
 ### Host-native
 
-AI host владеет reasoning и tools. EmbrAIon предоставляет project knowledge/policy/roles/routing и validation/review contracts.
+AI-хост отвечает за reasoning и инструменты. EmbrAIon предоставляет knowledge/policy/roles/routing проекта, а также contracts для validation и review.
 
 ### Provider-neutral
 
-`embraion execute` владеет bounded external/API attempt path через explicit project bindings. Он может нормализовать failures/health и применять eligible fallback без расширения исходных request ceilings.
+`embraion execute` отвечает за ограниченный внешний/API-путь через явные bindings проекта. Он может нормализовать ошибки/health и применять допустимый fallback, не расширяя исходные ограничения запроса.
 
-Routable deployment не автоматически executable: без binding runtime может вернуть `handoff-required`.
+Deployment, доступный для routing, не становится автоматически executable: без binding runtime может вернуть `handoff-required`.
 
-## Evidence и acceptance
+## Evidence и критерии принятия
 
-Transport completion не означает project correctness. Проект может требовать deterministic validation, project-specific acceptance, independent review и human merge approval.
+Успешное выполнение provider-запроса ещё не означает корректность проекта. Проект всё равно может требовать детерминированную validation, project-specific acceptance, независимое review и решение человека о merge.
 
 ## Связанные страницы
 

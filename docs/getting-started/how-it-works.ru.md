@@ -1,7 +1,7 @@
 # Как работает EmbrAIon
 
 !!! tip "Простыми словами"
-    Вы по-прежнему пишете обычный запрос в Codex, Copilot или Claude Code. У host уже есть сгенерированные native-файлы, которые связывают его с контрактом EmbrAIon в репозитории. EmbrAIon не перехватывает чат — он даёт host общие правила проекта и реальные команды для validation, enforcement и опционального provider execution.
+    Вы по-прежнему пишете обычный запрос в Codex, Copilot или Claude Code. У AI-хоста уже есть сгенерированные native-файлы, которые связывают его с контрактом EmbrAIon в репозитории. EmbrAIon не перехватывает чат: он даёт AI-хосту общие правила проекта и предоставляет реальные команды для validation, enforcement и опционального provider execution.
 
 ## Простой путь: host-native работа
 
@@ -12,29 +12,33 @@
           ↓
 Codex / Copilot / Claude Code
           ↓
-generated host-native EmbrAIon files
+сгенерированные host-native файлы EmbrAIon
           +
-project .embraion/ settings
+настройки проекта .embraion/
           ↓
-AI reasoning / edits / tools
+AI reasoning / правки / инструменты
           ↓
-project validation
+валидация проекта
           ↓
-review / evidence / human merge
+ревью / evidence / решение человека о merge
 ```
 
-Для первого полезного setup сосредоточьтесь на:
+![Host-native и provider execution](../assets/diagrams/en/14-host-native-vs-provider-execution.svg){ loading=lazy }
 
-- **Knowledge** — что AI должен знать.
-- **Policy** — какие пути и правила соблюдать.
-- **Validation** — какие команды доказывают корректность результата.
+Для первой полезной настройки сосредоточьтесь на:
 
-Routing, custom deployments, provider execution, pricing и enforcement могут оставаться на defaults, пока реально не понадобятся.
+- **Knowledge** — что AI должен знать о проекте.
+- **Policy** — какие пути и правила он должен соблюдать.
+- **Validation** — какие команды доказывают, что результат работает.
 
-## Что является guidance, а что реально исполняется?
+Routing, custom deployments, provider execution, pricing и enforcement можно оставить с безопасными настройками по умолчанию, пока они действительно не понадобятся.
+
+## Что является инструкцией, а что реально исполняется?
 
 !!! note "Для инженеров"
-    Generated agents и skills — это host-native instructions. Они направляют AI-клиент, но не равны исполняемым framework checks.
+    Сгенерированные agents и skills — это host-native инструкции. Они направляют AI-клиент, но не являются исполняемыми проверками EmbrAIon.
+
+![Инструкции и enforcement](../assets/diagrams/en/16-guidance-vs-enforcement.svg){ loading=lazy }
 
 ```bash
 embraion validation run affected
@@ -43,25 +47,25 @@ embraion enforcement check --base-ref origin/main
 
 Эти команды запускают реальные детерминированные проверки.
 
-Полная ownership-модель описана в [Инженерной модели](../reference/engineering-model.md).
+Полная модель владения описана в [Инженерной модели](../reference/engineering-model.md).
 
 ## Расширенный путь: provider execution
 
-Некоторым проектам нужен контролируемый внешний/API lane.
+Некоторым проектам нужен отдельный контролируемый внешний/API-путь.
 
 ```text
-bounded execution request
+ограниченный execution-запрос
       ↓
-project deployment + execution binding
+deployment проекта + execution binding
       ↓
-EmbrAIon provider-neutral runtime
+provider-neutral runtime EmbrAIon
       ↓
-approved provider/model
+разрешённый provider/model
       ↓
-normalized result / attempts / usage / cost
+нормализованный результат / попытки / использование / стоимость
 ```
 
-Это опционально. Обычные разговоры с Codex/Copilot/Claude через этот путь не проходят.
+Этот путь опционален. Обычные разговоры с Codex, Copilot или Claude Code через него не проходят.
 
 См. [Execution и провайдеры](../configuration/execution.md).
 
@@ -69,9 +73,9 @@ normalized result / attempts / usage / cost
 
 Можно сказать:
 
-> Пометь `vendor/**` как protected, зарегистрируй архитектурный документ и добавь integration test command в affected validation.
+> Пометь `vendor/**` как protected, зарегистрируй архитектурный документ и добавь команду integration-тестов в affected validation.
 
-AI host должен обновить канонические project files для этих concerns.
+AI-хост должен обновить канонические файлы проекта, отвечающие за эти настройки.
 
 !!! tip "Не нужно запоминать YAML"
     Смысл `.embraion/` не в том, чтобы заставить людей помнить больше имён файлов. Он даёт репозиторию и AI **один источник истины для каждого типа настройки**.

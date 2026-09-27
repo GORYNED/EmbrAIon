@@ -37,6 +37,8 @@ Instruction delivery and deterministic enforcement are different mechanisms.
 | Execution binding | **How** may it be invoked safely? | `.embraion/execution.yaml` |
 | Pricing | **How** is cost interpreted/refreshed? | `.embraion/pricing.yaml` |
 
+![Deployment → Routing → Execution → Pricing](../assets/diagrams/en/15-deployment-routing-execution-pricing.svg){ loading=lazy }
+
 ## Route classes
 
 | Route | Meaning |

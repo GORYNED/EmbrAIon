@@ -7,7 +7,7 @@
 
 Обновление проекта всегда намеренное.
 
-![Безопасное обновление](../assets/diagrams/ru/11-safe-update.svg){ loading=lazy }
+![Безопасное обновление](../assets/diagrams/en/11-safe-update.svg){ loading=lazy }
 
 ## Обычный процесс обновления
 

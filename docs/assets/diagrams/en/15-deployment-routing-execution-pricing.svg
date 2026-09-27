@@ -1,0 +1,107 @@
+<svg width="1280" height="780" viewBox="0 0 1280 780" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" fill="#0E1420"/>
+<rect x="0.75" y="0.75" width="1278.5" height="778.5" rx="27.25" stroke="#27364A" stroke-width="1.5"/>
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="34" font-weight="bold" letter-spacing="0em"><tspan x="54" y="76.8636">Deployment &#x2192; Routing &#x2192; Execution &#x2192; Pricing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="56" y="111.318">Four project-owned concepts answer four different questions.</tspan></text>
+<rect x="46" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="46" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip0_77_1268)">
+<circle cx="85" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M85 322.75L91 319.75V312.25L85 309.25L79 312.25V319.75L85 322.75ZM79 312.25L85 315.25M91 312.25L85 315.25M85 315.25V322.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip1_77_1268)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="119" y="312.773">Deployment</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="119" y="335.091">WHAT can be used</tspan></text>
+</g>
+<rect x="341" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="341" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip2_77_1268)">
+<circle cx="380" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M374.75 310.75H379.25C379.847 310.75 380.419 310.987 380.841 311.409C381.263 311.831 381.5 312.403 381.5 313V319M383.75 316.75L381.5 319L379.25 316.75M385.25 310.75H383.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip3_77_1268)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="414" y="312.773">Routing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="414" y="335.091">WHEN to select it</tspan></text>
+</g>
+<rect x="636" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="636" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip4_77_1268)">
+<circle cx="675" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M671.25 313.75L673.5 316L671.25 318.25M675 318.25H678.75M669 310.75H681V321.25H669V310.75Z" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip5_77_1268)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="709" y="312.773">Execution</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="709" y="335.091">HOW to invoke it</tspan></text>
+</g>
+<rect x="931" y="271" width="258" height="90" rx="15" fill="#1B2533"/>
+<rect x="931" y="271" width="258" height="90" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip6_77_1268)">
+<circle cx="970" cy="316" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M971.5 309.25H965.5V322.75H974.5V312.25L971.5 309.25ZM971.5 309.25V313H975.25M967.75 316H972.25M967.75 319H970.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip7_77_1268)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="1004" y="312.773">Pricing</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="1004" y="335.091">HOW cost is determined</tspan></text>
+</g>
+<g clip-path="url(#clip8_77_1268)">
+<path d="M305 316H336M330 322L336 316L330 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip9_77_1268)">
+<path d="M600 316H631M625 322L631 316L625 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip10_77_1268)">
+<path d="M895 316H926M920 322L926 316L920 310" stroke="#4C8DFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<rect x="291" y="471" width="698" height="98" rx="15" fill="#1B2533"/>
+<rect x="291" y="471" width="698" height="98" rx="15" stroke="#4C8DFF" stroke-width="2"/>
+<g clip-path="url(#clip11_77_1268)">
+<circle cx="330" cy="520" r="17" fill="#4C8DFF" fill-opacity="0.18" stroke="#4C8DFF" stroke-width="2"/>
+<path d="M330 526.75L336 523.75V516.25L330 513.25L324 516.25V523.75L330 526.75ZM324 516.25L330 519.25M336 516.25L330 519.25M330 519.25V526.75" stroke="#E8EDF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#clip12_77_1268)">
+<text fill="#E8EDF5" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="600" letter-spacing="0em"><tspan x="364" y="516.773">Example: analysis-api</tspan></text>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" letter-spacing="0em"><tspan x="364" y="539.091">substantial &#x2192; approved binding &#x2192; validated price snapshot</tspan></text>
+</g>
+<text fill="#9AA8BC" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="16" letter-spacing="0em"><tspan x="160" y="665.318">A host-native project may use only Deployment + Routing; Execution and Pricing are optional.</tspan></text>
+<defs>
+<clipPath id="clip0_77_1268">
+<rect width="36" height="36" fill="white" transform="translate(67 298)"/>
+</clipPath>
+<clipPath id="clip1_77_1268">
+<rect width="164" height="45" fill="white" transform="translate(119 293.5)"/>
+</clipPath>
+<clipPath id="clip2_77_1268">
+<rect width="36" height="36" fill="white" transform="translate(362 298)"/>
+</clipPath>
+<clipPath id="clip3_77_1268">
+<rect width="164" height="45" fill="white" transform="translate(414 293.5)"/>
+</clipPath>
+<clipPath id="clip4_77_1268">
+<rect width="36" height="36" fill="white" transform="translate(657 298)"/>
+</clipPath>
+<clipPath id="clip5_77_1268">
+<rect width="164" height="45" fill="white" transform="translate(709 293.5)"/>
+</clipPath>
+<clipPath id="clip6_77_1268">
+<rect width="36" height="36" fill="white" transform="translate(952 298)"/>
+</clipPath>
+<clipPath id="clip7_77_1268">
+<rect width="164" height="45" fill="white" transform="translate(1004 293.5)"/>
+</clipPath>
+<clipPath id="clip8_77_1268">
+<rect width="32" height="16" fill="white" transform="translate(305 308)"/>
+</clipPath>
+<clipPath id="clip9_77_1268">
+<rect width="32" height="16" fill="white" transform="translate(600 308)"/>
+</clipPath>
+<clipPath id="clip10_77_1268">
+<rect width="32" height="16" fill="white" transform="translate(895 308)"/>
+</clipPath>
+<clipPath id="clip11_77_1268">
+<rect width="36" height="36" fill="white" transform="translate(312 502)"/>
+</clipPath>
+<clipPath id="clip12_77_1268">
+<rect width="604" height="45" fill="white" transform="translate(364 497.5)"/>
+</clipPath>
+</defs>
+</svg>

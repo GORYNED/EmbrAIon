@@ -64,7 +64,8 @@ class DocumentationTests(unittest.TestCase):
         self.assertIn("reference/cli.md", targets)
         self.assertIn("examples/unity.md", targets)
         self.assertIn("configuration/index.md", targets)
-        self.assertIn("configuration/project-files.md", targets)
+        self.assertNotIn("configuration/project-files.md", targets)
+        self.assertTrue((DOCS / "configuration" / "project-files.md").is_file())
         self.assertIn("configuration/ai-hosts.md", targets)
         self.assertIn("oss/security-reporting.md", targets)
         self.assertIn("getting-started/in-60-seconds.md", targets)
@@ -119,6 +120,26 @@ class DocumentationTests(unittest.TestCase):
             for path in DOCS.rglob("*.ru.md")
         }
         self.assertEqual(english, russian)
+
+    def test_localized_diagrams_use_suffix_assets(self) -> None:
+        diagrams = DOCS / "assets" / "diagrams" / "en"
+        english = {
+            path.name
+            for path in diagrams.glob("*.svg")
+            if not path.name.endswith(".ru.svg")
+        }
+        russian = {
+            path.name.removesuffix(".ru.svg") + ".svg"
+            for path in diagrams.glob("*.ru.svg")
+        }
+        self.assertEqual(english, russian)
+
+        for path in DOCS.rglob("*.ru.md"):
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertNotIn(
+                    "assets/diagrams/ru/",
+                    path.read_text(encoding="utf-8"),
+                )
 
     def test_cli_reference_covers_top_level_commands(self) -> None:
         parser = build_parser()

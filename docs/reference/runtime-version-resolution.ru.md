@@ -1,10 +1,10 @@
 # Runtime и разрешение версий
 
-EmbrAIon разделяет **версию глобального launcher** и **framework version, закреплённую каждым project**.
+EmbrAIon разделяет **версию глобального launcher** и **версию framework, закреплённую за каждым проектом**.
 
 ## Один launcher, несколько project pins
 
-Проект хранит exact framework release в:
+Проект записывает точную release-версию framework в:
 
 ```text
 .embraion/project.yaml
@@ -16,40 +16,50 @@ framework:
   version: <published-version>
 ```
 
-Обычные команды находят ближайший project и разрешают его pin:
+Обычные команды находят ближайший проект и разрешают его pin:
 
-![Runtime и разрешение версий](../assets/diagrams/ru/07-runtime-version-resolution.svg){ loading=lazy }
+![Runtime и разрешение версий](../assets/diagrams/en/07-runtime-version-resolution.svg){ loading=lazy }
 
-Если pin отличается от launcher version, EmbrAIon может установить exact published distribution в isolated cache:
+Если pin отличается от версии launcher, EmbrAIon может установить точно эту опубликованную distribution в изолированный cache:
 
 ```text
 ~/.embraion/versions/<version>/
 ```
 
-Поэтому разные repos могут оставаться на разных releases EmbrAIon на одной машине.
+Поэтому разные репозитории на одной машине могут оставаться на разных release-версиях EmbrAIon.
 
-## Посмотреть resolution
+## Проверить разрешённую версию
 
 ```bash
 embraion status
 embraion status --json
 ```
 
-Status показывает launcher, project pin, resolved runtime, cache state и detected host projections.
+Status показывает launcher, project pin, resolved runtime, состояние cache и обнаруженные host projections.
 
-## Cache management
+## Управление cache
 
 ```bash
 embraion cache list
+```
+
+Предварительный просмотр очистки:
+
+```bash
 embraion cache prune --older-than 90
+```
+
+Применить очистку осознанно:
+
+```bash
 embraion cache prune --older-than 90 --apply
 ```
 
-Первый prune — dry run. Active launcher и current project's runtime защищены от age-based pruning.
+Активный launcher и resolved runtime текущего проекта защищены от очистки по возрасту.
 
 ## Обновление проекта
 
-Safe sequence:
+Безопасная последовательность:
 
 ```bash
 pipx upgrade embraion
@@ -58,16 +68,16 @@ embraion update
 embraion doctor
 ```
 
-`embraion update` launcher-owned. Safe normalization целится только в **installed launcher version**, чтобы runtime не угадывал schema/defaults другой release.
+`embraion update` принадлежит launcher. Безопасная нормализация конфигурации ориентируется **только на установленную версию launcher**, чтобы текущий runtime не пытался угадать schema/defaults другого release.
 
-Update может добавить compatible missing defaults и изменить project pin, сохраняя project-owned values. Все candidate canonical `.embraion/` files валидируются до записи.
+Команда может добавить совместимые отсутствующие defaults и обновить project pin, сохраняя значения проекта. Перед записью она валидирует все candidate canonical-файлы `.embraion/`.
 
 Host projections не обновляются молча.
 
 ## Переход на другую конкретную release
 
-Сначала установите эту launcher version, затем `embraion update`. Так configuration normalization принадлежит тому же release contract, который записывается.
+Сначала установите нужную версию launcher, затем запустите `embraion update` из проекта. Так нормализация конфигурации остаётся в том же release contract, который будет записан.
 
 ## Development override
 
-`EMBRAION_HOME` выбирает explicit framework checkout для framework development. Automatic resolution можно отключить через `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
+`EMBRAION_HOME` выбирает явный checkout framework для разработки самого EmbrAIon. Автоматическое разрешение версий можно намеренно отключить через `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.

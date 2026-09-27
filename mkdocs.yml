@@ -79,7 +79,6 @@ plugins:
             Model routing: Маршрутизация моделей
             Execution & providers: Execution и провайдеры
             Pricing & cost: Pricing и стоимость
-            Project files reference: Справочник файлов проекта
             Hosts: AI-хосты
             Portable bundle: Portable bundle
             Use: Использование
@@ -158,7 +157,6 @@ nav:
           - Model routing: model-routing.md
           - Execution & providers: configuration/execution.md
           - Pricing & cost: configuration/pricing.md
-          - Project files reference: configuration/project-files.md
   - Hosts:
       - Overview: hosts/index.md
       - Codex: hosts/codex.md

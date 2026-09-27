@@ -114,7 +114,7 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 
 ## Рекомендуемый порядок подключения
 
-![Подключение существующего репозитория](../assets/diagrams/ru/03-adopt-existing-repository.svg){ loading=lazy }
+![Подключение существующего репозитория](../assets/diagrams/en/03-adopt-existing-repository.svg){ loading=lazy }
 
 ## Дальше
 

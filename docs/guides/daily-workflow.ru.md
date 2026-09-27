@@ -1,6 +1,6 @@
 # Ежедневный процесс
 
-EmbrAIon должен делать AI-assisted engineering более дисциплинированным, **а не более церемониальным**.
+EmbrAIon должен делать разработку с AI более дисциплинированной, **а не более церемониальной**.
 
 !!! tip "Простыми словами"
     В большинстве случаев вы должны обсуждать продукт, а не framework.
@@ -9,11 +9,11 @@ EmbrAIon должен делать AI-assisted engineering более дисци
 
 | Шаг | Что вы делаете | Что даёт EmbrAIon |
 | --- | --- | --- |
-| 1 | Формулируете инженерный результат | Project knowledge, policy, roles и optional routing уже прикреплены к repo |
-| 2 | Host реализует задачу | Host-native AI выполняет reasoning/tools |
-| 3 | Запускаете affected validation | Реальные project commands создают evidence |
-| 4 | Review существенной работы | Применяется project review policy/evidence |
-| 5 | Merge/delivery | Optional enforcement может сделать выбранные gates deterministic |
+| 1 | Формулируете инженерный результат | Знания проекта, policy, roles и optional routing уже закреплены за репозиторием |
+| 2 | AI-хост реализует задачу | Host-native AI выполняет reasoning и использует инструменты |
+| 3 | Запускаете affected validation | Реальные команды проекта создают evidence |
+| 4 | Проверяете существенную работу | Применяются правила review и evidence проекта |
+| 5 | Делаете merge / delivery | Optional enforcement может сделать выбранные gates детерминированными |
 
 Пример:
 
@@ -28,27 +28,27 @@ embraion doctor
 embraion status
 ```
 
-Используйте diagnostics после framework updates, перед substantial work или когда поведение проекта выглядит неправильно — не как обязательный ритуал перед каждым маленьким изменением.
+Используйте диагностику после обновлений framework, перед существенной работой или когда поведение проекта выглядит неправильным — не как обязательный ритуал перед каждым небольшим изменением.
 
 ## За кулисами
 
-![Ежедневный AI-First процесс](../assets/diagrams/ru/05-daily-workflow.svg){ loading=lazy }
+![Ежедневный AI-First процесс](../assets/diagrams/en/05-daily-workflow.svg){ loading=lazy }
 
-Project contract может предоставить architecture knowledge, protected/private path rules, project-specific specialists, optional model/deployment routing, validation profiles и review requirements.
+Контракт проекта может предоставить знания об архитектуре, правила для protected/private paths, project-specific specialists, optional model/deployment routing, validation profiles и требования к review.
 
-## Изменение конфигурации отличается от продуктовой работы
+## Изменения конфигурации отличаются от продуктовой работы
 
 Это меняет AI-engineering system:
 
-> Настрой routing так, чтобы complex architecture использовала наш reviewed deployment.
+> Настрой routing так, чтобы complex architecture использовала наш проверенный deployment.
 
-А это — нет:
+А это — обычная продуктовая задача:
 
 > Исправь reconnect bug.
 
-Для обычной продуктовой работы host должен использовать существующий project contract, а не переписывать его без необходимости.
+В обычной продуктовой работе AI-хост должен использовать существующий контракт проекта, а не переписывать его без необходимости.
 
-## Validation
+## Валидация
 
 ```bash
 embraion validation run affected
@@ -63,10 +63,10 @@ embraion validation run affected
 - корректно ли изменилось требуемое поведение;
 - прошла ли relevant validation;
 - соблюдены ли protected/canonical boundaries;
-- был ли independent review, когда он обязателен;
+- была ли существенная работа независимо проверена, когда это требуется;
 - явно ли указан residual risk.
 
-Если CI enforcement установлен, выбранные gates могут стать deterministic на merge.
+Если установлен CI enforcement, он может сделать выбранные gates детерминированными при merge.
 
 ## После обновления EmbrAIon
 
@@ -78,4 +78,4 @@ embraion doctor
 embraion projection diff --host codex --destination .
 ```
 
-Project configuration update не переписывает host projections молча.
+Обновление конфигурации проекта не переписывает host projections молча.

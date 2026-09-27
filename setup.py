@@ -11,9 +11,11 @@ ROOT_FILES = (
     "framework.yaml",
     "AGENTS.md",
     "README.md",
+    "README.ru.md",
     "CHANGELOG.md",
     "LICENSE",
     "TRADEMARKS.md",
+    "TRADEMARKS.ru.md",
 )
 
 RESOURCE_DIRECTORIES = (

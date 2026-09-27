@@ -73,6 +73,6 @@ embraion validation run affected
 embraion projection diff --host codex --destination .
 ```
 
-![Первая задача для AI](../assets/diagrams/ru/08-first-ai-task.svg){ loading=lazy }
+![Первая задача для AI](../assets/diagrams/en/08-first-ai-task.svg){ loading=lazy }
 
 Дальше: [Ежедневный процесс](../guides/daily-workflow.md).
