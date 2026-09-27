@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.15.0 - 2026-09-27
+
+### Added
+
+- Project-defined task classes that map semantic work to Core route classes, optional roles and minimum data classes, and ordered host candidates.
+- Task-class routing with availability fallback, explicit quality or critical escalation, candidate groups, and provenance in route results.
+- An authority audit for duplicate project routing, deployment, execution, and pricing facts outside `.embraion/**`.
+
+### Changed
+
+- Task-class overrides take precedence over route-role, role, and route overrides while preserving Core access and privacy limits.
+- Re-review assignments are classified from their current delta; unavailable deployments do not increase task complexity.
+
 ## 0.14.0 - 2026-09-27
 
 ### Added
