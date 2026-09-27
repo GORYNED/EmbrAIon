@@ -144,6 +144,12 @@ class RoutingAuthorityTests(unittest.TestCase):
                 self.assertEqual(relative, audit_routing_authority(
                     self.project, paths=[path])[0]["path"])
 
+    def test_explicit_paths_use_resolved_project_relative_names(self) -> None:
+        path = self._write_case("docs/routing-choice.md", "model: example-basic-v1\n")
+        alias = self.project / "docs" / ".." / "docs" / path.name
+        self.assertEqual("docs/routing-choice.md", audit_routing_authority(
+            self.project, paths=[alias])[0]["path"])
+
     def test_concrete_effort_fallback_capability_billing_and_binding(self) -> None:
         cases = (
             ("docs/effort.md", "effort: high\n"),

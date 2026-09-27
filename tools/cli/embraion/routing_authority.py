@@ -196,7 +196,9 @@ def audit_routing_authority(project: Path | None = None, *,
     files = paths if paths is not None else _manual_files(root)
     findings: list[dict[str, str]] = []
     for path in files:
-        path = Path(path)
+        # Explicit paths may use a filesystem alias (for example /var on macOS)
+        # while project_root has already resolved to the canonical spelling.
+        path = Path(path).resolve()
         if not path.is_file() or path.suffix.lower() not in _TEXT_SUFFIXES:
             continue
         try:
