@@ -26,6 +26,7 @@ class ArtifactLockTests(unittest.TestCase):
         release: str = "v1.2.3",
         asset: str = "embraion-1.2.3-py3-none-any.whl",
         digest: str | None = None,
+        schema: object = 1,
     ) -> Path:
         digest = digest or ("sha256:" + ("a" * 64))
         manifest = root / ".embraion" / "project.yaml"
@@ -35,7 +36,7 @@ class ArtifactLockTests(unittest.TestCase):
             "  repository: GORYNED/EmbrAIon\n"
             f"  version: {version}\n"
             "  artifact:\n"
-            "    schema: 1\n"
+            f"    schema: {schema}\n"
             "    source: github-release\n"
             f"    release: {release}\n"
             f"    asset: {asset}\n"
@@ -69,6 +70,20 @@ class ArtifactLockTests(unittest.TestCase):
             self.assertIsNone(read_project_artifact_lock(manifest, required=False))
             with self.assertRaisesRegex(RuntimeError, "Missing framework.artifact"):
                 read_project_artifact_lock(manifest, required=True)
+
+    def test_non_integer_schema_values_fail_closed(self) -> None:
+        for value in ("true", "1.0"):
+            with self.subTest(schema=value):
+                with tempfile.TemporaryDirectory() as temporary:
+                    manifest = self._manifest(
+                        Path(temporary),
+                        schema=value,
+                    )
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        "expected integer 1",
+                    ):
+                        read_project_artifact_lock(manifest)
 
     def test_version_release_mismatch_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
