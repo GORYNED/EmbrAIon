@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.13.3 - 2026-09-27
+
+### Added
+
+- Complete English/Russian documentation parity with a site language switcher, beginner-first onboarding, and diagrams for host-native/provider execution, deployment-routing-execution-pricing, and guidance/enforcement.
+
+### Changed
+
+- English is the canonical documentation language and Russian is the only maintained translation; legacy Spanish, Hindi, Simplified Chinese, and legacy localization-tree content are removed.
+- Framework localization validation now requires a Russian translation for every canonical English documentation page and rejects the legacy `localization/` tree.
+- Packaged framework distributions now include `README.ru.md` and `TRADEMARKS.ru.md`, with installed-package regression coverage.
+- Documentation metadata now points to `https://embraion.goryned.com/`.
+- Routing, execution, provider, schema, and project-runtime behavior are unchanged from 0.13.2.
+
 ## 0.13.2 - 2026-09-26
 
 ### Fixed
