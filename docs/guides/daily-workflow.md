@@ -1,94 +1,72 @@
 # Daily Workflow
 
-EmbrAIon should make ordinary AI-assisted engineering more disciplined, **not more ceremonial**.
+EmbrAIon should make AI-assisted engineering more disciplined, **not more ceremonial**.
 
-After setup, most days should start with the product or engineering outcome you want, not with framework administration.
+!!! tip "In plain English"
+    Most days you should talk about the product, not the framework.
 
-![Daily AI-First workflow](../assets/diagrams/en/05-daily-workflow.svg){ loading=lazy }
+## A normal day
 
-## Before substantial work
+| Step | What you do | What EmbrAIon contributes |
+| --- | --- | --- |
+| 1 | Ask for the engineering outcome | Project knowledge, policy, roles, and optional routing are already attached to the repo |
+| 2 | Let the host implement | Host-native AI does the reasoning/tools |
+| 3 | Run affected validation | Real project commands produce evidence |
+| 4 | Review substantial work | Project review policy/evidence applies |
+| 5 | Merge/deliver | Optional enforcement can make selected gates deterministic |
+
+Example:
+
+> Fix the retry flow and add regression coverage.
+
+That should normally be enough.
+
+## Before substantial or suspicious work
 
 ```bash
 embraion doctor
 embraion status
 ```
 
-For a repository you use every day, you do not need to run every diagnostic before every tiny edit. Use them when starting a substantial task, after an EmbrAIon update, or when project behavior looks wrong.
+Use diagnostics after framework updates, before substantial work, or when project behavior looks wrong — not as ceremony before every tiny change.
 
-## Describe the task normally
+## Behind the scenes
 
-Ask your AI client for the actual engineering outcome:
+![Daily AI-First workflow](../assets/diagrams/en/05-daily-workflow.svg){ loading=lazy }
 
-> Fix the retry flow and add regression coverage.
+The project contract can supply architecture knowledge, protected/private path rules, project-specific specialists, optional model/deployment routing, validation profiles, and review requirements.
 
-You should not need to manually select every model, agent, or validation command. The host can use the repository's projected EmbrAIon roles and skills plus the project-owned `.embraion/` contract.
+## Configuration changes are different from product work
 
-For high-risk or ambiguous work, being explicit about the expected outcome or evidence is still useful. EmbrAIon reduces repeated setup; it does not replace clear requirements.
+This changes the AI-engineering system:
 
-## Let the project contract guide the work
+> Configure routing so complex architecture uses our reviewed deployment.
 
-The project contract can supply:
-
-- architecture and source-of-truth knowledge;
-- protected/private path rules;
-- project-specific specialists;
-- optional model/deployment routing;
-- validation profiles;
-- substantial-review requirements.
-
-The AI client still performs the reasoning and tool use. EmbrAIon makes the surrounding engineering rules durable.
-
-## Change configuration only when the intent is configuration
-
-If you say:
-
-> Configure routing so ordinary work stays on the host default but complex architecture uses our reviewed deployment.
-
-the host should change the relevant `.embraion/` configuration.
-
-If you say:
+This does not:
 
 > Fix the reconnect bug.
 
-the host should use the existing project contract, not casually rewrite it.
+For ordinary product work, the host should use the existing project contract rather than casually rewriting it.
 
-This distinction keeps ordinary product work separate from changes to the AI-First operating model.
-
-## During implementation
-
-Use project knowledge as source of truth and avoid editing generated projections to express canonical project policy.
-
-When host projection changes are needed, preview first:
-
-```bash
-embraion projection diff --host codex --destination .
-```
-
-## Validate the change
+## Validate
 
 ```bash
 embraion validation run affected
 ```
 
-If the repository has not configured an `affected` profile yet, do that first. `skipped` is not equivalent to `passed`.
+If the profile is empty, configure it first. `skipped` is not equivalent to `passed`.
 
-## Review substantial work
+## Review and finish
 
-Use an independent reviewer appropriate to the repository. Review should inspect correctness, regressions, policy boundaries, and validation evidence rather than merely restate the implementation.
-
-Projects that use structured run evidence can attach validation/review records. See [Runs & Review](runs-review.md).
-
-## Finish
-
-Before merge or delivery, the useful questions are:
+Ask:
 
 - Did the requested behavior change correctly?
-- Did relevant project validation pass?
+- Did relevant validation pass?
 - Were protected/canonical boundaries respected?
 - Was substantial work independently reviewed when required?
-- Is any residual risk explicit?
+- Is residual risk explicit?
 
-If the project has CI enforcement installed, that surface can make selected gates deterministic at merge time. It remains an explicit project choice.
+If CI enforcement is installed, it can make selected gates deterministic at merge time.
 
 ## After an EmbrAIon upgrade
 
@@ -100,4 +78,4 @@ embraion doctor
 embraion projection diff --host codex --destination .
 ```
 
-Updating the project configuration does not silently refresh generated host projections. Review projection changes separately.
+Updating project configuration does not silently rewrite host projections.
