@@ -31,6 +31,15 @@ from embraion.project import (
 
 
 class ProjectionPolicyTests(unittest.TestCase):
+    def _release_artifact(self) -> dict[str, object]:
+        return {
+            "schema": 1,
+            "source": "github-release",
+            "release": f"v{__version__}",
+            "asset": f"embraion-{__version__}-py3-none-any.whl",
+            "digest": "sha256:" + ("a" * 64),
+        }
+
     def test_init_creates_project_policy_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
@@ -129,7 +138,11 @@ class ProjectionPolicyTests(unittest.TestCase):
             project_data["framework"]["version"] = "0.8.1"
             write_yaml(manifest, project_data)
 
-            previous, current = update_project(project, version=__version__)
+            with patch(
+                "embraion.project.resolve_release_artifact",
+                return_value=self._release_artifact(),
+            ):
+                previous, current = update_project(project, version=__version__)
             self.assertEqual("0.8.1", str(previous))
             self.assertEqual(__version__, current)
 
@@ -201,9 +214,15 @@ class ProjectionPolicyTests(unittest.TestCase):
             manifest_before = manifest.read_bytes()
             policy_before = policy_path.read_bytes()
 
-            with self.assertRaisesRegex(
-                RuntimeError,
-                "Cannot safely update",
+            with (
+                patch(
+                    "embraion.project.resolve_release_artifact",
+                    return_value=self._release_artifact(),
+                ),
+                self.assertRaisesRegex(
+                    RuntimeError,
+                    "Cannot safely update",
+                ),
             ):
                 update_project(project, version=__version__)
 
@@ -211,17 +230,27 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertEqual(policy_before, policy_path.read_bytes())
             self.assertNotIn("enforcement", read_yaml(policy_path))
 
-    def test_update_refuses_incomplete_legacy_layout(self) -> None:
+    def test_update_materializes_missing_legacy_modular_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="Consumer")
-            (project / ".embraion" / "policy.yaml").unlink()
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy_path.unlink()
 
-            with self.assertRaisesRegex(
-                RuntimeError,
-                "incomplete or legacy layout",
-            ):
-                normalize_project_config(project, version=__version__)
+            changed = normalize_project_config(project, version=__version__)
+
+            self.assertTrue(policy_path.is_file())
+            self.assertIn(policy_path, changed)
+            policy = read_yaml(policy_path)
+            self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
+            self.assertEqual(
+                {
+                    "enabled": False,
+                    "validation-profile": "affected",
+                    "require-review": False,
+                },
+                policy["enforcement"],
+            )
 
     def test_update_refuses_non_launcher_target_without_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -693,6 +722,10 @@ class ProjectionPolicyTests(unittest.TestCase):
                     "embraion.project._generate_host_with_cached_runtime",
                     side_effect=fake_generate,
                 ),
+                patch(
+                    "embraion.project.resolve_release_artifact",
+                    return_value=self._release_artifact(),
+                ),
             ):
                 previous, current = update_project(
                     project,
@@ -772,6 +805,10 @@ class ProjectionPolicyTests(unittest.TestCase):
                 patch(
                     "embraion.project._generate_host_with_cached_runtime",
                     side_effect=fake_generate,
+                ),
+                patch(
+                    "embraion.project.resolve_release_artifact",
+                    return_value=self._release_artifact(),
                 ),
             ):
                 update_project(project, version=__version__)
