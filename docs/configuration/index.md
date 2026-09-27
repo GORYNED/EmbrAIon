@@ -112,8 +112,17 @@ capabilities: {}
 ### `knowledge.yaml`
 
 ```yaml
-{}
+slots:
+  constitution:
+  architecture:
+  source-authority:
+  compatibility:
+  persistence:
+  engineering-workflow:
+  specification:
 ```
+
+The slot names are framework-owned semantic extension points. Leave a slot empty when the project has no authoritative document for that concern.
 
 ### `policy.yaml`
 
@@ -164,6 +173,19 @@ profiles:
 agents: []
 ```
 
+## How runtime configuration fits together
+
+For projects that need explicit model/provider execution, the four runtime-facing files answer different questions:
+
+| Concern | Meaning |
+| --- | --- |
+| `deployments.yaml` | **What** reusable concrete choices exist |
+| `routing.yaml` | **When** a route or role selects one |
+| `execution.yaml` | **How** an approved deployment may be invoked |
+| `pricing.yaml` | **How** provider pricing is refreshed and interpreted |
+
+See [How EmbrAIon works](../getting-started/how-it-works.md) for the full host-native vs provider-execution flow.
+
 ## Inspect what the AI changed
 
 After conversational configuration, inspect the actual project contract:
@@ -195,5 +217,7 @@ embraion projection diff --host codex --destination .
 - [Validation profiles](validation.md)
 - [Project agents](agents.md)
 - [Project deployments](deployments.md)
+- [Execution & providers](execution.md)
+- [Pricing & cost](pricing.md)
 - [Model routing](../model-routing.md)
 - [Configure with your AI client](ai-hosts.md)

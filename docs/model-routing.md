@@ -2,21 +2,33 @@
 
 EmbrAIon routing is model-agnostic.
 
-Core decides the engineering constraints that should survive model churn:
+It classifies **work and risk**, not model strength, price, provider, or marketing tier. Model availability changes quickly; project architecture and safety constraints should not.
 
-The canonical task-oriented route classes are `bounded-read`, `bounded-write`, `ordinary`, `substantial`, `complex`, and `critical`. These describe work/risk, not model strength, price, or vendor tier.
+![Model routing](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
 
+## Route classes
+
+The canonical route classes are:
+
+| Route class | Meaning |
+| --- | --- |
+| `bounded-read` | Narrow read-only discovery or research |
+| `bounded-write` | Mechanical or tightly bounded writable work |
+| `ordinary` | Limited ordinary engineering |
+| `substantial` | Substantial engineering and standard review |
+| `complex` | Cross-domain, lifecycle, concurrency, or difficult review |
+| `critical` | Exceptional protected-decision risk |
+
+These classes are stable framework vocabulary. They do not imply that a particular model is permanently “the complex model” or “the critical model”.
+
+Routing is evaluated together with independent dimensions such as:
 
 - role;
-- complexity / route class;
 - data class;
 - access mode;
 - owned paths;
+- project deployment capabilities;
 - validation and review requirements.
-
-It does **not** maintain a canonical list of current model names.
-
-![Model routing](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
 
 ## Default behavior
 
@@ -45,7 +57,7 @@ New models can appear in a host without requiring an EmbrAIon release.
 
 ## Optional project overrides
 
-A project may define reusable execution choices in `.embraion/deployments.yaml` and reference them from `.embraion/routing.yaml`:
+A project may define reusable concrete choices in `.embraion/deployments.yaml` and reference them from `.embraion/routing.yaml`:
 
 ```yaml
 # .embraion/deployments.yaml
@@ -79,7 +91,7 @@ overrides:
 
 The registry is project-owned, not an EmbrAIon Core model catalog. Model/provider strings remain intentionally open-ended.
 
-For simple one-off choices, direct `model`, `effort`, and `options` overrides remain supported:
+For simple project choices, direct `model`, `effort`, and `options` overrides are also supported:
 
 ```yaml
 overrides:
@@ -98,34 +110,40 @@ Resolution precedence is:
 
 A role override is merged over the route override, so a role can replace only the fields it needs.
 
+## Routing is not provider execution
+
+Routing answers **what should be selected**. It does not by itself create a provider call.
+
+For host-native work, the AI host uses the resolved project contract and remains responsible for actual execution.
+
+For projects that opt into `embraion execute`, the selected deployment must also have an approved `.embraion/execution.yaml` binding. The runtime can then execute the bounded candidate list and apply eligible fallback under the original request ceilings.
+
+See [How EmbrAIon works](getting-started/how-it-works.md) and [Execution & providers](configuration/execution.md).
+
 ## AI-First configuration
 
-Every installed host projection includes the reusable `routing-configuration` skill. It tells the AI that model overrides belong in `.embraion/routing.yaml` under `overrides`, and that EmbrAIon itself has no model registry.
+Every installed host projection includes the reusable `routing-configuration` skill. It teaches the AI that routing overrides belong in `.embraion/routing.yaml`, not in generated host files or arbitrary documentation.
 
-The intended user experience is therefore conversational rather than manual configuration. A user can simply tell the AI already working in the repository:
+The intended user experience is conversational:
 
-> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put any model, effort, or host-specific overrides only in `.embraion/routing.yaml` under `overrides`, mapped to the appropriate route classes or roles. Do not weaken privacy, access, ownership, validation, or review policy.
+> Configure EmbrAIon routing for this repository using the models currently available to you. Keep host-default where no explicit choice is needed. Put model, effort, or host-specific overrides only in the project routing/deployment configuration. Do not weaken privacy, access, ownership, validation, or review policy.
 
-The AI should inspect host-native model choices when available, edit only the relevant override subtree, and verify the affected routes. Users may still edit the YAML directly, but they do not need to.
-
-
-A user does not need to edit YAML manually. They can ask the AI client already working in the repository to inspect the models/settings available in that client and update the project's EmbrAIon routing overrides.
-
-The AI should change only project overrides. It must not weaken privacy, access, owned-path, protected-source, validation, or review policy to make a model fit.
+The AI should inspect host-native model choices when available, change only project-owned configuration, and verify the affected routes.
 
 ## What EmbrAIon validates
 
 EmbrAIon can deterministically validate:
 
-- route-class names;
-- data-class names;
+- route-class and data-class names;
 - project-override structure;
 - role/route precedence;
+- deployment existence/enabled state;
+- host matching;
+- supported effort;
+- declared data/role/access/task capabilities;
 - access and privacy policy that is independent from model identity.
 
-The execution host remains authoritative for whether a particular selector or option is actually available to the current user/account. EmbrAIon can additionally validate project-deployment references, enabled state, host matching, supported effort, and declared data/role/access/task capabilities.
-
-This separation keeps Core usable with future models and hosts that did not exist when the current EmbrAIon release was published.
+The execution host remains authoritative for whether an opaque selector or option is actually available to the current user/account.
 
 ## Host-specific setup examples
 

@@ -73,7 +73,14 @@ overrides:
             effort: low
 ```
 
-Fallbacks are a routing plan, not an execution engine. EmbrAIon verifies that every referenced deployment exists, is enabled, belongs to the selected host, and satisfies declared route/data/role/access/effort capabilities. A project runtime or AI host remains responsible for actually executing requests and observing provider failures.
+Fallbacks in `.embraion/routing.yaml` are a **selection plan**. EmbrAIon verifies that every referenced deployment exists, is enabled, belongs to the selected host, and satisfies declared route/data/role/access/effort capabilities.
+
+What happens next depends on the execution lane:
+
+- for **host-native work**, the AI host remains responsible for actually running the selected model/tool workflow;
+- for **provider-neutral execution**, a caller can pass a bounded candidate set to `embraion execute`; EmbrAIon then owns the attempt loop, failure normalization, health-aware ordering, and eligible fallback under the original request ceilings.
+
+A deployment is therefore not the transport itself. Provider invocation requires an approved `.embraion/execution.yaml` binding.
 
 ## Fail-closed behavior
 
@@ -88,4 +95,4 @@ embraion deployment show native-main
 embraion deployment show native-main --json
 ```
 
-Use [Model routing](../model-routing.md) for route/role precedence and host-default behavior.
+Use [Model routing](../model-routing.md) for route/role precedence and host-default behavior, [Execution & providers](execution.md) for executable bindings, and [Pricing & cost](pricing.md) for cost evidence.
