@@ -73,7 +73,7 @@ nav:
   - Home: index.md
   - Start Here:
       - Why EmbrAIon?: getting-started/what-is-embraion.md
-      - Installation: getting-started/installation.md
+      - How it works: getting-started/how-it-works.md\n      - Installation: getting-started/installation.md
       - Add EmbrAIon to a project: getting-started/first-project.md
       - Adopt an existing repository: getting-started/existing-repository.md
       - Your first AI task: getting-started/first-ai-task.md
@@ -117,7 +117,7 @@ nav:
       - Contributing: oss/contributing.md
       - Support: oss/support.md
       - Security reporting: oss/security-reporting.md
-      - Governance: oss/governance.md
+      - Governance: oss/governance.md\n      - Localization strategy: oss/localization.md
       - Licensing: licensing.md
       - Release process: release-process.md
       - Learning: learning.md
