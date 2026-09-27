@@ -16,6 +16,8 @@
 
 > Where sparks become AI-built products（让火花化为 AI 构建的产品）
 
+> **翻译状态：**本页是本地化介绍。当前版本完整且权威的文档以[英文](../docs/index.md)为准；简体中文文档是精选翻译子集。
+
 EmbrAIon 是一个可复用的 AI-First Engineering System，用于通过明确的 Agent（代理角色）、Skill（技能）、Workflow（工作流）、Routing（路由）、访问控制、验证、审查、工具和 Project Overlay（项目叠加层）来组织 AI 辅助软件工程。
 
 ## EmbrAIon 的作用
@@ -155,6 +157,7 @@ embraion init
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
@@ -268,7 +271,7 @@ embraion help cache prune
 
 ## 文档
 
-完整简体中文文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。
+简体中文精选文档：[localization/docs/zh-CN](docs/zh-CN/README.md)。
 
 ## 许可证与品牌
 
@@ -284,4 +287,4 @@ embraion help cache prune
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>最后更新：2026-09-24 13:55 UTC</sub>
+<sub>最后更新：2026-09-27 01:48 UTC</sub>
