@@ -101,6 +101,14 @@ Resolution precedence:
 
 Role override merge поверх route override и может заменить только нужные поля.
 
+## Project task classes и effective routes
+
+Проект задаёт semantic task classes в `.embraion/routing.yaml`: Core route class, роль, минимальный data class и упорядоченные host candidates. Candidate использует override выбранного host, ссылается на deployment или раскрывает project candidate group. Task-class override имеет приоритет над сочетанием route/role, затем role и route. Команда `embraion route --task-class <class>` возвращает выбранный deployment, availability candidates, отдельные escalation routes и provenance. `embraion route --validate` проверяет конфигурацию; `embraion route --audit-authority` ищет дубли concrete facts вне `.embraion/**`.
+
+Availability fallback не повышает complexity. Переход на другой host требует новой privacy/access проверки и handoff. Quality/critical escalation требует явных `--escalation` и `--justification`; critical escalation указывает route class `critical`, и любой выбранный critical route требует justification. Каждый re-review — новое bounded assignment с классификацией фактического delta: узкая проверка исправления может быть `substantial`, но изменения concurrency, lifecycle, compatibility или architecture semantics остаются `complex`.
+
+`.embraion/**` — единственный manually maintained authority для concrete provider/model/deployment/effort/routing/fallback, deployment capabilities, billing, pricing/SKU и execution bindings. В `.embraion/execution.yaml` хранятся ссылки на credentials, не значения secrets. Consumer tests/docs проверяют semantic classes через resolved EmbrAIon configuration. Generated host projections являются производными outputs.
+
 ## Routing не является provider execution
 
 Routing отвечает на вопрос **что выбрать**, но сам не создаёт provider call.

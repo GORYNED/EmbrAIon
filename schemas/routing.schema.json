@@ -7,6 +7,22 @@
     "overrides"
   ],
   "properties": {
+    "task-classes": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/taskClass"}
+    },
+    "candidate-groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["deployments"],
+        "properties": {
+          "deployments": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/routingFallback"}},
+          "preferred": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    },
     "overrides": {
       "type": "object",
       "additionalProperties": {
@@ -15,6 +31,39 @@
     }
   },
   "$defs": {
+    "candidate": {
+      "type": "object",
+      "required": ["host"],
+      "properties": {
+        "host": {"type": "string", "minLength": 1},
+        "route-class": {"enum": ["bounded-read", "bounded-write", "ordinary", "substantial", "complex", "critical"]},
+        "deployment": {"type": "string", "minLength": 1},
+        "group": {"type": "string", "minLength": 1},
+        "effort": {"type": "string", "minLength": 1},
+        "options": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": false,
+      "not": {"required": ["deployment", "group"]}
+    },
+    "taskClass": {
+      "type": "object",
+      "required": ["route-class", "candidates"],
+      "properties": {
+        "route-class": {"enum": ["bounded-read", "bounded-write", "ordinary", "substantial", "complex", "critical"]},
+        "role": {"type": "string", "minLength": 1},
+        "data-class": {"enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]},
+        "candidates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/candidate"}},
+        "escalations": {
+          "type": "object",
+          "properties": {
+            "quality": {"$ref": "#/$defs/candidate"},
+            "critical": {"$ref": "#/$defs/candidate"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "routingFallback": {
       "type": "object",
       "required": [
@@ -115,6 +164,17 @@
           "additionalProperties": {
             "$ref": "#/$defs/routingSelection"
           }
+        },
+        "route-roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/$defs/routingSelection"}
+          }
+        },
+        "task-classes": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/routingSelection"}
         }
       },
       "additionalProperties": false

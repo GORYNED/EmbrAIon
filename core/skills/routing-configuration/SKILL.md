@@ -5,7 +5,13 @@ description: Configure model-agnostic EmbrAIon routing and project-owned deploym
 
 # Routing Configuration
 
-Use this skill when the user asks to choose, assign, replace, optimize, or override models, reasoning effort, execution deployments, providers, or host-specific model options for EmbrAIon.
+Use this skill for any Product Owner request, including ordinary language such as "configure routing", "change models for complex tasks", "use a cheaper model for ordinary tasks", or "change effort or fallback". Apply it for every AI host supported now or in the future.
+
+## Routing authority
+
+`.embraion/**` is the only manually maintained source of truth for concrete provider, model, deployment, effort, route, fallback, deployment capability, billing, pricing/SKU, and execution-binding facts. Edit those facts only in `.embraion/**`. Do not manually add or copy concrete mappings into `AGENTS.md`, documentation, tools, policy/tests, host configuration, or any other consumer file. Consumer tests must query resolved EmbrAIon configuration and assert semantic task/route behavior rather than repeating model names.
+
+Generated host projections may contain derived routing instructions but are never authority. Regenerate them with EmbrAIon; do not edit them manually. Generated telemetry/reports and capability evidence may record observed models without becoming routing authority. Store only credential references in `.embraion/execution.yaml`, never credential or secret values.
 
 ## Canonical locations
 
@@ -18,6 +24,8 @@ Route and role selection belongs in:
 `.embraion/routing.yaml`
 
 under `overrides.<host>.routes`, and, when a role-specific choice is needed, `overrides.<host>.roles`.
+
+Project task-class profiles, ordered host candidates, availability fallbacks, and explicit quality/critical escalations also belong in `.embraion/routing.yaml`. Binding selectors and credential references belong in `.embraion/execution.yaml`; pricing sources and SKUs belong in `.embraion/pricing.yaml`.
 
 EmbrAIon Core intentionally has no canonical model catalog. A consuming project may define a deployment registry because those values belong to that project, its accounts, its hosts, and its runtime environment.
 
@@ -34,7 +42,7 @@ Do not create framework-owned model catalogs under Core or adapters, and do not 
 7. Point route/role overrides at a deployment id and optionally provide a route-specific effort/options override.
 8. Use ordered `fallbacks` only when the project owns an explicit fallback policy. Every fallback must reference another declared deployment.
 9. Direct `model`, `effort`, and `options` overrides remain valid for simple one-off host selection and backwards compatibility.
-10. Verify with `embraion route` and inspect the registry with `embraion deployment list/show`.
+10. Verify with `embraion route --task-class <class>` or the legacy `--host/--route-class` form, and inspect the registry with `embraion deployment list/show`.
 
 ## Example shape
 

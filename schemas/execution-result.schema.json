@@ -7,7 +7,13 @@
     "schemaVersion": {"const": 1}, "runId": {"type": "string"}, "workItemId": {"type": "string"},
     "status": {"enum": ["completed", "failed", "cancelled", "handoff-required"]},
     "attempts": {"type": "array", "items": {"$ref": "#/$defs/attempt"}},
-    "outputText": {"type": ["string", "null"]}
+    "outputText": {"type": ["string", "null"]},
+    "handoff": {"type": "object", "required": ["deployment", "host", "reason"],
+      "additionalProperties": false, "properties": {
+        "deployment": {"type": "string", "minLength": 1},
+        "host": {"type": "string", "minLength": 1},
+        "reason": {"enum": ["host-boundary", "unbound-adapter"]}
+      }}
   },
   "$defs": {
     "attempt": {"type": "object", "additionalProperties": false,

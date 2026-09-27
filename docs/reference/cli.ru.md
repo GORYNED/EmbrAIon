@@ -258,9 +258,15 @@ Registry project-owned. EmbrAIon валидирует его, но не пост
 ```bash
 embraion route --host codex --route-class substantial --data PRIVATE
 embraion route --host codex --route-class substantial --role reviewer --data PRIVATE
+embraion route --task-class routine-review --access review
+embraion route --task-class routine-review --escalation quality --justification "review evidence"
+embraion route --validate
+embraion route --audit-authority
 ```
 
 Result сообщает `resolution: host-default` с `model: null`, когда host выбирает автоматически; `resolution: project-override` для direct project selector; `resolution: project-deployment`, когда routing ссылается на `.embraion/deployments.yaml`. Deployment routes также сообщают resolved provider, billing metadata и ordered fallback plan.
+
+Task-class resolution собирает ordered effective candidates, отделяет availability fallback от explicit escalation и возвращает provenance. Authority audit ищет дубли concrete facts вне `.embraion/**`; проверенные generated projections исключаются.
 
 ### `embraion dispatch`
 
