@@ -344,6 +344,8 @@ jobs:
           embraion update
           embraion framework verify
           embraion framework install
+          embraion status --json > status.json
+          embraion validate
 
           python - <<'PY'
           from pathlib import Path
@@ -362,6 +364,13 @@ jobs:
           assert artifact["release"] == f"v{version}"
           assert artifact["asset"] == f"embraion-{version}-py3-none-any.whl"
           assert re.fullmatch(r"sha256:[0-9a-f]{64}", artifact["digest"])
+
+          import json
+          status = json.loads(Path("status.json").read_text(encoding="utf-8"))
+          assert status["artifact-locked"] is True
+          assert status["artifact-digest"] == artifact["digest"]
+          assert status["runtime-source"] == "cache"
+          assert status["runtime-cached"] is True
           PY
 
   pypi-publish:
