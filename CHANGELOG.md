@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 0.14.0 - 2026-09-27
+
+### Added
+
+- Framework-owned release artifact locking in `.embraion/project.yaml`, binding the project framework version to the canonical GitHub release tag, exact Python wheel identity, and verified server-side SHA-256 digest.
+- `embraion framework verify` to re-download and verify the exact locked release artifact without installing it.
+- `embraion framework install` to verify the locked wheel before installing it into the isolated project-runtime cache.
+- A post-publication release smoke that exercises a real consumer `init → update → framework verify → framework install` flow using only the project pin/lock.
+
+### Changed
+
+- `embraion update` now resolves published release metadata before mutation and atomically writes `framework.version` together with `framework.artifact`.
+- Existing version-only project overlays can upgrade without manual migration; missing compatible modular configuration files are materialized from framework defaults.
+- Project runtime resolution uses the locked GitHub release wheel when a lock is present and binds reusable cache markers to the same artifact identity and digest.
+- YAML configuration writes use atomic replacement, with `.embraion/project.yaml` written last as the update commit point.
+
+### Security
+
+- Artifact resolution and installation fail closed for missing release assets, malformed locks, invalid or mismatched digests, and version/release/asset mismatches.
+- Consumer CI no longer needs a separately hardcoded EmbrAIon wheel SHA-256 or custom release-download/checksum parsing.
+
+
 ## 0.13.3 - 2026-09-27
 
 ### Added

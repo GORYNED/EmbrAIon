@@ -54,6 +54,7 @@ class CliIntegrationTests(unittest.TestCase):
         self.assertIn("Engineering controls", result.stdout)
         self.assertIn("status     Show launcher, project pin", result.stdout)
         self.assertIn("cache      Inspect or clean cached project-pinned", result.stdout)
+        self.assertIn("framework  Install or verify the project-pinned", result.stdout)
         self.assertIn("help       Show this command catalog", result.stdout)
 
     def test_help_command_matches_top_level_catalog(self) -> None:
@@ -66,6 +67,17 @@ class CliIntegrationTests(unittest.TestCase):
         self.assertIn("usage: embraion cache prune", result.stdout)
         self.assertIn("--older-than", result.stdout)
         self.assertIn("--apply", result.stdout)
+
+    def test_help_exposes_framework_artifact_install_and_verify(self) -> None:
+        install = self._run("help", "framework", "install")
+        verify = self._run("help", "framework", "verify")
+
+        self.assertIn("usage: embraion framework install", install.stdout)
+        self.assertIn("exact locked wheel", install.stdout)
+        self.assertIn("SHA-256", install.stdout)
+        self.assertIn("usage: embraion framework verify", verify.stdout)
+        self.assertIn("exact locked wheel", verify.stdout)
+        self.assertIn("SHA-256", verify.stdout)
 
     def test_help_is_launcher_owned_inside_older_pinned_project(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

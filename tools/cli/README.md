@@ -66,6 +66,8 @@ Main commands:
 embraion init
 embraion install
 embraion update
+embraion framework verify
+embraion framework install
 embraion sync
 embraion validate
 embraion doctor
@@ -83,6 +85,8 @@ embraion learning
 embraion eval
 ```
 
+Starting with v0.14.0, `embraion update` also writes a framework-owned release artifact lock into `.embraion/project.yaml`. `embraion framework verify` re-downloads the exact locked GitHub Release wheel and verifies its SHA-256; `embraion framework install` performs the same verification before installing the wheel into the isolated runtime cache. Consumer CI does not need its own wheel SHA variable or checksum parser.
+
 `v0.2.0` resolves project pins automatically: ordinary commands find the nearest `.embraion/project.yaml`, install an exact pinned release into `~/.embraion/versions/<version>/` when necessary, and delegate to that cached runtime. `init`, `update`, `status`, and `cache` intentionally stay on the global launcher.
 
 Use `embraion status` to inspect the launcher, project pin, resolved runtime, and detected host projections. Use `embraion cache list` to inspect cached runtimes and `embraion cache prune` for a safe dry-run cleanup; add `--apply` to remove candidates.
@@ -91,4 +95,4 @@ For framework development from a source checkout, `EMBRAION_HOME` may point the 
 
 Python source modules use standard `snake_case` naming as an ecosystem-specific exception to the repository's general kebab-case convention.
 
-<sub>Last updated: 2026-09-23 22:00 UTC</sub>
+<sub>Last updated: 2026-09-27 16:58 UTC</sub>

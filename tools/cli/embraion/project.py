@@ -13,6 +13,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 from . import __version__
+from .artifacts import resolve_release_artifact
 from .contracts import default_project_contract_slots
 from .common import (
     framework_root,
@@ -459,24 +460,8 @@ def _config_upgrade_inputs(
         ),
     }
 
-    # deployments.yaml is a new canonical modular file and can be created
-    # empty when upgrading an otherwise-complete older overlay.
-    required_existing = [
-        path for path in definitions
-        if path.name != "deployments.yaml"
-    ]
-    missing = [path for path in required_existing if not path.is_file()]
-    if missing:
-        relative = ", ".join(
-            path.relative_to(destination).as_posix()
-            for path in missing
-        )
-        raise RuntimeError(
-            "Project configuration uses an incomplete or legacy layout. "
-            "Automatic update only normalizes the modular .embraion layout; "
-            f"missing: {relative}."
-        )
-
+    # Missing modular files are safe to materialize from framework defaults.
+    # This keeps version-only legacy overlays upgradeable without a manual migration.
     return definitions
 
 
@@ -509,6 +494,7 @@ def normalize_project_config(
     path: Path,
     *,
     version: str,
+    artifact: dict[str, object] | None = None,
 ) -> list[Path]:
     destination = path.resolve()
     manifest = destination / ".embraion" / "project.yaml"
@@ -535,6 +521,8 @@ def normalize_project_config(
             framework = dict(candidate.get("framework") or {})
             framework["repository"] = "GORYNED/EmbrAIon"
             framework["version"] = version
+            if artifact is not None:
+                framework["artifact"] = dict(artifact)
             candidate["framework"] = framework
 
         _validate_upgrade_candidate(config_path, candidate, schema_path)
@@ -546,10 +534,19 @@ def normalize_project_config(
         if candidate != originals[config_path]
     ]
 
-    for config_path in changed:
+    # Treat project.yaml as the update commit point: write any compatible
+    # modular defaults first, then atomically replace the manifest containing
+    # framework.version and framework.artifact together.
+    ordered_changed = [
+        config_path for config_path in changed if config_path != manifest
+    ]
+    if manifest in changed:
+        ordered_changed.append(manifest)
+
+    for config_path in ordered_changed:
         write_yaml(config_path, candidates[config_path])
 
-    return changed
+    return ordered_changed
 
 
 def update_project(path: Path, version: str | None = None) -> tuple[str | None, str]:
@@ -574,12 +571,20 @@ def update_project(path: Path, version: str | None = None) -> tuple[str | None, 
             "launcher version first, then run 'embraion update'."
         )
 
+    # Resolve and validate the exact published wheel before mutating project files.
+    # A missing release, missing asset, or malformed GitHub digest fails closed.
+    artifact = resolve_release_artifact(current)
+
     recovery = _capture_prior_projection_evidence(
         destination,
         source_version=str(previous or "").strip(),
         target_version=current,
     )
-    normalize_project_config(destination, version=current)
+    normalize_project_config(
+        destination,
+        version=current,
+        artifact=artifact,
+    )
     _persist_projection_recovery_evidence(destination, recovery)
     return previous, current
 
