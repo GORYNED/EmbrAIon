@@ -194,7 +194,10 @@ class VersioningTests(unittest.TestCase):
                         )
 
             self.assertEqual(7, result)
-            ensure.assert_called_once_with("0.1.0")
+            ensure.assert_called_once_with(
+                "0.1.0",
+                artifact_lock=None,
+            )
             command = run.call_args.args[0]
             environment = run.call_args.kwargs["env"]
             self.assertEqual(
