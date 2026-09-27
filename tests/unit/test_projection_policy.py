@@ -240,7 +240,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             changed = normalize_project_config(project, version=__version__)
 
             self.assertTrue(policy_path.is_file())
-            self.assertIn(policy_path, changed)
+            self.assertIn(policy_path.resolve(), changed)
             policy = read_yaml(policy_path)
             self.assertEqual("PRIVATE", policy["privacy"]["default-class"])
             self.assertEqual(
