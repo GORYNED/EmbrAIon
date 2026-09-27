@@ -1,153 +1,83 @@
 # How EmbrAIon Works
 
-EmbrAIon gives an AI client a durable engineering contract for a repository. It does not replace the AI client and it does not intercept every prompt.
+!!! tip "In plain English"
+    You still type a normal request into Codex, Copilot, or Claude Code. The host already has generated native files that point it at the repository's EmbrAIon contract. EmbrAIon does not intercept the chat; it gives the host shared project rules and provides real commands for validation, enforcement, and optional provider execution.
 
-The host still receives your request directly:
+## The simple path: host-native work
+
+This is the path most projects use every day.
 
 ```text
-you
- ↓
-Codex / GitHub Copilot / Claude Code
- ↓
-host-native EmbrAIon projections
- +
-project-owned .embraion/ settings
- ↓
-engineering work
- ↓
-validation → review → evidence → human merge
+you ask for an engineering outcome
+          ↓
+Codex / Copilot / Claude Code
+          ↓
+generated host-native EmbrAIon files
+          +
+project .embraion/ settings
+          ↓
+AI reasoning / edits / tools
+          ↓
+project validation
+          ↓
+review / evidence / human merge
 ```
 
-The important distinction is between **projected guidance** and **deterministic framework execution**.
+For the first useful setup, focus on:
 
-## Projected vs deterministic surfaces
+- **Knowledge** — what the AI should know.
+- **Policy** — what paths/rules it should respect.
+- **Validation** — what commands prove the result works.
 
-| Surface | What it does | Who actually performs the work? |
-| --- | --- | --- |
-| Generated agents / skills | Teach the host reusable roles, procedures, and project integration rules | The AI host |
-| `embraion route` | Deterministically resolves host-default or project routing policy | EmbrAIon CLI |
-| `embraion dispatch` | Creates a bounded plan with role, access, data class, and owned paths | EmbrAIon CLI |
-| Host-native Codex/Copilot/Claude work | Reasons, edits, searches, and uses host tools | The AI host |
-| `embraion execute` | Runs a bounded provider-neutral execution request through an approved binding | EmbrAIon runtime |
-| `embraion validation run` | Runs real project-declared validation commands and records evidence | EmbrAIon CLI + project commands |
-| `embraion enforcement check` | Applies deterministic protected-path / validation / review gates | EmbrAIon CLI |
-| GitHub enforcement workflow | Runs the configured merge-time gate in CI | GitHub Actions |
+Routing, custom deployments, provider execution, pricing, and enforcement can stay at defaults until needed.
 
-A generated agent file can instruct a host, but it cannot magically override the host's own security model. Conversely, `validation`, `execute`, and `enforcement` are executable framework surfaces rather than prompt guidance.
+## What is guidance vs what really executes?
 
-## Two execution lanes
+!!! note "For engineers"
+    Generated agents and skills are host-native instructions. They guide the AI client. They are not the same thing as executable framework checks.
 
-Most projects use the **host-native lane**:
-
-```text
-normal user request
-   ↓
-AI host
-   ↓
-project knowledge / policy / roles / optional routing
-   ↓
-host reasoning + tools
+```bash
+embraion validation run affected
+embraion enforcement check --base-ref origin/main
 ```
 
-The project can optionally use the **provider execution lane**:
+Those commands run real deterministic checks.
+
+For the complete ownership model, see [Engineering Model Deep Dive](../reference/engineering-model.md).
+
+## The advanced path: provider execution
+
+Some projects also want a controlled external/API lane.
 
 ```text
-versioned execution request
-   ↓
-embraion execute
-   ↓
+bounded execution request
+      ↓
 project deployment + execution binding
-   ↓
-adapter (for example litellm-loopback)
-   ↓
+      ↓
+EmbrAIon provider-neutral runtime
+      ↓
 approved provider/model
-   ↓
-normalized result / attempts / usage / cost evidence
+      ↓
+normalized result / attempts / usage / cost
 ```
 
-The second lane is useful when a repository wants deterministic provider bindings, bounded fallback, normalized failure/health behavior, or cost evidence outside the host-native conversation.
+This is optional. Ordinary Codex/Copilot/Claude conversations do not pass through it.
 
-It is optional. A project can use EmbrAIon successfully without `execution.yaml` or `pricing.yaml`.
+See [Execution & Providers](../configuration/execution.md).
 
-## Deployments vs routing vs execution vs pricing
-
-These four concepts answer different questions:
-
-| Concept | Question | Canonical project file |
-| --- | --- | --- |
-| **Deployment** | **What** reusable concrete execution choice exists? | `.embraion/deployments.yaml` |
-| **Routing** | **When** should a route or role select it? | `.embraion/routing.yaml` |
-| **Execution binding** | **How** may that deployment be invoked safely? | `.embraion/execution.yaml` |
-| **Pricing** | **How** is provider cost interpreted and refreshed? | `.embraion/pricing.yaml` + validated snapshot |
-
-Example:
-
-```text
-deployment:
-  "analysis-api" = a reviewed provider/model choice
-
-routing:
-  substantial → analysis-api
-
-execution:
-  analysis-api → litellm-loopback
-                 selector + credential reference
-                 source/trust/task ceilings
-
-pricing:
-  analysis-api → official source + SKU mapping
-                 → validated local snapshot
-```
-
-A project may use only the first two for host-native routing. The execution and pricing files are required only when the project opts into those runtime capabilities.
-
-## What the project configures
-
-The project should describe facts and preferences that are specific to the repository:
-
-- project identity and exact framework pin;
-- architecture and source-of-truth knowledge;
-- protected/generated/external paths;
-- privacy, review, and enforcement policy;
-- concrete deployments and optional routing preferences;
-- project-specific specialists;
-- commands that prove changes work;
-- optional execution bindings, credential references, and pricing sources.
-
-The project should **not** reimplement generic fallback, health, role definitions, validation mechanics, or host projection logic. Those are EmbrAIon Core responsibilities.
-
-## What happens when you ask the AI to configure EmbrAIon
+## Conversational configuration
 
 You can say:
 
-> Configure routing so bounded work stays inexpensive and complex architecture uses our stronger reviewed deployment.
+> Mark `vendor/**` protected, register our architecture document, and add the integration test command to affected validation.
 
-The host should translate that intent to the canonical project files. It should not add an unrelated routing matrix to `AGENTS.md` or a generated agent file.
+The AI host should update the canonical project files for those concerns.
 
-Likewise:
-
-> Mark the vendor SDK protected.
-
-maps to project policy, and:
-
-> Add integration tests to affected validation.
-
-maps to project validation.
-
-The user does not need to memorize the YAML layout. The purpose of the layout is to give the AI and the repository **one authority per concern**.
-
-## What routing does not mean
-
-Writing a route override does not mean EmbrAIon transparently hijacks the host UI and switches every model selection.
-
-For host-native work, EmbrAIon resolves the project contract and the host remains authoritative for its actual model availability and execution.
-
-For provider-neutral execution through `embraion execute`, the framework can deterministically enforce the declared candidate/binding ceilings because it owns that execution path.
+!!! tip "You do not need to memorize YAML"
+    The point of `.embraion/` is not to make humans remember more filenames. It gives the repository and the AI **one authority per concern**.
 
 ## Next
 
-- [Configure the project](../configuration/index.md)
-- [Project deployments](../configuration/deployments.md)
-- [Execution & providers](../configuration/execution.md)
-- [Pricing & cost](../configuration/pricing.md)
-- [Model routing](../model-routing.md)
+- [Your First AI Task](first-ai-task.md)
+- [Daily Workflow](../guides/daily-workflow.md)
+- [Engineering Model Deep Dive](../reference/engineering-model.md)
