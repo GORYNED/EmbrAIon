@@ -90,8 +90,14 @@ EmbrAIon Core uses exactly:
 A mature project may have historical vocabulary that it cannot rename immediately. An execution binding can map the Core class to a project-specific capability label:
 
 ```yaml
-dataClassAliases:
-  CONFIDENTIAL: PROJECT_SECRET
+bindings:
+  legacy-api:
+    adapter: litellm-loopback
+    selector: example/example-model
+    sourceIds: [Project]
+    trustLevels: [verified]
+    dataClassAliases:
+      CONFIDENTIAL: PROJECT_SECRET
 ```
 
 This does **not** create a fourth Core data class. The request is still `CONFIDENTIAL`; the alias is a compatibility mapping at the project execution boundary.
