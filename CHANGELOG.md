@@ -2,11 +2,12 @@
 
 ## Unreleased
 
+## 0.13.2 - 2026-09-26
+
 ### Fixed
 
 - Security scanning no longer treats .NET `PublicKeyToken` assembly metadata as an API credential while preserving detection of standalone API-key, secret, token, and password assignments.
 - Security scanning now honors explicit project `CONFIDENTIAL` aliases declared in `.embraion/execution.yaml`, so intentional project vocabulary is not reported as legacy data-class drift.
-
 
 ## 0.13.1 - 2026-09-26
 
