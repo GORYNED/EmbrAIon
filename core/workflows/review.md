@@ -5,4 +5,4 @@
 3. Reviewer reports prioritized material findings.
 4. Lead assigns remediation without giving the Reviewer implementation ownership.
 5. Validator runs focused regressions.
-6. Re-review only when material changes invalidate prior review evidence.
+6. Re-review only when material changes invalidate prior review evidence. Treat it as a new bounded assignment and classify the actual delta. Prior complexity is risk evidence, not an inherited route. Narrow remediation checks may be substantial; renewed concurrency, lifecycle, compatibility, or architecture changes are complex.

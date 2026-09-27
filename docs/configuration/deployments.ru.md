@@ -75,6 +75,8 @@ overrides:
 
 Fallbacks в `.embraion/routing.yaml` — это **selection plan**. EmbrAIon проверяет, что каждый deployment существует, enabled, принадлежит выбранному host и удовлетворяет объявленным route/data/role/access/effort capabilities.
 
+Project task-class profiles могут объединять host-local selections с явно упорядоченными candidates других hosts. Межхостовой candidate требует handoff и новой privacy/access проверки. Availability fallback не повышает complexity; quality и critical escalation выбираются отдельно и явно.
+
 Дальнейшее зависит от execution lane:
 
 - для **host-native work** AI host фактически запускает выбранный model/tool workflow;

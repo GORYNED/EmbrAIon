@@ -1,0 +1,14 @@
+schemaVersion: 1
+bindings:
+  api-review:
+    adapter: example-adapter
+    selector: example/review-v1
+    credentialRef: env:EXAMPLE_ROUTING_TOKEN
+    sourceIds: [project-source]
+    trustLevels: [verified]
+  api-economy:
+    adapter: example-adapter
+    selector: example/economy-v1
+    credentialRef: env:EXAMPLE_ROUTING_TOKEN
+    sourceIds: [project-source]
+    trustLevels: [verified]

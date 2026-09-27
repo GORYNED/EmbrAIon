@@ -1,0 +1,81 @@
+providers:
+  example-provider: {display-name: Example Provider}
+deployments:
+  native-basic:
+    host: alpha-host
+    provider: example-provider
+    model: example-basic-v1
+    efforts: [low, medium]
+    default-effort: medium
+    billing: {mode: subscription, plan: example-plan}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only, workspace-write]
+      roles: [worker, reviewer, analyst]
+      task-classes: [bounded-write, ordinary, substantial]
+  native-spare:
+    host: alpha-host
+    provider: example-provider
+    model: example-spare-v1
+    efforts: [low]
+    billing: {mode: subscription, plan: example-plan}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only, workspace-write]
+      roles: [worker]
+      task-classes: [bounded-write]
+  native-main:
+    host: alpha-host
+    provider: example-provider
+    model: example-main-v1
+    efforts: [high]
+    billing: {mode: subscription, plan: example-plan}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only, workspace-write]
+      roles: [reviewer]
+      task-classes: [substantial, complex]
+  native-critical:
+    host: alpha-host
+    provider: example-provider
+    model: example-critical-v1
+    efforts: [high]
+    billing: {mode: subscription, plan: example-plan}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only]
+      roles: [reviewer]
+      task-classes: [critical]
+  api-review:
+    host: beta-host
+    provider: example-provider
+    model: example-review-v1
+    efforts: [low]
+    billing: {mode: api}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only]
+      roles: [reviewer]
+      task-classes: [substantial]
+  api-economy:
+    host: beta-host
+    provider: example-provider
+    model: example-economy-v1
+    efforts: [low]
+    billing: {mode: api}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only]
+      roles: [analyst]
+      task-classes: [ordinary]
+  api-alternate:
+    host: beta-host
+    provider: example-provider
+    model: example-alternate-v1
+    efforts: [low]
+    billing: {mode: api}
+    capabilities:
+      data-classes: [PRIVATE]
+      access-modes: [read-only]
+      roles: [analyst]
+      task-classes: [ordinary]

@@ -18,6 +18,6 @@ skills/
 
 A skill describes **how** to perform a class of work. It does not own agent identity or a canonical model catalog. Host adapters project skills into native locations, but Core does not assume that a host automatically inherits root/session skills into every subagent. Per-subagent skill delivery is only a framework guarantee when the target host explicitly supports it and the adapter configures and validates it.
 
-The `routing-configuration` skill tells an installed AI host how to safely write optional project-specific model overrides into `.embraion/routing.yaml` under `overrides`.
+The `routing-configuration` skill directs every installed AI host to keep all manually maintained concrete routing, deployment capability, billing, pricing/SKU, and execution-binding facts in `.embraion/**` when a Product Owner requests routing changes in ordinary language.
 
-<sub>Last updated: 2026-09-25 19:32 UTC</sub>
+<sub>Last updated: 2026-09-27 20:17 UTC</sub>

@@ -1,0 +1,11 @@
+schemaVersion: 1
+sources:
+  example-pricing:
+    url: https://example.org/pricing
+    adapter: openai
+    currency: USD
+    freshnessDays: 30
+    skus:
+      api-review:
+        sku: example-review-sku
+        patterns: {input: 'input=(?P<rate>[0-9.]+)'}

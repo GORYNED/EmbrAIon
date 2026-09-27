@@ -1,0 +1,66 @@
+task-classes:
+  bounded-fix:
+    route-class: bounded-write
+    role: worker
+    data-class: PRIVATE
+    candidates: [{host: alpha-host}]
+  routine-review:
+    route-class: substantial
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: alpha-host}]
+  difficult-review:
+    route-class: complex
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: alpha-host}]
+  narrow-re-review:
+    route-class: substantial
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: alpha-host}]
+  contract-re-review:
+    route-class: complex
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: alpha-host}]
+  protected-decision:
+    route-class: critical
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: alpha-host, deployment: native-critical}]
+  cost-sensitive:
+    route-class: ordinary
+    role: analyst
+    data-class: PRIVATE
+    candidates: [{host: beta-host, group: economy-peers}, {host: alpha-host, deployment: native-basic}]
+  cross-host-review:
+    route-class: substantial
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: beta-host, deployment: api-review}, {host: alpha-host, deployment: native-main}]
+    escalations:
+      quality: {host: alpha-host, deployment: native-main, route-class: complex}
+      critical: {host: alpha-host, deployment: native-critical, route-class: critical}
+candidate-groups:
+  economy-peers:
+    deployments: [{deployment: api-economy}, {deployment: api-alternate}]
+    preferred: {small: api-economy, wide: api-alternate}
+overrides:
+  alpha-host:
+    routes:
+      bounded-write:
+        deployment: native-basic
+        effort: medium
+        fallbacks: [{deployment: native-spare, effort: low}]
+      ordinary: {deployment: native-basic, effort: medium}
+      substantial: {deployment: native-basic, effort: medium}
+      complex: {deployment: native-main, effort: high}
+    route-roles:
+      complex:
+        reviewer: {deployment: native-main, effort: high}
+    task-classes:
+      difficult-review: {deployment: native-main, effort: high}
+  beta-host:
+    routes:
+      ordinary: {deployment: api-economy, effort: low}

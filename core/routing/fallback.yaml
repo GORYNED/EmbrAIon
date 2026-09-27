@@ -5,4 +5,7 @@ rules:
   - a project model override may narrow host automatic selection but never widens EmbrAIon policy
   - changing execution host or external boundary requires a fresh privacy and access decision
   - validation failure is a quality signal, not host or model unavailability
+  - unavailable deployments use only declared availability fallback candidates and never raise task complexity
+  - quality and critical escalation require an explicit request and justification
+  - re-review is a new bounded assignment classified from its actual delta; prior complexity is evidence, not an inherited route
   - unresolved writer or mutation state blocks writable rerouting

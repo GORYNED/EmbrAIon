@@ -427,7 +427,30 @@ def _cmd_deployment_show(args: argparse.Namespace) -> int:
 
 
 def _cmd_route(args: argparse.Namespace) -> int:
-    _print_json(route(args.host, args.route_class, args.data, role=args.role))
+    if args.audit_authority:
+        from .routing_authority import audit_routing_authority
+        findings = audit_routing_authority()
+        _print_json({"valid": not findings, "findings": findings})
+        return 1 if findings else 0
+    if args.validate:
+        from .runtime import validate_task_routes
+        _print_json(validate_task_routes())
+        return 0
+    if args.task_class:
+        from .runtime import resolve_task_route
+        if args.host or args.route_class:
+            raise RuntimeError("--task-class cannot be combined with --host or --route-class.")
+        _print_json(resolve_task_route(args.task_class, data_class=args.data,
+                                       role=args.role, access=args.access,
+                                       escalation=args.escalation,
+                                       justification=args.justification, shape=args.shape))
+    else:
+        if not args.host or not args.route_class:
+            raise RuntimeError("Route requires --host and --route-class, or --task-class.")
+        if args.escalation or args.justification or args.shape:
+            raise RuntimeError("Escalation and shape require --task-class.")
+        _print_json(route(args.host, args.route_class, args.data or "PRIVATE", role=args.role,
+                          access=args.access))
     return 0
 
 
@@ -1477,12 +1500,12 @@ def build_parser() -> argparse.ArgumentParser:
     route_parser = sub.add_parser("route", help="Resolve host-default or project routing", description="Resolve host-default or project routing for a host, route class, role, and data class.")
     route_parser.add_argument(
         "--host",
-        required=True,
+        required=False,
         help="Execution host/surface name. Project deployments may use custom hosts.",
     )
     route_parser.add_argument(
         "--route-class",
-        required=True,
+        required=False,
         choices=[
             "bounded-read",
             "bounded-write",
@@ -1493,9 +1516,16 @@ def build_parser() -> argparse.ArgumentParser:
         ],
     )
     route_parser.add_argument("--role")
+    route_parser.add_argument("--task-class", help="Resolve a project task class's effective candidate plan.")
+    route_parser.add_argument("--access", choices=["inspect", "plan", "review", "write", "external-read", "read-only", "workspace-write"])
+    route_parser.add_argument("--escalation", choices=["quality", "critical"])
+    route_parser.add_argument("--justification")
+    route_parser.add_argument("--shape", help="Optional project work-shape key for candidate-group preference.")
+    route_parser.add_argument("--validate", action="store_true", help="Validate every configured task class and candidate group.")
+    route_parser.add_argument("--audit-authority", action="store_true", help="Find duplicate concrete routing facts outside .embraion.")
     route_parser.add_argument(
         "--data",
-        default="PRIVATE",
+        default=None,
         choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
     )
     route_parser.set_defaults(func=_cmd_route)

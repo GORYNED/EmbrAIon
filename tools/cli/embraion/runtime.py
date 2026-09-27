@@ -47,6 +47,7 @@ def _routing_override(
     host: str,
     route_class: str,
     role: str | None,
+    task_class: str | None = None,
 ) -> dict[str, Any]:
     routing = read_routing_config(project)
     overrides = routing.get("overrides") or {}
@@ -70,7 +71,35 @@ def _routing_override(
         merged.pop("deployment", None)
         if "fallbacks" not in role_override:
             merged.pop("fallbacks", None)
+    route_role = ((host_overrides.get("route-roles") or {}).get(route_class) or {}).get(role) if role else None
+    task_override = (host_overrides.get("task-classes") or {}).get(task_class) if task_class else None
+    for specific in (route_role, task_override):
+        if specific is None:
+            continue
+        if not isinstance(specific, dict):
+            raise RuntimeError("Routing specific override must be a mapping.")
+        if "deployment" in specific or "model" in specific:
+            merged.pop("deployment", None)
+            merged.pop("model", None)
+            if "fallbacks" not in specific:
+                merged.pop("fallbacks", None)
+        merged.update(specific)
     return merged
+
+
+def _routing_layers(project: Path, host: str, route_class: str,
+                    role: str | None, task_class: str | None) -> list[str]:
+    host_config = (read_routing_config(project).get("overrides") or {}).get(host) or {}
+    layers: list[str] = []
+    if route_class in (host_config.get("routes") or {}):
+        layers.append("route")
+    if role and role in (host_config.get("roles") or {}):
+        layers.append("role")
+    if role and role in ((host_config.get("route-roles") or {}).get(route_class) or {}):
+        layers.append("route-role")
+    if task_class and task_class in (host_config.get("task-classes") or {}):
+        layers.append("task-class")
+    return layers or ["host-default"]
 
 
 def _deployment_registry(project: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -135,6 +164,7 @@ def _resolve_deployment(
     registry: tuple[dict[str, Any], dict[str, Any]],
     host: str,
     route_class: str,
+    task_class: str | None,
     data_class: str,
     role: str | None,
     access: str | None,
@@ -172,7 +202,10 @@ def _resolve_deployment(
             f"Project deployment '{deployment_id}' does not allow data class '{data_class}'."
         )
     task_classes = {str(value) for value in (capabilities.get("task-classes") or [])}
-    if task_classes and route_class not in task_classes:
+    allowed_task = route_class in task_classes or (
+        route_class != "critical" and task_class in task_classes
+    )
+    if task_classes and not allowed_task:
         raise RuntimeError(
             f"Project deployment '{deployment_id}' does not allow route class '{route_class}'."
         )
@@ -191,6 +224,7 @@ def _resolve_deployment(
     resolved_options.update(options or {})
     return {
         "deployment": deployment_id,
+        "host": host,
         "provider": provider,
         "model": definition["model"],
         "effort": selected_effort,
@@ -206,6 +240,7 @@ def _resolve_fallbacks(
     registry: tuple[dict[str, Any], dict[str, Any]],
     host: str,
     route_class: str,
+    task_class: str | None,
     data_class: str,
     role: str | None,
     access: str | None,
@@ -227,6 +262,7 @@ def _resolve_fallbacks(
                 registry=registry,
                 host=host,
                 route_class=route_class,
+                task_class=task_class,
                 data_class=data_class,
                 role=role,
                 access=access,
@@ -245,6 +281,7 @@ def route(
     role: str | None = None,
     access: str | None = None,
     project: Path | None = None,
+    task_class: str | None = None,
 ) -> dict[str, Any]:
     if route_class not in _known_route_classes():
         raise RuntimeError(f"Unknown route class: {route_class}")
@@ -252,7 +289,7 @@ def route(
         raise RuntimeError(f"Unknown data class: {data_class}")
 
     project_path = project_root(project)
-    override = _routing_override(project_path, host, route_class, role)
+    override = _routing_override(project_path, host, route_class, role, task_class)
     options = override.get("options") or {}
     if not isinstance(options, dict):
         raise RuntimeError("Routing override options must be a mapping.")
@@ -265,6 +302,7 @@ def route(
             registry=registry,
             host=host,
             route_class=route_class,
+            task_class=task_class,
             data_class=data_class,
             role=role,
             access=access,
@@ -291,6 +329,7 @@ def route(
         registry=registry,
         host=host,
         route_class=route_class,
+        task_class=task_class,
         data_class=data_class,
         role=role,
         access=access,
@@ -298,8 +337,10 @@ def route(
     result = {
         "host": host,
         "route": route_class,
+        "task-class": task_class,
         "role": role,
         "resolution": resolution,
+        "provenance": _routing_layers(project_path, host, route_class, role, task_class),
         "deployment": str(deployment_id) if deployment_id else None,
         "provider": provider,
         "model": model,
@@ -326,6 +367,164 @@ def route(
         },
     )
     return result
+
+
+_DATA_RANK = {"PUBLIC": 0, "PRIVATE": 1, "CONFIDENTIAL": 2}
+_COMPLEX_REVIEW_SEMANTICS = frozenset({"concurrency", "lifecycle", "compatibility", "architecture"})
+
+
+def classify_review_assignment(*, delta_semantics: list[str] | tuple[str, ...] = (),
+                               difficult: bool = False,
+                               previous_route: str | None = None) -> str:
+    """Classify the current bounded review; prior complexity is evidence only."""
+    if previous_route is not None and previous_route not in _known_route_classes():
+        raise RuntimeError(f"Unknown previous route class: {previous_route}")
+    if any(not isinstance(value, str) or not value for value in delta_semantics):
+        raise RuntimeError("Review delta semantics must be non-empty strings.")
+    return ("complex" if difficult or _COMPLEX_REVIEW_SEMANTICS.intersection(delta_semantics)
+            else "substantial")
+
+
+def resolve_task_route(
+    task_class: str,
+    *,
+    data_class: str | None = None,
+    role: str | None = None,
+    access: str | None = None,
+    escalation: str | None = None,
+    justification: str | None = None,
+    project: Path | None = None,
+    shape: str | None = None,
+) -> dict[str, Any]:
+    """Resolve a project task class without making availability a quality decision."""
+    root = project_root(project)
+    config = read_routing_config(root)
+    profile = (config.get("task-classes") or {}).get(task_class)
+    if profile is None:
+        raise RuntimeError(f"Unknown project task class: {task_class}")
+    route_class = profile["route-class"]
+    minimum_data = profile.get("data-class", "PRIVATE")
+    selected_data = data_class or minimum_data
+    if selected_data not in _DATA_RANK or _DATA_RANK[selected_data] < _DATA_RANK[minimum_data]:
+        raise RuntimeError("Task data class cannot be below the project minimum.")
+    selected_role = role or profile.get("role")
+    registry = _deployment_registry(root)
+    groups = config.get("candidate-groups") or {}
+
+    def resolve_candidate(spec: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
+        host = spec["host"]
+        candidate_route = spec.get("route-class", route_class)
+        selected_escalation = source == f"escalation:{escalation}"
+        optional_escalation = source.startswith("escalation:") and not selected_escalation
+        candidate_data = minimum_data if optional_escalation else selected_data
+        candidate_access = None if optional_escalation else access
+        if "deployment" not in spec and ("effort" in spec or "options" in spec):
+            raise RuntimeError("Candidate effort/options require an explicit deployment.")
+        if "group" in spec:
+            group_id = spec["group"]
+            if group_id not in groups:
+                raise RuntimeError(f"Unknown routing candidate group: {group_id}")
+            group = groups[group_id]
+            choices = list(group["deployments"])
+            for preferred in (group.get("preferred") or {}).values():
+                if preferred not in [item["deployment"] for item in choices]:
+                    raise RuntimeError(f"Candidate group '{group_id}' has an unknown preferred deployment.")
+            preferred_id = (group.get("preferred") or {}).get(shape) if shape else None
+            if preferred_id:
+                choices.sort(key=lambda item: 0 if item["deployment"] == preferred_id else 1)
+            return [
+                {
+                    **_resolve_deployment(item["deployment"], registry=registry, host=host,
+                                          route_class=candidate_route, task_class=task_class,
+                                          data_class=candidate_data, role=selected_role, access=candidate_access,
+                                          effort=item.get("effort"), options=item.get("options")),
+                    "source": f"{source}:group:{group_id}", "route": candidate_route,
+                }
+                for item in choices
+            ]
+        if "deployment" in spec:
+            resolved = _resolve_deployment(
+                spec["deployment"], registry=registry, host=host,
+                route_class=candidate_route, task_class=task_class,
+                data_class=candidate_data, role=selected_role, access=candidate_access,
+                effort=spec.get("effort"), options=spec.get("options"),
+            )
+            return [{**resolved, "source": source, "route": candidate_route}]
+        selected = route(host, candidate_route, candidate_data, role=selected_role,
+                         access=candidate_access, project=root, task_class=task_class)
+        primary = {key: selected.get(key) for key in ("deployment", "provider", "model", "effort", "options", "billing")}
+        results = [{**primary, "host": host, "route": candidate_route,
+                    "provenance": selected["provenance"],
+                    "source": f"{source}:host-route"}]
+        results.extend({**fallback, "route": candidate_route,
+                        "source": f"{source}:host-fallback"}
+                       for fallback in selected["fallbacks"])
+        return results
+
+    candidates: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, spec in enumerate(profile["candidates"]):
+        for candidate in resolve_candidate(spec, source=f"candidate:{index}"):
+            identity = candidate.get("deployment") or f"host-default:{candidate['host']}"
+            if identity in seen:
+                raise RuntimeError(f"Duplicate effective route candidate: {identity}")
+            seen.add(identity)
+            candidate["requires-handoff"] = bool(candidates and candidate["host"] != candidates[-1]["host"])
+            candidate["requires-fresh-privacy-access"] = candidate["requires-handoff"]
+            candidates.append(candidate)
+    if not candidates:
+        raise RuntimeError("Task route requires at least one candidate.")
+
+    escalations: dict[str, dict[str, Any]] = {}
+    for kind, spec in (profile.get("escalations") or {}).items():
+        if kind == "critical" and spec.get("route-class") != "critical":
+            raise RuntimeError("Critical escalation requires an explicit critical route class.")
+        resolved = resolve_candidate(spec, source=f"escalation:{kind}")
+        if len(resolved) != 1:
+            raise RuntimeError("Escalation must resolve to one candidate.")
+        escalations[kind] = resolved[0]
+        escalations[kind]["requires-handoff"] = resolved[0]["host"] != candidates[0]["host"]
+        escalations[kind]["requires-fresh-privacy-access"] = escalations[kind]["requires-handoff"]
+    if escalation is not None and escalation not in escalations:
+        raise RuntimeError(f"No declared {escalation} escalation for task class '{task_class}'.")
+    if escalation is not None and not (justification or "").strip():
+        raise RuntimeError("Explicit escalation requires justification.")
+    selected = escalations[escalation] if escalation else candidates[0]
+    if selected["route"] == "critical" and not (justification or "").strip():
+        raise RuntimeError("Critical task routing requires justification.")
+    return {
+        "task-class": task_class,
+        "route": route_class,
+        "role": selected_role,
+        "data": selected_data,
+        "candidates": candidates,
+        "selected": selected,
+        "fallbacks": candidates[1:] if escalation is None else [],
+        "escalations": escalations,
+        "selection-reason": escalation or "initial",
+        "shape": shape,
+        "group-preferences": {name: group.get("preferred") or {} for name, group in groups.items()},
+        "justification": justification if escalation or selected["route"] == "critical" else None,
+    }
+
+
+def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
+    root = project_root(project)
+    config = read_routing_config(root)
+    registry = _deployment_registry(root)[1]
+    for group_id, group in (config.get("candidate-groups") or {}).items():
+        ids = [item["deployment"] for item in group["deployments"]]
+        if len(ids) != len(set(ids)) or any(item not in registry for item in ids):
+            raise RuntimeError(f"Candidate group '{group_id}' contains duplicate or unknown deployments.")
+        if any(value not in ids for value in (group.get("preferred") or {}).values()):
+            raise RuntimeError(f"Candidate group '{group_id}' has an unknown preferred deployment.")
+    classes = config.get("task-classes") or {}
+    for task_class, profile in classes.items():
+        resolved = resolve_task_route(task_class, project=root, justification="configuration validation")
+        if not resolved["candidates"]:
+            raise RuntimeError(f"Task class '{task_class}' has no candidates.")
+    return {"valid": True, "task-classes": sorted(classes),
+            "candidate-groups": sorted(config.get("candidate-groups") or {})}
 
 
 def _current_branch(project: Path) -> str | None:

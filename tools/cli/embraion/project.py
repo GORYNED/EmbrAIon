@@ -84,6 +84,8 @@ def _normalize_components(
     supported = HOST_COMPONENTS.get(host)
     if supported is None:
         raise RuntimeError(f"Unsupported host: {host}")
+    if host != "portable" and ("skills" not in supported or host not in HOST_SKILL_DIRECTORIES):
+        raise RuntimeError(f"Host '{host}' must project the Core routing-authority skill.")
 
     if not components:
         return supported
@@ -721,6 +723,7 @@ def load_agents(
 
 def _agent_instructions(agent: dict[str, Any]) -> str:
     lines = [agent.get("purpose", "")]
+    lines.append("For Product Owner routing or model configuration requests, load the EmbrAIon routing-configuration skill.")
 
     if agent.get("responsibilities"):
         lines.append("Responsibilities:")
@@ -840,7 +843,7 @@ def _generate_markdown_agents(
 def _generate_host_skills(root: Path, output: Path, host: str) -> None:
     relative = HOST_SKILL_DIRECTORIES.get(host)
     if relative is None:
-        return
+        raise RuntimeError(f"Host '{host}' has no routing-authority skill projection.")
 
     target = output / relative
     target.mkdir(parents=True, exist_ok=True)

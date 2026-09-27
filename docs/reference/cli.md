@@ -264,9 +264,15 @@ Resolve host-default or project-overridden routing. EmbrAIon does not select a m
 ```bash
 embraion route --host codex --route-class substantial --data PRIVATE
 embraion route --host codex --route-class substantial --role reviewer --data PRIVATE
+embraion route --task-class routine-review --access review
+embraion route --task-class routine-review --escalation quality --justification "review evidence"
+embraion route --validate
+embraion route --audit-authority
 ```
 
 The result reports `resolution: host-default` with `model: null` when the host should choose automatically, `resolution: project-override` for a direct project selector, or `resolution: project-deployment` when routing references `.embraion/deployments.yaml`. Deployment routes also report the resolved provider, billing metadata, and ordered fallback plan.
+
+Task-class resolution composes the project's ordered effective candidates, keeps availability fallback separate from explicit escalation, and reports provenance. The authority audit checks manually maintained consumer files for duplicates of concrete facts held in `.embraion/**`; verified generated projections are exempt.
 
 ### `embraion dispatch`
 

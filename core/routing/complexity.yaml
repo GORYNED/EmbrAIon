@@ -16,3 +16,5 @@ principles:
   role-model-separation: true
   explicit-route-per-dispatch: true
   critical-requires-justification: true
+  rereview-is-new-bounded-assignment: true
+  previous-complexity-is-evidence-not-inheritance: true

@@ -110,6 +110,32 @@ Resolution precedence is:
 
 A role override is merged over the route override, so a role can replace only the fields it needs.
 
+## Project task classes and effective routes
+
+Projects can define their own semantic task classes in `.embraion/routing.yaml`. Each class names a Core route class, an optional role and minimum data class, and an ordered list of host candidates. A candidate can use that host's route/role/task-class override, name a deployment directly, or expand a project candidate group. Host route fallbacks are inserted immediately after that host's primary candidate. Task-class overrides take precedence over route-role, role, and route overrides.
+
+```yaml
+task-classes:
+  routine-review:
+    route-class: substantial
+    role: reviewer
+    data-class: PRIVATE
+    candidates: [{host: review-host}, {host: native-host, deployment: native-review}]
+    escalations:
+      quality: {host: native-host, deployment: deep-review, route-class: complex}
+      critical: {host: native-host, deployment: protected-review, route-class: critical}
+overrides:
+  review-host:
+    task-classes:
+      routine-review: {deployment: review-primary}
+```
+
+These identifiers are project examples, not Core models. Resolve with `embraion route --task-class routine-review --access review`. The JSON result reports the selected deployment, ordered availability candidates, separate escalation choices, and selection provenance. `embraion route --validate` checks all declared task classes and groups. `embraion route --audit-authority` finds duplicate concrete routing facts in manually maintained consumer files.
+
+Availability fallback follows only the declared candidate order and never changes the task's complexity. A cross-host candidate requires a fresh privacy/access decision and an explicit handoff. Quality or critical escalation is selected only with `--escalation` and `--justification`; critical escalation must name the `critical` route class, and any selected critical task route requires justification. Each re-review is a new bounded assignment classified from its actual delta. A narrow fix check can use `substantial` after a complex initial review, while changes to concurrency, lifecycle, compatibility, or architecture semantics remain `complex`.
+
+`.embraion/**` is the only manually maintained authority for concrete provider/model/deployment/effort/routing/fallback facts, deployment capabilities, billing, pricing/SKU, and execution bindings. Store credential references in `.embraion/execution.yaml`, not secret values. Consumer tests and docs should refer to semantic classes and query EmbrAIon for resolved choices. Generated host projections are derived outputs, never a second authority.
+
 ## Routing is not provider execution
 
 Routing answers **what should be selected**. It does not by itself create a provider call.

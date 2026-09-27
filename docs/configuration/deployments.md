@@ -75,6 +75,8 @@ overrides:
 
 Fallbacks in `.embraion/routing.yaml` are a **selection plan**. EmbrAIon verifies that every referenced deployment exists, is enabled, belongs to the selected host, and satisfies declared route/data/role/access/effort capabilities.
 
+Project task-class profiles may compose those host-local selections with explicitly ordered candidates on other hosts. A cross-host candidate is a handoff boundary with a fresh privacy/access decision, not an automatic provider switch. Availability fallback never raises complexity; quality and critical escalation are separate explicit selections.
+
 What happens next depends on the execution lane:
 
 - for **host-native work**, the AI host remains responsible for actually running the selected model/tool workflow;

@@ -49,7 +49,10 @@ def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict
     capabilities = deployment.get("capabilities") or {}
     bound_class = (binding.get("dataClassAliases") or {}).get(request["dataClass"], request["dataClass"])
     route_class = request["routeClass"]
-    task_class = (binding.get("taskClassAliases") or {}).get(route_class, route_class)
+    project_task_class = request.get("taskClass")
+    task_class = (binding.get("taskClassAliases") or {}).get(
+        project_task_class or route_class, project_task_class or route_class
+    )
     permitted_classes = binding.get("taskClasses")
     return bool(
         deployment.get("enabled", True)
@@ -59,8 +62,9 @@ def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict
         and bound_class in capabilities["data-classes"]
         and request["access"] in capabilities["access-modes"]
         and request["role"] in capabilities["roles"]
-        and (permitted_classes is None or route_class in permitted_classes)
-        and task_class in capabilities["task-classes"]
+        and (permitted_classes is None or route_class in permitted_classes or task_class in permitted_classes)
+        and (route_class in capabilities["task-classes"] or
+             (route_class != "critical" and task_class in capabilities["task-classes"]))
         and set(request["sourceIds"]).issubset(binding["sourceIds"])
         and request["trustLevel"] in binding["trustLevels"]
         and (request["access"] != "workspace-write" or bool(request["ownedPaths"]))
@@ -84,6 +88,23 @@ def execute(
     if len(identities) != len(set(identities)):
         raise RuntimeError("Execution candidate repeats a deployment.")
     root = project_root(project)
+    if request.get("taskClass"):
+        from .runtime import resolve_task_route
+        resolved = resolve_task_route(
+            request["taskClass"], data_class=request["dataClass"], role=request["role"],
+            access=request["access"], escalation=request.get("escalation"),
+            justification=request.get("justification"), shape=request.get("shape"), project=root,
+        )
+        expected_route = resolved["selected"]["route"]
+        if request["routeClass"] != expected_route:
+            raise RuntimeError("Execution route class does not match the effective task route.")
+        allowed = ([resolved["selected"]] if request.get("escalation") else resolved["candidates"])
+        allowed_ids = [item["deployment"] for item in allowed]
+        actual_ids = [item["deployment"] for item in request["candidates"]]
+        if any(item not in allowed_ids for item in actual_ids) or actual_ids != [item for item in allowed_ids if item in actual_ids]:
+            raise RuntimeError("Execution candidates do not follow the project effective route.")
+    elif request.get("escalation") or request.get("justification"):
+        raise RuntimeError("Execution escalation requires a project task class.")
     registry = read_deployments_config(root)["deployments"]
     bindings = read_execution_config(root)["bindings"]
     adapter_map = adapters or {}
@@ -92,12 +113,13 @@ def execute(
     seen: set[str] = set()
     status = "failed"
     output_text: str | None = None
+    handoff: dict[str, str] | None = None
     observations = health_observations if health_observations is not None else request.get("healthObservations")
     policy = health_policy if health_policy is not None else request.get("healthPolicy")
     states = ({identifier: evaluate_health(observations.get(identifier, []), **(policy or {}))["state"]
                for identifier in identities} if observations is not None else {})
     candidates = list(request["candidates"])
-    if not request.get("preserveCandidateOrder", False):
+    if not request.get("taskClass") and not request.get("preserveCandidateOrder", False):
         candidates.sort(key=lambda item: 1 if states.get(item["deployment"]) == "degraded" else
                         2 if states.get(item["deployment"]) == "unavailable" else 0)
     for candidate in candidates:
@@ -111,9 +133,22 @@ def execute(
         binding = bindings.get(identifier)
         if deployment is None:
             raise RuntimeError("Execution candidate is not a declared deployment.")
+        if deployment["host"] != request["host"]:
+            from .runtime import _deployment_registry, _resolve_deployment
+            _resolve_deployment(identifier, registry=_deployment_registry(root),
+                                host=deployment["host"], route_class=request["routeClass"],
+                                task_class=request.get("taskClass"), data_class=request["dataClass"],
+                                role=request["role"], access=request["access"],
+                                effort=candidate.get("effort"), options=candidate.get("options"))
+            if binding is not None and not _eligible({**request, "host": deployment["host"]}, deployment, binding):
+                raise RuntimeError("Cross-host candidate violates original request ceilings.")
+            status = "handoff-required"
+            handoff = {"deployment": identifier, "host": deployment["host"], "reason": "host-boundary"}
+            break
         if binding is None:
             # Unbound native/host candidates require an explicit host handoff.
             status = "handoff-required"
+            handoff = {"deployment": identifier, "host": deployment["host"], "reason": "unbound-adapter"}
             break
         if not _eligible(request, deployment, binding):
             raise RuntimeError("Execution candidate violates original role/data/source/trust/access ceilings.")
@@ -199,5 +234,7 @@ def execute(
             break
     result = {"schemaVersion": 1, "runId": request["runId"], "workItemId": request["workItemId"],
               "status": status, "attempts": attempts, "outputText": output_text}
+    if handoff is not None:
+        result["handoff"] = handoff
     _validate(result, "execution-result.schema.json")
     return result
