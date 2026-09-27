@@ -366,6 +366,11 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
                 str(current["framework"]["version"]),
             )
             self.assertEqual(artifact, current["framework"]["artifact"])
+
+            # The release does not exist yet during pre-publication validation.
+            # The post-publish release smoke exercises real locked resolution.
+            environment["EMBRAION_DISABLE_VERSION_RESOLUTION"] = "1"
+
             upgraded_policy = yaml.safe_load(
                 policy_path.read_text(encoding="utf-8")
             )
