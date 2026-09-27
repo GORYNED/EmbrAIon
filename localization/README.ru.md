@@ -132,6 +132,21 @@ validation → review → evidence → human merge
 
 Для опционального API/provider lane можно использовать `embraion execute`, где EmbrAIon уже детерминированно владеет bounded attempts, normalized failures/health и eligible fallback по утверждённым project bindings.
 
+## Execution и Pricing
+
+Четыре понятия отвечают на разные вопросы:
+
+| Понятие | Вопрос |
+| --- | --- |
+| Deployment | **Что** можно использовать |
+| Routing | **Когда** это выбирать |
+| Execution | **Как** это безопасно вызвать |
+| Pricing | **Как** получить и интерпретировать стоимость |
+
+Provider execution настраивается отдельным `.embraion/execution.yaml`; credentials хранятся как references, а не значения секретов.
+
+Pricing обновляется только явно через `embraion pricing refresh`. EmbrAIon валидирует официальный источник и локальный snapshot; failed refresh не уничтожает last-known-good данные, а неизвестная стоимость остаётся `unknown`, а не превращается в ноль.
+
 ## Routing
 
 EmbrAIon использует стабильные классы работы:
@@ -192,4 +207,4 @@ EmbrAIon находится в pre-1.0 стадии. Patch-релизы пред
 
 ---
 
-<sub>Последнее обновление: 2026-09-27 01:40 UTC</sub>
+<sub>Последнее обновление: 2026-09-27 01:52 UTC</sub>
