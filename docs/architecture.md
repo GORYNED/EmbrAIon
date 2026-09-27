@@ -50,6 +50,29 @@ validation and review
 
 This separation keeps roles small, procedures reusable, and project facts outside reusable Core.
 
+## Mechanisms vs project facts
+
+The most important ownership boundary is simple:
+
+| EmbrAIon Core | Consuming project |
+| --- | --- |
+| reusable roles and skills | architecture/domain knowledge |
+| route and execution contracts | concrete deployments and routing preferences |
+| generic security and privacy mechanics | protected paths and project privacy policy |
+| generic validation/review mechanics | real project validation commands |
+| host projection behavior | project-specific specialists |
+| provider-neutral execution/fallback/health | optional execution bindings, credentials references, pricing sources |
+
+A project can narrow or configure Core behavior, but it should not recreate a second generic AI framework inside the repository.
+
+## Prompt flow is host-native
+
+EmbrAIon does not sit in front of Codex, Copilot, or Claude Code as a mandatory prompt proxy.
+
+The host receives the user's request normally. Installed projections teach that host about reusable Core roles/skills and about the repository's canonical `.embraion/` contract. The host then performs the reasoning and tool use.
+
+This is why ordinary tasks can remain ordinary natural-language requests while configuration changes still land in deterministic project-owned files.
+
 ## State and learning
 
 Runtime state is normalized into privacy-safe session, context, validation, and run records. Repeated outcomes may create learning candidates, but canonical capability promotion is always reviewed, validated, and explicitly approved.

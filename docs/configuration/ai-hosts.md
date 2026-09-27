@@ -1,16 +1,66 @@
 # Configure with Your AI Client
 
-You do not have to hand-edit every `.embraion/` file. The AI client already working in the repository can help configure project-owned EmbrAIon settings, as long as it edits the canonical file for the requested concern and preserves safety boundaries.
+You do not have to hand-edit every `.embraion/` file. The AI client already working in the repository can help configure project-owned EmbrAIon settings.
 
-This page focuses on conversational configuration patterns for Codex, GitHub Copilot, and Claude Code. For install locations and generated files, use the dedicated [AI Clients](../hosts/index.md) section.
+The important point is **how** this works:
 
-EmbrAIon keeps the project configuration host-neutral where possible, then projects reusable agents and skills into the AI client you actually use.
+> EmbrAIon does not intercept your prompt. The installed host projection teaches the AI client where the repository's canonical EmbrAIon configuration lives and which reusable roles/skills are available.
 
-The important ownership rule is:
+The AI client still performs the conversation and reasoning. EmbrAIon supplies the project contract.
+
+## Two kinds of requests
+
+### Ordinary engineering
+
+You can ask for the engineering outcome directly:
+
+> Fix the retry behavior when the service connection fails.
+
+Once the host projection is installed, you should not need to restate the whole EmbrAIon workflow in every prompt. The host can use the repository's project knowledge, policy, roles, routing, validation, and review contract.
+
+### Configuring the AI-First system
+
+You can also ask the host to change how AI-assisted engineering works in this repository:
+
+> Configure routing so bounded work uses inexpensive models, complex architecture uses stronger reasoning, and the critical route is reserved for exceptional risk.
+
+The host should translate that intent into the correct canonical `.embraion/` files, validate the result, and avoid duplicating the rule elsewhere.
+
+## Canonical ownership
+
+| User intent | Canonical file |
+| --- | --- |
+| Change project identity or capabilities metadata | `.embraion/project.yaml` |
+| Register architecture/domain knowledge | `.embraion/knowledge.yaml` |
+| Mark protected/canonical/generated/external paths | `.embraion/policy.yaml` |
+| Register reusable concrete model/provider choices | `.embraion/deployments.yaml` |
+| Change model routing | `.embraion/routing.yaml` |
+| Add project validation commands | `.embraion/validation.yaml` |
+| Declare project-specific agents | `.embraion/agents.yaml` |
+| Configure optional provider execution bindings | `.embraion/execution.yaml` |
+| Configure optional pricing sources | `.embraion/pricing.yaml` |
+
+Generated host files are projections, not a second configuration authority.
 
 ![Canonical configuration to AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
 You can use one host or several in the same repository.
+
+## A general conversational request
+
+A useful project-setup request is:
+
+> Review this repository and configure its EmbrAIon project contract. Keep project facts in the canonical `.embraion/` files, preserve Core safety gates, do not invent model selectors or secrets, and explain which project settings you changed and why.
+
+After customization:
+
+```bash
+embraion doctor
+embraion policy show
+embraion status
+```
+
+For routing, verify the routes you changed with `embraion route`. For generated host files, preview with `embraion projection diff`.
 
 ## Codex
 
@@ -203,30 +253,3 @@ For selective adoption:
 embraion projection diff --host claude-code --destination . --component skills
 embraion install --host claude-code --destination . --component skills
 ```
-
-## Configure more than model routing
-
-The AI client can also help customize the rest of `.embraion/` as long as it edits the canonical file for the requested concern:
-
-| User intent | Canonical file |
-| --- | --- |
-| Change project identity or capabilities metadata | `.embraion/project.yaml` |
-| Register architecture/domain knowledge | `.embraion/knowledge.yaml` |
-| Mark protected/canonical/generated/external paths | `.embraion/policy.yaml` |
-| Change model routing | `.embraion/routing.yaml` |
-| Add project validation commands | `.embraion/validation.yaml` |
-| Declare project-specific agent IDs | `.embraion/agents.yaml` |
-
-A useful general request is:
-
-> Review this repository and configure its EmbrAIon project files for the current project. Keep each concern in its canonical `.embraion/` file, preserve existing framework safety gates, do not invent model selectors, and show which settings you changed and why.
-
-After customization, inspect the result with:
-
-```bash
-embraion doctor
-embraion policy show
-embraion status
-```
-
-For model routing, also run `embraion route` for the routes or roles you changed.
