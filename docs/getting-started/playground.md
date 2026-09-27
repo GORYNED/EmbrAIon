@@ -62,7 +62,10 @@ A fresh project's validation profiles may be empty. If so, running them reports 
 ## 5. Inspect routing without calling a model
 
 ```bash
-embraion route   --host codex   --route-class substantial   --data PRIVATE
+embraion route \
+  --host codex \
+  --route-class substantial \
+  --data PRIVATE
 ```
 
 With no project override, the result should resolve to `host-default`: EmbrAIon classifies the work, while the host remains responsible for its actual model selection.
@@ -94,6 +97,16 @@ routing / validation / policy inspection
 It intentionally does not simulate paid provider calls or complex application validation.
 
 For a checked-in example, use the [Minimal reference project](../examples/minimal.md).
+
+## What next?
+
+If the sandbox made sense, continue with a checked-in example:
+
+- [Minimal](../examples/minimal.md) — the smallest complete current project overlay;
+- [Python](../examples/python.md) — ordinary application code and tests;
+- [Unity](../examples/unity.md) — Unity 6 with EmbrAIon outside the game runtime.
+
+Then move to [Add EmbrAIon to a Project](first-project.md) or [Adopt an Existing Repository](existing-repository.md).
 
 ## Clean up
 

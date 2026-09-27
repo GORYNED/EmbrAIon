@@ -73,12 +73,13 @@ nav:
   - Home: index.md
   - Start Here:
       - Why EmbrAIon?: getting-started/what-is-embraion.md
-      - How it works: getting-started/how-it-works.md
-      - Installation: getting-started/installation.md
+      - EmbrAIon in 60 seconds: getting-started/in-60-seconds.md
       - Five-minute sandbox: getting-started/playground.md
+      - Installation: getting-started/installation.md
       - Add EmbrAIon to a project: getting-started/first-project.md
       - Adopt an existing repository: getting-started/existing-repository.md
       - Your first AI task: getting-started/first-ai-task.md
+      - How it works: getting-started/how-it-works.md
       - Updating safely: getting-started/updating.md
   - Configure:
       - Overview: configuration/index.md
@@ -99,6 +100,7 @@ nav:
       - Claude Code: hosts/claude-code.md
       - Portable bundle: hosts/portable.md
   - Use & Automate:
+      - Overview: guides/index.md
       - Daily workflow: guides/daily-workflow.md
       - Validation & evidence: validation.md
       - Runs & review: guides/runs-review.md
@@ -111,6 +113,7 @@ nav:
       - Unity: examples/unity.md
       - Spec Kit: spec-kit.md
   - Reference:
+      - Engineering model deep dive: reference/engineering-model.md
       - CLI reference: reference/cli.md
       - Runtime & version resolution: reference/runtime-version-resolution.md
       - Security model: security.md
