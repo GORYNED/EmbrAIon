@@ -77,19 +77,20 @@ def artifact_download_url(lock: FrameworkArtifactLock) -> str:
     )
 
 
-def _request(url: str) -> Request:
+def _request(url: str, *, accept: str) -> Request:
     return Request(
         url,
         headers={
-            "Accept": "application/vnd.github+json",
+            "Accept": accept,
             "User-Agent": "EmbrAIon-artifact-lock",
+            "X-GitHub-Api-Version": "2022-11-28",
         },
     )
 
 
 def _read_json_url(url: str) -> dict[str, object]:
     try:
-        with urlopen(_request(url), timeout=30) as response:
+        with urlopen(_request(url, accept="application/vnd.github+json"), timeout=30) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, OSError, UnicodeError, json.JSONDecodeError) as error:
         raise RuntimeError(f"Could not resolve EmbrAIon release metadata from {url}: {error}") from error
@@ -264,7 +265,7 @@ def download_locked_artifact(
     hasher = hashlib.sha256()
 
     try:
-        with urlopen(_request(url), timeout=60) as response, temporary.open("wb") as output:
+        with urlopen(_request(url, accept="application/octet-stream"), timeout=60) as response, temporary.open("wb") as output:
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
