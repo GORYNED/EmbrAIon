@@ -205,10 +205,10 @@ def artifact_lock_from_framework(
     asset = str(artifact.get("asset") or "").strip()
     digest = str(artifact.get("digest") or "").strip().lower()
 
-    if schema != ARTIFACT_SCHEMA_VERSION:
+    if type(schema) is not int or schema != ARTIFACT_SCHEMA_VERSION:
         raise RuntimeError(
             f"Unsupported framework.artifact schema {schema!r}; "
-            f"expected {ARTIFACT_SCHEMA_VERSION}."
+            f"expected integer {ARTIFACT_SCHEMA_VERSION}."
         )
     if source != ARTIFACT_SOURCE:
         raise RuntimeError(
