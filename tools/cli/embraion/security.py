@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .common import iter_text_files, read_json, state_root, write_json
+from .common import iter_text_files, read_json, read_yaml, state_root, write_json
 
 SEVERITY_ORDER = {
     "info": 0,
@@ -24,16 +24,49 @@ SECRET_PATTERNS = [
         "api-key",
         "high",
         re.compile(
-            r"(?i)(?:api[_-]?key|secret|token|password)\s*[:=]\s*"
+            r"(?i)(?<![A-Za-z0-9])(?:api[_-]?key|secret|token|password)\s*[:=]\s*"
             r"[\"']?(?!\$\{|<|REDACTED|CHANGEME)[A-Za-z0-9_\-/.+=]{16,}"
         ),
     ),
 ]
 
 
+def _declared_confidential_aliases(root: Path) -> set[str]:
+    path = root / ".embraion" / "execution.yaml"
+    if not path.is_file():
+        return set()
+
+    try:
+        config = read_yaml(path) or {}
+    except Exception:
+        return set()
+    if not isinstance(config, dict):
+        return set()
+
+    bindings = config.get("bindings")
+    if not isinstance(bindings, dict):
+        return set()
+
+    aliases: set[str] = set()
+    for binding in bindings.values():
+        if not isinstance(binding, dict):
+            continue
+        mapping = binding.get("dataClassAliases")
+        if not isinstance(mapping, dict):
+            continue
+        alias = mapping.get("CONFIDENTIAL")
+        if (
+            isinstance(alias, str)
+            and re.fullmatch(r"[A-Z][A-Z0-9_]*", alias)
+        ):
+            aliases.add(alias)
+    return aliases
+
+
 def collect_findings(root: Path) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
     legacy_data_class = "COMPANY" + "_SECRET"
+    declared_aliases = _declared_confidential_aliases(root)
 
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
@@ -52,7 +85,7 @@ def collect_findings(root: Path) -> list[dict[str, str]]:
                     }
                 )
 
-        if legacy_data_class in text:
+        if legacy_data_class in text and legacy_data_class not in declared_aliases:
             findings.append(
                 {
                     "schema-version": 1,

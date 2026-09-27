@@ -374,6 +374,65 @@ class CoreTests(unittest.TestCase):
             findings = collect_findings(root)
             self.assertTrue(any(item["severity"] == "high" for item in findings))
 
+    def test_security_scanner_ignores_public_key_token_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "settings.json").write_text(
+                "PublicKeyToken=b77a5c561934e089",
+                encoding="utf-8",
+            )
+            findings = collect_findings(root)
+            self.assertFalse(any(item["severity"] == "high" for item in findings))
+
+    def test_security_scanner_flags_undeclared_legacy_data_class(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            legacy = "COMPANY" + "_SECRET"
+            (root / "policy.txt").write_text(
+                "data-class=" + legacy,
+                encoding="utf-8",
+            )
+            findings = collect_findings(root)
+            self.assertTrue(
+                any(
+                    item["category"] == "policy-drift"
+                    and item["severity"] == "medium"
+                    for item in findings
+                )
+            )
+
+    def test_security_scanner_accepts_declared_confidential_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / ".embraion" / "execution.yaml"
+            config.parent.mkdir(parents=True)
+            legacy = "COMPANY" + "_SECRET"
+            write_yaml(
+                config,
+                {
+                    "schemaVersion": 1,
+                    "bindings": {
+                        "project-api": {
+                            "adapter": "example",
+                            "selector": "example/model",
+                            "sourceIds": ["Project"],
+                            "trustLevels": ["verified"],
+                            "dataClassAliases": {
+                                "CONFIDENTIAL": legacy
+                            },
+                        }
+                    },
+                },
+            )
+            (root / "policy.txt").write_text(
+                "data-class=" + legacy,
+                encoding="utf-8",
+            )
+            findings = collect_findings(root)
+            self.assertFalse(
+                any(item["category"] == "policy-drift" for item in findings)
+            )
+
     def test_eval_checks_are_deterministic(self) -> None:
         case = {
             "checks": [
