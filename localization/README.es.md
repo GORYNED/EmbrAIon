@@ -16,6 +16,8 @@
 
 > Where sparks become AI-built products *(Donde las chispas se convierten en productos creados con IA)*
 
+> **Estado de la traducción:** esta página es una introducción localizada. La documentación completa y canónica del release actual está en [inglés](../docs/index.md); el conjunto en español es una selección traducida.
+
 EmbrAIon es un AI-First Engineering System portátil para organizar la ingeniería de software asistida por IA mediante roles explícitos, habilidades reutilizables, flujos de trabajo, enrutamiento de tareas, control de acceso, validación, revisión independiente, seguridad, aprendizaje del sistema y capas específicas de cada proyecto.
 
 No está ligado a un único lenguaje de programación ni a un único entorno. Un proyecto Unity/C#, un servicio Python, una aplicación web u otro repositorio de software pueden utilizar el mismo núcleo de EmbrAIon y añadir únicamente su conocimiento y sus reglas específicas.
@@ -168,6 +170,7 @@ Se crea:
 ├── project.yaml
 ├── knowledge.yaml
 ├── policy.yaml
+├── deployments.yaml
 ├── routing.yaml
 ├── validation.yaml
 └── agents.yaml
@@ -417,7 +420,7 @@ Los releases con Git tag generan archivos de código fuente, Codex, Copilot, Cla
 
 ## Documentación
 
-Documentación canónica en inglés: [docs/](../docs/README.md)
+Documentación canónica en inglés: [docs/](../docs/index.md)
 
 Documentación en español: [localization/docs/es/](docs/es/README.md)
 
@@ -437,4 +440,4 @@ Antes de la primera versión estable todavía pueden cambiar los routing overrid
 
 **EmbrAIon** · **AI-First Engineering System** · **[by GORYNED](https://goryned.com)**
 
-<sub>Última actualización: 2026-09-24 13:55 UTC</sub>
+<sub>Última actualización: 2026-09-27 01:48 UTC</sub>
