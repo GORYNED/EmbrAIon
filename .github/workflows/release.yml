@@ -308,6 +308,62 @@ jobs:
               --title "EmbrAIon $GITHUB_REF_NAME"
           fi
 
+  consumer-artifact-lock-smoke:
+    name: Consumer artifact lock smoke
+    needs: github-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Download Python distribution
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist
+
+      - name: Install release launcher
+        shell: bash
+        run: python -m pip install dist/*.whl
+
+      - name: Exercise consumer pin and lock only
+        shell: bash
+        run: |
+          CONSUMER="$(mktemp -d)"
+          export EMBRAION_CACHE_HOME="$CONSUMER/cache"
+          mkdir -p "$CONSUMER/project"
+          cd "$CONSUMER/project"
+
+          embraion init --name ReleaseConsumer
+          embraion update
+          embraion framework verify
+          embraion framework install
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import yaml
+
+          data = yaml.safe_load(
+              Path(".embraion/project.yaml").read_text(encoding="utf-8")
+          )
+          framework = data["framework"]
+          artifact = framework["artifact"]
+          version = framework["version"]
+
+          assert artifact["schema"] == 1
+          assert artifact["source"] == "github-release"
+          assert artifact["release"] == f"v{version}"
+          assert artifact["asset"] == f"embraion-{version}-py3-none-any.whl"
+          assert re.fullmatch(r"sha256:[0-9a-f]{64}", artifact["digest"])
+          PY
+
   pypi-publish:
     name: Publish to PyPI
     needs: build
