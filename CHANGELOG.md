@@ -9,6 +9,7 @@
 - Independent child processes no longer inherit interpreter-scoped runtime resolution state. Cached runtime imports remain isolated from source `PYTHONPATH` during installation, probing, delegation, and prior-projection generation.
 - Self-hosted framework validation and CI explicitly select source code and data while preserving the published stable project pin, artifact lock, project routing, and generated Codex Core agents.
 - Framework-default routing and CLI-version tests use isolated project roots. Regression coverage exercises a newer source checkout under an older locked runtime environment.
+- Generated Codex TOML and skill entry points use canonical LF bytes so clean clones preserve projection ownership across platforms; recorded legacy CRLF projections upgrade without forced replacement.
 
 ## 0.16.0 - 2026-09-28
 

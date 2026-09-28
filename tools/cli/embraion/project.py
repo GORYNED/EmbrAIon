@@ -613,7 +613,7 @@ def _generate_codex(
             "max_concurrent_threads_per_session = 3",
             "",
         ]
-        (target / "config.toml").write_text("\n".join(config), encoding="utf-8")
+        (target / "config.toml").write_text("\n".join(config), encoding="utf-8", newline="\n")
 
     if "agents" not in components:
         return
@@ -634,7 +634,7 @@ def _generate_codex(
             f'sandbox_mode = "{access_projection["sandbox_mode"]}"\n'
             f'developer_instructions = {json.dumps(instructions, ensure_ascii=False)}\n'
         )
-        (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
+        (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8", newline="\n")
 
 
 def _host_access_projection(
@@ -713,14 +713,19 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
         if not directory.is_dir() or not (directory / "SKILL.md").is_file():
             continue
         shutil.copytree(directory, target / directory.name, dirs_exist_ok=True)
+        # Entry-point text is generated with canonical bytes even when Core was
+        # checked out with platform newline conversion.
+        entry = target / directory.name / "SKILL.md"
+        entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     _append_lead_skill(root, target)
 
 
 def _append_lead_skill(root: Path, skills: Path) -> None:
     lead = next(agent for agent in load_agents(root) if agent["id"] == "lead")
     path = skills / "orchestration/SKILL.md"
-    with path.open("a", encoding="utf-8") as output:
-        output.write("\n## Generated Core Lead contract\n\n" + _agent_instructions(lead) + "\n")
+    content = path.read_text(encoding="utf-8")
+    content += "\n## Generated Core Lead contract\n\n" + _agent_instructions(lead) + "\n"
+    path.write_text(content, encoding="utf-8", newline="\n")
 
 
 def _generate_portable(root: Path, output: Path) -> None:

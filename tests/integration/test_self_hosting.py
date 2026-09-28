@@ -36,12 +36,12 @@ class SelfHostingTests(unittest.TestCase):
             (root / "tests/fixtures").mkdir()
             (root / "tests/fixtures/source-only.txt").write_text("source fixture", encoding="utf-8")
             (root / "tests/unit/test_identity.py").write_text(
-                "import os,tempfile,unittest\n"
+                "import os,shutil,tempfile,unittest\n"
                 "from pathlib import Path\n"
                 "import embraion\n"
                 "from embraion.common import framework_root,read_yaml\n"
                 "from embraion.runtime import route\n"
-                "from embraion.project import load_agents,generate_host\n"
+                "from embraion.project import load_agents,generate_host,install,projection_plan,projection_is_verified\n"
                 "class Identity(unittest.TestCase):\n"
                 " def test_source_and_routing(self):\n"
                 "  root=Path.cwd()\n"
@@ -57,7 +57,11 @@ class SelfHostingTests(unittest.TestCase):
                 "   self.assertEqual('host-default',route('codex','substantial','PRIVATE',project=Path(blank))['resolution'])\n"
                 "  self.assertEqual({'lead','worker','reviewer','architect','analyst','validator','researcher','steward'},{a['id'] for a in load_agents(root,root)})\n"
                 "  generate_host(root,'codex',root/'build/codex',project=root)\n"
-                "  self.assertIn('developer_instructions',(root/'build/codex/.codex/config.toml').read_text())\n",
+                "  self.assertIn('developer_instructions',(root/'build/codex/.codex/config.toml').read_text())\n"
+                "  for directory in ['.codex','.agents']:\n"
+                "   shutil.copytree(root/'build/codex'/directory,root/directory)\n"
+                "  self.assertTrue(projection_is_verified(projection_plan('codex',root)))\n"
+                "  install('codex',root)\n",
                 encoding="utf-8",
             )
             write_yaml(root / ".embraion/validation.yaml", {
