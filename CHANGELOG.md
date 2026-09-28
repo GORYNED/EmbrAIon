@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.2 - 2026-09-28
+
 ### Fixed
 
 - Mixed API/native execution routes now require LiteLLM inputs only for candidates bound to that adapter on the current execution host, preserving provenance validation, fail-closed external fallback inputs, and native host handoff.
