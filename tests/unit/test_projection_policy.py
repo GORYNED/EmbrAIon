@@ -328,6 +328,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             expected_skills = {
                 "debugging",
                 "implementation",
+                "orchestration",
                 "planning",
                 "research",
                 "review",

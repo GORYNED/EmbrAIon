@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "embraion"
-version = "0.15.3"
+version = "0.16.0"
 description = "Portable AI-First Engineering System"
 readme = "README.md"
 license = "MIT"
@@ -13,6 +13,7 @@ dependencies = [
   "PyYAML>=6.0,<7",
   "jsonschema>=4.22,<5",
   "regex>=2024.0,<2027",
+  "tomlkit>=0.13,<1",
 ]
 
 [project.optional-dependencies]

@@ -115,6 +115,12 @@ Routing отвечает на вопрос **что выбрать**, но са�
 
 Для host-native work AI host использует resolved project contract и сам выполняет execution.
 
+При делегировании в Codex Lead независимо классифицирует конкретное задание и перед native spawn запрашивает `embraion route` с его role, route class, data class и access mode либо configured task class. Complexity предыдущего задания и название роли не выбирают модель. Явные resolved model/effort передаются через поддерживаемые native spawn parameters; `host-default` использует host subagent defaults или inheritance.
+
+Codex adapter не записывает model/effort в generated specialist files: Codex role-file overrides имеют приоритет над явным spawn choice. Config merge сохраняет пользовательские `default_subagent_model` и `default_subagent_reasoning_effort` как host defaults. EmbrAIon-managed concrete assignment choices остаются в `.embraion/**`; generated files не становятся вторым authority. См. официальные [config reference](https://learn.chatgpt.com/docs/config-file/config-reference) и [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+
+Static TOML не может обращаться к resolver перед каждым spawn. Projected Lead instructions направляют host к этому шагу; trust, permissions, инструкции более высокого приоритета и native capabilities сохраняют силу. Если обязательный explicit choice нельзя применить, Lead сообщает об ограничении и разрешает его до dispatch, а не заявляет об успешном применении. Cross-host routes требуют явного handoff и новой privacy/access проверки. Role, access, route class, host и model selection остаются независимыми.
+
 Для `embraion execute` выбранный deployment должен иметь approved `.embraion/execution.yaml` binding. Runtime выполняет bounded candidate list и eligible fallback в исходных request ceilings.
 
 См. [Как работает EmbrAIon](getting-started/how-it-works.md) и [Execution и провайдеры](configuration/execution.md).
