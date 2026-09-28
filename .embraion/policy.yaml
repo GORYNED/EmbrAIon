@@ -1,0 +1,61 @@
+sources:
+  canonical:
+    - .embraion/*.yaml
+    - .embraion/.gitignore
+    - AGENTS.md
+    - CHANGELOG.md
+    - CONTRIBUTING.md
+    - GOVERNANCE.md
+    - README.md
+    - README.ru.md
+    - SECURITY.md
+    - SUPPORT.md
+    - framework.yaml
+    - pyproject.toml
+    - setup.py
+    - requirements-docs.txt
+    - mkdocs.yml
+    - core/**
+    - adapters/**
+    - tools/**
+    - schemas/**
+    - templates/**
+    - tests/**
+    - evals/**
+    - examples/**
+    - docs/**
+    - .github/**
+
+  protected:
+    - LICENSE
+    - TRADEMARKS.md
+    - TRADEMARKS.ru.md
+    - brand/assets/**
+
+  generated:
+    - build/**
+    - dist/**
+    - site/**
+    - '**/__pycache__/**'
+    - '**/*.egg-info/**'
+    - .pytest_cache/**
+    - .venv/**
+    - htmlcov/**
+    - .coverage
+    - .embraion/state/**
+    - .embraion/cache/**
+    - .codex/**
+    - .agents/skills/**
+
+  external: []
+
+review:
+  substantial-required: true
+
+privacy:
+  default-class: PRIVATE
+
+enforcement:
+  enabled: false
+  validation-profile: affected
+  require-review: false

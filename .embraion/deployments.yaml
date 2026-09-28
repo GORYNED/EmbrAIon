@@ -1,0 +1,55 @@
+providers: {}
+
+deployments:
+  codex-luna:
+    host: codex
+    model: gpt-6-luna
+    efforts:
+      - low
+      - medium
+    default-effort: medium
+    billing:
+      mode: subscription
+    capabilities:
+      data-classes:
+        - PUBLIC
+        - PRIVATE
+        - CONFIDENTIAL
+      access-modes:
+        - read-only
+        - workspace-write
+
+  codex-sol:
+    host: codex
+    model: gpt-6-sol
+    efforts:
+      - medium
+      - high
+    default-effort: medium
+    billing:
+      mode: subscription
+    capabilities:
+      data-classes:
+        - PUBLIC
+        - PRIVATE
+        - CONFIDENTIAL
+      access-modes:
+        - read-only
+        - workspace-write
+
+  codex-astra:
+    host: codex
+    model: gpt-6-astra
+    efforts:
+      - high
+    default-effort: high
+    billing:
+      mode: subscription
+    capabilities:
+      data-classes:
+        - PUBLIC
+        - PRIVATE
+        - CONFIDENTIAL
+      access-modes:
+        - read-only
+        - workspace-write

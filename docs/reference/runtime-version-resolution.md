@@ -106,3 +106,7 @@ Install that launcher version first, then run `embraion update` from the project
 ## Development override
 
 `EMBRAION_HOME` selects an explicit framework checkout for framework development. Automatic version resolution can also be disabled intentionally with `EMBRAION_DISABLE_VERSION_RESOLUTION=1`.
+
+Resolver-owned `EMBRAION_VERSION_RESOLVED`, `EMBRAION_RESOLVED_VERSION`, `EMBRAION_RESOLVED_PROJECT`, and the resolver's `EMBRAION_HOME` apply only to the delegated interpreter. Validation and other independent child commands receive a clean environment and resolve their own project. An explicit user development override remains inherited. Cached runtime installation, probes, and delegation also exclude `PYTHONPATH` so checkout imports cannot replace the locked distribution.
+
+The framework repository is itself an EmbrAIon project. Its pin and artifact lock stay on the latest published stable release while source development advances. From a checkout, use `python tools/source.py <command>` for source CLI operations and `python tools/source.py test unit` or `test integration` for source tests. The runner selects checkout code and data, removes inherited resolver state, and uses the local `.venv` when present; otherwise the current Python must have the framework dependencies installed. Source CLI commands retain the repository's project overlay and routing. Repository validation profiles and source CI steps use this entry point; installed-package checks outside the checkout continue to use the packaged CLI.

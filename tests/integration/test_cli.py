@@ -32,7 +32,8 @@ class CliIntegrationTests(unittest.TestCase):
         )
 
     def test_cli_version(self) -> None:
-        result = self._run("--version")
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self._run("--version", cwd=Path(temporary))
         self.assertEqual(__version__, result.stdout.strip())
 
     def test_packaged_framework_includes_russian_root_docs(self) -> None:

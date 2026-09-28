@@ -1,0 +1,4 @@
+# Store self-host metadata and generated host text consistently across platforms.
+.embraion/** text eol=lf
+.agents/** text eol=lf
+.codex/** text eol=lf

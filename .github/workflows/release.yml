@@ -53,9 +53,9 @@ jobs:
 
       - name: Compatibility tests
         run: |
-          embraion validate
-          python -m unittest discover -s tests/unit -p "test_*.py"
-          python -m unittest discover -s tests/integration -p "test_*.py"
+          python tools/source.py validate
+          python tools/source.py test unit
+          python tools/source.py test integration
 
       - name: Project resolver E2E
         if: matrix.python == '3.14'
@@ -127,20 +127,20 @@ jobs:
 
       - name: Validate source and tests
         run: |
-          embraion validate
-          python -m unittest discover -s tests/unit -p "test_*.py"
-          python -m unittest discover -s tests/integration -p "test_*.py"
-          embraion security scan --path . --fail-on high
-          embraion sync --host all --output build/generated --force
+          python tools/source.py validate
+          python tools/source.py test unit
+          python tools/source.py test integration
+          python tools/source.py security scan --path . --fail-on high
+          python tools/source.py sync --host all --output build/generated --force
 
       - name: Behavioral eval smoke
         shell: bash
         run: |
           mkdir -p build/evals
-          embraion eval run --case reviewer-readonly --record tests/fixtures/evals/reviewer-readonly.json --output build/evals/reviewer-readonly.json
-          embraion eval run --case worker-scope --record tests/fixtures/evals/worker-scope.json --output build/evals/worker-scope.json
-          embraion eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
-          embraion eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
+          python tools/source.py eval run --case reviewer-readonly --record tests/fixtures/evals/reviewer-readonly.json --output build/evals/reviewer-readonly.json
+          python tools/source.py eval run --case worker-scope --record tests/fixtures/evals/worker-scope.json --output build/evals/worker-scope.json
+          python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
+          python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
 
       - name: Validate documentation site
         run: |
@@ -228,13 +228,13 @@ jobs:
 
       - name: Validate source and tests
         run: |
-          embraion validate
-          python -m unittest discover -s tests/unit -p "test_*.py"
-          python -m unittest discover -s tests/integration -p "test_*.py"
-          embraion security scan --path . --fail-on high
+          python tools/source.py validate
+          python tools/source.py test unit
+          python tools/source.py test integration
+          python tools/source.py security scan --path . --fail-on high
 
       - name: Generate host bundles
-        run: embraion sync --host all --output build/generated --force
+        run: python tools/source.py sync --host all --output build/generated --force
 
       - name: Validate documentation site
         run: |

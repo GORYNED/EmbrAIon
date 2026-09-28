@@ -936,6 +936,7 @@ def _generate_host_with_cached_runtime(
         "project=Path(sys.argv[3]))"
     )
     environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
     environment["EMBRAION_HOME"] = str(runtime_root)
     environment["EMBRAION_DISABLE_VERSION_RESOLUTION"] = "1"
     subprocess.run(

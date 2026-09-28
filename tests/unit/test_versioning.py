@@ -212,6 +212,17 @@ class VersioningTests(unittest.TestCase):
             )
             self.assertEqual(str(framework), environment["EMBRAION_HOME"])
 
+    def test_locked_runtime_does_not_import_from_source_pythonpath(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._manifest(root, "0.1.0")
+            cached = CachedRuntime(python=Path(sys.executable), framework_root=root / "cached")
+            with patch.dict(os.environ, {"PYTHONPATH": str(root / "source")}), patch(
+                "embraion.versioning.ensure_cached_runtime", return_value=cached
+            ), patch("embraion.versioning.subprocess.run", return_value=subprocess.CompletedProcess([], 0)) as run:
+                self.assertEqual(0, resolve_project_runtime(["validate"], "0.2.0", start=root))
+            self.assertNotIn("PYTHONPATH", run.call_args.kwargs["env"])
+
 
 if __name__ == "__main__":
     unittest.main()

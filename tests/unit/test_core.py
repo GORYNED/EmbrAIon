@@ -54,7 +54,8 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(expected, str(data["framework"]["version"]))
 
     def test_default_route_uses_host_default_without_model_catalog(self) -> None:
-        result = route("codex", "substantial", "CONFIDENTIAL")
+        with tempfile.TemporaryDirectory() as temporary:
+            result = route("codex", "substantial", "CONFIDENTIAL", project=Path(temporary))
         self.assertEqual("host-default", result["resolution"])
         self.assertIsNone(result["model"])
         self.assertIsNone(result["effort"])

@@ -1,0 +1,21 @@
+profiles:
+  fast:
+    - python tools/source.py validate
+    - python tools/source.py test unit
+
+  affected:
+    - python tools/source.py validate
+    - python tools/source.py test unit
+    - python tools/source.py test integration
+    - python tools/source.py security scan --path . --fail-on high
+
+  full:
+    - python tools/source.py validate
+    - python tools/source.py test unit
+    - python tools/source.py test integration
+    - python tools/source.py security scan --path . --fail-on high
+    - python tools/source.py sync --host all --output build/generated --force
+    - python tools/source.py eval run --case reviewer-readonly --record tests/fixtures/evals/reviewer-readonly.json --output build/evals/reviewer-readonly.json
+    - python tools/source.py eval run --case worker-scope --record tests/fixtures/evals/worker-scope.json --output build/evals/worker-scope.json
+    - python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
+    - python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
