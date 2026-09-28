@@ -201,10 +201,16 @@ class LiteLLMLoopbackAdapter:
             raise RuntimeError("LiteLLM adapter accepts read-only work only.")
         payload = request.get("payload")
         candidates = {item["deployment"] for item in request["candidates"]}
+        required = request.get("_adapterCandidateDeployments")
+        if (not isinstance(required, list) or any(not isinstance(item, str) for item in required)
+                or len(required) != len(set(required)) or not set(required).issubset(candidates)
+                or request["selected"]["deployment"] not in required):
+            raise RuntimeError("LiteLLM requires Core-derived adapter candidate scope.")
         if (not isinstance(payload, dict) or set(payload) - {"inputsByDeployment", "maxOutputTokens"}
                 or not isinstance(payload.get("inputsByDeployment"), dict)
-                or set(payload["inputsByDeployment"]) != candidates):
-            raise RuntimeError("LiteLLM requires one bounded input for every candidate.")
+                or not set(payload["inputsByDeployment"]).issubset(candidates)
+                or not set(required).issubset(payload["inputsByDeployment"])):
+            raise RuntimeError("LiteLLM requires bounded input for every adapter-bound candidate and no non-candidate input.")
         if any(not _valid_input(value) for value in payload["inputsByDeployment"].values()):
             raise RuntimeError("LiteLLM input envelope is invalid.")
         if not _valid_envelope(payload["inputsByDeployment"][request["selected"]["deployment"]],

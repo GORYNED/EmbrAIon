@@ -162,6 +162,8 @@ pip install "embraion[litellm]"
 
 Проекты pin/validate совместимую комбинацию adapter/runtime. EmbrAIon остаётся provider-neutral: concrete selectors, bindings, credential references, source ceilings и evidence принадлежат проекту.
 
+Для LiteLLM `payload.inputsByDeployment` должен содержать bounded input для каждого candidate, привязанного к `litellm-loopback` на execution host запроса, включая external fallback candidates. Cross-host и unbound candidates не требуют external input. Unknown и non-candidate input keys приводят к fail closed. Каждый selected external input проверяется на approved boundary и исходный provenance work item до получения credentials и вызова transport. Core вычисляет adapter candidate scope внутри runtime; caller не может передать его. Существующие валидные optional inputs для handoff candidates остаются допустимыми.
+
 ## Связанные страницы
 
 - [Как работает EmbrAIon](../getting-started/how-it-works.md)
