@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Projection ownership and recovery evidence are now scoped by host and canonical destination, preserving root provenance during alternate destination installs with automatic compatibility for matching legacy ledgers.
+
 ## 0.15.2 - 2026-09-28
 
 ### Fixed

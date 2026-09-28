@@ -412,3 +412,5 @@ Examples:
 When you want to change project policy, knowledge, validation, or routing, prefer the canonical `.embraion/` file rather than editing a generated host projection to represent the same intent.
 
 See [AI host examples](ai-hosts.md) for concrete workflows.
+
+Projection ownership is scoped by host and canonical destination: `.embraion/state/projections/<host>/<destination-id>.json`, with matching `<destination-id>.recovery.json` evidence. The root projection uses `root`; alternate destinations use a SHA-256 identity of the canonical project-relative path, or absolute path for external destinations. Filenames contain no absolute paths. Installs, inventories, config-mode evidence, and pruning are independent per destination. Matching legacy host-only ledgers are read without mutation and migrate automatically after a successful install; mismatched or ambiguous evidence is never assigned to another destination. A relocated project does not automatically inherit ownership from a recorded absolute destination.

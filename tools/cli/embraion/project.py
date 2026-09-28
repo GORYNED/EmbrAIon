@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -21,7 +22,6 @@ from .common import (
     project_root,
     read_json,
     read_yaml,
-    state_root,
     write_json,
     write_yaml,
 )
@@ -942,12 +942,92 @@ def _file_hashes(root: Path) -> dict[str, str]:
     }
 
 
-def _projection_state_path(project: Path, host: str) -> Path:
-    return state_root(project) / "projections" / f"{host}.json"
+def _canonical_projection_destination(destination: Path) -> Path:
+    resolved = destination.resolve()
+    if os.name == "nt":
+        # pathlib uses GetFinalPathNameByHandle on Windows, including actual
+        # spelling, without requiring directory-list access to every ancestor.
+        return resolved
+    # realpath resolves symlinks/junctions, but on some case-insensitive
+    # filesystems it preserves the caller's case. Use actual directory spelling.
+    canonical = Path(resolved.anchor)
+    for part in resolved.parts[1:]:
+        target = canonical / part
+        if target.exists():
+            names = os.listdir(canonical)
+            if part not in names:
+                for name in names:
+                    if name.casefold() == part.casefold() and target.samefile(canonical / name):
+                        part = name
+                        break
+        canonical /= part
+    return canonical
 
 
-def _projection_recovery_path(project: Path, host: str) -> Path:
-    return state_root(project) / "projections" / f"{host}.recovery.json"
+def _projection_destination_id(project: Path, destination: Path) -> str:
+    project = _canonical_projection_destination(project)
+    destination = _canonical_projection_destination(destination)
+    if destination.as_posix() == project.as_posix():
+        return "root"
+    # WindowsPath comparisons fold case even on case-sensitive directories.
+    # Canonical filesystem spelling, not Path equality, defines containment.
+    if destination.parts[:len(project.parts)] == project.parts:
+        identity = "relative:" + "/".join(destination.parts[len(project.parts):])
+    else:
+        identity = "absolute:" + destination.as_posix()
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
+def _projection_state_path(project: Path, host: str, destination: Path | None = None) -> Path:
+    identity = _projection_destination_id(project, destination if destination is not None else project)
+    return project / ".embraion" / "state" / "projections" / host / f"{identity}.json"
+
+
+def _projection_recovery_path(project: Path, host: str, destination: Path | None = None) -> Path:
+    return _projection_state_path(project, host, destination).with_suffix(".recovery.json")
+
+
+def _projection_record(
+    path: Path, host: str, destination: Path, *, payload: bytes | None = None,
+) -> dict[str, Any] | None:
+    try:
+        data = read_json(path) if payload is None else json.loads(payload)
+        if (not isinstance(data, dict) or data.get("schema-version") != 1
+                or data.get("host") != host or not isinstance(data.get("destination"), str)
+                or not isinstance(data.get("files"), dict)
+                or not all(isinstance(key, str) and isinstance(value, str)
+                           for key, value in data["files"].items())):
+            return None
+        recorded = Path(data["destination"])
+        if not recorded.is_absolute():
+            return None
+        if (_canonical_projection_destination(recorded).as_posix()
+                != _canonical_projection_destination(destination).as_posix()):
+            return None
+        return data
+    except (OSError, ValueError, RuntimeError, TypeError):
+        return None
+
+
+def _projection_recovery_record(
+    project: Path, path: Path, host: str, destination: Path, *, payload: bytes | None = None,
+) -> dict[str, Any] | None:
+    data = _projection_record(path, host, destination, payload=payload)
+    if data is None or not isinstance(data.get("source-framework-version"), str) or not data["source-framework-version"]:
+        return None
+    manifest = read_yaml(project / ".embraion" / "project.yaml") or {}
+    current_pin = str((manifest.get("framework") or {}).get("version", ""))
+    if not current_pin or data.get("target-framework-version") != current_pin:
+        return None
+    return data
+
+
+def _projection_evidence_path(project: Path, host: str, destination: Path, *, recovery: bool = False) -> Path:
+    scoped = (_projection_recovery_path if recovery else _projection_state_path)(project, host, destination)
+    if scoped.exists():
+        return scoped
+    suffix = ".recovery.json" if recovery else ".json"
+    return project / ".embraion" / "state" / "projections" / f"{host}{suffix}"
 
 
 def _host_has_projection_candidates(host: str, destination: Path) -> bool:
@@ -1080,7 +1160,7 @@ def _persist_projection_recovery_evidence(
     evidence: dict[str, dict[str, Any]],
 ) -> None:
     for host, record in evidence.items():
-        write_json(_projection_recovery_path(project, host), record)
+        write_json(_projection_recovery_path(project, host, Path(record["destination"])), record)
 
 
 def _load_projection_recovery(
@@ -1088,19 +1168,12 @@ def _load_projection_recovery(
     host: str,
     destination: Path,
 ) -> dict[str, Any] | None:
-    path = _projection_recovery_path(project, host)
-    if not path.is_file():
+    # An existing ownership record, including a damaged one, must not revive
+    # stale recovery evidence as an alternative authority.
+    if _projection_state_path(project, host, destination).exists():
         return None
-
-    data = read_json(path) or {}
-    if data.get("destination") != str(destination.resolve()):
-        return None
-
-    manifest = read_yaml(project / ".embraion" / "project.yaml") or {}
-    current_pin = str((manifest.get("framework") or {}).get("version", ""))
-    if data.get("target-framework-version") != current_pin:
-        return None
-    return data
+    path = _projection_evidence_path(project, host, destination, recovery=True)
+    return _projection_recovery_record(project, path, host, destination)
 
 
 def _load_projection_state(
@@ -1108,14 +1181,8 @@ def _load_projection_state(
     host: str,
     destination: Path,
 ) -> dict[str, Any] | None:
-    path = _projection_state_path(project, host)
-    if not path.is_file():
-        return None
-
-    data = read_json(path) or {}
-    if data.get("destination") != str(destination.resolve()):
-        return None
-    return data
+    path = _projection_evidence_path(project, host, destination)
+    return _projection_record(path, host, destination)
 
 
 def _projection_plan_from_generated(
@@ -1239,7 +1306,7 @@ def projection_plan(
     config_mode: str = "replace",
 ) -> dict[str, Any]:
     root = framework_root()
-    destination = destination.resolve()
+    destination = _canonical_projection_destination(destination)
     selected = _normalize_components(host, components)
     config_mode = _validate_codex_config_mode(host, selected, config_mode)
 
@@ -1266,7 +1333,7 @@ def install(
     config_mode: str = "replace",
 ) -> dict[str, Any]:
     root = framework_root()
-    destination = destination.resolve()
+    destination = _canonical_projection_destination(destination)
     project = project_root(destination)
     selected = _normalize_components(host, components)
     config_mode = _validate_codex_config_mode(host, selected, config_mode)
@@ -1284,6 +1351,26 @@ def install(
 
         if dry_run:
             return plan
+
+        # Capture cleanup candidates before mutation. Never remove evidence
+        # replaced by another operation or belonging to another destination.
+        cleanup: dict[Path, bytes] = {}
+        legacy = project / ".embraion" / "state" / "projections"
+        for candidate in (
+            legacy / f"{host}.json",
+            legacy / f"{host}.recovery.json",
+            _projection_recovery_path(project, host, destination),
+        ):
+            if not candidate.is_file():
+                continue
+            original = candidate.read_bytes()
+            record = (
+                _projection_recovery_record(project, candidate, host, destination, payload=original)
+                if candidate.name.endswith(".recovery.json")
+                else _projection_record(candidate, host, destination, payload=original)
+            )
+            if record is not None:
+                cleanup[candidate] = original
 
         conflicts = list(plan["conflict"])
         if (
@@ -1370,9 +1457,8 @@ def install(
             if target.is_file() and previous_hash:
                 current_files[relative] = previous_hash
 
-        write_json(
-            _projection_state_path(project, host),
-            {
+        state_path = _projection_state_path(project, host, destination)
+        record = {
                 "schema-version": 1,
                 "framework-version": framework_version(root),
                 "host": host,
@@ -1380,7 +1466,7 @@ def install(
                 "config-mode": (
                     config_mode
                     if host == "codex" and "config" in selected
-                    else None
+                    else (previous or recovery or {}).get("config-mode")
                 ),
                 "managed-components": sorted(
                     set((previous or recovery or {}).get("managed-components") or [])
@@ -1392,9 +1478,11 @@ def install(
                     | set(selected)
                 ),
                 "files": current_files,
-            },
-        )
-        recovery_path = _projection_recovery_path(project, host)
-        if recovery_path.is_file():
-            recovery_path.unlink()
+            }
+        write_json(state_path, record)
+        if _projection_record(state_path, host, destination) != record:
+            raise RuntimeError("Projection ownership write verification failed; prior evidence preserved.")
+        for candidate, original in cleanup.items():
+            if candidate.is_file() and candidate.read_bytes() == original:
+                candidate.unlink()
         return plan
