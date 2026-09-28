@@ -45,6 +45,8 @@ jobs:
         run: python -m unittest discover -s tests/unit -p "test_*.py"
 
       - name: Integration tests
+        env:
+          EMBRAION_PROJECTION_EVIDENCE_DIR: build/projection-evidence
         run: python -m unittest discover -s tests/integration -p "test_*.py"
 
       - name: Security scan
@@ -70,6 +72,7 @@ jobs:
           path: |
             build/generated
             build/evals
+            build/projection-evidence
           if-no-files-found: warn
           retention-days: 14
 

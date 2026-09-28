@@ -179,7 +179,7 @@ class RoutingAuthorityTests(unittest.TestCase):
     def test_byte_identical_unowned_projection_is_not_exempt(self) -> None:
         install("codex", self.project)
         projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
-        state = self.project / ".embraion/state/projections/codex.json"
+        state = self.project / ".embraion/state/projections/codex/root.json"
         state.unlink()
         findings = audit_routing_authority(self.project, paths=[projected])
         self.assertIn(projected.relative_to(self.project).as_posix(),
@@ -188,7 +188,7 @@ class RoutingAuthorityTests(unittest.TestCase):
     def test_invalid_projection_ownership_fails_closed(self) -> None:
         install("codex", self.project)
         projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
-        state = self.project / ".embraion/state/projections/codex.json"
+        state = self.project / ".embraion/state/projections/codex/root.json"
         state.write_text("{invalid json", encoding="utf-8")
         findings = audit_routing_authority(self.project, paths=[projected])
         self.assertIn(projected.relative_to(self.project).as_posix(),

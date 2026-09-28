@@ -131,7 +131,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             install("codex", project)
             projection_path = project / ".codex" / "config.toml"
             projection_before = projection_path.read_bytes()
-            state_path = project / ".embraion/state/projections/codex.json"
+            state_path = project / ".embraion/state/projections/codex/root.json"
             state_before = state_path.read_bytes()
 
             project_data = read_yaml(manifest)
@@ -645,7 +645,7 @@ class ProjectionPolicyTests(unittest.TestCase):
 
             install("codex", project, components=["skills"])
             state = read_json(
-                project / ".embraion/state/projections/codex.json"
+                project / ".embraion/state/projections/codex/root.json"
             )
             self.assertIn(".codex/config.toml", state["files"])
             self.assertIn(".codex/agents/reviewer.toml", state["files"])
@@ -660,7 +660,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             init_project(project, name="Consumer")
             install("codex", project)
 
-            state_path = project / ".embraion/state/projections/codex.json"
+            state_path = project / ".embraion/state/projections/codex/root.json"
             state = read_json(state_path)
             state.pop("managed-components", None)
             write_json(state_path, state)
@@ -764,7 +764,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertFalse(recovery_path.exists())
 
             state = read_json(
-                project / ".embraion/state/projections/copilot.json"
+                project / ".embraion/state/projections/copilot/root.json"
             )
             self.assertIn(relative, state["files"])
 
@@ -1019,7 +1019,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             original = "generated obsolete projection\n"
             stale.write_text(original, encoding="utf-8")
 
-            state_path = project / ".embraion/state/projections/codex.json"
+            state_path = project / ".embraion/state/projections/codex/root.json"
             state = read_json(state_path)
             state["files"][relative] = hashlib.sha256(stale.read_bytes()).hexdigest()
             write_json(state_path, state)
