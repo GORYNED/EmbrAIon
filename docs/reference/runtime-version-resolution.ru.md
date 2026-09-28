@@ -15,12 +15,12 @@ EmbrAIon разделяет **версию глобального launcher** и 
 ```yaml
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.15.2
+  version: 0.15.3
   artifact:
     schema: 1
     source: github-release
-    release: v0.15.2
-    asset: embraion-0.15.2-py3-none-any.whl
+    release: v0.15.3
+    asset: embraion-0.15.3-py3-none-any.whl
     digest: sha256:<64-lowercase-hex>
 ```
 
