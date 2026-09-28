@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -120,6 +121,20 @@ class ReferenceProjectEndToEndTests(unittest.TestCase):
             )
 
             self.assertTrue((project / ".codex" / "config.toml").is_file())
+            config_path = project / ".codex/config.toml"
+            instructions = tomllib.loads(config_path.read_text(encoding="utf-8"))["developer_instructions"]
+            self.assertIn("proactively delegate", instructions)
+            self.assertIn("trivial or tightly bounded work directly", instructions)
+            self.assertIn("independent read-only Reviewer", instructions)
+            self.assertTrue((project / ".agents/skills/orchestration/SKILL.md").is_file())
+            for specialist in ("analyst", "architect", "researcher", "reviewer", "steward", "validator", "worker"):
+                profile = project / f".codex/agents/{specialist}.toml"
+                self.assertTrue(profile.is_file())
+                self.assertNotIn("model", tomllib.loads(profile.read_text(encoding="utf-8")))
+            config_before = config_path.read_bytes()
+            self._run(project, environment, "install", "--host", "codex", "--destination", ".")
+            self.assertEqual(config_before, config_path.read_bytes())
+            self._run(project, environment, "projection", "verify", "--host", "codex", "--destination", ".")
             self.assertTrue((project / ".agents" / "skills" / "review" / "SKILL.md").is_file())
             self.assertTrue(
                 (project / ".github" / "agents" / "reviewer.agent.md").is_file()

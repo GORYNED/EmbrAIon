@@ -9,10 +9,10 @@
 
 | Вы делаете | Что происходит за кулисами | Вы проверяете |
 | --- | --- | --- |
-| Просите: «Добавь retry при ошибке соединения» | Host использует projected roles/skills, knowledge и policy | Code change |
+| Просите: «Добавь retry при ошибке соединения» | Lead применяет project rules и выбирает полезные роли без отдельной просьбы о delegation | Code change |
 | AI реализует задачу | Действует существующий routing/default model policy | Protected paths не нарушены |
 | Запускаете проверки | EmbrAIon выполняет validation profile | Получен `passed`, а не `skipped` |
-| Делаете review существенной работы | Применяются review/evidence rules, если настроены | Решение о merge |
+| Делаете review существенной работы | Lead получает независимый read-only review, когда Core или более строгая project policy этого требует | Решение о merge |
 
 ## 1. Проверьте состояние проекта
 
@@ -51,7 +51,13 @@ project knowledge / policy / optional routing
 implementation
 ```
 
-Reasoning и изменения по-прежнему выполняет AI host.
+Reasoning и изменения по-прежнему выполняет AI host. В Codex проекция `config` помещает Lead guidance в корневой `developer_instructions`, поэтому достаточно обычного запроса без названий ролей. Lead выполняет тривиальную работу напрямую; для более крупных задач он сам выбирает только полезные роли: Analyst для requirements, Architect для boundaries, Researcher для неизвестных фактов, Worker для bounded implementation, Validator для проверок, Reviewer для независимого review, Steward для compatibility и persistence.
+
+Каждое делегированное задание ограничено scope, ownership, acceptance criteria и ожидаемыми evidence. Lead может распараллеливать read-only discovery и независимые изменения; общие файлы, shared contracts и зависимости требуют последовательной работы или явной isolation. Перед native spawn Lead классифицирует каждое задание и разрешает его routing, затем объединяет результаты и сохраняет окончательное право приёмки. Пустой project `agents: []` сохраняет Core roles.
+
+Guidance зависит от trusted host config, native capabilities, permissions и инструкций более высокого приоритета. Он не делает orchestration детерминированной: validation и review требуют реальных evidence. Ownership проекций и merge описаны в [Codex](../hosts/codex.md).
+
+Все supported host projections также содержат canonical `orchestration` skill с generated Core Lead contract. Codex, Copilot, Claude Code и Portable получают общий guidance, но загрузку skill выбирает каждый host. Корневые инструкции Codex дают дополнительную точку входа без зависимости от выбора skill.
 
 ## 4. Validation
 
@@ -65,7 +71,7 @@ embraion validation run affected
 
 ## 5. Review и завершение
 
-Для существенных изменений используйте review policy репозитория и явно фиксируйте residual risk.
+Для meaningful changes собирайте свежие соразмерные проверки и фиксируйте residual risk. Существенная реализация требует независимой read-only оценки Reviewer, когда Core или более строгая project policy этого требует; автор реализации не может дать независимое одобрение собственной работе. Lead разрешает findings, обновляет validation после fixes и запрашивает новый review, если изменения делают прежние evidence неактуальными. Missing, skipped, historical и unavailable checks не являются свежим pass.
 
 Если host projections намеренно менялись:
 

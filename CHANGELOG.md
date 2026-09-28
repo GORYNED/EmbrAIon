@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.16.0 - 2026-09-28
+
+### Added
+
+- Canonical proportional Lead orchestration for ordinary-language engineering requests, assignment routing, safe parallelism, fresh validation, independent review, and final integration.
+- Codex root `developer_instructions` derived from Core Lead semantics and native adapter guidance, alongside the existing model-neutral specialists.
+- An orchestration skill carrying the derived Lead contract across Codex, Copilot, Claude Code, and Portable projections.
+
+### Changed
+
+- Codex merge mode preserves user instructions and unrelated TOML using syntax-aware ownership, updates only the managed orchestration subsection and required agent settings, and rejects ambiguous state even with `--force`.
+- Delegated assignments resolve project routing before supported native spawn selection; static configuration is documented as guidance rather than deterministic per-spawn routing enforcement.
+
+### Fixed
+
+- Regression coverage explicitly preserves Core specialists and root Lead orchestration when project agents are empty.
+
 ## 0.15.3 - 2026-09-28
 
 ### Fixed

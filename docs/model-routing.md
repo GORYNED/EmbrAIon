@@ -142,6 +142,12 @@ Routing answers **what should be selected**. It does not by itself create a prov
 
 For host-native work, the AI host uses the resolved project contract and remains responsible for actual execution.
 
+For Codex delegation, Lead classifies each concrete assignment independently and queries `embraion route` with that assignment's role, route class, data class, and access mode, or a configured task class, before native spawn. The previous assignment's complexity and the role name do not select a model. Explicit resolved model/effort choices are passed through supported native spawn parameters; `host-default` uses the host's subagent defaults or inheritance.
+
+The Codex adapter omits model/effort fields from generated specialist files because Codex role-file overrides take precedence over explicit spawn choices. Config merge preserves user `default_subagent_model` and `default_subagent_reasoning_effort` settings as host defaults. EmbrAIon-managed concrete assignment choices remain in `.embraion/**`; generated files are not a second routing authority. See the official [config reference](https://learn.chatgpt.com/docs/config-file/config-reference) and [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+
+Static TOML cannot evaluate the resolver at each spawn. The projected Lead instructions guide the host to perform that step; trust, permissions, higher-priority instructions, and native capabilities still apply. If a required explicit choice cannot be applied, Lead must report and resolve the limitation before dispatch, rather than claim execution used it. Cross-host routes require an explicit handoff and fresh privacy/access checks. Role, access, route class, host, and model selection stay independent.
+
 For projects that opt into `embraion execute`, the selected deployment must also have an approved `.embraion/execution.yaml` binding. The runtime can then execute the bounded candidate list and apply eligible fallback under the original request ceilings.
 
 See [How EmbrAIon works](getting-started/how-it-works.md) and [Execution & providers](configuration/execution.md).

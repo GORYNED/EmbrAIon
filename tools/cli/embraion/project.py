@@ -25,6 +25,7 @@ from .common import (
     write_json,
     write_yaml,
 )
+from .codex_config import merge_codex_config, orchestration_block
 from .policy import read_agents_config
 from .versioning import ensure_cached_runtime
 
@@ -65,16 +66,6 @@ cache/
 """
 
 CODEX_CONFIG_MODES = {"replace", "merge"}
-CODEX_CONFIG_MANAGED_BEGIN = "# >>> EmbrAIon managed: agents"
-CODEX_CONFIG_MANAGED_END = "# <<< EmbrAIon managed: agents"
-CODEX_CONFIG_MANAGED_KEYS = {
-    "enabled": "enabled = true",
-    "max_concurrent_threads_per_session": "max_concurrent_threads_per_session = 3",
-}
-_TOML_TABLE = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
-_CODEX_MANAGED_ASSIGNMENT = re.compile(
-    r"^\s*(enabled|max_concurrent_threads_per_session)\s*="
-)
 
 
 def _normalize_components(
@@ -146,141 +137,6 @@ def _validate_codex_config_mode(
     return mode
 
 
-def _codex_managed_block() -> list[str]:
-    return [
-        CODEX_CONFIG_MANAGED_BEGIN,
-        CODEX_CONFIG_MANAGED_KEYS["enabled"],
-        CODEX_CONFIG_MANAGED_KEYS["max_concurrent_threads_per_session"],
-        CODEX_CONFIG_MANAGED_END,
-    ]
-
-
-def _merge_codex_config_text(existing: str) -> str:
-    try:
-        parsed_existing = tomllib.loads(existing) if existing.strip() else {}
-    except tomllib.TOMLDecodeError as error:
-        raise RuntimeError(
-            f"Cannot safely merge .codex/config.toml: invalid TOML: {error}"
-        ) from error
-
-    lines = existing.splitlines()
-    begin_indexes = [
-        index for index, line in enumerate(lines)
-        if line.strip() == CODEX_CONFIG_MANAGED_BEGIN
-    ]
-    end_indexes = [
-        index for index, line in enumerate(lines)
-        if line.strip() == CODEX_CONFIG_MANAGED_END
-    ]
-    if len(begin_indexes) > 1 or len(end_indexes) > 1:
-        raise RuntimeError(
-            "Cannot safely merge .codex/config.toml: duplicate EmbrAIon managed markers."
-        )
-    if bool(begin_indexes) != bool(end_indexes):
-        raise RuntimeError(
-            "Cannot safely merge .codex/config.toml: incomplete EmbrAIon managed markers."
-        )
-
-    managed = _codex_managed_block()
-    if begin_indexes:
-        begin = begin_indexes[0]
-        end = end_indexes[0]
-        if end < begin:
-            raise RuntimeError(
-                "Cannot safely merge .codex/config.toml: managed markers are out of order."
-            )
-
-        active_table = None
-        begin_table = None
-        end_table = None
-        for index, line in enumerate(lines):
-            match = _TOML_TABLE.match(line)
-            if match:
-                active_table = match.group(1).strip()
-            if index == begin:
-                begin_table = active_table
-            if index == end:
-                end_table = active_table
-
-        if begin_table != "agents" or end_table != "agents":
-            raise RuntimeError(
-                "Cannot safely merge .codex/config.toml: EmbrAIon managed "
-                "markers must be contained entirely within [agents]."
-            )
-
-        lines = lines[:begin] + managed + lines[end + 1 :]
-    else:
-        agents_header = None
-        agents_end = len(lines)
-        for index, line in enumerate(lines):
-            match = _TOML_TABLE.match(line)
-            if not match:
-                continue
-            table_name = match.group(1).strip()
-            if table_name == "agents":
-                agents_header = index
-                continue
-            if agents_header is not None and index > agents_header:
-                agents_end = index
-                break
-
-        if agents_header is None:
-            if lines and lines[-1].strip():
-                lines.append("")
-            lines.extend(["[agents]", *managed])
-        else:
-            body = lines[agents_header + 1 : agents_end]
-            body = [
-                line
-                for line in body
-                if not _CODEX_MANAGED_ASSIGNMENT.match(line)
-            ]
-            lines = (
-                lines[: agents_header + 1]
-                + managed
-                + body
-                + lines[agents_end:]
-            )
-
-    merged = "\n".join(lines).rstrip() + "\n"
-    try:
-        parsed = tomllib.loads(merged)
-    except tomllib.TOMLDecodeError as error:
-        raise RuntimeError(
-            f"Cannot safely merge .codex/config.toml: merged TOML is invalid: {error}"
-        ) from error
-
-    agents = parsed.get("agents") or {}
-    if (
-        agents.get("enabled") is not True
-        or agents.get("max_concurrent_threads_per_session") != 3
-    ):
-        raise RuntimeError(
-            "Cannot safely merge .codex/config.toml: EmbrAIon managed agents "
-            "settings are not effective after merge."
-        )
-
-    existing_agents = dict(parsed_existing.get("agents") or {})
-    merged_agents = dict(agents)
-    for key in CODEX_CONFIG_MANAGED_KEYS:
-        existing_agents.pop(key, None)
-        merged_agents.pop(key, None)
-    if merged_agents != existing_agents:
-        raise RuntimeError(
-            "Cannot safely merge .codex/config.toml: project-owned [agents] "
-            "settings changed."
-        )
-
-    # Ensure we never silently erase existing non-managed tables or values.
-    for key, value in parsed_existing.items():
-        if key == "agents":
-            continue
-        if parsed.get(key) != value:
-            raise RuntimeError(
-                f"Cannot safely merge .codex/config.toml: non-managed table '{key}' changed."
-            )
-
-    return merged
 
 
 def projection_is_verified(plan: dict[str, Any]) -> bool:
@@ -746,7 +602,12 @@ def _generate_codex(
 
     if "config" in components:
         target.mkdir(parents=True, exist_ok=True)
+        lead = next(agent for agent in load_agents(root) if agent["id"] == "lead")
+        instructions = (root / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
+        instructions += "\n\n" + _agent_instructions(lead)
         config = [
+            "developer_instructions = " + json.dumps(orchestration_block(instructions), ensure_ascii=False),
+            "",
             "[agents]",
             "enabled = true",
             "max_concurrent_threads_per_session = 3",
@@ -765,13 +626,13 @@ def _generate_codex(
             continue
 
         access_projection = _host_access_projection("codex", agent)
-        instructions = _agent_instructions(agent).replace('"""', '\\"\\"\\"')
+        instructions = _agent_instructions(agent)
 
         content = (
             f'name = "{agent["id"]}"\n'
             f'description = {__import__("json").dumps(agent.get("purpose", ""), ensure_ascii=False)}\n'
             f'sandbox_mode = "{access_projection["sandbox_mode"]}"\n'
-            f'developer_instructions = """\n{instructions}\n"""\n'
+            f'developer_instructions = {json.dumps(instructions, ensure_ascii=False)}\n'
         )
         (agents_target / f"{agent['id']}.toml").write_text(content, encoding="utf-8")
 
@@ -852,6 +713,14 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
         if not directory.is_dir() or not (directory / "SKILL.md").is_file():
             continue
         shutil.copytree(directory, target / directory.name, dirs_exist_ok=True)
+    _append_lead_skill(root, target)
+
+
+def _append_lead_skill(root: Path, skills: Path) -> None:
+    lead = next(agent for agent in load_agents(root) if agent["id"] == "lead")
+    path = skills / "orchestration/SKILL.md"
+    with path.open("a", encoding="utf-8") as output:
+        output.write("\n## Generated Core Lead contract\n\n" + _agent_instructions(lead) + "\n")
 
 
 def _generate_portable(root: Path, output: Path) -> None:
@@ -870,6 +739,7 @@ def _generate_portable(root: Path, output: Path) -> None:
 
     shutil.copy2(root / "core/catalog.yaml", target / "catalog.yaml")
     shutil.copytree(root / "core/skills", target / "skills", dirs_exist_ok=True)
+    _append_lead_skill(root, target / "skills")
     shutil.copytree(root / "core/knowledge", target / "knowledge", dirs_exist_ok=True)
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
 
@@ -1244,7 +1114,7 @@ def _projection_plan_from_generated(
                 continue
             try:
                 current_text = target.read_text(encoding="utf-8")
-                merged_text = _merge_codex_config_text(current_text)
+                merged_text = merge_codex_config(current_text, (generated / relative).read_text(encoding="utf-8"))
             except (OSError, UnicodeError, RuntimeError):
                 plan["conflict"].append(relative)
                 continue
@@ -1412,7 +1282,7 @@ def install(
                     else ""
                 )
                 target.write_text(
-                    _merge_codex_config_text(existing),
+                    merge_codex_config(existing, source.read_text(encoding="utf-8")),
                     encoding="utf-8",
                 )
             else:
