@@ -76,6 +76,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
                                  "role": "worker", "sourceIds": ["source-a"], "access": "read-only", "dataClass": "PRIVATE"},
                     "task": {"responsibility": "test"}, "context": []}
         self.request = {"workItemId": "work-1", "role": "worker", "sourceIds": ["source-a"],
+                        "_adapterCandidateDeployments": ["first"],
                         "access": "read-only", "dataClass": "PRIVATE", "timeoutSeconds": 5,
                         "candidates": [{"deployment": "first"}], "selected": {"deployment": "first"},
                         "payload": {"inputsByDeployment": {"first": [{"role": "user", "content": [
@@ -161,6 +162,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
                    "routeClass": "ordinary", "host": "test-host", "trustLevel": "verified",
                    "ownedPaths": [], "contextRef": "context-1", "maxAttempts": 1}
         request.pop("selected")
+        request.pop("_adapterCandidateDeployments")
         evidence = []
         result = execute(request, project=self.project, adapters={"litellm-loopback": self.adapter},
                          evidence_sink=evidence.append)

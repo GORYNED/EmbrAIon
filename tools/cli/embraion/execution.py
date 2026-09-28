@@ -170,7 +170,12 @@ def execute(
         raw: dict[str, Any]
         try:
             attempt_request = {**request, "selected": {"deployment": identifier, "effort": effort,
-                                                        "options": candidate.get("options") or {}}}
+                                                        "options": candidate.get("options") or {}},
+                               "_adapterCandidateDeployments": [
+                                   item for item in identities
+                                   if registry.get(item, {}).get("host") == request["host"]
+                                   and bindings.get(item, {}).get("adapter") == binding["adapter"]
+                               ]}
             adapter.preflight(attempt_request, deployment, binding)
             test_host = (binding["adapter"] == "litellm-loopback" and os.environ.get("EMBRAION_TEST_MODE") == "1"
                          and bool(os.environ.get("EMBRAION_LITELLM_TEST_SERVER_SCRIPT")))
