@@ -1,0 +1,92 @@
+slots:
+  constitution: GOVERNANCE.md
+
+  architecture: docs/reference/engineering-model.md
+
+  source-authority: AGENTS.md
+
+  compatibility: docs/reference/runtime-version-resolution.md
+
+  persistence: null
+
+  engineering-workflow: AGENTS.md
+
+  specification: null
+
+routing:
+  path: docs/model-routing.md
+  trust: project
+  roles:
+    - lead
+    - architect
+    - analyst
+  triggers:
+    - routing
+    - model
+    - deployment
+    - effort
+
+runtime-versioning:
+  path: docs/reference/runtime-version-resolution.md
+  trust: project
+  roles:
+    - lead
+    - architect
+    - steward
+  triggers:
+    - runtime
+    - version
+    - pin
+    - update
+    - compatibility
+
+cli-reference:
+  path: docs/reference/cli.md
+  trust: project
+  roles:
+    - lead
+    - analyst
+    - validator
+  triggers:
+    - cli
+    - command
+    - install
+    - update
+
+validation-ci:
+  path: .github/workflows/validate.yml
+  trust: project
+  roles:
+    - lead
+    - validator
+    - reviewer
+  triggers:
+    - validation
+    - test
+    - ci
+    - release
+
+docs-ci:
+  path: .github/workflows/docs.yml
+  trust: project
+  roles:
+    - lead
+    - validator
+    - reviewer
+  triggers:
+    - docs
+    - documentation
+    - mkdocs
+
+release-process:
+  path: .github/workflows/release.yml
+  trust: project
+  roles:
+    - lead
+    - validator
+    - reviewer
+  triggers:
+    - release
+    - publish
+    - pypi
+    - version

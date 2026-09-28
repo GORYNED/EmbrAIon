@@ -15,6 +15,13 @@ from typing import Sequence
 
 import yaml
 
+from .environment import (
+    RESOLUTION_GUARD_ENV,
+    RESOLVED_VERSION_ENV,
+    RESOLVED_PROJECT_ENV,
+    child_environment,
+)
+
 from .artifacts import (
     FrameworkArtifactLock,
     download_locked_artifact,
@@ -26,9 +33,6 @@ PROJECT_MANIFEST = Path(".embraion") / "project.yaml"
 
 CACHE_HOME_ENV = "EMBRAION_CACHE_HOME"
 DISABLE_RESOLUTION_ENV = "EMBRAION_DISABLE_VERSION_RESOLUTION"
-RESOLUTION_GUARD_ENV = "EMBRAION_VERSION_RESOLVED"
-RESOLVED_VERSION_ENV = "EMBRAION_RESOLVED_VERSION"
-RESOLVED_PROJECT_ENV = "EMBRAION_RESOLVED_PROJECT"
 
 _BYPASS_COMMANDS = {"init", "update", "status", "cache", "help", "framework"}
 _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
@@ -168,6 +172,7 @@ def _probe_runtime(python: Path, environment: Path) -> CachedRuntime:
     result = subprocess.run(
         [str(python), "-c", code],
         cwd=str(environment),
+        env=_cached_runtime_environment(),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -266,6 +271,7 @@ def ensure_cached_runtime(
                     "--no-input",
                     install_target,
                 ],
+                env=_cached_runtime_environment(),
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -285,6 +291,7 @@ def ensure_cached_runtime(
                         "--no-input",
                         str(wheel),
                     ],
+                    env=_cached_runtime_environment(),
                     text=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -299,6 +306,7 @@ def ensure_cached_runtime(
                 "from importlib.metadata import version; print(version('embraion'))",
             ],
             cwd=str(environment),
+            env=_cached_runtime_environment(),
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -364,6 +372,15 @@ def _resolution_disabled(argv: Sequence[str]) -> bool:
     return command is None and any(token in {"-h", "--help"} for token in argv)
 
 
+def _cached_runtime_environment() -> dict[str, str]:
+    environment = child_environment()
+    # Installation and probing must inspect the distribution being cached.
+    environment.pop("PYTHONPATH", None)
+    environment.pop("EMBRAION_HOME", None)
+    environment.pop(DISABLE_RESOLUTION_ENV, None)
+    return environment
+
+
 def resolve_project_runtime(
     argv: Sequence[str],
     current_version: str,
@@ -393,7 +410,7 @@ def resolve_project_runtime(
         artifact_lock=artifact_lock,
     )
 
-    environment = os.environ.copy()
+    environment = _cached_runtime_environment()
     environment[RESOLUTION_GUARD_ENV] = "1"
     environment[RESOLVED_VERSION_ENV] = package_version
     environment[RESOLVED_PROJECT_ENV] = str(manifest)

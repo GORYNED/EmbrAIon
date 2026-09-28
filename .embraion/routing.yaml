@@ -1,0 +1,26 @@
+overrides:
+  codex:
+    routes:
+      bounded-read:
+        deployment: codex-luna
+        effort: low
+
+      bounded-write:
+        deployment: codex-luna
+        effort: medium
+
+      ordinary:
+        deployment: codex-luna
+        effort: medium
+
+      substantial:
+        deployment: codex-sol
+        effort: medium
+
+      complex:
+        deployment: codex-sol
+        effort: high
+
+      critical:
+        deployment: codex-astra
+        effort: high

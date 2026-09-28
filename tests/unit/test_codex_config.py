@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import tempfile
+import hashlib
+import shutil
 import tomllib
 import unittest
 from pathlib import Path
@@ -9,11 +11,39 @@ from embraion.codex_config import (
     AGENTS_BEGIN, AGENTS_END, ORCHESTRATION_BEGIN, ORCHESTRATION_END,
     merge_codex_config, orchestration_block,
 )
-from embraion.common import framework_root
+from embraion.common import framework_root, read_json, write_json
 from embraion.project import generate_host, init_project, install, projection_is_verified, projection_plan
 
 
 class CodexConfigTests(unittest.TestCase):
+    def test_clean_clone_and_managed_crlf_upgrade_preserve_projection_ownership(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            project = root / "clone"
+            init_project(project, name="SelfHostClone")
+            generated = root / "generated"
+            generate_host(framework_root(), "codex", generated)
+            for directory in (".codex", ".agents"):
+                shutil.copytree(generated / directory, project / directory)
+            for path in [*(project / ".codex").rglob("*.toml"), *(project / ".agents").rglob("SKILL.md")]:
+                self.assertNotIn(b"\r\n", path.read_bytes(), str(path))
+            # A clean Git clone has generated files but no local ownership ledger.
+            self.assertTrue(projection_is_verified(projection_plan("codex", project)))
+            install("codex", project)
+            state_path = project / ".embraion/state/projections/codex/root.json"
+            state = read_json(state_path)
+            legacy = {".codex/agents/reviewer.toml", ".agents/skills/orchestration/SKILL.md"}
+            for relative in legacy:
+                path = project / relative
+                path.write_bytes(path.read_bytes().replace(b"\n", b"\r\n"))
+                state["files"][relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+            write_json(state_path, state)
+            plan = projection_plan("codex", project)
+            self.assertEqual([], plan["conflict"])
+            self.assertEqual(legacy, set(plan["update"]))
+            install("codex", project)
+            self.assertTrue(projection_is_verified(projection_plan("codex", project)))
+
     def generated(self, text: str = "Generated Lead contract") -> str:
         import json
         return 'developer_instructions = ' + json.dumps(orchestration_block(text)) + '\n[agents]\nenabled = true\nmax_concurrent_threads_per_session = 3\n'

@@ -27,14 +27,16 @@ From a source checkout:
 
 ```bash
 python -m pip install -e .
-embraion validate
-python -m unittest discover -s tests/unit -p "test_*.py"
-python -m unittest discover -s tests/integration -p "test_*.py"
-embraion security scan --path . --fail-on high
-embraion sync --host all --output build/generated --force
+python tools/source.py validate
+python tools/source.py test unit
+python tools/source.py test integration
+python tools/source.py security scan --path . --fail-on high
+python tools/source.py sync --host all --output build/generated --force
 ```
 
 The CI matrix also validates supported behavior on Linux, Windows, and macOS.
+
+Use a local `.venv` for development dependencies when the system Python is shared. The source runner selects that environment when present. `embraion validation run fast`, `affected`, and `full` use the same source entry point, even when the project runtime remains pinned to the previous stable release. Advance the self-host project pin and artifact lock only after the new release is published.
 
 ## Change expectations
 

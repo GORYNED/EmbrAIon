@@ -11,6 +11,8 @@ from typing import Any, Iterable
 
 import yaml
 
+from .environment import child_environment
+
 TEXT_SUFFIXES = {".md", ".yaml", ".yml", ".json", ".toml", ".txt", ".py", ".ps1", ".sh"}
 SKIP_PARTS = {".git", ".venv", "node_modules", "dist", "build", "__pycache__", "Library"}
 
@@ -23,6 +25,7 @@ def run(cmd: list[str], cwd: Path | None = None, check: bool = True) -> subproce
     return subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
+        env=child_environment(),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

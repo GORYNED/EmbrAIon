@@ -12,6 +12,7 @@ from typing import Any
 
 from .common import project_root, state_root, write_json
 from .evidence import attach_validation_evidence, read_run
+from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
 from .security import redact_child_output, redact_value
@@ -151,7 +152,7 @@ def _prepare_validation_command(
     definitions: list[tuple[str, dict[str, Any]]],
 ) -> tuple[str, dict[str, str]]:
     prepared = command
-    environment = os.environ.copy()
+    environment = child_environment()
 
     for name, definition in definitions:
         targets = definition.get("commands")
