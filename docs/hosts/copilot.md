@@ -21,6 +21,7 @@ embraion install --host copilot --destination .
 │   └── ...
 └── skills/
     ├── implementation/
+    ├── orchestration/
     ├── review/
     ├── routing-configuration/
     └── ...
@@ -38,15 +39,17 @@ Skills under `.github/skills/` are projected as root/session procedural capabili
 
 ## Routing
 
-GitHub Copilot remains authoritative for the models and options available to the current account. EmbrAIon does not maintain a Copilot model catalog.
+Apply the [canonical assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md) before every new or reused assignment. Core owns classification, resolution, reuse, evidence, and cross-host handoff with fresh privacy/access checks; the [native adapter](https://github.com/GORYNED/EmbrAIon/blob/main/adapters/copilot/orchestration.md) owns host mechanisms. Concrete deployment choices belong in `.embraion/`; generated specialist profiles remain model-neutral.
 
-Optional selectors/options belong only under `overrides.copilot` in `.embraion/routing.yaml`.
+CLI supports definition `model`, ordered `models`, `modelPolicy`, and `reasoningEffort`, plus per-call settings where the installed `task`/`session.startSubagent` schema exposes them. Precedence is call, `settings.subagents`, definition, then parent; `models` wins over `model`. A mandatory model needs supported `required` policy; `preferred` and Auto can inherit. VS Code supports per-call model and definition model string/array, but may refuse a higher-cost tier than the parent. `reasoning-effort` needs installed-version/schema proof; CLI field names are not interchangeable. Cloud/general agents establish `model`, not the CLI-only controls.
 
-Inspect resolution with:
+Mandatory settings cannot silently inherit, substitute, or be capped. Unknown surfaces, schemas, or options are capability limitations to resolve under Core. Documentation checked 2026-09-29; official sources are linked in the native adapter. Verify installed schema, precedence, and effective settings at invocation. Preparing a route does not execute it.
 
 ```bash
 embraion route --host copilot --route-class substantial --data PRIVATE
 ```
+
+The opt-in `embraion dispatch --native-surface` planner supports `copilot-cli`, `copilot-vscode`, or `copilot-cloud`; `--task-class` selects configured assignment routing. Its `native-plan` includes `status`, `arguments`, `definition-overrides`, `requirements`, `limitations`, and `executed: false`. `prepared` means static translation; `handoff-required` needs a native loading/session step, and `capability-limitation` blocks invocation until resolved. Active schema, effective configuration, and eligibility still need verification.
 
 ## Selective adoption
 

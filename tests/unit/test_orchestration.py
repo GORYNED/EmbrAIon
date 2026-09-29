@@ -120,6 +120,23 @@ class OrchestrationTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, text)
 
+    def test_codex_dispatch_contract_maps_resolved_routes_to_spawn_fields(self) -> None:
+        root = framework_root()
+        text = (root / "adapters/codex/orchestration.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "canonical orchestration skill", "agent_type", "reasoning_effort",
+            "collaboration.spawn_agent", "fork_turns", "'none'", "cannot accept overrides",
+            "capability limitations", "model-neutral", "effective settings",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+        contract = (root / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").lower()
+        for phrase in ("every new delegated assignment", "before dispatch", "host-default inheritance",
+                       "model-only or effort-only", "capability limitation", "fresh privacy/access",
+                       "prepared plan", "verify the applied selection"):
+            with self.subTest(core_phrase=phrase):
+                self.assertIn(phrase, contract)
+
     def test_empty_project_agents_preserve_root_lead_and_core_specialists(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
@@ -132,6 +149,14 @@ class OrchestrationTests(unittest.TestCase):
                 {agent["id"] for agent in load_agents(framework_root(), project)},
             )
             self._assert_root_contract(self._config(project))
+            instructions = self._config(project)["developer_instructions"].lower()
+            for phrase in (
+                "selected candidate", "collaboration.spawn_agent",
+                "reasoning_effort", "fork_turns", "host-default inheritance",
+                "capability limitation",
+            ):
+                with self.subTest(generated_dispatch_clause=phrase):
+                    self.assertIn(phrase, instructions)
             profiles = project / ".codex/agents"
             self.assertEqual(SPECIALISTS, {path.stem for path in profiles.glob("*.toml")})
             self.assertFalse((profiles / "lead.toml").exists())
@@ -179,9 +204,10 @@ class OrchestrationTests(unittest.TestCase):
                 "bounded-read": "project-read-selector",
                 "complex": "project-complex-selector",
             }
+            efforts = {"bounded-read": "low", "complex": "high"}
             write_yaml(project / ".embraion/routing.yaml", {
                 "overrides": {"codex": {"routes": {
-                    classification: {"model": selector}
+                    classification: {"model": selector, "effort": efforts[classification]}
                     for classification, selector in selectors.items()
                 }}},
             })
@@ -194,6 +220,8 @@ class OrchestrationTests(unittest.TestCase):
                     self.assertEqual("architect", result["role"])
                     self.assertEqual(classification, result["route"])
                     self.assertEqual(selector, result["model"])
+                    self.assertEqual(efforts[classification], result["effort"])
+                    self.assertEqual("project-override", result["resolution"])
             install("codex", project)
             config = self._config(project)
             self._assert_root_contract(config)
@@ -204,6 +232,29 @@ class OrchestrationTests(unittest.TestCase):
                 self.assertNotIn(selector, config["developer_instructions"])
                 for profile in (project / ".codex/agents").glob("*.toml"):
                     self.assertNotIn(selector, profile.read_text(encoding="utf-8"))
+    def test_host_default_and_effort_only_project_override_are_distinct(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="EffortOnlyRouting")
+            default = route(
+                "codex", "bounded-read", "PUBLIC", role="worker",
+                access="inspect", project=project,
+            )
+            self.assertEqual("host-default", default["resolution"])
+            self.assertIsNone(default["model"])
+
+            write_yaml(project / ".embraion/routing.yaml", {
+                "overrides": {"codex": {"routes": {
+                    "bounded-read": {"effort": "high"},
+                }}},
+            })
+            effort_only = route(
+                "codex", "bounded-read", "PUBLIC", role="worker",
+                access="inspect", project=project,
+            )
+            self.assertEqual("project-override", effort_only["resolution"])
+            self.assertIsNone(effort_only["model"])
+            self.assertEqual("high", effort_only["effort"])
 
 
 if __name__ == "__main__":

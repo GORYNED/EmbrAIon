@@ -21,6 +21,7 @@ embraion install --host copilot --destination .
 │   └── ...
 └── skills/
     ├── implementation/
+    ├── orchestration/
     ├── review/
     ├── routing-configuration/
     └── ...
@@ -40,13 +41,17 @@ Skills в `.github/skills/` проецируются как root/session procedu
 
 ## Routing
 
-GitHub Copilot authoritative для моделей/options текущего аккаунта. EmbrAIon не поддерживает Copilot model catalog.
+Применяйте [канонический assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md) перед каждым новым или повторно используемым заданием. Core определяет classification, resolution, reuse, evidence и cross-host handoff со свежими privacy/access checks; [native adapter](https://github.com/GORYNED/EmbrAIon/blob/main/adapters/copilot/orchestration.md) определяет механизмы конкретного host. Concrete deployment choices принадлежат `.embraion/`; generated specialist profiles остаются model-neutral.
 
-Optional selectors/options принадлежат только `overrides.copilot` в `.embraion/routing.yaml`.
+CLI поддерживает definition `model`, ordered `models`, `modelPolicy` и `reasoningEffort`, а также per-call settings, если они есть в установленной схеме `task`/`session.startSubagent`. Precedence: call, `settings.subagents`, definition, parent; `models` имеет приоритет над `model`. Обязательная model требует поддерживаемой policy `required`; `preferred` и Auto могут наследовать parent. VS Code поддерживает per-call model и definition model string/array, но может отклонить более дорогой tier, чем у parent. Для `reasoning-effort` нужно подтверждение installed version/schema; CLI field names не взаимозаменяемы. Для cloud/general agents подтверждена `model`, но не CLI-only controls.
+
+Обязательные settings нельзя молча заменить, ограничить cap или унаследовать. Неизвестная surface, schema или options — capability limitation, требующая разрешения по Core. Документация проверена 2026-09-29; ссылки на официальные источники находятся в native adapter. Проверяйте installed schema, precedence и effective settings при invocation. Подготовка маршрута ещё не означает execution.
 
 ```bash
 embraion route --host copilot --route-class substantial --data PRIVATE
 ```
+
+Opt-in planner `embraion dispatch --native-surface` поддерживает `copilot-cli`, `copilot-vscode`, or `copilot-cloud`; `--task-class` выбирает настроенный assignment route. `native-plan` содержит `status`, `arguments`, `definition-overrides`, `requirements`, `limitations` и `executed: false`. `prepared` означает static translation; `handoff-required` требует native loading/session step, а `capability-limitation` блокирует invocation до разрешения проблемы. Проверка active schema, effective configuration и eligibility всё ещё необходима.
 
 ## Selective adoption
 

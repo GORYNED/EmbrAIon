@@ -10,6 +10,10 @@ Projected skills are root/session procedural capabilities. EmbrAIon does not ass
 
 EmbrAIon does not maintain a Copilot model catalog. Copilot keeps ownership of its available models and default/automatic selection. Optional project routing overrides may pass arbitrary Copilot-understood model selectors and settings without making them part of EmbrAIon Core.
 
+The orchestration skill projection combines the [canonical assignment routing contract](../../core/skills/orchestration/SKILL.md) with [this host's native guidance](orchestration.md). Native capabilities and precedence depend on the active surface and installed schema; prepared settings must be applied and verified at invocation. Reusable role profiles remain model-neutral.
+
 Canonical role, complexity, access, privacy, validation, and workflow policy remains in Core.
 
-<sub>Last updated: 2026-09-25 19:32 UTC</sub>
+The opt-in `embraion dispatch --native-surface` planner supports `copilot-cli`, `copilot-vscode`, or `copilot-cloud` for this adapter and accepts `--task-class` for configured assignment routing. Its `native-plan` contains `status`, `arguments`, `definition-overrides`, `requirements`, `limitations`, and `executed: false`. A `prepared` result is static translation; `handoff-required` needs a supported native loading/session step, and `capability-limitation` prevents invocation until resolved. None proves native execution. Unsupported native options block planning until their application is established.
+
+<sub>Last updated: 2026-09-29 01:14 UTC</sub>

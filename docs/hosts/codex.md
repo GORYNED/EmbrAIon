@@ -40,7 +40,7 @@ Lead handles trivial work directly and proactively selects the smallest useful r
 
 Codex must load and trust the project configuration for this guidance to apply. Host capabilities, permissions, native limits, and higher-priority instructions still govern execution. Generated instructions guide orchestration; static TOML cannot guarantee delegation or enforce validation and review by itself.
 
-The `skills` component also includes the canonical `orchestration` skill with the generated Core Lead contract. Copilot, Claude Code, and Portable projections receive the same skill-level guidance, whose loading is selected by the host. Codex's root `developer_instructions` additionally supplies guidance without relying on skill selection.
+The `skills` component also includes the canonical `orchestration` skill with the generated Core Lead contract. Copilot and Claude Code skill projections include the Core contract and their own native guidance; Portable includes only the canonical contract. The host selects skill loading. Codex's root `developer_instructions` additionally supplies guidance without relying on skill selection.
 
 ## Config ownership
 
@@ -72,19 +72,17 @@ Managed agent settings require a single explicit `[agents]` table. Inline, dotte
 
 ## Routing
 
-Codex remains authoritative for its available models and automatic/default model selection. Without a project override, EmbrAIon resolves routing to `host-default`.
+Apply the [canonical assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md) before every new or reused assignment. Core owns classification, resolution, reuse, evidence, and cross-host handoff with fresh privacy/access checks; the [native adapter](https://github.com/GORYNED/EmbrAIon/blob/main/adapters/codex/orchestration.md) owns host mechanisms. Concrete deployment choices belong in `.embraion/`; generated specialist profiles remain model-neutral.
 
-Optional Codex model, effort, or host-specific settings belong only under `overrides.codex` in `.embraion/routing.yaml`.
+On a verified `collaboration.spawn_agent` schema, map role/model/effort to `agent_type`/`model`/`reasoning_effort`, independently. Explicit model or effort requires `fork_turns='none'` or a bounded positive integer string; full-history forks cannot accept these overrides. Follow-up/message tools cannot change them. Custom role-file model/effort can override spawn settings, so inspect the loaded definition and effective settings. Tool names and fork fields are surface-specific.
 
-Before each native spawn, Lead classifies the concrete assignment and queries the project resolver with its role, route class, data class, and access mode, or a configured task class. It applies explicit resolved model/effort choices through supported spawn parameters. Generated specialist files omit model/effort fields because role-file overrides would take precedence over explicit spawn choices. A `host-default` result uses Codex subagent defaults or inheritance, including preserved user defaults. Static TOML cannot query routing per spawn; if the current host cannot apply a required choice, Lead must report and resolve the limitation before dispatch. Roles never imply a fixed model or broader access.
-
-See the official [Codex config reference](https://learn.chatgpt.com/docs/config-file/config-reference) and [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents) for host settings and precedence.
-
-Inspect resolution without executing a model:
+Mandatory settings cannot silently inherit, substitute, or be capped. Unknown surfaces, schemas, or options are capability limitations to resolve under Core. Documentation checked 2026-09-29; official sources are linked in the native adapter. Verify installed schema, precedence, and effective settings at invocation. Preparing a route does not execute it.
 
 ```bash
 embraion route --host codex --route-class substantial --data PRIVATE
 ```
+
+The opt-in `embraion dispatch --native-surface` planner supports `codex-native`; `--task-class` selects configured assignment routing. Its `native-plan` includes `status`, `arguments`, `definition-overrides`, `requirements`, `limitations`, and `executed: false`. `prepared` means static translation; `handoff-required` needs a native loading/session step, and `capability-limitation` blocks invocation until resolved. Active schema, effective configuration, and eligibility still need verification.
 
 ## Selective adoption
 

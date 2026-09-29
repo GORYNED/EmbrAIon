@@ -20,3 +20,4 @@ profiles:
     - python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
     - python tools/source.py eval run --case cross-package-orchestration --record tests/fixtures/evals/cross-package-orchestration.json --output build/evals/cross-package-orchestration.json
     - python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
+    - python tools/source.py eval run --case assignment-routing --record tests/fixtures/evals/assignment-routing.json --output build/evals/assignment-routing.json

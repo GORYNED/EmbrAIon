@@ -455,18 +455,20 @@ def _cmd_route(args: argparse.Namespace) -> int:
 
 
 def _cmd_dispatch(args: argparse.Namespace) -> int:
-    _print_json(
-        create_dispatch(
-            args.task,
-            args.role,
-            args.host,
-            args.route_class,
-            args.data,
-            args.access,
-            args.owned_path or [],
-        )
+    record = create_dispatch(
+        args.task,
+        args.role,
+        args.host,
+        args.route_class,
+        args.data,
+        args.access,
+        args.owned_path or [],
+        native_surface=args.native_surface,
+        task_class=args.task_class,
+        verified_native_fields=args.verified_native_field,
     )
-    return 0
+    _print_json(record)
+    return 1 if record["state"] == "blocked" else 0
 
 
 def _cmd_pricing_status(args: argparse.Namespace) -> int:
@@ -1532,15 +1534,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     dispatch = sub.add_parser("dispatch", help="Create a bounded execution plan", description="Create a privacy-aware execution plan with explicit access and owned-path constraints.")
     dispatch.add_argument("--task", required=True)
-    dispatch.add_argument("--role", default="worker")
+    dispatch.add_argument("--role")
     dispatch.add_argument(
         "--host",
-        required=True,
+        required=False,
         help="Execution host/surface name. Project deployments may use custom hosts.",
     )
     dispatch.add_argument(
         "--route-class",
-        required=True,
+        required=False,
         choices=[
             "bounded-read",
             "bounded-write",
@@ -1552,7 +1554,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dispatch.add_argument(
         "--data",
-        default="PRIVATE",
+        default=None,
         choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
     )
     dispatch.add_argument(
@@ -1561,6 +1563,9 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["inspect", "plan", "review", "write", "external-read"],
     )
     dispatch.add_argument("--owned-path", action="append")
+    dispatch.add_argument("--task-class", help="Resolve the selected project task-class candidate before preparing dispatch.")
+    dispatch.add_argument("--native-surface", help="Prepare native arguments/definition overrides; this never executes a host.")
+    dispatch.add_argument("--verified-native-field", action="append", help="Conditional field observed in the installed native schema; retain evidence before invocation.")
     dispatch.set_defaults(func=_cmd_dispatch)
 
     context = sub.add_parser(

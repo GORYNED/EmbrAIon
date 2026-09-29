@@ -21,6 +21,7 @@ embraion install --host claude-code --destination .
 │   └── ...
 └── skills/
     ├── implementation/
+    ├── orchestration/
     ├── review/
     ├── routing-configuration/
     └── ...
@@ -30,15 +31,17 @@ Generated files are projections. Project policy, knowledge, validation, agents, 
 
 ## Routing
 
-Claude Code remains authoritative for its available models and default selection. EmbrAIon does not maintain a Claude Code model catalog.
+Apply the [canonical assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md) before every new or reused assignment. Core owns classification, resolution, reuse, evidence, and cross-host handoff with fresh privacy/access checks; the [native adapter](https://github.com/GORYNED/EmbrAIon/blob/main/adapters/claude-code/orchestration.md) owns host mechanisms. Concrete deployment choices belong in `.embraion/`; generated specialist profiles remain model-neutral.
 
-Optional selectors/options belong only under `overrides.claude-code` in `.embraion/routing.yaml`.
+Inspect current `Agent` or older `Task` schema for per-call `model`. Native `.claude/agents/*.md` or `--agents` JSON definitions support `model` and `effort`; per-call Agent effort is not established. Explicit effort requires a loaded, selected assignment-specific native definition or supported handoff with verified settings. Normal model precedence is invocation, definition, `CLAUDE_CODE_SUBAGENT_MODEL`, then parent; force-mode environment settings can supersede it. Allowlists, fork inheritance, `CLAUDE_CODE_EFFORT_LEVEL`, and model-specific effort caps may alter the result.
 
-Inspect resolution with:
+Mandatory settings cannot silently inherit, substitute, or be capped. Unknown surfaces, schemas, or options are capability limitations to resolve under Core. Documentation checked 2026-09-29; official sources are linked in the native adapter. Verify installed schema, precedence, and effective settings at invocation. Preparing a route does not execute it.
 
 ```bash
 embraion route --host claude-code --route-class substantial --data PRIVATE
 ```
+
+The opt-in `embraion dispatch --native-surface` planner supports `claude-agent`; `--task-class` selects configured assignment routing. Its `native-plan` includes `status`, `arguments`, `definition-overrides`, `requirements`, `limitations`, and `executed: false`. `prepared` means static translation; `handoff-required` needs a native loading/session step, and `capability-limitation` blocks invocation until resolved. Active schema, effective configuration, and eligibility still need verification.
 
 ## Selective adoption
 

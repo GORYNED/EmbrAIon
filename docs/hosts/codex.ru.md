@@ -40,7 +40,7 @@ Lead выполняет тривиальную работу напрямую и 
 
 Codex должен загрузить project config и доверять ему. Возможности host, permissions, native limits и инструкции более высокого приоритета продолжают действовать. Generated instructions направляют orchestration; static TOML сам по себе не гарантирует делегирование и не обеспечивает исполняемую validation или review.
 
-Component `skills` также содержит canonical `orchestration` skill с generated Core Lead contract. Copilot, Claude Code и Portable projections получают тот же skill-level guidance; загрузку skill выбирает host. Корневой Codex `developer_instructions` дополнительно передаёт guidance без зависимости от выбора skill.
+Component `skills` также содержит canonical `orchestration` skill с generated Core Lead contract. Copilot и Claude Code skill projections включают Core contract и собственное native guidance; Portable включает только canonical contract. Загрузку skill выбирает host. Корневой Codex `developer_instructions` дополнительно передаёт guidance без зависимости от выбора skill.
 
 ## Ownership config
 
@@ -64,19 +64,17 @@ Merge mode разбирает TOML через `tomlkit` и сохраняет п
 
 ## Routing
 
-Codex остаётся authoritative для доступных моделей и automatic/default selection. Без project override EmbrAIon разрешает routing как `host-default`.
+Применяйте [канонический assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md) перед каждым новым или повторно используемым заданием. Core определяет classification, resolution, reuse, evidence и cross-host handoff со свежими privacy/access checks; [native adapter](https://github.com/GORYNED/EmbrAIon/blob/main/adapters/codex/orchestration.md) определяет механизмы конкретного host. Concrete deployment choices принадлежат `.embraion/`; generated specialist profiles остаются model-neutral.
 
-Optional Codex model, effort и host-specific settings принадлежат только `overrides.codex` в `.embraion/routing.yaml`.
+При подтверждённой схеме `collaboration.spawn_agent` передавайте role/model/effort независимо как `agent_type`/`model`/`reasoning_effort`. Явная model или effort требует `fork_turns='none'` либо ограниченной положительной числовой строки; full-history fork не принимает эти overrides. Follow-up/message tools не меняют их. Model/effort в custom role file может переопределить spawn settings: проверяйте загруженное определение и effective settings. Имена tools и поля fork зависят от surface.
 
-Перед каждым native spawn Lead классифицирует конкретное задание и запрашивает project resolver с role, route class, data class и access mode либо configured task class. Явные resolved model/effort он передаёт через поддерживаемые spawn parameters. Generated specialist files не содержат model/effort: role-file overrides имели бы приоритет над явным spawn choice. Результат `host-default` использует Codex subagent defaults или inheritance, включая сохранённые пользовательские defaults. Static TOML не может запрашивать routing перед каждым spawn; если host не умеет применить обязательный выбор, Lead сообщает об ограничении и разрешает его до dispatch. Роль не означает фиксированную модель или расширенный access.
-
-Настройки и precedence host описаны в официальных [Codex config reference](https://learn.chatgpt.com/docs/config-file/config-reference) и [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents).
-
-Проверить resolution без вызова модели:
+Обязательные settings нельзя молча заменить, ограничить cap или унаследовать. Неизвестная surface, schema или options — capability limitation, требующая разрешения по Core. Документация проверена 2026-09-29; ссылки на официальные источники находятся в native adapter. Проверяйте installed schema, precedence и effective settings при invocation. Подготовка маршрута ещё не означает execution.
 
 ```bash
 embraion route --host codex --route-class substantial --data PRIVATE
 ```
+
+Opt-in planner `embraion dispatch --native-surface` поддерживает `codex-native`; `--task-class` выбирает настроенный assignment route. `native-plan` содержит `status`, `arguments`, `definition-overrides`, `requirements`, `limitations` и `executed: false`. `prepared` означает static translation; `handoff-required` требует native loading/session step, а `capability-limitation` блокирует invocation до разрешения проблемы. Проверка active schema, effective configuration и eligibility всё ещё необходима.
 
 ## Selective adoption
 

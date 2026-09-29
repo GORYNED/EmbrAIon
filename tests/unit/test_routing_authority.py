@@ -41,6 +41,8 @@ class RoutingAuthorityTests(unittest.TestCase):
         self.assertEqual("bounded-write", bounded["route"])
         self.assertEqual(2, len(bounded["candidates"]))
         self.assertEqual("candidate:0:host-fallback", bounded["fallbacks"][0]["source"])
+        self.assertEqual("project-deployment", bounded["selected"]["resolution"])
+        self.assertEqual("project-deployment", bounded["fallbacks"][0]["resolution"])
         self.assertNotEqual("complex", bounded["fallbacks"][0]["route"])
 
         routine = resolve_task_route("routine-review", project=self.project)
@@ -69,6 +71,7 @@ class RoutingAuthorityTests(unittest.TestCase):
         critical = resolve_task_route("cross-host-review", project=self.project,
                                       escalation="critical", justification="protected decision")
         self.assertEqual("critical", critical["selected"]["route"])
+        self.assertEqual("project-deployment", critical["selected"]["resolution"])
         self.assertEqual([], critical["fallbacks"])
         with self.assertRaisesRegex(RuntimeError, "requires justification"):
             resolve_task_route("protected-decision", project=self.project)
@@ -78,11 +81,32 @@ class RoutingAuthorityTests(unittest.TestCase):
 
         peers = resolve_task_route("cost-sensitive", project=self.project)
         self.assertEqual(3, len(peers["candidates"]))
+        self.assertTrue(all(candidate["resolution"] == "project-deployment" for candidate in peers["candidates"]))
         self.assertTrue(peers["candidates"][0]["source"].endswith("group:economy-peers"))
         self.assertFalse(peers["candidates"][1]["requires-handoff"])
         self.assertTrue(peers["candidates"][2]["requires-handoff"])
         wide = resolve_task_route("cost-sensitive", project=self.project, shape="wide")
         self.assertEqual(peers["candidates"][1]["deployment"], wide["selected"]["deployment"])
+
+    def test_task_candidate_preserves_resolution_for_defaults_and_partial_overrides(self) -> None:
+        routing_path = self.project / ".embraion/routing.yaml"
+        task_class = "native-assignment"
+        task = {"route-class": "bounded-read", "candidates": [{"host": "codex"}]}
+        for override in (None, {"effort": "medium"}, {"options": {"native-setting": True}}):
+            with self.subTest(override=override):
+                routing = {"overrides": {}, "task-classes": {task_class: task}}
+                if override is not None:
+                    routing["overrides"] = {"codex": {"routes": {"bounded-read": override}}}
+                write_yaml(routing_path, routing)
+                expected = route("codex", "bounded-read", "PRIVATE", role="architect",
+                                 access="read-only", task_class=task_class, project=self.project)
+                selected = resolve_task_route(task_class, role="architect", access="read-only",
+                                              project=self.project)["selected"]
+                self.assertEqual(expected["resolution"], selected["resolution"])
+                self.assertEqual("project-override" if override else "host-default", selected["resolution"])
+                self.assertIsNone(selected["model"])
+                self.assertEqual(expected["effort"], selected["effort"])
+                self.assertEqual(expected["options"], selected["options"])
 
     def test_role_route_task_precedence_and_fail_closed(self) -> None:
         reviewed = route("alpha-host", "complex", "PRIVATE", role="reviewer",

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Host harness representations",
+  "type": "object",
+  "required": ["schema-version", "hosts", "delegation-surfaces"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "hosts": {"type": "object"},
+    "delegation-surfaces": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["host", "mechanism", "mode", "model", "effort", "sources"],
+        "properties": {
+          "host": {"enum": ["codex", "copilot", "claude-code", "portable"]},
+          "mechanism": {"type": "string", "minLength": 1},
+          "mode": {"enum": ["runtime", "unknown", "bundle"]},
+          "model": {"$ref": "#/$defs/binding"},
+          "effort": {"$ref": "#/$defs/binding"},
+          "conditional-effort": {"$ref": "#/$defs/binding"},
+          "bounded-fork": {"type": "boolean"},
+          "required-model-policy": {"type": "boolean"},
+          "definition-handoff": {"type": "boolean"},
+          "effort-levels": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "options": {"type": "object", "additionalProperties": {"type": "object", "required": ["location", "field", "schema"], "properties": {"location": {"enum": ["arguments", "definition-overrides"]}, "field": {"type": "string", "minLength": 1}, "schema": {"type": "object"}}, "additionalProperties": false}},
+          "sources": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "binding": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "required": ["location", "field"],
+         "properties": {"location": {"enum": ["arguments", "definition-overrides"]}, "field": {"type": "string", "minLength": 1}},
+         "additionalProperties": false}
+      ]
+    }
+  }
+}

@@ -31,12 +31,15 @@ release: vX.Y.Z
 - packaged reference-project E2E;
 - security scanning;
 - behavioral eval smoke;
+- Core assignment routing и capability-aware regression coverage для Codex, Copilot, Claude Code и Portable;
 - generation of host projections;
 - strict documentation build.
 
 Только после успешных checks workflow создаёт immutable release tag и запускает tagged build.
 
 Tagged build снова проверяет version/tag contract, строит distributions/release archives, создаёт GitHub Release и публикует Python distributions в PyPI.
+
+Assignment-routing eval fixtures проверяют grading и regression behavior, но не подтверждают live native execution. Evidence различает prepared arguments, capability limitations, handoffs и действительно применённые settings.
 
 ## Совместимость pre-1.0
 

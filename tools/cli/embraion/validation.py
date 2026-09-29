@@ -200,6 +200,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
     schema_pairs = [
         (root / "framework.yaml", root / "schemas/framework.schema.json"),
         (root / "core/catalog.yaml", root / "schemas/catalog.schema.json"),
+        (root / "adapters/harness-capabilities.yaml", root / "schemas/harness.schema.json"),
     ]
     for instance_path, schema_path in schema_pairs:
         if not instance_path.exists() or not schema_path.exists():

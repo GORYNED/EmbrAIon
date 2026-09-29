@@ -439,6 +439,7 @@ def resolve_task_route(
                                           data_class=candidate_data, role=selected_role, access=candidate_access,
                                           effort=item.get("effort"), options=item.get("options")),
                     "source": f"{source}:group:{group_id}", "route": candidate_route,
+                    "resolution": "project-deployment",
                 }
                 for item in choices
             ]
@@ -449,14 +450,17 @@ def resolve_task_route(
                 data_class=candidate_data, role=selected_role, access=candidate_access,
                 effort=spec.get("effort"), options=spec.get("options"),
             )
-            return [{**resolved, "source": source, "route": candidate_route}]
+            return [{**resolved, "source": source, "route": candidate_route,
+                     "resolution": "project-deployment"}]
         selected = route(host, candidate_route, candidate_data, role=selected_role,
                          access=candidate_access, project=root, task_class=task_class)
         primary = {key: selected.get(key) for key in ("deployment", "provider", "model", "effort", "options", "billing")}
         results = [{**primary, "host": host, "route": candidate_route,
+                    "resolution": selected["resolution"],
                     "provenance": selected["provenance"],
                     "source": f"{source}:host-route"}]
         results.extend({**fallback, "route": candidate_route,
+                        "resolution": "project-deployment",
                         "source": f"{source}:host-fallback"}
                        for fallback in selected["fallbacks"])
         return results
@@ -539,16 +543,21 @@ def _current_branch(project: Path) -> str | None:
 
 def create_dispatch(
     task: str,
-    role: str,
-    host: str,
-    route_class: str,
-    data_class: str,
+    role: str | None,
+    host: str | None,
+    route_class: str | None,
+    data_class: str | None,
     access: str,
     owned_paths: list[str],
+    *,
+    native_surface: str | None = None,
+    task_class: str | None = None,
+    project: Path | None = None,
+    verified_native_fields: list[str] | None = None,
 ) -> dict[str, Any]:
-    project = project_root()
+    project = project_root(project)
 
-    if access == "write":
+    if _normalized_access_mode(access) == "workspace-write":
         if not owned_paths:
             raise RuntimeError("Writable dispatch requires at least one owned path.")
 
@@ -558,14 +567,24 @@ def create_dispatch(
                 "Writable dispatch is not allowed from the stable main/master branch."
             )
 
-    selected = route(
-        host,
-        route_class,
-        data_class,
-        role=role,
-        access=access,
-        project=project,
-    )
+    if task_class:
+        if host or route_class:
+            raise RuntimeError("Dispatch --task-class cannot be combined with --host or --route-class.")
+        profile = (read_routing_config(project).get("task-classes") or {}).get(task_class) or {}
+        role = role or profile.get("role") or "worker"
+        effective = resolve_task_route(task_class, role=role, data_class=data_class,
+                                       access=access, project=project)
+        selected = {**effective["selected"], "fallbacks": effective["fallbacks"]}
+        data_class = effective["data"]
+        host = selected["host"]
+        route_class = selected["route"]
+    else:
+        if not host or not route_class:
+            raise RuntimeError("Dispatch requires --host and --route-class, or --task-class.")
+        role = role or "worker"
+        data_class = data_class or "PRIVATE"
+        selected = route(host, route_class, data_class, role=role,
+                         access=access, project=project)
     dispatch_id = uuid.uuid4().hex
 
     record = {
@@ -576,6 +595,8 @@ def create_dispatch(
         "host": host,
         "route": route_class,
         "resolution": selected["resolution"],
+        "provenance": selected.get("provenance") or [selected.get("source", "project-deployment")],
+        "task-class": task_class,
         "deployment": selected.get("deployment"),
         "provider": selected.get("provider"),
         "model": selected["model"],
@@ -588,6 +609,15 @@ def create_dispatch(
         "state": "planned",
         "created-utc": datetime.now(timezone.utc).isoformat(),
     }
+
+    if native_surface:
+        from .delegation import prepare_native_assignment
+        record["native-plan"] = prepare_native_assignment(selected, native_surface, role=role,
+                                                          verified_native_fields=verified_native_fields)
+        if record["native-plan"]["status"] == "capability-limitation":
+            record["state"] = "blocked"
+        elif record["native-plan"]["status"] == "handoff-required":
+            record["state"] = "handoff-required"
 
     record = redact_value(record)
     destination = state_root(project) / "dispatch" / f"{dispatch_id}.json"

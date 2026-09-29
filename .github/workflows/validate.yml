@@ -63,6 +63,7 @@ jobs:
           python tools/source.py eval run --case worker-scope --record tests/fixtures/evals/worker-scope.json --output build/evals/worker-scope.json
           python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
           python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
+          python tools/source.py eval run --case assignment-routing --record tests/fixtures/evals/assignment-routing.json --output build/evals/assignment-routing.json
 
       - name: Upload evidence
         if: always()

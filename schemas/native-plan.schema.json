@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Native assignment preparation (not execution evidence)",
+  "type": "object",
+  "required": ["surface", "status", "executed", "arguments", "definition-overrides", "requirements", "limitations", "reuse"],
+  "properties": {
+    "surface": {"type": "string"},
+    "status": {"enum": ["prepared", "handoff-required", "capability-limitation"]},
+    "executed": {"const": false},
+    "arguments": {"type": "object"},
+    "definition-overrides": {"type": "object"},
+    "requirements": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "reuse": {"enum": ["fresh-assignment", "verified-existing-agent"]},
+    "mechanism": {"type": "string"},
+    "sources": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
