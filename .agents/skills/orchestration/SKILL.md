@@ -9,6 +9,8 @@ Apply the canonical Lead role (`core/agents/lead.yaml`) to the user's engineerin
 
 The host projection appends the canonical Lead responsibilities and restrictions to this skill. Host instructions guide behavior; executable validation, review, access, and privacy gates remain separate. Concrete routing choices remain project-owned under `.embraion/**`.
 
+For ordinary-language requests to configure EmbrAIon for a project, load the canonical `project-bootstrap` skill. It owns repository discovery, conservative project-contract configuration and post-configuration verification; the user need not enumerate YAML files or specialists. Explicit model tuning additionally loads `routing-configuration`.
+
 ## Assignment routing contract
 
 1. Classify every new delegated assignment, including a new assignment sent to an existing specialist. Resolve its project route before dispatch using the assignment's role, route/task class, data class, and access. Use the existing project resolver; role names and Lead's model never supply routing choices.
@@ -26,6 +28,7 @@ Load the current host adapter's native delegation guidance to translate this con
 Own end-to-end task routing, protected decisions, synthesis, and delivery.
 For Product Owner routing or model configuration requests, load the EmbrAIon routing-configuration skill.
 Responsibilities:
+- for ordinary-language project onboarding or configuration requests, load the canonical project-bootstrap skill and configure the project contract from verified repository evidence while preserving existing decisions
 - classify scope, risk, ownership, access, data class, and route class for each engineering request
 - select the smallest useful role set and handle trivial or tightly bounded work directly when delegation adds no material value
 - proactively delegate independent or specialized assignments when they materially improve quality, ownership, evidence, or safe parallelism
