@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from embraion import __version__
-from embraion.common import framework_root, read_yaml, write_yaml
+from embraion.common import framework_root, read_json, read_yaml, write_yaml
 from embraion.evals import evaluate_case
 from embraion.project import init_project, sync
 from embraion.runtime import route
@@ -453,6 +453,22 @@ class CoreTests(unittest.TestCase):
         )
         self.assertTrue(passed)
         self.assertEqual([], failures)
+
+    def test_cross_package_orchestration_eval_covers_solo_execution_failure(self) -> None:
+        root = framework_root()
+        case = read_yaml(root / "evals/cases/cross-package-orchestration.yaml")
+        passed_record = read_json(root / "tests/fixtures/evals/cross-package-orchestration.json")
+        passed, failures = evaluate_case(case, passed_record)
+        self.assertTrue(passed, failures)
+
+        # A successful process exit and a small patch cannot substitute for
+        # required specialist dispatch before writable implementation.
+        blocked_record = {"process-exit-code": 0}
+        passed, failures = evaluate_case(case, blocked_record)
+        self.assertFalse(passed)
+        self.assertTrue(any("selected-capabilities" in failure for failure in failures))
+        self.assertTrue(any("task-complete" in failure for failure in failures))
+        self.assertTrue(any("final-acceptance-owner" in failure for failure in failures))
 
 
 if __name__ == "__main__":

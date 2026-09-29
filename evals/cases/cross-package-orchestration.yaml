@@ -1,0 +1,47 @@
+schema-version: 1
+id: cross-package-orchestration
+purpose: require specialist-led architecture and ownership work before implementation, regardless of final diff size
+context:
+  task: a change spans package boundaries and requires architecture, ownership, and dependency-direction decisions
+  expected-diff: small
+checks:
+  - type: contains
+    field: selected-capabilities
+    value: architect
+  - type: contains
+    field: selected-capabilities
+    value: worker
+  - type: contains
+    field: specialist-dispatches
+    value: architect
+  - type: contains
+    field: specialist-dispatches
+    value: worker
+  - type: equals
+    field: writable-implementation-after-specialist-analysis
+    value: true
+  - type: equals
+    field: task-complete
+    value: true
+  - type: contains
+    field: integrated-specialist-results
+    value: architect
+  - type: equals
+    field: final-acceptance-owner
+    value: lead
+expect:
+  required-capabilities:
+    - architect
+    - worker
+  required-analysis:
+    - architecture and dependency direction
+    - affected package ownership
+  required-evidence:
+    - bounded implementation
+    - integrated specialist results
+grade:
+  hard:
+    - successful process exit alone does not establish task completion
+    - specialist analysis precedes writable implementation
+    - a small final diff does not lower the original task scope
+    - Lead integrates results and retains final acceptance authority

@@ -69,6 +69,10 @@ class OrchestrationTests(unittest.TestCase):
             ("each engineering request", "scope", "risk", "ownership", "route class"),
             ("smallest useful role set", "trivial", "directly", "material value"),
             ("proactively delegate", "specialized", "materially improve"),
+            ("delegate architecture", "ownership-boundary", "cross-package", "small"),
+            ("before writable implementation", "matching available core specialist"),
+            ("preserve the original scope and complexity", "small final diff", "final acceptance authority"),
+            ("architecture or ownership decisions", "architect", "before implementation"),
             ("roles by purpose", "architect", "researcher", "steward", "validator"),
             ("each concrete delegated assignment", "classify", ".embraion/**", "host"),
             ("role", "access", "route class", "model selection", "independent"),
@@ -82,6 +86,9 @@ class OrchestrationTests(unittest.TestCase):
                 self._assert_semantic_clause(responsibilities, *terms)
         self._assert_semantic_clause(
             lead["restrictions"], "ceremony", "trivial", "material benefit"
+        )
+        self._assert_semantic_clause(
+            lead["restrictions"], "small expected or final diff", "skip an available matching specialist", "cross-package"
         )
         self._assert_semantic_clause(
             lead["restrictions"], "missing", "historical", "fresh pass"
@@ -98,6 +105,20 @@ class OrchestrationTests(unittest.TestCase):
                 self.assertIn("../agents/lead.yaml", text)
                 self.assertIn("../rules/review.md", text)
                 self.assertIn("final acceptance", text)
+
+    def test_codex_host_projection_requires_preimplementation_specialist_dispatch(self) -> None:
+        text = (framework_root() / "adapters/codex/orchestration.md").read_text(encoding="utf-8").lower()
+        for phrase in (
+            "original nature and ownership of the problem",
+            "before writable implementation",
+            "matching available core specialist",
+            "architect analyze",
+            "before implementation",
+            "small final diff does not retroactively reduce",
+            "lead retains final acceptance authority",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
 
     def test_empty_project_agents_preserve_root_lead_and_core_specialists(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

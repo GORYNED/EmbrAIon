@@ -18,4 +18,5 @@ profiles:
     - python tools/source.py eval run --case reviewer-readonly --record tests/fixtures/evals/reviewer-readonly.json --output build/evals/reviewer-readonly.json
     - python tools/source.py eval run --case worker-scope --record tests/fixtures/evals/worker-scope.json --output build/evals/worker-scope.json
     - python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
+    - python tools/source.py eval run --case cross-package-orchestration --record tests/fixtures/evals/cross-package-orchestration.json --output build/evals/cross-package-orchestration.json
     - python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json

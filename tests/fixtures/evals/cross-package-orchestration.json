@@ -1,0 +1,9 @@
+{
+  "selected-capabilities": ["architect", "worker", "validator"],
+  "specialist-dispatches": ["architect", "worker"],
+  "writable-implementation-after-specialist-analysis": true,
+  "task-complete": true,
+  "final-diff-size": "small",
+  "integrated-specialist-results": ["architect", "worker"],
+  "final-acceptance-owner": "lead"
+}

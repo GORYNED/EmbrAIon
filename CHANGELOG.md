@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.16.2 - 2026-09-28
+
+### Changed
+
+- Host-native Lead orchestration dispatches architecture, ownership, dependency-direction, and cross-package work to matching Core specialists before writable implementation, regardless of final diff size; Lead integrates the results and retains final acceptance authority.
+
+### Added
+
+- Generic cross-package orchestration regression coverage for specialist dispatch, analysis-before-write ordering, scope preservation, result integration, and Lead final authority.
+
 ## 0.16.1 - 2026-09-28
 
 ### Fixed

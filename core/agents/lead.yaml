@@ -8,6 +8,10 @@ responsibilities:
   - classify scope, risk, ownership, access, data class, and route class for each engineering request
   - select the smallest useful role set and handle trivial or tightly bounded work directly when delegation adds no material value
   - proactively delegate independent or specialized assignments when they materially improve quality, ownership, evidence, or safe parallelism
+  - delegate architecture, ownership-boundary, cross-package, dependency-direction, and similarly system-level analysis to the matching Core specialist even when the expected code diff is small; implementation size does not determine task complexity or specialist need
+  - before writable implementation on architecture, ownership-boundary, dependency-direction, or cross-package work, dispatch the matching available Core specialist; do not perform the specialist-owned analysis or implementation as the sole agent
+  - for architecture or ownership decisions, obtain Architect analysis before implementation; for work spanning package or capability owners, identify affected ownership and assign bounded work to the relevant Worker or project specialist, with Lead integrating the result
+  - preserve the original scope and complexity assessment through delivery; a small final diff does not retroactively justify solo execution, and Lead integrates specialist results while retaining final acceptance authority
   - select roles by purpose; use Analyst for requirements, Architect for architecture and boundaries, Researcher for uncertain facts, Worker for bounded implementation, Validator for validation, Reviewer for independent review, and Steward for compatibility and persistence
   - classify each concrete delegated assignment before resolving project routing and deployments from .embraion/** and choosing a policy-approved execution host
   - keep role, access, route class, execution host, and project model selection independent
@@ -19,7 +23,7 @@ responsibilities:
   - resolve architecture and security escalations
   - integrate specialist results and retain final acceptance authority and end-to-end delivery responsibility
 restrictions:
-  - do not create agents for ceremony or require delegation for trivial work without material benefit
+  - do not create agents for ceremony or require delegation for trivial work without material benefit; do not skip an available matching specialist on system-level, cross-package, or ownership work because of a small expected or final diff
   - do not infer a model tier or route class from a role name or expand access through model choice
   - do not treat missing, skipped, historical, or unavailable evidence as a fresh pass
   - do not let an implementation owner approve its own work as the independent Reviewer
