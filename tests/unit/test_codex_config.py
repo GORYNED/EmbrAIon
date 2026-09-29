@@ -165,6 +165,7 @@ name = "one"
             self.assertEqual({"description": "Keep my role"}, agents["custom"])
 
     def test_all_hosts_receive_derived_lead_skill(self) -> None:
+        contract = (framework_root() / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         with tempfile.TemporaryDirectory() as temporary:
             for host, directory in (("codex", ".agents/skills"), ("copilot", ".github/skills"),
                                     ("claude-code", ".claude/skills"), ("portable", "embraion/skills")):
@@ -174,6 +175,29 @@ name = "one"
                 self.assertIn("Generated Core Lead contract", skill)
                 self.assertIn("proactively delegate", skill)
                 self.assertIn("final acceptance authority", skill)
+                self.assertIn(contract, skill)
+                if host != "portable":
+                    guidance = (framework_root() / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
+                    self.assertIn(guidance, skill)
+                else:
+                    for native_host in ("codex", "copilot", "claude-code"):
+                        guidance = (framework_root() / "adapters" / native_host / "orchestration.md").read_text(encoding="utf-8").strip()
+                        self.assertNotIn(guidance, skill)
+
+    def test_codex_skills_only_receive_native_dispatch_contract_idempotently(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="SkillsOnlyRouting")
+            install("codex", project, components=["skills"])
+            entry = project / ".agents/skills/orchestration/SKILL.md"
+            first = entry.read_bytes()
+            guidance = (framework_root() / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
+            self.assertIn(guidance, first.decode("utf-8"))
+            self.assertEqual(1, first.decode("utf-8").count(guidance))
+            self.assertFalse((project / ".codex/config.toml").exists())
+            install("codex", project, components=["skills"])
+            self.assertEqual(first, entry.read_bytes())
+            self.assertTrue(projection_is_verified(projection_plan("codex", project, components=["skills"])))
 
 
 if __name__ == "__main__":

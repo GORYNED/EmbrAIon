@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.16.3 - 2026-09-29
+
+### Fixed
+
+- Delegated assignments follow one host-neutral Core routing contract: resolve each assignment before dispatch, apply explicit project fields through verified native capabilities, and permit host-default inheritance only for actual host-default resolution. Unsupported settings and conflicting native precedence require a capability limitation or supported handoff.
+- Task-class candidates retain their routing resolution so missing models and partial project overrides cannot be mistaken for host-default. Writable dispatch ownership and branch checks also cover the workspace-write access spelling.
+
+### Added
+
+- Native delegation guidance for Codex, Copilot CLI/VS Code/cloud, and Claude Code, with distinct model, effort, definition, and precedence behavior. All executable host skills receive their adapter guidance; Portable carries the canonical contract without runtime claims.
+- Optional native preparation on the existing dispatch command, producing reviewable arguments or scoped definition overrides with explicit capability limitations and handoff requirements. Prepared plans never claim execution.
+- Capability-aware cross-host regression coverage and a canonical assignment-routing behavioral eval in validation and both release gates.
+
 ## 0.16.2 - 2026-09-28
 
 ### Changed

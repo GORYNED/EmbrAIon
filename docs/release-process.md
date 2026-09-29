@@ -31,12 +31,15 @@ Before the tag is created, CI validates:
 - packaged reference-project E2E;
 - security scanning;
 - behavioral eval smoke;
+- Core assignment routing and capability-aware Codex, Copilot, Claude Code, and Portable regressions;
 - generation of host projections;
 - strict documentation build.
 
 Only after those checks pass does the workflow create the immutable release tag and dispatch the tagged build.
 
 The tagged build validates the version/tag contract again, builds distributions and release archives, creates the GitHub Release, and publishes Python distributions to PyPI.
+
+Assignment-routing eval fixtures verify grading and regression behavior. They do not claim live native host execution. Native selection evidence must distinguish prepared arguments, capability limitations, handoffs, and applied settings.
 
 ## Pre-1.0 compatibility
 

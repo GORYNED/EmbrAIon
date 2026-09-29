@@ -1,4 +1,64 @@
 schema-version: 1
+# Native field representations, not live selector availability or project routing.
+# Inspect the installed surface and effective settings before actual dispatch.
+delegation-surfaces:
+  codex-native:
+    host: codex
+    mechanism: spawn_agent
+    mode: runtime
+    model: {location: arguments, field: model}
+    effort: {location: arguments, field: reasoning_effort}
+    bounded-fork: true
+    options:
+      fork_turns:
+        location: arguments
+        field: fork_turns
+        schema: {type: string, pattern: '^(none|[1-9][0-9]*)$'}
+    sources: [https://learn.chatgpt.com/docs/agent-configuration/subagents]
+  copilot-cli:
+    host: copilot
+    mechanism: task/startSubagent with verified call settings or a loaded scoped definition
+    mode: runtime
+    model: {location: definition-overrides, field: model}
+    effort: {location: definition-overrides, field: reasoningEffort}
+    required-model-policy: true
+    options:
+      modelPolicy:
+        location: definition-overrides
+        field: modelPolicy
+        schema: {enum: [required]}
+    sources: [https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference]
+  copilot-vscode:
+    host: copilot
+    mechanism: runSubagent
+    mode: runtime
+    model: {location: arguments, field: model}
+    effort: null
+    conditional-effort: {location: definition-overrides, field: reasoning-effort}
+    sources: [https://code.visualstudio.com/docs/agents/run/subagents, https://github.com/microsoft/vscode/blob/main/extensions/copilot/assets/prompts/skills/agent-customization/references/agents.md]
+  copilot-cloud:
+    host: copilot
+    mechanism: unknown delegated runtime
+    mode: unknown
+    model: null
+    effort: null
+    sources: [https://docs.github.com/en/copilot/reference/custom-agents-configuration]
+  claude-agent:
+    host: claude-code
+    mechanism: Agent (Task on older versions)
+    mode: runtime
+    model: {location: arguments, field: model}
+    effort: {location: definition-overrides, field: effort}
+    effort-levels: [low, medium, high, xhigh, max]
+    definition-handoff: true
+    sources: [https://code.claude.com/docs/en/sub-agents, https://code.claude.com/docs/en/model-config]
+  portable:
+    host: portable
+    mechanism: canonical interchange bundle
+    mode: bundle
+    model: null
+    effort: null
+    sources: []
 hosts:
   codex:
     agents: .codex/agents

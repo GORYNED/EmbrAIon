@@ -1,0 +1,59 @@
+schema-version: 1
+id: assignment-routing
+purpose: apply the canonical project route to every assignment through verified host-native capabilities
+context:
+  task: resolve explicit, partial, host-default, reused, unsupported, and cross-host assignments independently
+  hosts: [codex, copilot, claude-code, portable]
+  evidence-kind: synthetic-grading-fixture
+  live-host-execution: false
+checks:
+  - { type: equals, field: evidence-kind, value: synthetic-grading-fixture }
+  - { type: equals, field: live-host-execution, value: false }
+  - { type: equals, field: core.route-resolved-before-each-dispatch, value: true }
+  - { type: equals, field: core.explicit.model-applied, value: true }
+  - { type: equals, field: core.explicit.effort-applied, value: true }
+  - { type: equals, field: core.partial.explicit-fields-applied, value: true }
+  - { type: equals, field: core.inheritance-only-after-host-default, value: true }
+  - { type: equals, field: core.unresolved-route-dispatched, value: false }
+  - { type: equals, field: core.unsupported-choice-dispatched, value: false }
+  - { type: equals, field: core.reused-agent-matches-new-route, value: true }
+  - { type: equals, field: core.handoff-fresh-privacy-access-checks, value: true }
+  - { type: equals, field: core.prepared-plan-is-execution-evidence, value: false }
+  - { type: equals, field: codex.model-field, value: model }
+  - { type: equals, field: codex.effort-field, value: reasoning_effort }
+  - { type: equals, field: codex.override-compatible-fork, value: true }
+  - { type: equals, field: codex.role-definition-precedence-checked, value: true }
+  - { type: equals, field: copilot.cli.effort-field, value: reasoningEffort }
+  - { type: equals, field: copilot.cli.model-policy, value: required }
+  - { type: equals, field: copilot.cli.precedence-and-auto-checked, value: true }
+  - { type: equals, field: copilot.cli.unverified-call-fields-used, value: false }
+  - { type: equals, field: copilot.vscode.unverified-effort-dispatched, value: false }
+  - { type: equals, field: copilot.vscode.parent-tier-refusal-silently-inherited, value: false }
+  - { type: equals, field: copilot.cloud.unverified-controls-dispatched, value: false }
+  - { type: equals, field: claude-code.model-field, value: model }
+  - { type: equals, field: claude-code.effort-definition-field, value: effort }
+  - { type: equals, field: claude-code.assignment-definition-loaded-and-selected, value: true }
+  - { type: equals, field: claude-code.unverified-call-effort-used, value: false }
+  - { type: equals, field: claude-code.environment-allowlist-caps-checked, value: true }
+  - { type: equals, field: portable.canonical-contract-carried, value: true }
+  - { type: equals, field: portable.runtime-available, value: false }
+  - { type: equals, field: portable.native-status, value: capability-limitation }
+  - { type: equals, field: portable.runtime-arguments, value: {} }
+expect:
+  required-evidence:
+    - successful resolver results paired with actual native invocation settings for each execution
+    - active tool schema and loaded definition establish native model and effort application
+    - inheritance distinguished from missing selectors, unsupported settings, and resolver errors
+    - reuse matches fresh routing and cross-host handoff repeats privacy and access checks
+    - Copilot surfaces and Claude definition-level effort retain their distinct native capabilities
+    - Portable carries the canonical contract without claiming a native execution runtime
+    - fixture results exercise grading only; live execution evidence must be collected separately
+grade:
+  hard:
+    - resolving or preparing a route without applying required fields is not execution evidence
+    - unresolved routes and unsupported mandatory settings block dispatch
+    - host precedence, substitution, inheritance, and caps cannot silently defeat a required selection
+    - Codex override-compatible forks and Claude assignment-specific definitions are native mechanisms
+    - Copilot CLI, VS Code, and cloud capabilities must not be treated as interchangeable
+    - Portable supplies canonical guidance but no native runtime or spawn arguments
+    - synthetic fixture records test grading and are not live host execution evidence

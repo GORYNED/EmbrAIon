@@ -604,6 +604,8 @@ def _generate_codex(
         target.mkdir(parents=True, exist_ok=True)
         lead = next(agent for agent in load_agents(root) if agent["id"] == "lead")
         instructions = (root / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
+        contract = (root / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
+        instructions += "\n\n" + contract
         instructions += "\n\n" + _agent_instructions(lead)
         config = [
             "developer_instructions = " + json.dumps(orchestration_block(instructions), ensure_ascii=False),
@@ -718,6 +720,10 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
         entry = target / directory.name / "SKILL.md"
         entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     _append_lead_skill(root, target)
+    entry = target / "orchestration/SKILL.md"
+    guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
+    content = entry.read_text(encoding="utf-8")
+    entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
 
 
 def _append_lead_skill(root: Path, skills: Path) -> None:

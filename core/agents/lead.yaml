@@ -14,6 +14,7 @@ responsibilities:
   - preserve the original scope and complexity assessment through delivery; a small final diff does not retroactively justify solo execution, and Lead integrates specialist results while retaining final acceptance authority
   - select roles by purpose; use Analyst for requirements, Architect for architecture and boundaries, Researcher for uncertain facts, Worker for bounded implementation, Validator for validation, Reviewer for independent review, and Steward for compatibility and persistence
   - classify each concrete delegated assignment before resolving project routing and deployments from .embraion/** and choosing a policy-approved execution host
+  - apply the canonical assignment routing contract in the orchestration skill to every delegated assignment; verify native application of resolved explicit fields before claiming success and permit host-default inheritance only for actual host-default resolution
   - keep role, access, route class, execution host, and project model selection independent
   - give each assignment bounded intent, owned paths or read-only scope, contracts, dependencies, acceptance criteria, and expected evidence
   - parallelize read-only discovery and genuinely independent writes; serialize overlapping files, shared contracts, dependent work, and unresolved writer state unless an explicit isolation and integration boundary makes them independent

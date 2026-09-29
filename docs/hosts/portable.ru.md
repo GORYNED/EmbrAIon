@@ -46,9 +46,9 @@ Portable **не означает**:
 
 ## Routing
 
-Portable несёт host-neutral routing capability data, но не является execution host. Integration, consuming bundle, отвечает за model availability и execution.
+Portable передаёт [канонический assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md), но не содержит native dispatch adapter, spawn tool или model runtime. Consuming integration отвечает за проверку возможностей execution host, применение resolved settings и evidence исполнения. Cross-host handoff требует свежих privacy/access checks по Core. Concrete deployment choices остаются в `.embraion/`.
 
-Project-owned routing overrides остаются в `.embraion/routing.yaml` и не превращают Portable в model registry.
+Opt-in planner `embraion dispatch --native-surface` поддерживает `portable`; `--task-class` выбирает настроенный assignment route. `native-plan` содержит `status`, `arguments`, `definition-overrides`, `requirements`, `limitations` и `executed: false`. `prepared` означает static translation; `handoff-required` требует native loading/session step, а `capability-limitation` блокирует invocation до разрешения проблемы. Проверка active schema, effective configuration и eligibility всё ещё необходима. Portable всегда возвращает capability limitation без runtime arguments.
 
 ## Selective adoption
 

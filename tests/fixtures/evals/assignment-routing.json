@@ -1,0 +1,54 @@
+{
+  "evidence-kind": "synthetic-grading-fixture",
+  "live-host-execution": false,
+  "core": {
+    "route-resolved-before-each-dispatch": true,
+    "explicit": {
+      "model-applied": true,
+      "effort-applied": true
+    },
+    "partial": {
+      "explicit-fields-applied": true
+    },
+    "inheritance-only-after-host-default": true,
+    "unresolved-route-dispatched": false,
+    "unsupported-choice-dispatched": false,
+    "reused-agent-matches-new-route": true,
+    "handoff-fresh-privacy-access-checks": true,
+    "prepared-plan-is-execution-evidence": false
+  },
+  "codex": {
+    "model-field": "model",
+    "effort-field": "reasoning_effort",
+    "override-compatible-fork": true,
+    "role-definition-precedence-checked": true
+  },
+  "copilot": {
+    "cli": {
+      "effort-field": "reasoningEffort",
+      "model-policy": "required",
+      "precedence-and-auto-checked": true,
+      "unverified-call-fields-used": false
+    },
+    "vscode": {
+      "unverified-effort-dispatched": false,
+      "parent-tier-refusal-silently-inherited": false
+    },
+    "cloud": {
+      "unverified-controls-dispatched": false
+    }
+  },
+  "claude-code": {
+    "model-field": "model",
+    "effort-definition-field": "effort",
+    "assignment-definition-loaded-and-selected": true,
+    "unverified-call-effort-used": false,
+    "environment-allowlist-caps-checked": true
+  },
+  "portable": {
+    "canonical-contract-carried": true,
+    "runtime-available": false,
+    "native-status": "capability-limitation",
+    "runtime-arguments": {}
+  }
+}

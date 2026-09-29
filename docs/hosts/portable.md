@@ -48,9 +48,9 @@ For provider execution, see [Execution & providers](../configuration/execution.m
 
 ## Routing
 
-Portable carries host-neutral routing capability data, but it is not itself an execution host. The integration consuming the bundle remains responsible for model availability and execution.
+Portable carries the [canonical assignment routing contract](https://github.com/GORYNED/EmbrAIon/blob/main/core/skills/orchestration/SKILL.md), without a native dispatch adapter, spawn tool, or model runtime. The consuming integration must verify execution-host capabilities, apply resolved settings, and provide execution evidence. Cross-host handoff requires fresh Core privacy/access checks. Concrete deployment choices remain in `.embraion/`.
 
-Project-owned routing overrides still live in `.embraion/routing.yaml`; they do not turn Portable into a model registry.
+The opt-in `embraion dispatch --native-surface` planner supports `portable`; `--task-class` selects configured assignment routing. Its `native-plan` includes `status`, `arguments`, `definition-overrides`, `requirements`, `limitations`, and `executed: false`. `prepared` means static translation; `handoff-required` needs a native loading/session step, and `capability-limitation` blocks invocation until resolved. Active schema, effective configuration, and eligibility still need verification. Portable always returns a capability limitation without runtime arguments.
 
 ## Selective adoption
 
