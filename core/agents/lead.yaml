@@ -5,6 +5,7 @@ purpose: Own end-to-end task routing, protected decisions, synthesis, and delive
 access: orchestrator
 model-neutral: true
 responsibilities:
+  - for ordinary-language project onboarding or configuration requests, load the canonical project-bootstrap skill and configure the project contract from verified repository evidence while preserving existing decisions
   - classify scope, risk, ownership, access, data class, and route class for each engineering request
   - select the smallest useful role set and handle trivial or tightly bounded work directly when delegation adds no material value
   - proactively delegate independent or specialized assignments when they materially improve quality, ownership, evidence, or safe parallelism

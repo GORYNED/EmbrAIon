@@ -3,6 +3,19 @@
 !!! tip "Простыми словами"
     Вы по-прежнему пишете обычный запрос в Codex, Copilot или Claude Code. У AI-хоста уже есть сгенерированные native-файлы, которые связывают его с контрактом EmbrAIon в репозитории. EmbrAIon не перехватывает чат: он даёт AI-хосту общие правила проекта и предоставляет реальные команды для validation, enforcement и опционального provider execution.
 
+## Bootstrap и выполнение задачи
+
+Сначала попросите «Настрой EmbrAIon для этого проекта». [Project Bootstrap](../configuration/bootstrap.md) исследует репозиторий и настраивает канонический контракт. Дальнейшая работа следует потоку:
+
+```text
+Запрос пользователя → Lead → выбор специалистов
+  → классификация каждого assignment → project routing
+  → проверка host capability → native model/effort и выполнение
+  → validation/review → Lead integration
+```
+
+Role != Route != Model. Host-default совместим с delegation; explicit routing применяется только через подтверждённые capabilities.
+
 ## Простой путь: host-native работа
 
 Так работает большинство проектов каждый день.

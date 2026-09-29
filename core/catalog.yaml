@@ -1,5 +1,5 @@
 schema-version: 1
-catalog-version: 5
+catalog-version: 6
 
 capabilities:
   - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
@@ -13,6 +13,7 @@ capabilities:
 
   - { id: planning, type: skill, path: skills/planning, load: conditional, triggers: [substantial-work, multi-step-work, ambiguity] }
   - { id: orchestration, type: skill, path: skills/orchestration, load: conditional, triggers: [engineering-request, orchestration] }
+  - { id: project-bootstrap, type: skill, path: skills/project-bootstrap, load: conditional, triggers: [project-bootstrap, project-onboarding, configure-project, configure-embraion] }
   - { id: implementation, type: skill, path: skills/implementation, load: conditional, triggers: [implementation, writable-task] }
   - { id: research, type: skill, path: skills/research, load: conditional, triggers: [research, discovery] }
   - { id: review, type: skill, path: skills/review, load: conditional, triggers: [review, substantial-change] }

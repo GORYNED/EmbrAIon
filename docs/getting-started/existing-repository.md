@@ -15,16 +15,9 @@ embraion doctor
 
 This creates `.embraion/` configuration and local state/cache ignore rules. It does not install executable hooks or enforcement.
 
-## 2. Describe project truth first
+## 2. Prepare to install Bootstrap
 
-Before generating host files, configure the project-owned source of truth:
-
-- `.embraion/knowledge.yaml` — bind the built-in Project Contract Slots (`constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, `specification`) to existing project files, then add only truly project-specific extra knowledge;
-- `.embraion/policy.yaml` — canonical/protected/generated/external paths, privacy, and review policy;
-- `.embraion/validation.yaml` — real project validation commands;
-- `.embraion/agents.yaml` — only project-specific specialists you actually need.
-
-You can ask your active AI client to inspect the repository and propose these settings. Review the diff before accepting it.
+Inspect existing `.embraion/**` and host-file ownership first. If the project is already initialized, preserve its configuration. The next step installs canonical skills without blindly replacing host settings. After installation, ask “Configure EmbrAIon for this project.” Bootstrap inspects existing documents, policy, and CI, preserves intentional settings, and binds actual sources/validation commands. See [Project Bootstrap](../configuration/bootstrap.md).
 
 ## 3. Preview host adoption
 

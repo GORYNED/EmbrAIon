@@ -1,58 +1,12 @@
 # Настройка EmbrAIon для проекта
 
-После `embraion init` репозиторий владеет небольшой поверхностью конфигурации в `.embraion/`.
+После `embraion init` и установки host projection напишите:
 
-!!! tip "Простыми словами"
-    Не нужно настраивать всё сразу. Для первого полезного результата ответьте на три вопроса: **Что AI должен знать? Какие правила он должен соблюдать? Чем доказать, что изменение работает?**
+> Настрой EmbrAIon для этого проекта.
 
-## Начните с трёх файлов
+Lead использует канонический Core skill [Project Bootstrap](bootstrap.md): изучает репозиторий, связывает существующие источники истины, сохраняет safety policy и находит реальные validation commands. Вам не нужно вручную знать каждый YAML-файл. Routing и custom agents остаются необязательными.
 
-| Первый вопрос | Начните здесь |
-| --- | --- |
-| Что AI должен знать о проекте? | `.embraion/knowledge.yaml` |
-| Какие source/path/privacy правила нужно соблюдать? | `.embraion/policy.yaml` |
-| Какие команды доказывают корректность изменения? | `.embraion/validation.yaml` |
-
-Остальное может оставаться на безопасных defaults, пока реально не понадобится.
-
-### Как может выглядеть минимальный результат
-
-После conversational setup полезный diff может быть очень маленьким:
-
-```yaml
-# .embraion/knowledge.yaml
-slots:
-  architecture:
-    path: docs/architecture.md
-```
-
-```yaml
-# .embraion/policy.yaml
-sources:
-  protected:
-    - vendor/**
-```
-
-```yaml
-# .embraion/validation.yaml
-profiles:
-  affected:
-    - python -m pytest
-```
-
-Можно редактировать YAML напрямую, но обычно проще сказать AI:
-
-> Зарегистрируй наш architecture document, защити `vendor/**` и сделай `python -m pytest` командой affected validation.
-
-!!! tip "Или просто скажите AI"
-    > Изучи этот репозиторий и настрой минимально полезный EmbrAIon project contract: привяжи существующие architecture/source-of-truth knowledge, классифицируй важные source paths и добавь реальные validation commands. Model routing оставь на host-default, если нет явной необходимости.
-
-## Выберите глубину
-
-- **Простая настройка:** knowledge + policy + validation → установить host projection → начать работу.
-- **Полная инженерная настройка:** добавлять project agents, deployments, routing, provider execution, pricing и enforcement только при необходимости.
-
-[Инженерная модель](../reference/engineering-model.md)
+Для явного tuning моделей используйте полный запрос на странице Bootstrap. Ручное редактирование остаётся доступным; таблица ниже — справочник ownership.
 
 ## Карта конфигурации: вопрос → файл
 
@@ -94,18 +48,6 @@ Generated host files — это projections канонического конт�
 > Добавь read-only domain specialist только если существующих Core roles недостаточно.
 
 Смысл не в том, чтобы человек запоминал YAML, а в том, чтобы для каждого типа настройки было одно корректное место.
-
-## Рекомендуемый порядок
-
-1. **Identity** — проверить `project.yaml`.
-2. **Knowledge** — зарегистрировать project truth.
-3. **Policy** — классифицировать source paths и privacy/review defaults.
-4. **Validation** — добавить реальные команды.
-5. **Host projection** — установить нужные hosts.
-6. **Agents** — только project-specific specialists.
-7. **Deployments / routing** — только когда нужен явный selection.
-8. **Execution / pricing** — только для provider-neutral runtime.
-9. **Enforcement** — после того как policy и validation заслуживают доверия.
 
 ## Проверьте изменения
 

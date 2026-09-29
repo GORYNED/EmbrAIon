@@ -1,0 +1,12 @@
+{
+  "evidence-kind": "synthetic-grading-fixture",
+  "live-host-execution": false,
+  "discovery": {"before-mutation": true, "concerns-inspected-beyond-filenames": true},
+  "knowledge": {"existing-authority-reused": true, "optional-slot-unbound": true, "fabricated-facts": false},
+  "documents": {"created-only-with-sufficient-evidence": true, "insufficient-evidence-left-unbound": true},
+  "configuration": {"canonical-project-authority": true, "existing-settings-preserved": true, "stricter-policy-preserved": true, "repeat-is-noop": true},
+  "validation": {"real-command-provenance": true, "command-context-and-safety-reviewed": true, "dependencies-silently-installed": false, "skipped-claimed-as-pass": false, "infrastructure-limitations-reported": true},
+  "agents": {"core-roles-retained-with-empty-project-list": true},
+  "routing": {"optional-host-default": true, "explicit-tuning-only-on-request": true, "unsupported-selection-dispatched": false},
+  "verification": {"after-mutation": true, "projection-ownership-checked": true}
+}

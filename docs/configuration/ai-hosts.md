@@ -40,26 +40,19 @@ Generated host files are projections, not a second configuration authority.
 
 ![Canonical configuration to AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
-## General setup request
+## Project Bootstrap
 
-A useful request is:
+> Configure EmbrAIon for this project.
 
-> Review this repository and configure its EmbrAIon project contract. Keep project facts in the canonical `.embraion/` files, preserve Core safety gates, do not invent model selectors or secrets, and explain which project settings you changed and why.
+This short request loads the canonical Core `project-bootstrap` procedure. Lead discovers existing repository truth, preserves settings, configures useful knowledge/policy/validation, keeps agents minimal and routing optional, then verifies the result. See [Project Bootstrap](bootstrap.md) for discovery, documentation safeguards, repeated setup, and limitations.
 
-After customization:
+For explicit tuning:
 
-```bash
-embraion doctor
-embraion policy show
-embraion validation list
-embraion status
-```
-
-For routing, verify the changed routes with `embraion route`. For generated host files, preview with `embraion projection diff`.
+> Configure EmbrAIon completely for this project, including routing using the models and reasoning settings actually available to my AI host.
 
 ## Routing request
 
-> Configure EmbrAIon routing for this repository using only model selectors and reasoning settings actually available to this host. Keep host-default where an explicit override is unnecessary. Put reusable concrete choices in `.embraion/deployments.yaml` and route/role selection in `.embraion/routing.yaml`. Do not weaken privacy, access, ownership, validation, or review policy.
+> Configure EmbrAIon routing for this repository using the models and reasoning settings actually available to this host. Keep host-default where explicit routing adds no value, preserve project safety policy, and verify the resulting routes.
 
 ## Knowledge request
 

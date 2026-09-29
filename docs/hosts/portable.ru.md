@@ -1,5 +1,9 @@
 # Portable bundle
 
+## Project Bootstrap
+
+Portable переносит канонический Core skill `project-bootstrap` и контракт ordinary-language trigger. Потребляющая интеграция должна загрузить и выполнить процедуру через собственные проверенные host capabilities и permissions. Portable не предоставляет AI-сессию, native spawn или model runtime. См. [Project Bootstrap](../configuration/bootstrap.md).
+
 ## Что это
 
 Portable — **host-neutral capability bundle**, а не отдельный AI-клиент и не generic model/provider.

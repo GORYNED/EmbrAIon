@@ -71,29 +71,15 @@ A repository may install multiple projections.
 
 If the repository already owns host configuration, agents, or skills, use the safer incremental flow in [Adopt an Existing Repository](existing-repository.md) instead of overwriting files blindly.
 
-## Model routing is optional
+## Configure the project with one request
 
-EmbrAIon is model-agnostic. If the AI client's default/automatic model choice is acceptable, configure nothing.
+Open the repository in your AI host and ask:
 
-If explicit project routing is useful, ask the AI client to write only confirmed selectors to `.embraion/routing.yaml`. Do not weaken privacy, access, protected-source, validation, or review policy to make a model fit.
+> Configure EmbrAIon for this project.
 
-## Add project knowledge
+The canonical Core `project-bootstrap` skill inspects the repository first, then binds existing knowledge documents, preserves policy, and configures real validation commands. You do not need to assemble YAML manually. Core roles normally suffice: `agents: []` does not disable them. Routing can remain `overrides: {}` and host-default.
 
-Project-specific facts belong with the repository. For example:
-
-```text
-knowledge/
-├── project.md
-└── architecture.md
-```
-
-Reference them from `.embraion/knowledge.yaml`. See [Project Knowledge](../configuration/knowledge.md).
-
-## Add real validation early
-
-The default validation profiles are empty. Before relying on validation as evidence, configure real repository commands in `.embraion/validation.yaml`.
-
-See [Validation Profiles](../configuration/validation.md).
+Bootstrap verifies the result and reports skips, infrastructure limitations, and ambiguity. Repeated setup preserves intentional settings and invents neither sources of truth nor commands. Then ask ordinary engineering questions. See [Project Bootstrap](../configuration/bootstrap.md).
 
 ## Next
 

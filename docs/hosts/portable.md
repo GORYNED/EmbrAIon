@@ -1,5 +1,9 @@
 # Portable Bundle
 
+## Project Bootstrap
+
+Portable carries the canonical Core `project-bootstrap` skill and ordinary-language trigger contract. The consuming integration must load and execute the procedure with its own verified host capabilities and permissions. Portable provides no AI session, native spawn, or model runtime. See [Project Bootstrap](../configuration/bootstrap.md).
+
 ## What it is
 
 Portable is a **host-neutral capability bundle**, not another AI client and not a generic model/provider.

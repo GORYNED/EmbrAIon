@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.17.0 - 2026-09-29
+
+### Added
+
+- Canonical Project Bootstrap skill: ordinary-language repository onboarding discovers authoritative knowledge, ownership and real validation, preserves existing decisions, keeps project agents minimal and routing optional, and verifies the resulting contract.
+- Evidence-bound `embraion bootstrap plan` and `apply` operations for conservative project configuration. Plans execute no commands; stale, modified, unsafe or invalid plans fail before mutation. Existing populated settings, project routing, agents and artifact locks are preserved.
+- Cross-host Bootstrap projection, generic minimal/mature/partial repository regression coverage and a behavioral grading case with explicit evidence limitations.
+
+### Changed
+
+- English and Russian onboarding, README, configuration, FAQ and host/routing documentation follow `init` -> host projection -> "Configure EmbrAIon for this project" -> ordinary engineering requests. Advanced tuning uses only confirmed host capabilities and project-owned choices.
+
 ## 0.16.3 - 2026-09-29
 
 ### Fixed

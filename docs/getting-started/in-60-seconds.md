@@ -3,6 +3,24 @@
 !!! tip "In plain English"
     You keep the rules for AI work **with the repository**. Your AI client reads generated host-native instructions, while EmbrAIon keeps project knowledge, safety boundaries, validation, and routing in one reusable project contract.
 
+## The setup path
+
+```text
+pipx install embraion
+  ↓
+embraion init
+  ↓
+embraion install --host codex --destination .
+  ↓
+“Configure EmbrAIon for this project”
+  ↓
+project contract configured and verified
+  ↓
+ordinary engineering prompts
+```
+
+Use `copilot` or `claude-code` for other hosts. [Project Bootstrap](../configuration/bootstrap.md) discovers knowledge, policy, and real checks; optional routing stays on host-default. Portable carries the capability but does not execute an AI session.
+
 ## What you get
 
 1. **Project knowledge** — point the AI at the architecture and source-of-truth documents that matter.
@@ -36,7 +54,7 @@ Everything else can stay at its safe default until you need it.
 
 ## Two paths from here
 
-- **Simple path:** sandbox → install → knowledge/policy/validation → normal AI tasks.
+- **Simple path:** install → init → host projection → Project Bootstrap → normal AI tasks.
 - **Engineer path:** ownership → projections → routing → execution → evidence/enforcement.
 
 ## One important distinction

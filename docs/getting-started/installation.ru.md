@@ -73,6 +73,8 @@ embraion init
 
 Контракт EmbrAIon переносим между репозиториями; собственные validation commands проекта могут оставаться platform-specific.
 
+После `init` установите host projection, откройте репозиторий в этом хосте и напишите «Настрой EmbrAIon для этого проекта». См. [Project Bootstrap](../configuration/bootstrap.md).
+
 ## Дальше
 
 - Хотите нулевой риск? [Попробуйте песочницу](playground.md).

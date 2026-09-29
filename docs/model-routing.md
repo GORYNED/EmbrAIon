@@ -6,6 +6,30 @@ It classifies **work and risk**, not model strength, price, provider, or marketi
 
 ![Model routing](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
 
+## Assignment flow across hosts
+
+```text
+User task → Lead decomposition → delegated assignment
+  → independent assignment classification → project route resolution
+  → active host surface capability check → native model/effort application
+  → execution evidence → validation/review → Lead integration
+```
+
+Role != Route != Model. Every new or reused assignment is assessed from its actual scope, role, data class, access, and owned paths. Reuse cannot change settings through a message tool that does not support them. Host-default needs no explicit mapping and still supports delegation. Explicit selections require proof that native execution applied them; unknown fields, silent inheritance, substitution, and capping cannot satisfy a mandatory route.
+
+| Surface | Native settings and limits |
+| --- | --- |
+| Codex verified spawn schema | Separate role/model/effort fields; explicit overrides need a bounded or no-history fork; loaded role definitions can override spawn |
+| Copilot CLI | Definition model/ordered models, policy and effort; per-call fields need installed-schema proof; Auto and precedence can cause inheritance |
+| Copilot VS Code | Per-call/definition model; effort needs installed-version/schema proof; parent cost tier may constrain selection |
+| Copilot cloud/general | Definition model established; CLI-only policy/effort/list controls are not assumed |
+| Claude Code | Per-call model where verified; explicit effort through loaded assignment-specific definition or supported handoff, not an invented Agent effort field |
+| Portable | Contract/capability metadata only; no spawn or model runtime |
+
+See [host documentation](hosts/index.md) for precedence and effective-setting checks. Unsupported mandatory settings cause a capability limitation before dispatch or a supported handoff; changing host requires fresh privacy/access checks. A prepared plan has `executed: false` and does not prove execution.
+
+Default [Project Bootstrap](configuration/bootstrap.md) preserves optional routing. Ask for full/tuned bootstrap only when you want project-owned deployment and route choices.
+
 ## Route classes
 
 The canonical route classes are:
@@ -85,8 +109,6 @@ overrides:
     roles:
       reviewer:
         deployment: complex-main
-        options:
-          thinking: maximum
 ```
 
 The registry is project-owned, not an EmbrAIon Core model catalog. Model/provider strings remain intentionally open-ended.

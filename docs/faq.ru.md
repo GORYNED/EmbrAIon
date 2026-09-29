@@ -115,6 +115,66 @@ embraion enforcement install \
 
 Установка workflow не делает status check обязательным автоматически; управление branch/ruleset остаётся явным решением владельца репозитория.
 
+## Нужно ли говорить Lead, каких агентов использовать?
+
+Нет. Lead выбирает минимальный полезный набор специалистов по scope, ownership, risk и policy проекта. Trivial work может выполнять Lead; substantial work получает пропорциональное delegation и независимое review.
+
+## Что означает `agents: []`?
+
+Нет дополнительных специалистов проекта. Core Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher и Steward остаются доступными.
+
+## Обязательно ли настраивать routing?
+
+Нет. Routing необязателен, в том числе при Bootstrap. `overrides: {}` — корректный результат.
+
+## Что происходит при пустом routing?
+
+Resolution использует `host-default`: модель и effort выбираются host defaults или inheritance. Orchestration и delegation продолжают работать; EmbrAIon не придумывает model mapping.
+
+## Как настроить routing?
+
+Напишите:
+
+> Настрой EmbrAIon routing для этого репозитория с моделями и reasoning settings, реально доступными этому хосту. Оставь host-default там, где явный routing не добавляет пользы, сохрани safety policy проекта и проверь полученные routes.
+
+Lead использует skill `routing-configuration`, хранит reusable choices в `.embraion/deployments.yaml`, выбор route/role/task-class в `.embraion/routing.yaml` и проверяет результат. См. [Routing](model-routing.md).
+
+## Может ли Lead использовать разные модели для разных subagents?
+
+Да, если активная native поверхность хоста поддерживает resolved settings и их применение можно проверить. Каждое assignment классифицируется и разрешается независимо. Role != Route != Model. Механизмы Codex, Copilot CLI/VS Code/cloud и Claude Code отличаются; см. [AI-хосты](hosts/index.md).
+
+## Что если хост не может применить явные model или effort?
+
+Lead сообщает capability limitation до dispatch. Он не должен молча принять inheritance, substitution или capping либо заявить об успешном применении. Поддерживаемый handoff требует проверки effective settings, а при смене хоста — новой privacy/access проверки. Подготовка route или definition не является evidence выполнения.
+
+## Что делает «Настрой EmbrAIon для этого проекта»?
+
+Запрос загружает каноническую Core процедуру [Project Bootstrap](configuration/bootstrap.md): изучить репозиторий и текущую конфигурацию, связать полезные knowledge, сохранить policy, найти реальную validation, решить, нужны ли project agents, оставить routing необязательным, проверить результат и сообщить о нём.
+
+## Будет ли Bootstrap выдумывать архитектуру или документацию?
+
+Нет. Он использует авторитетные документы. Отсутствующий канонический документ создаётся только для реального concern, при достаточных проверенных evidence и существенной пользе для дальнейшей работы. Иначе slot остаётся unbound, а ограничение явно сообщается.
+
+## Перезапишет ли Bootstrap существующие настройки проекта?
+
+Он сохраняет корректные knowledge, намеренные custom settings, более строгую policy, project agents и существующий routing, если tuning не запрошен. Изменения требуют repository evidence. Generated host output остаётся производным и регенерируется официальными механизмами с ownership checks.
+
+## Какая validation создаётся?
+
+Реальные команды из workflow репозитория и CI: дешёвый частый `fast`, достаточный для обычных изменений `affected`, широкий локальный `full`. Без выдуманных команд. Пустые profiles остаются `skipped`; недоступный tooling и внешний CI отмечаются как ограничения.
+
+## Можно ли повторить Bootstrap позже?
+
+Да. Повторите его после изменений workflow или архитектуры. Он должен безопасно сходиться без дублирования entries, документов и агентов, меняя только то, что оправдано новыми evidence.
+
+## Устанавливает ли Bootstrap внешние зависимости?
+
+Он не устанавливает зависимости или tooling скрытно ради зелёной validation. Установленный setup workflow проекта может выполняться в пределах authorization; недостающая infrastructure и необходимые provisioning decisions сообщаются явно.
+
+## Что остаётся ручным?
+
+Решения, требующие полномочий пользователя или недоступных evidence: trust/settings хоста, непроверенные model selectors, неоднозначный ownership, credentials/integrations, provisioning вне установленного workflow и repository rules для enforcement. Bootstrap сообщает эти границы. Вы проверяете configuration diff и evidence.
+
 ## Что читать дальше?
 
 - Первый раз в системе: [EmbrAIon за 60 секунд](getting-started/in-60-seconds.md)

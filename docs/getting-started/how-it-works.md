@@ -3,6 +3,19 @@
 !!! tip "In plain English"
     You still type a normal request into Codex, Copilot, or Claude Code. The host already has generated native files that point it at the repository's EmbrAIon contract. EmbrAIon does not intercept the chat; it gives the host shared project rules and provides real commands for validation, enforcement, and optional provider execution.
 
+## Bootstrap and task execution
+
+First ask “Configure EmbrAIon for this project.” [Project Bootstrap](../configuration/bootstrap.md) discovers the repository and configures its canonical contract. Subsequent work follows this flow:
+
+```text
+User prompt → Lead → specialist selection
+  → classification of each assignment → project routing
+  → host capability check → native model/effort and execution
+  → validation/review → Lead integration
+```
+
+Role != Route != Model. Host-default supports delegation; explicit routing applies only through verified capabilities.
+
 ## The simple path: host-native work
 
 This is the path most projects use every day.

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import __version__
 from .artifacts import read_project_artifact_lock, verify_project_artifact
+from .bootstrap import _safe_path as bootstrap_safe_path, apply_bootstrap, plan_bootstrap
 from .common import find_project_root, framework_root, project_root
 from .context import build_context, read_context
 from .contracts import (
@@ -90,6 +91,7 @@ def _print_main_help(file: object | None = None) -> None:
         "",
         "Project & setup",
         "  init       Add EmbrAIon to a project and create .embraion/project.yaml",
+        "  bootstrap  Plan or apply evidence-bound project contract configuration",
         "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
         "  projection Preview ownership-aware projection changes",
         "  policy     Inspect the effective project policy overlay",
@@ -216,6 +218,29 @@ def _cmd_init(args: argparse.Namespace) -> int:
         force=args.force,
     )
     print(f"Created {path}")
+    return 0
+
+
+def _cmd_bootstrap(args: argparse.Namespace) -> int:
+    root = project_root(Path(args.path))
+    if args.bootstrap_command == "plan":
+        result = plan_bootstrap(root)
+        if args.output:
+            output = Path(args.output).resolve()
+            state_output = output.is_relative_to(root / ".embraion" / "state")
+            if state_output:
+                bootstrap_safe_path(root, output.relative_to(root).as_posix())
+            if output.is_relative_to(root) and not state_output:
+                raise RuntimeError("Write bootstrap plans outside the repository so output cannot invalidate discovery evidence.")
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        _print_json(result)
+    else:
+        try:
+            plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            raise RuntimeError(f"Cannot read bootstrap plan: {error}") from error
+        _print_json(apply_bootstrap(root, plan))
     return 0
 
 
@@ -1251,6 +1276,17 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--name")
     init.add_argument("--force", action="store_true")
     init.set_defaults(func=_cmd_init)
+
+    bootstrap = sub.add_parser("bootstrap", help="Plan or apply conservative project configuration", description="Discover evidence without executing commands. Review the plan and repository sources before applying. Routing and agents are preserved; use the Project Bootstrap skill for semantic inspection and verification.")
+    bootstrap_sub = bootstrap.add_subparsers(dest="bootstrap_command", required=True)
+    bootstrap_plan = bootstrap_sub.add_parser("plan", help="Inspect an initialized repository without mutation", description="Produce a freshness-bound plan. No dependencies are installed and no repository commands run.")
+    bootstrap_plan.add_argument("--path", default=".", help="Initialized project path")
+    bootstrap_plan.add_argument("--output", help="Explicit JSON output outside the repository or in .embraion/state")
+    bootstrap_plan.set_defaults(func=_cmd_bootstrap)
+    bootstrap_apply = bootstrap_sub.add_parser("apply", help="Apply a reviewed, unchanged, fresh plan", description="Fill unbound slots and empty profiles; preserve populated settings. Does not execute validation or configure models.")
+    bootstrap_apply.add_argument("--path", default=".", help="Initialized project path")
+    bootstrap_apply.add_argument("--plan", required=True, help="Reviewed JSON plan path")
+    bootstrap_apply.set_defaults(func=_cmd_bootstrap)
 
     install_parser = sub.add_parser("install", help="Install a host projection", description="Generate and install a Codex, Copilot, Claude Code, or Portable projection.")
     install_parser.add_argument(
