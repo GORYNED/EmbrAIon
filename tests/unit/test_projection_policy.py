@@ -326,6 +326,7 @@ class ProjectionPolicyTests(unittest.TestCase):
             }
             expected_agents = set(access_by_agent)
             expected_skills = {
+                "project-bootstrap",
                 "debugging",
                 "implementation",
                 "orchestration",

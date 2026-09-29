@@ -142,6 +142,7 @@ jobs:
           python tools/source.py eval run --case steward-trigger --record tests/fixtures/evals/steward-trigger.json --output build/evals/steward-trigger.json
           python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
           python tools/source.py eval run --case assignment-routing --record tests/fixtures/evals/assignment-routing.json --output build/evals/assignment-routing.json
+          python tools/source.py eval run --case project-bootstrap --record tests/fixtures/evals/project-bootstrap.json --output build/evals/project-bootstrap.json
 
       - name: Validate documentation site
         run: |
@@ -239,6 +240,7 @@ jobs:
         run: |
           mkdir -p build/evals
           python tools/source.py eval run --case assignment-routing --record tests/fixtures/evals/assignment-routing.json --output build/evals/assignment-routing.json
+          python tools/source.py eval run --case project-bootstrap --record tests/fixtures/evals/project-bootstrap.json --output build/evals/project-bootstrap.json
 
       - name: Generate host bundles
         run: python tools/source.py sync --host all --output build/generated --force

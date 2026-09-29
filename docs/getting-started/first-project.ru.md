@@ -71,29 +71,15 @@ embraion install --host portable --destination vendor/embraion
 
 Если репозиторий уже владеет host configuration, agents или skills, используйте более безопасный пошаговый процесс из [Подключения существующего репозитория](existing-repository.md), а не перезаписывайте файлы вслепую.
 
-## Model routing опционален
+## Настройте проект одним запросом
 
-EmbrAIon model-agnostic. Если default/automatic model choice AI-клиента подходит, ничего настраивать не нужно.
+Откройте репозиторий в AI-хосте и напишите:
 
-Если проекту нужен явный routing, попросите AI-клиент записывать только подтверждённые selectors в `.embraion/routing.yaml`. Не ослабляйте privacy, access, protected-source, validation или review policy ради совместимости с моделью.
+> Настрой EmbrAIon для этого проекта.
 
-## Добавьте project knowledge
+Канонический Core skill `project-bootstrap` сначала исследует репозиторий, затем связывает существующие knowledge documents, сохраняет policy и настраивает реальные validation commands. Нет необходимости вручную собирать YAML. Core roles обычно достаточно: `agents: []` не отключает их. Routing может остаться `overrides: {}` и host-default.
 
-Факты проекта должны жить вместе с репозиторием. Например:
-
-```text
-knowledge/
-├── project.md
-└── architecture.md
-```
-
-Сошлитесь на них из `.embraion/knowledge.yaml`. См. [Знания проекта](../configuration/knowledge.md).
-
-## Добавьте реальную validation как можно раньше
-
-Стандартные validation profiles пустые. До того как считать validation evidence, добавьте реальные команды репозитория в `.embraion/validation.yaml`.
-
-См. [Настройку валидации](../configuration/validation.md).
+Bootstrap проверяет результат, сообщает skips, infrastructure limitations и неоднозначности. Он сохраняет намеренные настройки при повторном запуске и не придумывает источники истины или команды. Затем задавайте обычные инженерные задачи. См. [Project Bootstrap](../configuration/bootstrap.md).
 
 ## Дальше
 

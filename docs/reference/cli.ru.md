@@ -25,6 +25,19 @@ embraion init
 embraion init --name MyProject
 ```
 
+### `embraion bootstrap`
+
+Необязательный deterministic discovery и консервативное применение для инициализированного проекта. Обычный entry point пользователя — ordinary-language skill [Project Bootstrap](../configuration/bootstrap.md).
+
+```bash
+embraion bootstrap plan --output .embraion/state/bootstrap-plan.json
+embraion bootstrap apply --plan .embraion/state/bootstrap-plan.json
+```
+
+`plan` сообщает evidence, proposed knowledge/policy/validation changes и limitations. Перед применением прочитайте оригинальные источники: имя документа не доказывает authority, CI commands требуют проверки локального контекста и безопасности. `--path` выбирает инициализированный проект. Output должен находиться в локальном `.embraion/state/` или вне репозитория.
+
+`apply` принимает только неизменённый проверенный план, совпадающий с текущими discovery, source hashes, configuration и project root. Он заполняет unbound slots/empty profiles и консервативно пустые canonical sources; populated settings и более строгие ограничения сохраняются. Он не настраивает routing/agents, не создаёт docs, не устанавливает зависимости, не запускает команды и не заявляет validation pass. Семантическая коррекция выполняется bounded project edits с последующим новым планом. Lead отвечает за дальнейшую verification.
+
 ### `embraion install`
 
 Установить одну host projection.

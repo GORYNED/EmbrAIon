@@ -74,9 +74,11 @@ With no project override, the result should resolve to `host-default`: EmbrAIon 
 
 Open the repository with your installed AI client and try a natural-language configuration request:
 
-> Configure this sandbox so `docs/**` is canonical project content, `vendor/**` is protected, and add a simple validation command appropriate for this empty repository. Keep model routing on host-default. Explain every project setting you change.
+> Configure EmbrAIon for this project.
 
 Then inspect the canonical diff under `.embraion/`.
+
+Bootstrap must report that an empty repository has no application test workflow; it should preserve unbound optional slots and `skipped` profiles rather than invent checks. See [Project Bootstrap](../configuration/bootstrap.md).
 
 ## What this proves
 

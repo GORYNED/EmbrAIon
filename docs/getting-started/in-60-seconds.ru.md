@@ -3,6 +3,24 @@
 !!! tip "Простыми словами"
     Вы храните правила AI-работы **вместе с репозиторием**. AI-клиент получает сгенерированные native-инструкции, а EmbrAIon хранит project knowledge, safety boundaries, validation и routing в одном повторно используемом контракте проекта.
 
+## Путь настройки
+
+```text
+pipx install embraion
+  ↓
+embraion init
+  ↓
+embraion install --host codex --destination .
+  ↓
+«Настрой EmbrAIon для этого проекта»
+  ↓
+контракт проекта настроен и проверен
+  ↓
+обычные инженерные запросы
+```
+
+Для других хостов используйте `copilot` или `claude-code`. [Project Bootstrap](../configuration/bootstrap.md) находит знания, policy и реальные проверки; optional routing остаётся на host-default. Portable переносит capability, но сам не исполняет AI-сессию.
+
 ## Что вы получаете
 
 1. **Project knowledge** — укажите AI на важные архитектурные документы и источники истины.
@@ -37,7 +55,7 @@
 
 ## Два пути дальше
 
-- **Простой:** sandbox → installation → knowledge/policy/validation → обычные AI-задачи.
+- **Простой:** install → init → host projection → Project Bootstrap → обычные AI-задачи.
 - **Инженерный:** ownership → projections → routing → execution → evidence/enforcement.
 
 ## Одно важное различие

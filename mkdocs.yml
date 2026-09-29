@@ -69,6 +69,7 @@ plugins:
             FAQ: FAQ
             Glossary: Глоссарий
             Configure: Настройка
+            Project Bootstrap: Начальная настройка проекта
             Overview: Обзор
             Basics: Основы
             Project knowledge: Знания проекта
@@ -151,6 +152,7 @@ nav:
       - Glossary: glossary.md
   - Configure:
       - Overview: configuration/index.md
+      - Project Bootstrap: configuration/bootstrap.md
       - Basics:
           - Project knowledge: configuration/knowledge.md
           - Policy & protected paths: configuration/policy.md

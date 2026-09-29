@@ -37,14 +37,21 @@ pipx install embraion
 cd MyProject
 embraion init
 embraion install --host codex --destination .
-embraion doctor
 ```
 
-Then open the repository in your AI client and work normally:
+Open the repository in your AI client and ask:
+
+> Configure EmbrAIon for this project.
+
+Lead uses the canonical Core Project Bootstrap skill to inspect existing truth, bind knowledge, preserve safety policy, and discover real validation. Routing stays optional. See [Project Bootstrap](docs/configuration/bootstrap.md).
+
+Then work normally:
 
 > Fix the retry flow and add regression coverage.
 
 Use `copilot` or `claude-code` instead of `codex` when that is your host.
+
+Lead reads the project contract, selects specialists automatically, classifies each assignment independently, resolves project routing, and applies configured model/effort through supported native host capabilities. It collects proportional validation and review, integrates results, and retains final authority.
 
 Want to experiment first? Use the [Five-Minute Sandbox](docs/getting-started/playground.md).
 
@@ -100,4 +107,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-09-27 16:22 UTC</sub>
+<sub>Last updated: 2026-09-29 02:30 UTC</sub>

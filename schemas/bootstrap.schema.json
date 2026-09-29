@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/bootstrap.schema.json",
+  "title": "EmbrAIon Bootstrap Plan",
+  "type": "object",
+  "required": ["schema-version", "root", "inventory", "snapshots", "evidence", "changes", "limitations", "requires-review"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "root": {"type": "string", "minLength": 1},
+    "requires-review": {"const": true},
+    "inventory": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "snapshots": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+    "evidence": {"type": "array", "items": {
+      "type": "object", "required": ["path", "kind"],
+      "properties": {"path": {"type": "string"}, "kind": {"enum": ["contract-candidate", "manifest", "command-candidate", "ci-workflow", "workflow-source"]}, "slot": {"type": "string"}, "command": {"type": "string"}, "context-review": {"type": "boolean"}, "job": {"type": "string"}, "step": {"type": "integer", "minimum": 1}},
+      "additionalProperties": false
+    }},
+    "changes": {"type": "array", "items": {
+      "type": "object", "required": ["path", "value"],
+      "properties": {"path": {"enum": [".embraion/knowledge.yaml", ".embraion/policy.yaml", ".embraion/validation.yaml"]}, "value": {"type": "object"}},
+      "additionalProperties": false
+    }},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

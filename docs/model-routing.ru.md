@@ -6,6 +6,30 @@ Routing EmbrAIon model-agnostic.
 
 ![Маршрутизация моделей](assets/diagrams/en/12-model-routing.svg){ loading=lazy }
 
+## Поток assignment для разных хостов
+
+```text
+Задача пользователя → декомпозиция Lead → delegated assignment
+  → независимая классификация assignment → project route resolution
+  → проверка active host surface capability → native model/effort application
+  → execution evidence → validation/review → Lead integration
+```
+
+Role != Route != Model. Каждое новое или повторно используемое assignment оценивается по фактическим scope, role, data class, access и owned paths. Message tool без поддержки изменения settings не может менять их при reuse. Host-default не требует явного mapping и поддерживает delegation. Explicit selection требует evidence native application; неизвестные fields, скрытые inheritance, substitution и capping не удовлетворяют обязательному route.
+
+| Поверхность | Native settings и ограничения |
+| --- | --- |
+| Codex verified spawn schema | Отдельные role/model/effort; explicit overrides требуют bounded или no-history fork; loaded role definitions могут перекрывать spawn |
+| Copilot CLI | Definition model/ordered models, policy и effort; per-call fields требуют installed-schema proof; Auto и precedence могут приводить к inheritance |
+| Copilot VS Code | Per-call/definition model; effort требует installed-version/schema proof; parent cost tier может ограничивать выбор |
+| Copilot cloud/general | Definition model подтверждён; CLI-only policy/effort/list controls не предполагаются |
+| Claude Code | Per-call model при проверенной поддержке; explicit effort через loaded assignment-specific definition или supported handoff, без выдуманного Agent effort field |
+| Portable | Только contract/capability metadata; нет spawn или model runtime |
+
+См. [AI-хосты](hosts/index.md): precedence и effective-setting checks. Неподдерживаемые обязательные settings требуют capability limitation до dispatch или supported handoff; смена хоста требует новой privacy/access проверки. Prepared plan содержит `executed: false` и не доказывает выполнение.
+
+Обычный [Project Bootstrap](configuration/bootstrap.md) сохраняет необязательность routing. Полный/tuned bootstrap запрашивайте для намеренного выбора project-owned deployments и routes.
+
 ## Route classes
 
 Канонические route classes:
@@ -85,8 +109,6 @@ overrides:
     roles:
       reviewer:
         deployment: complex-main
-        options:
-          thinking: maximum
 ```
 
 Registry project-owned, а не Core model catalog. Model/provider strings намеренно open-ended.

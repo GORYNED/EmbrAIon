@@ -43,7 +43,7 @@ cd MyProject
 embraion init
 ```
 
-Then you explicitly install the host projection(s) you want.
+Then install your host projection, open the repository in that host, and ask “Configure EmbrAIon for this project.” See [Project Bootstrap](../configuration/bootstrap.md).
 
 ## Why one launcher is enough
 

@@ -38,7 +38,7 @@ EmbrAIon becomes useful when:
 
     ---
 
-    Read the one-minute overview, try the sandbox, install EmbrAIon, then give your AI client normal engineering tasks.
+    Read the one-minute overview, try the sandbox, install EmbrAIon, ask it to configure this project, then give your AI client normal engineering tasks.
 
     [EmbrAIon in 60 Seconds](getting-started/in-60-seconds.md)
 
@@ -60,10 +60,13 @@ pipx install embraion
 cd MyProject
 embraion init
 embraion install --host codex --destination .
-embraion doctor
 ```
 
-Then open the repository in your AI client and ask for the engineering outcome:
+Open the repository in your AI client and ask:
+
+> Configure EmbrAIon for this project.
+
+[Project Bootstrap](configuration/bootstrap.md) discovers project truth and real validation while preserving settings and optional routing. Then ask for the engineering outcome:
 
 > Fix the retry flow and add regression coverage.
 

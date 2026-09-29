@@ -1,58 +1,12 @@
 # Configure EmbrAIon for Your Project
 
-After `embraion init`, your repository owns a small configuration surface under `.embraion/`.
+After `embraion init` and installing your host projection, ask:
 
-!!! tip "In plain English"
-    You do not need to configure everything. For a first useful setup, answer three questions: **What should the AI know? What should it respect? What proves the change works?**
+> Configure EmbrAIon for this project.
 
-## Start with these three files
+Lead uses the canonical Core [Project Bootstrap](bootstrap.md) skill: inspect the repository, bind existing sources of truth, preserve safety policy, and discover real validation commands. You do not need to know every YAML file manually. Routing and custom agents stay optional.
 
-| First question | Start here |
-| --- | --- |
-| What should the AI know about this project? | `.embraion/knowledge.yaml` |
-| Which source/path/privacy rules must it respect? | `.embraion/policy.yaml` |
-| Which commands prove a change works? | `.embraion/validation.yaml` |
-
-Everything else can stay at its safe default until the project actually needs it.
-
-### What a minimal result can look like
-
-After conversational setup, the useful diff can be very small:
-
-```yaml
-# .embraion/knowledge.yaml
-slots:
-  architecture:
-    path: docs/architecture.md
-```
-
-```yaml
-# .embraion/policy.yaml
-sources:
-  protected:
-    - vendor/**
-```
-
-```yaml
-# .embraion/validation.yaml
-profiles:
-  affected:
-    - python -m pytest
-```
-
-You can edit these files directly, but the intended workflow is often simpler:
-
-> Register our architecture document, protect `vendor/**`, and make `python -m pytest` the affected validation command.
-
-!!! tip "Or just tell your AI"
-    > Review this repository and configure the minimum useful EmbrAIon project contract: bind the existing architecture/source-of-truth knowledge, classify important source paths, and add real validation commands. Leave model routing on host-default unless there is a clear project requirement.
-
-## Choose your depth
-
-- **Simple configuration:** knowledge + policy + validation → install your host projection → start working.
-- **Full engineering configuration:** add project agents, deployments, routing, provider execution, pricing, and enforcement only when needed.
-
-[Engineering Model Deep Dive](../reference/engineering-model.md)
+For explicit model tuning, use the full request on the Bootstrap page. Manual editing remains available; the table below is an ownership reference.
 
 ## Configuration map: question → file
 
@@ -94,18 +48,6 @@ You can ask the AI already working in the repository:
 > Add a read-only domain specialist only if existing Core roles are not sufficient.
 
 The point is not that humans must memorize YAML. The project contract gives the AI one correct place to write each kind of setting.
-
-## Recommended order
-
-1. **Identity** — confirm `project.yaml`.
-2. **Knowledge** — register project truth.
-3. **Policy** — classify source paths and privacy/review defaults.
-4. **Validation** — add real commands.
-5. **Host projection** — install the host(s) you use.
-6. **Agents** — only project-specific specialists.
-7. **Deployments / routing** — only when explicit selection is useful.
-8. **Execution / pricing** — only for the provider-neutral runtime.
-9. **Enforcement** — after policy and validation are trustworthy.
 
 ## Inspect what changed
 

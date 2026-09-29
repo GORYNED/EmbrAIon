@@ -71,9 +71,11 @@ embraion route   --host codex   --route-class substantial   --data PRIVATE
 
 Откройте репозиторий в установленном AI-клиенте и попробуйте естественный запрос:
 
-> Настрой песочницу так, чтобы `docs/**` был canonical project content, `vendor/**` был protected, и добавь простую validation command для пустого репозитория. Routing оставь на host-default. Объясни каждое изменение.
+> Настрой EmbrAIon для этого проекта.
 
 Затем посмотрите канонический diff в `.embraion/`.
+
+Bootstrap должен сообщить, что в пустом репозитории нет application test workflow; optional slots остаются unbound, profiles — `skipped`, вместо выдуманных проверок. См. [Project Bootstrap](../configuration/bootstrap.md).
 
 ## Что это показывает
 

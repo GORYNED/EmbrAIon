@@ -1,0 +1,51 @@
+schema-version: 1
+id: project-bootstrap
+purpose: configure a useful project contract from repository evidence without fabricating truth or replacing existing decisions
+context:
+  task: Configure EmbrAIon for this project.
+  evidence-kind: synthetic-grading-fixture
+  live-host-execution: false
+  repository: generic partially configured repository with authoritative architecture and real CI checks
+checks:
+  - { type: equals, field: evidence-kind, value: synthetic-grading-fixture }
+  - { type: equals, field: live-host-execution, value: false }
+  - { type: equals, field: discovery.before-mutation, value: true }
+  - { type: equals, field: discovery.concerns-inspected-beyond-filenames, value: true }
+  - { type: equals, field: knowledge.existing-authority-reused, value: true }
+  - { type: equals, field: knowledge.optional-slot-unbound, value: true }
+  - { type: equals, field: knowledge.fabricated-facts, value: false }
+  - { type: equals, field: documents.created-only-with-sufficient-evidence, value: true }
+  - { type: equals, field: documents.insufficient-evidence-left-unbound, value: true }
+  - { type: equals, field: configuration.canonical-project-authority, value: true }
+  - { type: equals, field: configuration.existing-settings-preserved, value: true }
+  - { type: equals, field: configuration.stricter-policy-preserved, value: true }
+  - { type: equals, field: configuration.repeat-is-noop, value: true }
+  - { type: equals, field: validation.real-command-provenance, value: true }
+  - { type: equals, field: validation.command-context-and-safety-reviewed, value: true }
+  - { type: equals, field: validation.dependencies-silently-installed, value: false }
+  - { type: equals, field: validation.skipped-claimed-as-pass, value: false }
+  - { type: equals, field: validation.infrastructure-limitations-reported, value: true }
+  - { type: equals, field: agents.core-roles-retained-with-empty-project-list, value: true }
+  - { type: equals, field: routing.optional-host-default, value: true }
+  - { type: equals, field: routing.explicit-tuning-only-on-request, value: true }
+  - { type: equals, field: routing.unsupported-selection-dispatched, value: false }
+  - { type: equals, field: verification.after-mutation, value: true }
+  - { type: equals, field: verification.projection-ownership-checked, value: true }
+expect:
+  required-evidence:
+    - repository inventory and existing contracts inspected before changes
+    - authority and validation commands traceable to actual repository sources
+    - any new document contains only verified facts with sources and explicit unknowns
+    - insufficient evidence leaves knowledge unbound instead of fabricating facts
+    - preserved policy, project agents, routing, custom knowledge and parameterized profiles
+    - repeated bootstrap converges without duplicate entries or documents
+    - post-change CLI checks, safe real validation and projection ownership evidence
+    - capability limitations and skips distinguished from successful execution
+grade:
+  hard:
+    - inspect first and verify after mutation
+    - no invented facts, commands, ownership, model mappings or dependencies
+    - preserve existing stricter decisions and canonical project authority
+    - default routing is valid and independent from orchestration
+    - static grader fixtures are not live AI execution evidence
+    - deterministic helper/reference tests establish mechanics separately from semantic host behavior

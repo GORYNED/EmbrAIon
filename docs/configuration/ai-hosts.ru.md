@@ -40,26 +40,19 @@ Generated host files — это projections, а не второй configuration 
 
 ![Каноническая конфигурация и AI host projections](../assets/diagrams/en/10-ai-host-projections.svg){ loading=lazy }
 
-## Общий запрос на настройку
+## Project Bootstrap
 
-Полезный запрос:
+> Настрой EmbrAIon для этого проекта.
 
-> Изучи репозиторий и настрой его EmbrAIon project contract. Храни project facts в канонических `.embraion/` files, сохрани Core safety gates, не придумывай model selectors или secrets и объясни, какие settings изменил и почему.
+Короткий запрос загружает каноническую Core процедуру `project-bootstrap`. Lead находит существующую истину репозитория, сохраняет настройки, конфигурирует полезные knowledge/policy/validation, оставляет agents минимальными и routing необязательным, затем проверяет результат. См. [Project Bootstrap](bootstrap.md): discovery, ограничения создания документов, повторная настройка и limitations.
 
-После изменений:
+Для явного tuning:
 
-```bash
-embraion doctor
-embraion policy show
-embraion validation list
-embraion status
-```
-
-Routing проверяйте через `embraion route`, generated host files — через `embraion projection diff`.
+> Настрой EmbrAIon полностью для этого проекта, включая routing с моделями и reasoning settings, реально доступными моему AI-хосту.
 
 ## Запрос на routing
 
-> Настрой EmbrAIon routing для этого репозитория, используя только model selectors и reasoning settings, реально доступные этому host. Оставь host-default там, где явный override не нужен. Reusable concrete choices помести в `.embraion/deployments.yaml`, а route/role selection — в `.embraion/routing.yaml`. Не ослабляй privacy, access, ownership, validation или review policy.
+> Настрой EmbrAIon routing для этого репозитория с моделями и reasoning settings, реально доступными этому хосту. Оставь host-default там, где явный routing не добавляет пользы, сохрани safety policy проекта и проверь полученные routes.
 
 ## Запрос на knowledge
 

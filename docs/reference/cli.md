@@ -25,6 +25,19 @@ embraion init
 embraion init --name MyProject
 ```
 
+### `embraion bootstrap`
+
+Optional deterministic discovery and conservative application for an initialized project. The normal user entry point is the ordinary-language [Project Bootstrap](../configuration/bootstrap.md) skill.
+
+```bash
+embraion bootstrap plan --output .embraion/state/bootstrap-plan.json
+embraion bootstrap apply --plan .embraion/state/bootstrap-plan.json
+```
+
+`plan` reports evidence, proposed knowledge/policy/validation changes, and limitations. Read the original sources before applying: filename candidates are not proof of authority and CI commands need local context/safety review. `--path` selects the initialized project. Output must be in local `.embraion/state/` or outside the repository.
+
+`apply` accepts only an unchanged, reviewed plan matching current discovery, source hashes, configuration, and project root. It fills unbound slots/empty profiles and conservatively populates empty canonical sources; populated settings and stricter restrictions survive. It does not configure routing/agents, create docs, install dependencies, run commands, or claim validation passed. Semantic correction belongs to bounded project edits followed by a fresh plan. Lead owns subsequent verification.
+
 ### `embraion install`
 
 Install one host projection.

@@ -1,5 +1,9 @@
 # Codex
 
+## Project Bootstrap
+
+Проецируемый канонический Core skill `project-bootstrap` поддерживает «Настрой EmbrAIon для этого проекта». Установите component `skills` и используйте его в активной сессии; trust, permissions и загрузка skills определяются хостом. Lead изучает истину репозитория, сохраняет настройки, находит реальную validation и оставляет routing необязательным. См. [Project Bootstrap](../configuration/bootstrap.md).
+
 ## Что это
 
 Codex adapter проецирует host configuration EmbrAIon, Core/project agents и reusable skills в native-файлы Codex.
@@ -25,6 +29,7 @@ embraion install --host codex --destination .
 └── skills/
     ├── implementation/
     ├── orchestration/
+    ├── project-bootstrap/
     ├── review/
     ├── routing-configuration/
     └── ...

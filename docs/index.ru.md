@@ -38,7 +38,7 @@ EmbrAIon становится полезен, когда:
 
     ---
 
-    Прочитайте обзор за минуту, попробуйте песочницу, установите EmbrAIon и дальше ставьте AI обычные инженерные задачи.
+    Прочитайте обзор за минуту, попробуйте песочницу, установите EmbrAIon, попросите настроить проект и дальше ставьте AI обычные инженерные задачи.
 
     [EmbrAIon за 60 секунд](getting-started/in-60-seconds.md)
 
@@ -60,10 +60,13 @@ pipx install embraion
 cd MyProject
 embraion init
 embraion install --host codex --destination .
-embraion doctor
 ```
 
-После этого откройте репозиторий в своём AI-клиенте и сформулируйте инженерный результат:
+Откройте репозиторий в своём AI-клиенте и напишите:
+
+> Настрой EmbrAIon для этого проекта.
+
+[Project Bootstrap](configuration/bootstrap.md) находит истину проекта и реальную validation, сохраняя настройки и необязательность routing. Затем сформулируйте инженерный результат:
 
 > Исправь retry flow и добавь regression coverage.
 

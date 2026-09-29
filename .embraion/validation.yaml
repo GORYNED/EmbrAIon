@@ -21,3 +21,4 @@ profiles:
     - python tools/source.py eval run --case cross-package-orchestration --record tests/fixtures/evals/cross-package-orchestration.json --output build/evals/cross-package-orchestration.json
     - python tools/source.py eval run --case privacy-gate --record tests/fixtures/evals/privacy-gate.json --output build/evals/privacy-gate.json
     - python tools/source.py eval run --case assignment-routing --record tests/fixtures/evals/assignment-routing.json --output build/evals/assignment-routing.json
+    - python tools/source.py eval run --case project-bootstrap --record tests/fixtures/evals/project-bootstrap.json --output build/evals/project-bootstrap.json

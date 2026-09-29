@@ -1,5 +1,9 @@
 # Claude Code
 
+## Project Bootstrap
+
+Проецируемый канонический Core skill `project-bootstrap` поддерживает «Настрой EmbrAIon для этого проекта». Установите component `skills` и используйте его в активной сессии; trust, permissions и загрузка skills определяются хостом. Lead изучает истину репозитория, сохраняет настройки, находит реальную validation и оставляет routing необязательным. См. [Project Bootstrap](../configuration/bootstrap.md).
+
 ## Что это
 
 Claude Code adapter проецирует EmbrAIon Core/project agents и reusable skills в repository-native files Claude Code.
@@ -22,6 +26,7 @@ embraion install --host claude-code --destination .
 └── skills/
     ├── implementation/
     ├── orchestration/
+    ├── project-bootstrap/
     ├── review/
     ├── routing-configuration/
     └── ...

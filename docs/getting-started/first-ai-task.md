@@ -5,6 +5,14 @@ Once EmbrAIon is initialized and your host projection is installed, **normal eng
 !!! tip "In plain English"
     You ask for the product or engineering outcome. The repository already carries the project rules.
 
+## Configure the contract first
+
+After `embraion init` and host projection installation, ask:
+
+> Configure EmbrAIon for this project.
+
+[Project Bootstrap](../configuration/bootstrap.md) discovers existing truth and real checks while preserving project decisions. Then use ordinary engineering requests.
+
 ## The day-one flow
 
 | You do | Behind the scenes | You verify |
