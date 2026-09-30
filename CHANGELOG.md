@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.17.1 - 2026-09-30
+
+### Fixed
+
+- Preserve Unicode, quoted and newline Git paths in enforcement and worktree discovery; normalize platform path separators in regression checks.
+- Preserve user-owned, active, ambiguous or unfinished worktrees during garbage collection.
+- Allow enforcement after run completion without attaching evidence to closed runs; bind passed reviews to the reviewed Git state and reject stale or validation-time changes.
+- Reject unsupported LiteLLM effort/options before provider calls and retain safe actionable diagnostics in public execution results.
+- Include every Portable catalog capability and align bundle metadata with the generated contents.
+- Prevent projection writes through nested aliases, predictable temporary symlinks and hardlinks; preserve files modified before pruning.
+- Count independent learning evidence idempotently across run/eval associations, recheck promotion thresholds and align learning evidence with its schema.
+
 ## 0.17.0 - 2026-09-29
 
 ### Added
