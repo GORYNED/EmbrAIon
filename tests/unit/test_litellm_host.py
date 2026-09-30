@@ -27,7 +27,7 @@ class _Response:
 
 
 class LiteLLMHostTests(unittest.TestCase):
-    def _call(self, reported_provider: str | None, error_status: int | None = None):
+    def _call(self, reported_provider: str | None, error_status: int | None = None, extra: dict | None = None):
         captured = []
         stub = types.ModuleType("litellm")
         stub.num_retries = 7
@@ -55,6 +55,8 @@ class LiteLLMHostTests(unittest.TestCase):
                            "input": [{"role": "user", "content": [{"type": "input_text", "text": context}]}],
                            "maxOutputTokens": 64, "timeoutSeconds": 5, "nonce": nonce,
                            "provenanceMac": mac}).encode()
+        if extra:
+            body = json.dumps({**json.loads(body), **extra}).encode()
         environment = {"EMBRAION_SESSION_TOKEN": token, "EMBRAION_PROVENANCE_KEY": key,
                        "EMBRAION_UPSTREAM_MODEL": selector, "EMBRAION_PROVIDER_KEY": "scoped-key"}
         with (patch.dict(os.environ, environment), patch.dict(sys.modules, {"litellm": stub}),
@@ -87,6 +89,14 @@ class LiteLLMHostTests(unittest.TestCase):
         self.assertEqual(0, stub.num_retries)
         self.assertEqual("openai", payload["observedProvider"])
         self.assertEqual("call-1", payload["callId"])
+
+    def test_host_rejects_untranslated_settings_before_provider_call(self):
+        for extra in ({"effort": "high"}, {"options": {"temperature": 0}}):
+            with self.subTest(extra=extra):
+                status, payload, calls, _ = self._call("openai", extra=extra)
+                self.assertEqual(400, status)
+                self.assertEqual("invalid-request", payload["failure"])
+                self.assertEqual([], calls)
 
     def test_requested_provider_is_not_substituted_for_missing_observation(self):
         status, payload, calls, _ = self._call(None)

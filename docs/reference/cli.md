@@ -77,6 +77,8 @@ embraion install \
 
 `--config-mode replace` remains the default. Merge mode preserves project-owned `[agents]` keys and other TOML tables and fails closed when the file cannot be merged safely.
 
+Projection install and pruning reject nested symlinks or junctions in managed paths, including projection evidence under `.embraion/state`. The destination itself may still be a directory alias. File writes use exclusively created, unique temporary files and replace the destination entry, preserving external hardlink contents and ignoring pre-existing `.tmp` aliases. Pruning rechecks ownership hashes immediately before deletion and preserves intervening edits.
+
 ### `embraion projection`
 
 Preview ownership-aware projection changes:
@@ -389,6 +391,8 @@ embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
 ```
 
+With `--run-id`, active runs receive validation evidence. Completing a run with passed review binds it to HEAD, index entries, and tracked/nonignored untracked file contents, modes and symlink targets. Enforcement requires that snapshot to match both before and after validation; commits, staging changes and working edits require a new reviewed run. Legacy review records without a snapshot cannot satisfy the gate. Unreadable state, submodules and ambiguous directory aliases fail closed. Completed runs are not modified or recompleted. All gates, including external-review gates, reject validation-time changes to the inspected Git snapshot. Ignored runtime/build output is outside that snapshot.
+
 The check rejects mutations of protected sources, requires the configured validation profile to produce a real pass, and enforces review from execution evidence when `require-review` is enabled.
 
 Install the GitHub Actions CI surface explicitly:
@@ -447,6 +451,8 @@ embraion worktree gc --apply
 embraion worktree salvage /path/to/worktree
 ```
 
+GC only removes worktrees created by `embraion worktree create` with matching ownership metadata in the Git worktree directory. It requires terminal local run/session evidence, a clean integrated checkout, and no lock or unfinished Git operation. Missing, malformed, active, blocked, or otherwise unproven evidence preserves the worktree. Older and manually created worktrees remain untouched.
+
 ### `embraion learning`
 
 Record evidence and manage gated learning candidates.
@@ -463,6 +469,8 @@ embraion learning propose repeated-review-gap
 embraion learning approve repeated-review-gap
 embraion learning promote repeated-review-gap
 ```
+
+Learning evidence is identified by run ID. Eval IDs record their associated runs, so observing the same eval without its run does not add a confirmation; later association replaces an earlier eval-only confirmation. Separate runs remain independent even with a shared eval label. Unattributed observations count once only when no identified evidence exists. Repeating evidence is idempotent. Legacy associations are reconstructed conservatively and persisted. If newly discovered correlation invalidates a proposal or approval, it returns to observed/accumulating; approval and promotion recheck thresholds. Promoted candidates cannot be reproposed. An omitted target ID stays omitted; promotion notes are included in the schema.
 
 ### `embraion eval`
 

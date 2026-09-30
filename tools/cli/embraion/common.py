@@ -5,6 +5,8 @@ import os
 import subprocess
 import sys
 import sysconfig
+import stat
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -93,14 +95,25 @@ def read_yaml(path: Path) -> Any:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def write_yaml(path: Path, data: Any) -> None:
+def atomic_write_bytes(path: Path, content: bytes, *, mode: int | None = None) -> None:
+    """Replace a directory entry without following final links or shared inodes."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        yaml.safe_dump(data, sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+    if mode is None and path.exists() and not path.is_symlink():
+        mode = stat.S_IMODE(path.stat().st_mode)
+    descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(content)
+        if mode is not None:
+            temporary.chmod(mode)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def write_yaml(path: Path, data: Any) -> None:
+    atomic_write_bytes(path, yaml.safe_dump(data, sort_keys=False, allow_unicode=True).encode("utf-8"))
 
 
 def read_json(path: Path) -> Any:
@@ -108,13 +121,7 @@ def read_json(path: Path) -> Any:
 
 
 def write_json(path: Path, data: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    temporary.replace(path)
+    atomic_write_bytes(path, (json.dumps(data, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
 def framework_version(root: Path) -> str:

@@ -25,6 +25,9 @@ vendor/embraion/
 └── embraion/
     ├── plugin.json
     ├── catalog.yaml
+    ├── agents/
+    ├── workflows/
+    ├── rules/
     ├── skills/
     ├── knowledge/
     └── routing/

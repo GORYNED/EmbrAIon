@@ -91,6 +91,18 @@ class LiteLLMExecutionTests(unittest.TestCase):
         self.assertEqual({"inputTokens": 100, "outputTokens": 20, "cachedInputTokens": 10}, raw["usage"])
         self.assertIsNone(raw["usageSemantics"])
 
+    def test_explicit_execution_settings_fail_before_child_or_provider_call(self) -> None:
+        for selection in ({"effort": "high"}, {"options": {"temperature": 0}},
+                          {"options": {"unsupported": False}}):
+            with self.subTest(selection=selection):
+                self.request["selected"] = {"deployment": "first", **selection}
+                with patch("embraion.adapters.litellm_execution.subprocess.Popen") as child:
+                    with self.assertRaisesRegex(RuntimeError, "effort|options"):
+                        self.adapter.preflight(self.request, self.deployment, self.binding)
+                    with self.assertRaisesRegex(RuntimeError, "effort|options"):
+                        self.adapter.execute(self.request, self.deployment, self.binding, None)
+                    child.assert_not_called()
+
     def _write_usage_evidence(self, **overrides: object) -> None:
         folder = self.project / ".embraion" / "usage-evidence"
         folder.mkdir(parents=True, exist_ok=True)

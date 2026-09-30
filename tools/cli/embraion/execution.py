@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from .common import project_root
-from .failures import may_fallback, normalize_failure
+from .failures import may_fallback, normalize_failure, UnsupportedExecutionSettings
 from .health import evaluate_health
 from .policy import _validated_config_mapping, read_deployments_config
 from .pricing import _validate, calculate_cost
@@ -168,6 +168,7 @@ def execute(
         model = deployment["model"]
         started = _now()
         raw: dict[str, Any]
+        preflight_finished = False
         try:
             attempt_request = {**request, "selected": {"deployment": identifier, "effort": effort,
                                                         "options": candidate.get("options") or {}},
@@ -177,11 +178,18 @@ def execute(
                                    and bindings.get(item, {}).get("adapter") == binding["adapter"]
                                ]}
             adapter.preflight(attempt_request, deployment, binding)
+            preflight_finished = True
             test_host = (binding["adapter"] == "litellm-loopback" and os.environ.get("EMBRAION_TEST_MODE") == "1"
                          and bool(os.environ.get("EMBRAION_LITELLM_TEST_SERVER_SCRIPT")))
             credential = (credential_resolver.resolve(binding["credentialRef"], identifier, binding["adapter"])
                           if binding.get("credentialRef") and not test_host else None)
             raw = adapter.execute(attempt_request, deployment, binding, credential)
+        except UnsupportedExecutionSettings:
+            raw = ({"status": "failed", "failure": "unknown",
+                    "terminationConfirmed": False, "mutationConfirmed": False} if preflight_finished else
+                   {"status": "failed", "failure": "unsupported-capability",
+                    "diagnostic": UnsupportedExecutionSettings.diagnostic,
+                    "terminationConfirmed": True, "mutationConfirmed": True})
         except Exception:
             raw = {"status": "failed", "failure": "unknown", "terminationConfirmed": False,
                    "mutationConfirmed": False, "observedModel": None, "usage": None}
@@ -219,6 +227,8 @@ def execute(
             "usageState": "upstream-unavailable" if usage is None else ("complete" if "inputTokens" in usage and "outputTokens" in usage else "partial"),
             "validationState": "pending" if attempt_status == "completed" else "rejected",
         }
+        if raw.get("diagnostic") == UnsupportedExecutionSettings.diagnostic:
+            attempt["diagnostic"] = UnsupportedExecutionSettings.diagnostic
         # Validate before sending to the durable sink. No raw adapter output is persisted.
         _validate({"schemaVersion": 1, "runId": request["runId"], "workItemId": request["workItemId"],
                    "status": "completed" if attempt_status == "completed" else "failed", "attempts": [attempt]},
