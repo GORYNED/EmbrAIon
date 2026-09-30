@@ -20,6 +20,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from ..common import project_root
+from ..failures import UnsupportedExecutionSettings
 from .provider_pricing import OFFICIAL_HOSTS
 
 
@@ -187,10 +188,7 @@ class LiteLLMLoopbackAdapter:
     def _check_execution_settings(request: dict[str, Any]) -> None:
         selected = request["selected"]
         if selected.get("effort") is not None or selected.get("options") not in (None, {}):
-            raise RuntimeError(
-                "LiteLLM does not support explicit selected effort or options; "
-                "no verified provider translation is available."
-            )
+            raise UnsupportedExecutionSettings()
 
     def preflight(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> None:
         self._check_execution_settings(request)

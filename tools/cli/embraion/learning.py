@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -46,59 +48,66 @@ def observe(
             },
             "proposed-target": {
                 "type": target_type,
-                "id": target_id,
+                **({"id": target_id} if target_id is not None else {}),
             },
         }
 
-    evidence = item.setdefault(
-        "evidence",
-        {
-            "count": 0,
-            "run-ids": [],
-            "eval-ids": [],
-        },
-    )
-
-    # A run is one independent confirmation, regardless of repeated eval labels.
-    # Eval-only observations use their eval ID. Unattributed repeats count once.
-    identities = evidence.setdefault("observation-ids", _legacy_identities(evidence))
-    identity = f"run:{run_id}" if run_id else f"eval:{eval_id}" if eval_id else "unattributed"
-    before = (list(identities), list(evidence.get("run-ids", [])), list(evidence.get("eval-ids", [])),
-              evidence.get("count"), item.get("confidence"))
-    if identity not in identities:
-        identities.append(identity)
-    if run_id and run_id not in evidence.setdefault("run-ids", []):
-        evidence["run-ids"].append(run_id)
-    if eval_id and eval_id not in evidence.setdefault("eval-ids", []):
-        evidence["eval-ids"].append(eval_id)
+    before = deepcopy(item)
+    evidence = item["evidence"]
+    _migrate_evidence(evidence)
+    runs = evidence.setdefault("run-ids", [])
+    evals = evidence.setdefault("eval-ids", [])
+    if run_id and run_id not in runs:
+        runs.append(run_id)
+    if eval_id:
+        if eval_id not in evals:
+            evals.append(eval_id)
+        associated = evidence["eval-runs"].setdefault(eval_id, [])
+        if run_id and run_id not in associated:
+            associated.append(run_id)
     _recount(item)
-    after = (identities, evidence.get("run-ids", []), evidence.get("eval-ids", []),
-             evidence["count"], item["confidence"])
-    if before == after:
-        return item
     if item["state"] in {"observed", "accumulating"}:
         item["state"] = "accumulating" if evidence["count"] > 1 else "observed"
+    elif item["state"] in {"proposed", "approved"} and not _proposal_ready(item):
+        # New correlation can disprove previously assumed independence.
+        item["state"] = "accumulating" if evidence["count"] > 1 else "observed"
+    if item == before:
+        return item
     item["updated-utc"] = datetime.now(timezone.utc).isoformat()
-
     write_json(path, item)
     return item
 
 
-def _legacy_identities(evidence: dict[str, Any]) -> list[str]:
-    # Legacy counters cannot prove independence or associate evals with runs.
-    runs = evidence.get("run-ids") or []
-    evals = evidence.get("eval-ids") or []
-    return list(dict.fromkeys([f"run:{value}" for value in runs] if runs else
-                             [f"eval:{value}" for value in evals])) or (
-        ["unattributed"] if evidence.get("count", 0) else [])
+def _migrate_evidence(evidence: dict[str, Any]) -> None:
+    if "eval-runs" not in evidence:
+        # Earlier records cannot distinguish eval-only evidence from evals
+        # attached to known runs. Do not infer independence from their counter.
+        evidence["eval-runs"] = {
+            value: list(evidence.get("run-ids") or [])
+            for value in evidence.get("eval-ids") or []
+        }
 
 
 def _recount(item: dict[str, Any]) -> None:
     evidence = item["evidence"]
-    identities = evidence.setdefault("observation-ids", _legacy_identities(evidence))
-    count = len(set(identities))
+    _migrate_evidence(evidence)
+    identities = [f"run:{value}" for value in evidence.get("run-ids") or []]
+    identities += [f"eval:{value}" for value in evidence.get("eval-ids") or []
+                   if not evidence["eval-runs"].get(value)]
+    evidence["observation-ids"] = list(dict.fromkeys(identities)) or ["unattributed"]
+    count = len(evidence["observation-ids"])
     evidence["count"] = count
     item["confidence"] = min(0.95, 0.5 + 0.1 * max(0, count - 1))
+    # Accept legacy optional null targets, but write the canonical omission.
+    if item.get("proposed-target", {}).get("id", "") is None:
+        item["proposed-target"].pop("id", None)
+
+
+def _proposal_ready(item: dict[str, Any]) -> bool:
+    policy = read_yaml(framework_root() / "tools/learning/policy.yaml") or {}
+    defaults = policy.get("defaults", {})
+    return (item["evidence"]["count"] >= int(defaults.get("minimum-independent-evidence", 3))
+            and float(item.get("confidence", 0)) >= float(defaults.get("minimum-confidence", 0.75)))
 
 
 def transition(candidate_id: str, action: str) -> dict[str, Any]:
@@ -109,20 +118,13 @@ def transition(candidate_id: str, action: str) -> dict[str, Any]:
 
     item = read_json(path)
 
+    _recount(item)
+    if action in {"propose", "approve", "promote"} and not _proposal_ready(item):
+        raise RuntimeError("Insufficient independent evidence or confidence for proposal.")
+
     if action == "propose":
-        _recount(item)
-        policy = read_yaml(framework_root() / "tools/learning/policy.yaml") or {}
-        defaults = policy.get("defaults", {})
-
-        minimum_evidence = int(defaults.get("minimum-independent-evidence", 3))
-        minimum_confidence = float(defaults.get("minimum-confidence", 0.75))
-
-        if item["evidence"]["count"] < minimum_evidence:
-            raise RuntimeError("Insufficient independent evidence for proposal.")
-
-        if float(item.get("confidence", 0)) < minimum_confidence:
-            raise RuntimeError("Confidence is below promotion policy threshold.")
-
+        if item.get("state") not in {"observed", "accumulating", "proposed"}:
+            raise RuntimeError("Only observed or accumulating candidates can be proposed.")
         item["state"] = "proposed"
 
     elif action == "approve":

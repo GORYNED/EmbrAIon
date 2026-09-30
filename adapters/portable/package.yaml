@@ -5,6 +5,9 @@ version-source: framework.yaml
 
 include:
   catalog: core/catalog.yaml
+  agents: core/agents
+  workflows: core/workflows
+  rules: core/rules
   skills: core/skills
   knowledge: core/knowledge
   routing: core/routing

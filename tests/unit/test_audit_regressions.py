@@ -197,7 +197,8 @@ class AuditRegressionTests(unittest.TestCase):
                 item = observe("evals", "pattern", "skill", "review", "same", eval_id=eval_id)
             self.assertEqual(4, item["evidence"]["count"])
             item = observe("evals", "pattern", "skill", "review", "same", run_id="independent", eval_id="one")
-            self.assertEqual(5, item["evidence"]["count"])
+            # The later run identifies the same eval, not a fifth confirmation.
+            self.assertEqual(4, item["evidence"]["count"])
             legacy = observe("legacy", "pattern", "skill", "review", "same", run_id="one")
             legacy["evidence"].pop("observation-ids")
             legacy["evidence"]["count"] = 4

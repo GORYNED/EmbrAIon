@@ -73,7 +73,7 @@ embraion install   --host codex   --component config   --config-mode merge
 
 `--config-mode replace` остаётся default. Merge mode сохраняет project-owned `[agents]` keys и другие TOML tables и fail-closed, если файл нельзя безопасно merge.
 
-Projection install и pruning отклоняют вложенные symlinks/junctions в managed paths, включая projection evidence под `.embraion/state`. Сам destination может оставаться alias каталога; targets ограничены его канонической границей.
+Projection install и pruning отклоняют вложенные symlinks/junctions в managed paths, включая projection evidence под `.embraion/state`. Сам destination может быть alias каталога. Запись использует эксклюзивно созданный уникальный temporary file и заменяет directory entry: внешний hardlink inode и существующие `.tmp` aliases не изменяются. Pruning повторно проверяет ownership hash перед удалением и сохраняет более поздние пользовательские правки.
 
 ### `embraion projection`
 
@@ -356,7 +356,7 @@ embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
 ```
 
-С `--run-id` active runs получают validation evidence. Для завершённого run gate читает review evidence и хранит новую validation в gate, не изменяя завершённый run. Ошибка новой validation по-прежнему блокирует gate.
+С `--run-id` active runs получают validation evidence. Завершение run с passed review фиксирует HEAD, index и содержимое, modes и symlink targets tracked/nonignored untracked файлов. Gate требует совпадения снимка до и после validation; новый commit, staging или working edit требуют нового reviewed run. Legacy review без снимка не проходит gate. Нечитаемое состояние, submodules и неоднозначные directory aliases приводят к отказу. Завершённый run не изменяется и не завершается повторно. Все gates, включая external-review, отклоняют изменения Git-снимка во время validation; ignored runtime/build output в него не входит.
 
 Check отклоняет mutations protected sources, требует real pass configured validation profile и проверяет review из execution evidence, когда `require-review` enabled.
 
@@ -427,7 +427,7 @@ embraion learning approve repeated-review-gap
 embraion learning promote repeated-review-gap
 ```
 
-Learning evidence идентифицируется по run ID: повторы и eval labels внутри одного run считаются один раз. Без run ID отдельный eval ID даёт одно подтверждение; observations без обоих ID считаются один раз на candidate. Повторы сохраняют confidence и состояние candidate. Legacy counts консервативно восстанавливаются по run IDs (или eval IDs, если runs отсутствуют), а не по прежнему счётчику вызовов.
+Learning evidence идентифицируется по run ID. Eval IDs сохраняют связи с runs: повтор eval без run не добавляет подтверждение, а последующая связь заменяет ранее учтённое eval-only подтверждение. Отдельные runs независимы даже при общей eval label. Непривязанные observations считаются один раз только при отсутствии идентифицированного evidence. Повторы идемпотентны; legacy associations консервативно восстанавливаются и сохраняются. Если новая корреляция опровергает независимость proposal/approval, состояние возвращается в observed/accumulating. Approval и promotion повторно проверяют пороги; promoted нельзя снова propose. Неуказанный target ID отсутствует; promotion-note включён в schema.
 
 ### `embraion eval`
 

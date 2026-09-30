@@ -17,6 +17,7 @@ from . import __version__
 from .artifacts import resolve_release_artifact
 from .contracts import default_project_contract_slots
 from .common import (
+    atomic_write_bytes,
     framework_root,
     framework_version,
     project_root,
@@ -1322,12 +1323,11 @@ def install(
                     if target.is_file()
                     else ""
                 )
-                target.write_text(
-                    merge_codex_config(existing, source.read_text(encoding="utf-8")),
-                    encoding="utf-8",
-                )
+                atomic_write_bytes(target, merge_codex_config(
+                    existing, source.read_text(encoding="utf-8")
+                ).encode("utf-8"))
             else:
-                shutil.copy2(source, target)
+                atomic_write_bytes(target, source.read_bytes(), mode=source.stat().st_mode & 0o777)
 
         previous = _load_projection_state(project, host, destination)
         recovery = (
@@ -1338,10 +1338,16 @@ def install(
         previous_files = (previous or recovery or {}).get("files") or {}
 
         if prune:
-            for relative in plan["obsolete-owned"]:
+            for relative in list(plan["obsolete-owned"]):
                 target = _projection_target(destination, relative)
                 if target.is_file():
-                    target.unlink()
+                    if _sha256(target) == previous_files.get(relative):
+                        target.unlink()
+                    else:
+                        # An obsolete plan cannot authorize deleting a later edit.
+                        plan["obsolete-owned"].remove(relative)
+                        plan["obsolete-modified"].append(relative)
+            plan["obsolete-modified"].sort()
 
         selected_components = set(selected)
         current_files = {

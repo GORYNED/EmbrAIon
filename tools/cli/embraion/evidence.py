@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import os
+import stat
+import subprocess
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .common import project_root, read_json, run, state_root, write_json
+from .environment import child_environment
 from .context import read_context
 from .policy import effective_policy, normalize_project_path, path_matches
 from .runtime import _append_event, route
@@ -17,6 +23,53 @@ def _git_value(project: Path, *args: str) -> str | None:
         return None
     value = result.stdout.strip()
     return value or None
+
+
+def review_snapshot(project: Path) -> str | None:
+    """Bind review to HEAD, index, and Git-visible working content (not mtimes).
+
+    Unreadable files, submodules and ambiguous directory aliases fail closed.
+    Ignored runtime state is intentionally outside the reviewed Git surface.
+    """
+    def git(*args: str) -> bytes:
+        return subprocess.check_output(["git", "-C", str(project), *args],
+                                       stderr=subprocess.DEVNULL, env=child_environment())
+
+    digest = hashlib.sha256()
+    def add(value: bytes) -> None:
+        digest.update(len(value).to_bytes(8, "big"))
+        digest.update(value)
+
+    try:
+        add(git("rev-parse", "HEAD"))
+        add(git("ls-files", "--stage", "-z"))
+        names = git("ls-files", "--cached", "--others", "--exclude-standard", "-z")
+        root = project.resolve()
+        for name in sorted(set(names.split(b"\0")) - {b""}):
+            path = root / os.fsdecode(name)
+            add(name)
+            for parent in path.parents:
+                if parent == root:
+                    break
+                if parent.is_symlink():
+                    return None
+            try:
+                info = path.lstat()
+            except FileNotFoundError:
+                add(b"missing")
+                continue
+            if stat.S_ISLNK(info.st_mode):
+                add(b"symlink")
+                add(os.fsencode(os.readlink(path)))
+            elif stat.S_ISREG(info.st_mode):
+                add(b"file")
+                add(str(stat.S_IMODE(info.st_mode)).encode("ascii"))
+                add(path.read_bytes())
+            else:
+                return None
+        return "sha256:" + digest.hexdigest()
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
 
 
 def _run_path(project: Path, run_id: str) -> Path:
@@ -170,6 +223,8 @@ def complete_run(
 ) -> dict[str, Any]:
     root = project_root(project)
     record = read_run(run_id, root)
+    if record.get("state") != "active":
+        raise RuntimeError("Only an active run can be completed; start a new run for fresh review.")
     normalized = [normalize_project_path(path) for path in changed_paths]
 
     if record.get("access") == "write":
@@ -202,6 +257,7 @@ def complete_run(
     record["changed-paths"] = normalized
     record["validation"] = list(record.get("validation") or []) + validation
     record["review"] = review
+    record["review-snapshot"] = review_snapshot(root) if review == "passed" else None
     record["outcome"] = outcome
     record["residual-risks"] = residual_risks
     record["state"] = {

@@ -25,6 +25,7 @@
         "finishedUtc": {"type": "string", "format": "date-time"},
         "status": {"enum": ["completed", "failed", "cancelled"]},
         "failure": {"type": ["string", "null"]},
+        "diagnostic": {"type": "string", "maxLength": 256},
         "usage": {"type": ["object", "null"]},
         "cost": {"type": ["object", "null"]},
         "terminationConfirmed": {"type": "boolean"},

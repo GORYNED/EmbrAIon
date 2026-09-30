@@ -10,7 +10,7 @@ from typing import Any
 
 from .common import project_root, read_yaml, state_root, write_json, write_yaml
 from .environment import child_environment
-from .evidence import read_run
+from .evidence import read_run, review_snapshot
 from .policy import (
     effective_policy,
     path_matches,
@@ -147,6 +147,7 @@ def check_enforcement(
     # A gate owns fresh validation evidence. Completed run evidence is immutable;
     # keep its association on the gate without attaching to the closed run.
     validation_run_id = run_id if run_record and run_record.get("state") == "active" else None
+    initial_snapshot = review_snapshot(root)
     changed_paths = _git_changed_paths(root, base_ref)
     checks: list[dict[str, Any]] = []
 
@@ -191,16 +192,31 @@ def check_enforcement(
             }
         )
 
+    final_snapshot = review_snapshot(root)
+    changed_paths = sorted(set(changed_paths) | set(_git_changed_paths(root, base_ref)))
+    protected_changes = [path for path in changed_paths if path_matches(path, protected)]
+    checks[0].update({"status": "failed" if protected_changes else "passed",
+                      "changed-paths": protected_changes})
+    checks.append({
+        "id": "workspace-stability",
+        "status": "passed" if initial_snapshot and initial_snapshot == final_snapshot else "failed",
+        "reason": "Validation must preserve the inspected Git snapshot; unverifiable state fails closed.",
+    })
+
     review_required = bool(config.get("require-review", False))
     if not review_required:
         checks.append({"id": "review", "status": "not-required"})
     elif run_id:
         run_record = read_run(run_id, root)
         review_status = str(run_record.get("review") or "not-required")
+        recorded_snapshot = run_record.get("review-snapshot")
+        fresh = bool(recorded_snapshot) and recorded_snapshot == initial_snapshot == final_snapshot
         checks.append(
             {
                 "id": "review",
-                "status": "passed" if review_status == "passed" else "failed",
+                "status": "passed" if review_status == "passed" and fresh else "failed",
+                "snapshot-matches": fresh,
+                "reason": None if fresh else "Review snapshot is missing, stale, or cannot be verified.",
                 "source": "execution-run",
                 "run-id": run_id,
                 "review": review_status,

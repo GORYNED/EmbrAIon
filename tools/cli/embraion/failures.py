@@ -29,3 +29,12 @@ def normalize_failure(value: str | None = None, *, http_status: int | None = Non
 def may_fallback(failure: str, *, termination_confirmed: bool,
                  mutation_confirmed: bool) -> bool:
     return failure in SAFE_FALLBACK and termination_confirmed and mutation_confirmed
+
+
+class UnsupportedExecutionSettings(RuntimeError):
+    """Known preflight rejection with a static, non-sensitive public diagnostic."""
+
+    diagnostic = "This execution adapter does not support explicit selected effort or options; no verified provider translation is available."
+
+    def __init__(self) -> None:
+        super().__init__(self.diagnostic)

@@ -166,6 +166,8 @@ pip install "embraion[litellm]"
 
 Текущий LiteLLM adapter отклоняет явный `selected.effort` и непустой `selected.options` на preflight, до получения credentials и provider call. Проверенной трансляции этих настроек пока нет; option allowlist сам по себе не подтверждает поддержку transport. Запросы без этих настроек продолжают использовать bounded Responses transport.
 
+Публичный execution result, включая CLI, сообщает об этом известном preflight refusal как `unsupported-capability` со статическим `diagnostic`. Credentials и provider call не вызываются. Произвольные тексты adapter exceptions и diagnostics не раскрываются.
+
 ## Связанные страницы
 
 - [Как работает EmbrAIon](../getting-started/how-it-works.md)

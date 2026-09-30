@@ -170,6 +170,8 @@ For LiteLLM, `payload.inputsByDeployment` must include a bounded input for every
 
 The current LiteLLM adapter rejects explicit `selected.effort` and nonempty `selected.options` during preflight, before credential resolution or any provider call. These settings have no verified provider translation yet; an option allowlist alone does not establish transport support. Requests without those settings continue to use the bounded Responses transport.
 
+Public execution results report this known preflight refusal as `unsupported-capability` with a static `diagnostic`, including through the CLI. No credential lookup or provider call occurs. Arbitrary adapter exception messages and raw diagnostics are not exposed.
+
 ## Related
 
 - [How EmbrAIon works](../getting-started/how-it-works.md)

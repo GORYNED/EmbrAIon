@@ -72,6 +72,16 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "eval-runs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          }
         }
       },
       "additionalProperties": false
@@ -101,6 +111,9 @@
     "updated-utc": {
       "type": "string",
       "format": "date-time"
+    },
+    "promotion-note": {
+      "type": "string"
     }
   },
   "additionalProperties": false

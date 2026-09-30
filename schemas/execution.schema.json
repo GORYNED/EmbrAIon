@@ -173,6 +173,13 @@
     },
     "updated-utc": {
       "type": "string"
+    },
+    "review-snapshot": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[a-f0-9]{64}$"
     }
   },
   "additionalProperties": false
