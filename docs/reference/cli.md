@@ -77,6 +77,8 @@ embraion install \
 
 `--config-mode replace` remains the default. Merge mode preserves project-owned `[agents]` keys and other TOML tables and fails closed when the file cannot be merged safely.
 
+Projection install and pruning reject nested symlinks or junctions in managed paths, including projection evidence under `.embraion/state`. The destination itself may still be a directory alias; all targets stay within its canonical boundary.
+
 ### `embraion projection`
 
 Preview ownership-aware projection changes:
@@ -389,6 +391,8 @@ embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
 ```
 
+With `--run-id`, active runs receive validation evidence. For completed runs, the gate reads review evidence and stores fresh validation on the gate without modifying the completed run. A failed fresh validation still fails the gate.
+
 The check rejects mutations of protected sources, requires the configured validation profile to produce a real pass, and enforces review from execution evidence when `require-review` is enabled.
 
 Install the GitHub Actions CI surface explicitly:
@@ -447,6 +451,8 @@ embraion worktree gc --apply
 embraion worktree salvage /path/to/worktree
 ```
 
+GC only removes worktrees created by `embraion worktree create` with matching ownership metadata in the Git worktree directory. It requires terminal local run/session evidence, a clean integrated checkout, and no lock or unfinished Git operation. Missing, malformed, active, blocked, or otherwise unproven evidence preserves the worktree. Older and manually created worktrees remain untouched.
+
 ### `embraion learning`
 
 Record evidence and manage gated learning candidates.
@@ -463,6 +469,8 @@ embraion learning propose repeated-review-gap
 embraion learning approve repeated-review-gap
 embraion learning promote repeated-review-gap
 ```
+
+Learning evidence is identified by run ID; repeated observations and eval labels within that run count once. Without a run ID, a distinct eval ID supplies one confirmation; observations without either ID count once per candidate. Repeating evidence preserves confidence and candidate state. Legacy counts are conservatively reconstructed from recorded run IDs (or eval IDs when no runs exist), rather than trusting the old invocation counter.
 
 ### `embraion eval`
 

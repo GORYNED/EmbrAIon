@@ -183,7 +183,17 @@ class LiteLLMLoopbackAdapter:
     def __init__(self, project: Path | None = None) -> None:
         self.project = project_root(project)
 
+    @staticmethod
+    def _check_execution_settings(request: dict[str, Any]) -> None:
+        selected = request["selected"]
+        if selected.get("effort") is not None or selected.get("options") not in (None, {}):
+            raise RuntimeError(
+                "LiteLLM does not support explicit selected effort or options; "
+                "no verified provider translation is available."
+            )
+
     def preflight(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> None:
+        self._check_execution_settings(request)
         selector = binding["selector"]
         provider = binding.get("expectedProvider")
         if not isinstance(selector, str) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}/[^\s]{1,128}", selector):
@@ -224,6 +234,7 @@ class LiteLLMLoopbackAdapter:
 
     def execute(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any],
                 credential: str | None) -> dict[str, Any]:
+        self._check_execution_settings(request)
         selected = request["selected"]["deployment"]
         test_mode = os.environ.get("EMBRAION_TEST_MODE") == "1"
         fixture = os.environ.get("EMBRAION_LITELLM_TEST_SERVER_SCRIPT") if test_mode else None

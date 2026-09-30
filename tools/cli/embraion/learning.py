@@ -59,21 +59,46 @@ def observe(
         },
     )
 
-    evidence["count"] = int(evidence.get("count", 0)) + 1
-
+    # A run is one independent confirmation, regardless of repeated eval labels.
+    # Eval-only observations use their eval ID. Unattributed repeats count once.
+    identities = evidence.setdefault("observation-ids", _legacy_identities(evidence))
+    identity = f"run:{run_id}" if run_id else f"eval:{eval_id}" if eval_id else "unattributed"
+    before = (list(identities), list(evidence.get("run-ids", [])), list(evidence.get("eval-ids", [])),
+              evidence.get("count"), item.get("confidence"))
+    if identity not in identities:
+        identities.append(identity)
     if run_id and run_id not in evidence.setdefault("run-ids", []):
         evidence["run-ids"].append(run_id)
-
     if eval_id and eval_id not in evidence.setdefault("eval-ids", []):
         evidence["eval-ids"].append(eval_id)
-
-    count = evidence["count"]
-    item["confidence"] = min(0.95, 0.5 + 0.1 * max(0, count - 1))
-    item["state"] = "accumulating" if count > 1 else "observed"
+    _recount(item)
+    after = (identities, evidence.get("run-ids", []), evidence.get("eval-ids", []),
+             evidence["count"], item["confidence"])
+    if before == after:
+        return item
+    if item["state"] in {"observed", "accumulating"}:
+        item["state"] = "accumulating" if evidence["count"] > 1 else "observed"
     item["updated-utc"] = datetime.now(timezone.utc).isoformat()
 
     write_json(path, item)
     return item
+
+
+def _legacy_identities(evidence: dict[str, Any]) -> list[str]:
+    # Legacy counters cannot prove independence or associate evals with runs.
+    runs = evidence.get("run-ids") or []
+    evals = evidence.get("eval-ids") or []
+    return list(dict.fromkeys([f"run:{value}" for value in runs] if runs else
+                             [f"eval:{value}" for value in evals])) or (
+        ["unattributed"] if evidence.get("count", 0) else [])
+
+
+def _recount(item: dict[str, Any]) -> None:
+    evidence = item["evidence"]
+    identities = evidence.setdefault("observation-ids", _legacy_identities(evidence))
+    count = len(set(identities))
+    evidence["count"] = count
+    item["confidence"] = min(0.95, 0.5 + 0.1 * max(0, count - 1))
 
 
 def transition(candidate_id: str, action: str) -> dict[str, Any]:
@@ -85,6 +110,7 @@ def transition(candidate_id: str, action: str) -> dict[str, Any]:
     item = read_json(path)
 
     if action == "propose":
+        _recount(item)
         policy = read_yaml(framework_root() / "tools/learning/policy.yaml") or {}
         defaults = policy.get("defaults", {})
 

@@ -751,7 +751,8 @@ def _generate_portable(root: Path, output: Path) -> None:
     shutil.copy2(root / "core/catalog.yaml", target / "catalog.yaml")
     shutil.copytree(root / "core/skills", target / "skills", dirs_exist_ok=True)
     _append_lead_skill(root, target / "skills")
-    shutil.copytree(root / "core/knowledge", target / "knowledge", dirs_exist_ok=True)
+    for directory in ("agents", "workflows", "rules", "knowledge"):
+        shutil.copytree(root / "core" / directory, target / directory, dirs_exist_ok=True)
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
 
 
@@ -861,11 +862,12 @@ def _projection_destination_id(project: Path, destination: Path) -> str:
 
 def _projection_state_path(project: Path, host: str, destination: Path | None = None) -> Path:
     identity = _projection_destination_id(project, destination if destination is not None else project)
-    return project / ".embraion" / "state" / "projections" / host / f"{identity}.json"
+    return _projection_target(project, f".embraion/state/projections/{host}/{identity}.json")
 
 
 def _projection_recovery_path(project: Path, host: str, destination: Path | None = None) -> Path:
-    return _projection_state_path(project, host, destination).with_suffix(".recovery.json")
+    path = _projection_state_path(project, host, destination).with_suffix(".recovery.json")
+    return _projection_target(project, path.relative_to(project.resolve()).as_posix())
 
 
 def _projection_record(
@@ -908,7 +910,7 @@ def _projection_evidence_path(project: Path, host: str, destination: Path, *, re
     if scoped.exists():
         return scoped
     suffix = ".recovery.json" if recovery else ".json"
-    return project / ".embraion" / "state" / "projections" / f"{host}{suffix}"
+    return _projection_target(project, f".embraion/state/projections/{host}{suffix}")
 
 
 def _host_has_projection_candidates(host: str, destination: Path) -> bool:
@@ -1067,6 +1069,30 @@ def _load_projection_state(
     return _projection_record(path, host, destination)
 
 
+def _projection_target(destination: Path, relative: str) -> Path:
+    """Resolve below the canonical destination, never through nested aliases.
+
+    The destination itself may be an alias; nested links are ambiguous ownership
+    even if they currently point inside the destination.
+    """
+    root = destination.resolve()
+    path = Path(relative)
+    if path.is_absolute() or ".." in path.parts:
+        raise RuntimeError(f"Projection target crosses destination boundary: {relative}")
+    target = root / path
+    try:
+        if not target.resolve().is_relative_to(root):
+            raise RuntimeError(f"Projection target crosses destination boundary: {relative}")
+        for part in (target, *target.parents):
+            if part == root:
+                break
+            if part.is_symlink() or (hasattr(part, "is_junction") and part.is_junction()):
+                raise RuntimeError(f"Projection target contains a nested symlink: {relative}")
+    except (OSError, ValueError) as error:
+        raise RuntimeError(f"Cannot prove projection target boundary: {relative}") from error
+    return target
+
+
 def _projection_plan_from_generated(
     host: str,
     generated: Path,
@@ -1084,6 +1110,8 @@ def _projection_plan_from_generated(
     )
     previous_files = (previous or recovery or {}).get("files") or {}
     generated_files = _file_hashes(generated)
+    for relative in set(generated_files) | set(previous_files):
+        _projection_target(destination, relative)
 
     plan: dict[str, Any] = {
         "schema-version": 1,
@@ -1114,7 +1142,7 @@ def _projection_plan_from_generated(
     }
 
     for relative, generated_hash in generated_files.items():
-        target = destination / relative
+        target = _projection_target(destination, relative)
 
         if (
             host == "codex"
@@ -1158,7 +1186,7 @@ def _projection_plan_from_generated(
         if _component_for_path(host, relative) not in selected:
             continue
 
-        target = destination / relative
+        target = _projection_target(destination, relative)
         if not target.exists():
             continue
 
@@ -1243,6 +1271,7 @@ def install(
             legacy / f"{host}.recovery.json",
             _projection_recovery_path(project, host, destination),
         ):
+            _projection_target(project, candidate.relative_to(project).as_posix())
             if not candidate.is_file():
                 continue
             original = candidate.read_bytes()
@@ -1281,7 +1310,7 @@ def install(
 
         for relative in writable:
             source = generated / relative
-            target = destination / relative
+            target = _projection_target(destination, relative)
             target.parent.mkdir(parents=True, exist_ok=True)
             if (
                 host == "codex"
@@ -1310,7 +1339,7 @@ def install(
 
         if prune:
             for relative in plan["obsolete-owned"]:
-                target = destination / relative
+                target = _projection_target(destination, relative)
                 if target.is_file():
                     target.unlink()
 
@@ -1326,7 +1355,7 @@ def install(
             and "config" in selected
             and config_mode == "merge"
         ):
-            merged_config = destination / ".codex/config.toml"
+            merged_config = _projection_target(destination, ".codex/config.toml")
             if merged_config.is_file():
                 current_files[".codex/config.toml"] = _sha256(merged_config)
         preserved_obsolete = list(plan["obsolete-modified"])
@@ -1334,7 +1363,7 @@ def install(
             preserved_obsolete += list(plan["obsolete-owned"])
 
         for relative in preserved_obsolete:
-            target = destination / relative
+            target = _projection_target(destination, relative)
             previous_hash = previous_files.get(relative)
             if target.is_file() and previous_hash:
                 current_files[relative] = previous_hash
@@ -1365,6 +1394,7 @@ def install(
         if _projection_record(state_path, host, destination) != record:
             raise RuntimeError("Projection ownership write verification failed; prior evidence preserved.")
         for candidate, original in cleanup.items():
+            _projection_target(project, candidate.relative_to(project).as_posix())
             if candidate.is_file() and candidate.read_bytes() == original:
                 candidate.unlink()
         return plan

@@ -164,6 +164,8 @@ pip install "embraion[litellm]"
 
 Для LiteLLM `payload.inputsByDeployment` должен содержать bounded input для каждого candidate, привязанного к `litellm-loopback` на execution host запроса, включая external fallback candidates. Cross-host и unbound candidates не требуют external input. Unknown и non-candidate input keys приводят к fail closed. Каждый selected external input проверяется на approved boundary и исходный provenance work item до получения credentials и вызова transport. Core вычисляет adapter candidate scope внутри runtime; caller не может передать его. Существующие валидные optional inputs для handoff candidates остаются допустимыми.
 
+Текущий LiteLLM adapter отклоняет явный `selected.effort` и непустой `selected.options` на preflight, до получения credentials и provider call. Проверенной трансляции этих настроек пока нет; option allowlist сам по себе не подтверждает поддержку transport. Запросы без этих настроек продолжают использовать bounded Responses transport.
+
 ## Связанные страницы
 
 - [Как работает EmbrAIon](../getting-started/how-it-works.md)

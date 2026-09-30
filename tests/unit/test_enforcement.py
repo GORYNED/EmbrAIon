@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 import tempfile
@@ -14,7 +13,7 @@ from embraion.enforcement import (
     enforcement_status,
     install_enforcement_surface,
 )
-from embraion.evidence import start_run
+from embraion.evidence import start_run, complete_run, read_run
 from embraion.project import init_project
 
 
@@ -199,12 +198,12 @@ class EnforcementTests(unittest.TestCase):
                 substantial=True,
                 project=project,
             )
-            run_path = project / ".embraion" / "state" / "runs" / "run-1.json"
-            record = json.loads(run_path.read_text(encoding="utf-8"))
-            record["review"] = "passed"
-            run_path.write_text(
-                json.dumps(record),
-                encoding="utf-8",
+            active_gate = check_enforcement(base_ref=base, project=project, run_id="run-1")
+            self.assertFalse(active_gate["passed"])
+            self.assertEqual(1, len(read_run("run-1", project)["validation"]))
+            completed = complete_run(
+                "run-1", changed_paths=["src/app.py"], validation=[],
+                review="passed", outcome="completed", residual_risks=[], project=project,
             )
 
             result = check_enforcement(
@@ -213,6 +212,14 @@ class EnforcementTests(unittest.TestCase):
                 run_id="run-1",
             )
             self.assertTrue(result["passed"])
+            self.assertEqual(completed, read_run("run-1", project))
+            validation_check = next(check for check in result["checks"] if check["id"] == "validation")
+            self.assertTrue((project / validation_check["evidence-path"]).is_file())
+            validation = read_yaml(project / ".embraion/validation.yaml")
+            validation["profiles"]["affected"] = [f'"{sys.executable}" -c "raise SystemExit(1)"']
+            write_yaml(project / ".embraion/validation.yaml", validation)
+            self.assertFalse(check_enforcement(base_ref=base, project=project, run_id="run-1")["passed"])
+            self.assertEqual(completed, read_run("run-1", project))
 
     def test_github_actions_surface_is_explicit_and_conflict_safe(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

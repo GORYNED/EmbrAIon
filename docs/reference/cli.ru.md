@@ -73,6 +73,8 @@ embraion install   --host codex   --component config   --config-mode merge
 
 `--config-mode replace` остаётся default. Merge mode сохраняет project-owned `[agents]` keys и другие TOML tables и fail-closed, если файл нельзя безопасно merge.
 
+Projection install и pruning отклоняют вложенные symlinks/junctions в managed paths, включая projection evidence под `.embraion/state`. Сам destination может оставаться alias каталога; targets ограничены его канонической границей.
+
 ### `embraion projection`
 
 Preview ownership-aware изменений projection:
@@ -354,6 +356,8 @@ embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
 ```
 
+С `--run-id` active runs получают validation evidence. Для завершённого run gate читает review evidence и хранит новую validation в gate, не изменяя завершённый run. Ошибка новой validation по-прежнему блокирует gate.
+
 Check отклоняет mutations protected sources, требует real pass configured validation profile и проверяет review из execution evidence, когда `require-review` enabled.
 
 Явно установить GitHub Actions CI surface:
@@ -409,6 +413,8 @@ embraion worktree gc --apply
 embraion worktree salvage /path/to/worktree
 ```
 
+GC удаляет только worktrees, созданные через `embraion worktree create`, с соответствующей записью ownership в Git-каталоге worktree. Требуются завершённые локальные run/session evidence, чистый интегрированный checkout, отсутствие блокировок и незавершённых Git-операций. Отсутствующее, повреждённое, активное, blocked или иное недоказанное состояние сохраняется. Старые и созданные вручную worktrees не удаляются.
+
 ### `embraion learning`
 
 Записать evidence и управлять gated learning candidates.
@@ -420,6 +426,8 @@ embraion learning propose repeated-review-gap
 embraion learning approve repeated-review-gap
 embraion learning promote repeated-review-gap
 ```
+
+Learning evidence идентифицируется по run ID: повторы и eval labels внутри одного run считаются один раз. Без run ID отдельный eval ID даёт одно подтверждение; observations без обоих ID считаются один раз на candidate. Повторы сохраняют confidence и состояние candidate. Legacy counts консервативно восстанавливаются по run IDs (или eval IDs, если runs отсутствуют), а не по прежнему счётчику вызовов.
 
 ### `embraion eval`
 
