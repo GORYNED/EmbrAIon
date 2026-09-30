@@ -116,7 +116,9 @@ class AuditRegressionTests(unittest.TestCase):
         self.repo()
         other = self.root / ('ветка"\nline' if os.name != "nt" else "ветка")
         git(self.root, "worktree", "add", "-b", "task", str(other))
-        self.assertIn(str(other), [item["path"] for item in parse_worktrees(self.root)])
+        # Git uses forward slashes on Windows; preserve exact spelling otherwise.
+        self.assertIn(other.as_posix(),
+                      [Path(item["path"]).as_posix() for item in parse_worktrees(self.root)])
 
     def test_portable_catalog_resolves_every_capability(self):
         generate_host(framework_root(), "portable", self.root)
