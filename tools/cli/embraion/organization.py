@@ -42,14 +42,40 @@ def _under(path: str, prefix: str) -> bool:
     return path == prefix or path.startswith(prefix + "/")
 
 
-def _selected(path: str, config: dict[str, Any]) -> bool:
+def _excluded(path: str, config: dict[str, Any]) -> bool:
     from fnmatch import fnmatchcase
-    if any(fnmatchcase(path, pattern) or _under(path, pattern.rstrip("/"))
-           for pattern in config.get("exclude", [])):
+    return any(fnmatchcase(path, pattern) or _under(path, pattern.rstrip("/"))
+               or (pattern.endswith("/**") and _under(path, pattern[:-3]))
+               for pattern in config.get("exclude", []))
+
+
+def _scope_overlap(path: str, config: dict[str, Any]) -> bool:
+    if _excluded(path, config):
         return False
-    if path.endswith(".cs") and config.get("namespaces", {}).get("enabled", True):
+    scopes: list[str] = []
+    namespace = config.get("namespaces")
+    assemblies = config.get("assemblies")
+    meta = config.get("unity_meta")
+    if namespace and namespace.get("enabled", True):
+        scopes.extend(rule["path"] for rule in namespace["rules"])
+    if assemblies and assemblies.get("enabled", True):
+        scopes.extend(assemblies["roots"])
+    if meta and meta.get("enabled", True):
+        scopes.extend(meta["roots"])
+    return any(not _excluded(scope, config) and (_under(path, scope) or _under(scope, path))
+               for scope in scopes)
+
+
+def _symlink_in_scope(path: str, config: dict[str, Any]) -> bool:
+    return _scope_overlap(path, config)
+
+
+def _selected(path: str, config: dict[str, Any]) -> bool:
+    if _excluded(path, config):
+        return False
+    if path.endswith(".cs") and config.get("namespaces") and config["namespaces"].get("enabled", True):
         return True
-    if path.endswith((".asmdef", ".asmdef.meta")) and config.get("assemblies", {}).get("enabled", True):
+    if path.endswith((".asmdef", ".asmdef.meta")) and config.get("assemblies") and config["assemblies"].get("enabled", True):
         return True
     if config.get("unity_meta") and config["unity_meta"].get("enabled", True):
         if path.endswith(".meta"):
@@ -106,11 +132,12 @@ def _snapshot_tree(root: Path, commit: str, config: dict[str, Any]) -> tuple[dic
         if not _safe(path):
             issues.append(_finding("unsafe_path", path, "Git tree contains an unsafe path"))
             continue
-        if not _selected(path, config):
-            continue
         mode, kind, oid = header.decode("ascii").split()
         if mode == "120000":
-            issues.append(_finding("unsafe_path", path, "Symbolic link is not scanned"))
+            if _symlink_in_scope(path, config):
+                issues.append(_finding("unsafe_path", path, "Symbolic link overlaps a configured source scope"))
+            continue
+        if not _selected(path, config):
             continue
         if kind != "blob":
             continue
@@ -128,16 +155,30 @@ def _snapshot_worktree(root: Path, config: dict[str, Any]) -> tuple[dict[str, by
     files: dict[str, bytes] = {}
     issues: list[dict[str, str]] = []
     for directory, dirs, names in os.walk(root, followlinks=False):
-        relative_dir = Path(directory).relative_to(root).as_posix()
-        dirs[:] = [name for name in dirs if name not in {".git", ".venv", "node_modules", "Library", "Temp"}
-                   and not (Path(directory) / name).is_symlink()]
+        retained: list[str] = []
+        for name in dirs:
+            candidate = Path(directory) / name
+            rel = candidate.relative_to(root).as_posix()
+            if name == ".git" or (name in {".venv", "node_modules", "Library", "Temp"}
+                                  and not _scope_overlap(rel, config)):
+                continue
+            if candidate.is_symlink():
+                if _symlink_in_scope(rel, config):
+                    issues.append(_finding("unsafe_path", rel, "Symbolic link overlaps a configured source scope"))
+                continue
+            retained.append(name)
+        dirs[:] = retained
         for name in names:
             path = (Path(directory) / name)
             rel = path.relative_to(root).as_posix()
+            if path.is_symlink():
+                if _symlink_in_scope(rel, config):
+                    issues.append(_finding("unsafe_path", rel, "Symbolic link overlaps a configured source scope"))
+                continue
             if not _selected(rel, config):
                 continue
-            if not _safe(rel) or path.is_symlink():
-                issues.append(_finding("unsafe_path", rel, "Symbolic link or unsafe path is not scanned"))
+            if not _safe(rel):
+                issues.append(_finding("unsafe_path", rel, "Unsafe path is not scanned"))
                 continue
             if not path.is_file():
                 continue
@@ -343,7 +384,7 @@ def _assemblies(files: dict[str, bytes], config: dict[str, Any], issues: list[di
             source_layer, target_layer = record["layer"], records[target]["layer"]
             if source_layer and target_layer and target_layer not in BOUNDARY[source_layer] and (record["name"], records[target]["name"]) not in allowed:
                 issues.append(_finding("assembly_boundary", path, f"{source_layer} assembly {record['name']} references {target_layer} assembly {records[target]['name']}", target=target))
-            if spec.get("enforce_platforms", True) and source_layer and target_layer and target_layer in BOUNDARY[source_layer]:
+            if spec.get("enforce_platforms", True) and source_layer and target_layer:
                 source_platforms, target_platforms = record["platforms"], records[target]["platforms"]
                 source_exclusions, target_exclusions = record["exclusions"], records[target]["exclusions"]
                 incompatible = ((target_platforms and (not source_platforms or not source_platforms <= target_platforms))

@@ -80,6 +80,21 @@ class OrganizationTests(unittest.TestCase):
         self.write("Assets/Editor/E.asmdef", json.dumps({"name": "E", "references": [], "includePlatforms": ["Editor"]}))
         self.assertNotIn("assembly_platform", self.codes(check_organization(self.root)))
 
+    def test_allowed_layer_edge_still_requires_platform_compatibility(self) -> None:
+        config = {"assemblies": {"roots": ["Assets"], "path_rules": [
+            {"path": "Assets/Runtime", "layer": "Runtime"},
+            {"path": "Assets/Editor", "layer": "Editor"}],
+            "allowed_edges": [{"from": "R", "to": "E"}]}}
+        self.config(config)
+        self.write("Assets/Runtime/R.asmdef", json.dumps({"name": "R", "references": ["E"]}))
+        self.write("Assets/Editor/E.asmdef", json.dumps({"name": "E", "includePlatforms": ["Editor"]}))
+        result = check_organization(self.root)
+        self.assertEqual({"assembly_platform"}, self.codes(result))
+        self.assertFalse(result["passed"])
+        config["assemblies"]["enforce_platforms"] = False
+        self.config(config)
+        self.assertTrue(check_organization(self.root)["passed"])
+
     def test_incremental_baseline_worktree_and_missing_ref(self) -> None:
         self.config({"namespaces": {"rules": [{"path": "Assets", "namespace": "Demo"}]}})
         self.write("Assets/Old.cs", "namespace Wrong;")
@@ -165,6 +180,52 @@ class OrganizationTests(unittest.TestCase):
             self.skipTest("symlinks unavailable")
         with self.assertRaisesRegex(RuntimeError, "symbolic link"):
             check_organization(self.root)
+
+    def test_symlinked_source_directory_fails_worktree_and_git_scans(self) -> None:
+        self.config({"exclude": ["Assets/Vendor/**"], "namespaces": {"rules": [
+            {"path": "Assets/Code", "namespace": "Demo", "require_declaration": True}]}})
+        self.write("Assets/Code/Good.cs", "namespace Demo;")
+        base = self.commit()
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        external = Path(outside.name)
+        (external / "Bad.cs").write_text("namespace Wrong;", encoding="utf-8")
+        (self.root / "Assets/Code/Good.cs").unlink()
+        (self.root / "Assets/Code").rmdir()
+        try:
+            (self.root / "Assets/Code").symlink_to(external, target_is_directory=True)
+            (self.root / "Assets/Vendor").symlink_to(external, target_is_directory=True)
+        except OSError:
+            self.skipTest("symlinks unavailable")
+        current = check_organization(self.root, base_ref=base, include_worktree=True)
+        self.assertFalse(current["passed"])
+        self.assertEqual(["Assets/Code"], [finding["path"] for finding in current["findings"]])
+        head = self.commit()
+        committed = check_organization(self.root, base_ref=base, head_ref=head)
+        self.assertFalse(committed["passed"])
+        self.assertEqual(["Assets/Code"], [finding["path"] for finding in committed["findings"]])
+
+    def test_symlinked_ancestor_of_source_scope_fails(self) -> None:
+        self.config({"namespaces": {"rules": [
+            {"path": "Assets/Code", "namespace": "Demo", "require_declaration": True}]}})
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        external = Path(outside.name)
+        try:
+            (self.root / "Assets").symlink_to(external, target_is_directory=True)
+        except OSError:
+            self.skipTest("symlinks unavailable")
+        result = check_organization(self.root)
+        self.assertEqual(["Assets"], [finding["path"] for finding in result["findings"]])
+        self.assertFalse(result["passed"])
+
+    def test_configured_nested_temp_directory_is_scanned(self) -> None:
+        self.config({"namespaces": {"rules": [
+            {"path": "Assets/Project/Temp", "namespace": "Demo", "require_declaration": True}]}})
+        self.write("Assets/Project/Temp/Bad.cs", "namespace Wrong;")
+        result = check_organization(self.root)
+        self.assertEqual(["Assets/Project/Temp/Bad.cs"], [finding["path"] for finding in result["findings"]])
+        self.assertFalse(result["passed"])
 
 
 if __name__ == "__main__":
