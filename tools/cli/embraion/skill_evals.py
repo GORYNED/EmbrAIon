@@ -14,13 +14,14 @@ import time
 from pathlib import Path, PureWindowsPath
 from typing import Any
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
 
 from .common import framework_root, write_json
 
 MAX_SOURCE_BYTES = 2_000_000
 MAX_SOURCE_FILES = 200
 MAX_EVENT_BYTES = 2_000_000
+MAX_SUITE_BYTES = 2_000_000
 VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max", "ultra"}
 READ_COMMAND = re.compile(r"(?:^|\s)(?:cat|sed|head|tail|rg|grep|less|more|type)\s")
 
@@ -222,10 +223,25 @@ def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effor
     return result
 
 
+def _suite_bytes(path: Path) -> bytes:
+    with path.open("rb") as stream:
+        payload = stream.read(MAX_SUITE_BYTES + 1)
+    if len(payload) > MAX_SUITE_BYTES:
+        raise ValueError("skill evaluation suite exceeds size limit")
+    return payload
+
+
 def _load_suite(path: Path) -> dict[str, Any]:
-    suite = json.loads(path.read_text(encoding="utf-8"))
+    payload = _suite_bytes(path)
+    try:
+        suite = json.loads(payload)
+    except (ValueError, UnicodeError):
+        raise ValueError("invalid skill evaluation suite JSON") from None
     schema = json.loads((framework_root() / "schemas/skill-eval.schema.json").read_text(encoding="utf-8"))
-    Draft202012Validator(schema).validate(suite)
+    try:
+        Draft202012Validator(schema).validate(suite)
+    except ValidationError:
+        raise ValueError("invalid skill evaluation suite schema") from None
     for case in suite["cases"]:
         _safe_relative(case["fixture"])
         for check in case["checks"]:
@@ -240,6 +256,16 @@ def _load_suite(path: Path) -> dict[str, Any]:
     if len(skills) != len(set(skills)):
         raise ValueError("duplicate skill id")
     return suite
+
+
+def _check_output_destination(output: Path, suite: Path, source_dirs: list[Path]) -> None:
+    destination = output.absolute()
+    for component in (destination, *destination.parents):
+        if component.is_symlink():
+            raise ValueError("skill evaluation output path contains a symlink")
+    resolved = destination.resolve()
+    if resolved == suite or any(resolved.is_relative_to(source.resolve()) for source in source_dirs):
+        raise ValueError("skill evaluation output overlaps suite source")
 
 
 def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, attempts: int, output: Path, timeout_seconds: int = 180, codex_binary: str = "codex") -> dict[str, Any]:
@@ -258,6 +284,7 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
         raise ValueError("invalid model name")
     suite = suite.resolve(strict=True)
     data = _load_suite(suite)
+    suite_digest = hashlib.sha256(_suite_bytes(suite)).hexdigest()
     source_root = framework_root().resolve()
     skills: list[dict[str, Any]] = []
     for skill in data["skills"]:
@@ -275,13 +302,18 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
     if any("previous" in skill for skill in skills) and not previous:
         raise ValueError("previous skill must be supplied for every skill")
     variants = ["baseline", "candidate"] + (["previous"] if previous else [])
-    records: list[dict[str, Any]] = []
+    prepared_cases: list[tuple[dict[str, Any], Path, str]] = []
     for case in data["cases"]:
         fixture = suite.parent / _safe_relative(case["fixture"])
         _reject_source_ancestors(fixture, suite.parent)
         if not fixture.resolve().is_relative_to(suite.parent):
             raise ValueError("fixture path escapes suite directory")
-        fixture_digest = _digest(fixture)
+        prepared_cases.append((case, fixture, _digest(fixture)))
+    sources = [fixture for _, fixture, _ in prepared_cases]
+    sources.extend(skill[version]["path"] for skill in skills for version in ("candidate", "previous") if version in skill)
+    _check_output_destination(output, suite, sources)
+    records: list[dict[str, Any]] = []
+    for case, fixture, fixture_digest in prepared_cases:
         case_digest = hashlib.sha256(json.dumps({"case": case, "fixture": fixture_digest}, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
         for attempt in range(1, attempts + 1):
             for variant in variants:
@@ -310,6 +342,8 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
         for version in ("candidate", "previous"):
             if version in skill and _digest(skill[version]["path"]) != skill[version]["digest"]:
                 raise RuntimeError("skill source changed during evaluation")
+    if hashlib.sha256(_suite_bytes(suite)).hexdigest() != suite_digest:
+        raise RuntimeError("suite source changed during evaluation")
     identity = {skill["id"]: {version: skill[version]["digest"] for version in ("candidate", "previous") if version in skill} for skill in skills}
     summary = {variant: {"total": sum(record["variant"] == variant for record in records), "behavior-passed": sum(record["variant"] == variant and record["behavior-passed"] for record in records)} for variant in variants}
     pairs: list[dict[str, Any]] = []
@@ -333,6 +367,6 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
                 comparisons[reference] = outcome
             pairs.append({"case": case["id"], "attempt": attempt, "candidate-vs": comparisons})
     pair_summary = {reference: {outcome: sum(pair["candidate-vs"].get(reference) == outcome for pair in pairs) for outcome in ("improved", "regressed", "tied-pass", "tied-fail", "unavailable")} for reference in ("baseline", "previous") if reference in variants}
-    report = {"schema-version": 1, "evidence-kind": "live-codex-subprocess", "suite": data["id"], "suite-digest": hashlib.sha256(suite.read_bytes()).hexdigest(), "host": host, "model": model, "effort": effort, "attempts": attempts, "skill-identities": identity, "summary": summary, "pair-summary": pair_summary, "pairs": pairs, "runs": records}
+    report = {"schema-version": 1, "evidence-kind": "live-codex-subprocess", "suite": data["id"], "suite-digest": suite_digest, "host": host, "model": model, "effort": effort, "attempts": attempts, "skill-identities": identity, "summary": summary, "pair-summary": pair_summary, "pairs": pairs, "runs": records}
     write_json(output, report)
     return report

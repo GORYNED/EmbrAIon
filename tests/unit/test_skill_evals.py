@@ -5,12 +5,13 @@ import signal
 import subprocess
 import sys
 import tempfile
+import traceback
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from embraion.common import framework_root
-from embraion.skill_evals import _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
+from embraion.skill_evals import MAX_SUITE_BYTES, _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
 
 
 FAKE_HOST = '''#!/usr/bin/env python3
@@ -171,6 +172,48 @@ class SkillEvalTests(unittest.TestCase):
         suite = _load_suite(framework_root() / "evals/skills/code-organization.json")
         self.assertEqual({"positive", "negative"}, {case["polarity"] for case in suite["cases"]})
         self.assertEqual(4, len(suite["cases"]))
+
+    def test_invalid_suite_errors_do_not_echo_prompt_payload(self) -> None:
+        canary = "PRIVATE_PROMPT_CANARY_7421"
+        self.data["cases"][0]["prompt"] = canary
+        self.data["cases"][0]["polarity"] = "invalid"
+        self.suite.write_text(json.dumps(self.data), encoding="utf-8")
+        try:
+            _load_suite(self.suite)
+        except ValueError:
+            rendered = traceback.format_exc()
+        else:
+            self.fail("invalid suite was accepted")
+        self.assertNotIn(canary, rendered)
+        self.assertIn("invalid skill evaluation suite schema", rendered)
+
+        self.suite.write_text('{"prompt": "' + canary + '",', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "invalid skill evaluation suite JSON"):
+            _load_suite(self.suite)
+        self.suite.write_bytes(b" " * (MAX_SUITE_BYTES + 1))
+        with self.assertRaisesRegex(ValueError, "exceeds size limit"):
+            _load_suite(self.suite)
+
+    def test_output_source_aliases_rejected_before_host_run(self) -> None:
+        fixture_file = self.root / "fixture" / "input.txt"
+        skill_file = framework_root() / "core/skills/code-organization/SKILL.md"
+        originals = {path: path.read_bytes() for path in (self.suite, fixture_file, skill_file)}
+        destinations = [self.suite, fixture_file, skill_file]
+        if self.file_symlink_supported:
+            alias = self.root / "suite-alias.json"
+            alias.symlink_to(self.suite)
+            destinations.append(alias)
+        if self.directory_symlink_supported:
+            alias_dir = self.root / "fixture-alias"
+            alias_dir.symlink_to(self.root / "fixture", target_is_directory=True)
+            destinations.append(alias_dir / "report.json")
+        with patch("embraion.skill_evals._invoke_codex") as invoke:
+            for destination in destinations:
+                with self.subTest(destination=destination):
+                    with self.assertRaises(ValueError):
+                        run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=destination, codex_binary=str(self.host))
+            invoke.assert_not_called()
+        self.assertEqual(originals, {path: path.read_bytes() for path in originals})
 
     def test_composed_skills_with_previous_variant_and_unverified_trigger(self) -> None:
         import os
