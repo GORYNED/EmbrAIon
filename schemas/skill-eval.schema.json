@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon live skill evaluation suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema-version", "id", "skills", "cases"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "id": {"$ref": "#/$defs/id"},
+    "skills": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "candidate"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "candidate": {"$ref": "#/$defs/path"},
+          "previous": {"$ref": "#/$defs/path"}
+        }
+      }
+    },
+    "cases": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "polarity", "fixture", "prompt", "checks"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "polarity": {"enum": ["positive", "negative"]},
+          "fixture": {"$ref": "#/$defs/path"},
+          "prompt": {"type": "string", "minLength": 1, "maxLength": 20000},
+          "checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/check"}}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"},
+    "path": {"type": "string", "minLength": 1, "maxLength": 250},
+    "check": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["type", "path"], "properties": {"type": {"enum": ["file-exists", "file-absent", "unchanged-path"]}, "path": {"$ref": "#/$defs/path"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "path", "text"], "properties": {"type": {"const": "file-contains"}, "path": {"$ref": "#/$defs/path"}, "text": {"type": "string", "minLength": 1}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "path", "field", "value"], "properties": {"type": {"const": "json-field-equals"}, "path": {"$ref": "#/$defs/path"}, "field": {"type": "string", "minLength": 1}, "value": {}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "paths"], "properties": {"type": {"const": "changed-paths-within"}, "paths": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/path"}}}}
+      ]
+    }
+  }
+}
