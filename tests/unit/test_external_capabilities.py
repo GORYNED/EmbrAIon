@@ -25,8 +25,9 @@ class ExternalCapabilitiesTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name) / "framework"
-        self.project = Path(self.temporary.name) / "project"
+        temporary_root = Path(self.temporary.name).resolve()
+        self.root = temporary_root / "framework"
+        self.project = temporary_root / "project"
         (self.root / "schemas").mkdir(parents=True)
         shutil.copyfile(SCHEMA, self.root / "schemas/external-capabilities.schema.json")
         (self.root / "framework.yaml").write_text("version: 0.20.0\n", encoding="utf-8")
