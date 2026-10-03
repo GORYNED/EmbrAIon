@@ -20,6 +20,7 @@ ROOT_FILES = (
 
 RESOURCE_DIRECTORIES = (
     "core",
+    "extensions",
     "adapters",
     "schemas",
     "templates",

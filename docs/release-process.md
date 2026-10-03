@@ -46,3 +46,7 @@ Assignment-routing eval fixtures verify grading and regression behavior. They do
 ## Pre-1.0 compatibility
 
 Patch releases are intended for compatible fixes and improvements. Minor releases may intentionally evolve framework contracts. Project pinning allows upgrades to remain explicit.
+
+## Optional capability changes
+
+The 0.20 optional inventories, organization configuration and knowledge-maintenance bindings are additive. Validate schemas, selected bundle paths, installed wheel resources and every host projection before publication. Run genuine skill evaluation when an authenticated native host is available; report host failures and unavailable evidence explicitly. Deterministic fixtures and fake-host tests do not replace live behavioral evidence or justify claims of improvement. No provider login or credential configuration is installed by a release.

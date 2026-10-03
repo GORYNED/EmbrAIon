@@ -75,3 +75,9 @@ embraion validation run affected --run-id task-001
 Run должен быть active. Validation record прикрепляется по evidence ID вместо повторного ввода неподтверждённого claim.
 
 См. [Runs и review](guides/runs-review.md) и [Enforcement](guides/enforcement.md).
+
+## Структура кода и live evals skills
+
+Задайте точные правила namespace, assembly и ассетов в [конфигурации структуры](configuration/organization.ru.md), затем подключите `embraion organization check` к профилям валидации и CI. Инкрементальная проверка отдельно показывает существующий долг; полный аудит сообщает все нарушения. Отсутствующая конфигурация означает `skipped`, а не подтверждение правильной структуры.
+
+Существующий `eval run` оценивает переданные execution records. [Live evals](guides/skill-evals.ru.md) запускают изолированные авторизованные сессии Codex и сравнивают baseline/candidate в повторных английских и русских случаях. Тесты с fake host проверяют механизм, а не семантическое качество skill.

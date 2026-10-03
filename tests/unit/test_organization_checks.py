@@ -139,18 +139,18 @@ class OrganizationTests(unittest.TestCase):
             check_organization(self.root, base_ref="missing-branch")
 
     def test_invalid_yaml_does_not_expose_values(self) -> None:
-        secret = "fixture-credential-canary-7392"
-        self.write(".embraion/organization.yaml", "namespaces: [\n  credential: " + secret + "\n")
+        canary = "fixture-credential-canary-7392"
+        self.write(".embraion/organization.yaml", "namespaces: [\n  credential: " + canary + "\n")
         with self.assertRaisesRegex(RuntimeError, "Invalid organization configuration YAML") as caught:
             check_organization(self.root)
-        self.assertNotIn(secret, "".join(traceback.format_exception(caught.exception)))
+        self.assertNotIn(canary, "".join(traceback.format_exception(caught.exception)))
 
     def test_schema_error_reports_location_without_values(self) -> None:
-        secret = "fixture-credential-canary-7392"
-        self.config({"namespaces": {"rules": [{"path": "Assets", "namespace": secret}]}})
+        canary = "fixture-credential-canary-7392"
+        self.config({"namespaces": {"rules": [{"path": "Assets", "namespace": canary}]}})
         with self.assertRaisesRegex(RuntimeError, "at namespaces.rules.0.namespace") as caught:
             check_organization(self.root)
-        self.assertNotIn(secret, "".join(traceback.format_exception(caught.exception)))
+        self.assertNotIn(canary, "".join(traceback.format_exception(caught.exception)))
 
     def test_symlinked_configuration_parent_is_rejected(self) -> None:
         self.write("settings/organization.yaml", "namespaces:\n  rules: []\n")

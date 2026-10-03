@@ -1,5 +1,5 @@
 schema-version: 1
-catalog-version: 6
+catalog-version: 7
 
 capabilities:
   - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
@@ -21,6 +21,11 @@ capabilities:
   - { id: validation, type: skill, path: skills/validation, load: conditional, triggers: [validation, test, regression] }
   - { id: debugging, type: skill, path: skills/debugging, load: conditional, triggers: [bug, failure, unexpected-behavior] }
   - { id: verification, type: skill, path: skills/verification, load: conditional, triggers: [completion, release, handoff] }
+  - { id: skill-authoring, type: skill, path: skills/skill-authoring, load: conditional, triggers: [skill-create, skill-change, skill-eval] }
+  - { id: compatibility-migration, type: skill, path: skills/compatibility-migration, load: conditional, triggers: [compatibility, persistence, migration, stable-identity] }
+  - { id: test-design, type: skill, path: skills/test-design, load: conditional, triggers: [test-design, regression, acceptance] }
+  - { id: performance-investigation, type: skill, path: skills/performance-investigation, load: conditional, triggers: [performance, profiling, benchmark] }
+  - { id: dependency-upgrade, type: skill, path: skills/dependency-upgrade, load: conditional, triggers: [dependency-upgrade, package-update, version-upgrade] }
   - { id: routing-configuration, type: skill, path: skills/routing-configuration, load: conditional, triggers: [routing, model-selection, model-override, provider, deployment, effort, fallback, billing, pricing, execution-binding, host-configuration] }
 
   - { id: engineering, type: workflow, path: workflows/engineering.md, load: conditional, triggers: [substantial-work] }

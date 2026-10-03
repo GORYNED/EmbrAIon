@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.20.0 - 2026-10-03
+
+### Added
+
+- Five conditional Core procedures: skill authoring, compatibility migration, test design, performance investigation, and dependency upgrades; an original MIT Unity bundle selects serialization, lifecycle, player validation, and asset audit skills without importing external plugin frameworks.
+- Optional external capability inventory, bounded diagnostics, and ownership-aware projection of selected built-in skills to all four hosts. Declarations, installation, host discovery, instruction reading, tool readiness, and execution remain separate evidence stages.
+- Configurable C# namespace, Unity assembly boundary/platform/cycle, and asset metadata/GUID checks, including incremental comparisons that expose existing debt and reject new findings.
+- Local metadata-only task checkpoints and read-only freshness checks, plus explicit documentation/source baselines and advisory knowledge drift audits.
+- A live Codex skill evaluation runner with isolated baseline/candidate/previous sessions, repeated cases, declarative grading, source digests, privacy-minimal reports, and separate skill-read evidence. An English/Russian sample suite and unit tests verify the runner; live behavior requires an available authenticated host.
+
+### Documentation
+
+- Add paired English/Russian configuration and task guides, CLI references and navigation. Distinguish live UI evidence from static inspection and semantic evaluation from deterministic harness tests.
+- Existing overlays without the optional files keep their current behavior. External host-managed plugins remain independently installed and are never copied or downloaded by these commands.
+
 ## 0.19.2 - 2026-10-03
 
 ### Added

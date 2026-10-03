@@ -86,7 +86,7 @@ class CheckpointTests(unittest.TestCase):
                                   project=self.root)
         private = self.root / "private"
         private.mkdir()
-        (private / "secret").write_text("token=abcdefgh12345678")
+        (private / "secret").write_text("token=" + "not-a-real-secret-" * 2)
         (self.root / "linked").symlink_to(private, target_is_directory=True)
         with self.assertRaises(RuntimeError):
             create_checkpoint("cp1", task_id="T1", phase="planning", acceptance_path="linked/secret",
