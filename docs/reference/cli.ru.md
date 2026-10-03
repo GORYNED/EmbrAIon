@@ -324,6 +324,8 @@ embraion context show CONTEXT_ID
 
 Записать execution evidence:
 
+Для `run start --route-class critical` передайте `--justification "конкретный риск"`. Причина сохраняется в записи маршрута запуска с маскированием секретов.
+
 ```bash
 embraion run start   --run-id task-001   --task "Implement feature"   --role worker   --host codex   --route-class substantial   --data PRIVATE   --access write   --owned-path "src/**"   --substantial
 

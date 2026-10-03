@@ -13,7 +13,7 @@
 
 ### Changed
 
-- Every selected critical route now requires a nonblank justification, including direct route, dispatch, and execution requests. Existing critical callers must provide their reason. Optional escalation inspection and configuration validation do not count as selected execution routes.
+- Every selected critical route now requires a nonblank justification, including direct route, dispatch, run start, and execution requests. Existing critical callers must provide their reason. Optional escalation inspection and configuration validation do not count as selected execution routes.
 
 ### Added
 

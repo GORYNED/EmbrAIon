@@ -621,6 +621,7 @@ def _cmd_run_start(args: argparse.Namespace) -> int:
             args.owned_path or [],
             context_id=args.context_id,
             substantial=args.substantial,
+            justification=args.justification,
         )
     )
     return 0
@@ -1686,6 +1687,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_start.add_argument("--owned-path", action="append")
     run_start.add_argument("--context-id")
     run_start.add_argument("--substantial", action="store_true")
+    run_start.add_argument("--justification", help="Reason required for a critical run; retained in redacted evidence.")
     run_start.set_defaults(func=_cmd_run_start)
 
     run_complete = run_sub.add_parser("complete", help="Complete an execution evidence record")

@@ -4,11 +4,13 @@ import json
 import shutil
 import tempfile
 import unittest
+import jsonschema
 from pathlib import Path
 from unittest.mock import patch
 
-from embraion.cli import _cmd_dispatch, _cmd_route, build_parser
-from embraion.common import framework_root, read_yaml, write_yaml
+from embraion.cli import _cmd_dispatch, _cmd_route, _cmd_run_start, build_parser
+from embraion.common import framework_root, read_json, read_yaml, write_yaml
+from embraion.evidence import start_run, read_run, attach_validation_evidence, complete_run
 from embraion.execution import execute
 from embraion.project import init_project
 from embraion.runtime import create_dispatch, resolve_task_route, route, validate_task_routes
@@ -126,8 +128,38 @@ class CriticalJustificationTests(unittest.TestCase):
             execute(request, project=self.project)
         self.assertEqual(before, telemetry.read_bytes() if telemetry.exists() else b"")
 
+    def test_critical_run_requires_and_retains_redacted_reason(self) -> None:
+        for reason in (None, "  "):
+            with self.assertRaisesRegex(RuntimeError, "requires justification"):
+                start_run("critical-run", "Protected", "reviewer", "alpha-host", "critical",
+                          "PRIVATE", "inspect", [], project=self.project, justification=reason)
+            self.assertFalse((self.project / ".embraion/state/runs/critical-run.json").exists())
+        secret = "fixture-" + "s" * 24
+        record = start_run("critical-run", "Protected", "reviewer", "alpha-host", "critical",
+                           "PRIVATE", "inspect", [], project=self.project,
+                           justification="protected decision; token=" + secret)
+        persisted = read_run("critical-run", self.project)
+        self.assertEqual(record, persisted)
+        self.assertIn("protected decision", persisted["route"]["justification"])
+        self.assertNotIn(secret, json.dumps(persisted))
+        self.assertIn("<REDACTED>", persisted["route"]["justification"])
+        jsonschema.validate(persisted, read_json(framework_root() / "schemas/execution.schema.json"))
+        attach_validation_evidence("critical-run", profile="fast", status="passed", evidence_id="validation-1",
+                                   project=self.project)
+        completed = complete_run("critical-run", changed_paths=[], validation=[], review="not-required",
+                                 outcome="completed", residual_risks=[], project=self.project)
+        self.assertEqual(persisted["route"]["justification"], completed["route"]["justification"])
+        self.assertEqual("validation-1", completed["validation"][0]["evidence-id"])
+        jsonschema.validate(completed, read_json(framework_root() / "schemas/execution.schema.json"))
+
     def test_cli_threads_justification_and_native_agent_separately(self) -> None:
         parser = build_parser()
+        run_args = parser.parse_args(["run", "start", "--run-id", "critical-run", "--task", "Protected",
+                                      "--host", "codex", "--route-class", "critical",
+                                      "--justification", "protected decision"])
+        with patch("embraion.cli.start_run", return_value={}) as start, patch("embraion.cli._print_json"):
+            _cmd_run_start(run_args)
+        self.assertEqual("protected decision", start.call_args.kwargs["justification"])
         route_args = parser.parse_args(["route", "--host", "alpha-host", "--route-class",
                                         "critical", "--justification", "protected decision"])
         with patch("embraion.cli.route", return_value={}) as mocked_route, patch("embraion.cli._print_json"):

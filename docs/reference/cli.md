@@ -346,6 +346,8 @@ embraion context show CONTEXT_ID
 
 Record execution evidence:
 
+For `run start --route-class critical`, pass `--justification "concrete risk"`. The redacted reason is retained in the run's route evidence.
+
 ```bash
 embraion run start \
   --run-id task-001 \
