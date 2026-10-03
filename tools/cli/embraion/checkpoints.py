@@ -49,6 +49,20 @@ def _safe_file(root: Path, relative: str, *, state: bool = False) -> Path:
 def _hash(path: Path) -> str | None:
     if not path.is_file():
         return None
+    parts = path.parts
+    if ".embraion" in parts:
+        tail = parts[parts.index(".embraion") + 1:]
+        if (tail and (tail[0] == "state" or tail == ("project.yaml",)
+                      or tail == ("knowledge.yaml",)
+                      or tail == ("knowledge-maintenance.yaml",))):
+            try:
+                with path.open("rb") as stream:
+                    content = stream.read(MAX_METADATA_BYTES + 1)
+            except OSError:
+                raise RuntimeError("Invalid local metadata.") from None
+            if len(content) > MAX_METADATA_BYTES:
+                raise RuntimeError("Invalid local metadata.")
+            return "sha256:" + hashlib.sha256(content).hexdigest()
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 

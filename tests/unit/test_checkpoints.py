@@ -153,6 +153,16 @@ class CheckpointTests(unittest.TestCase):
                 create_checkpoint("cp1", task_id="T1", phase="planning", acceptance_path=path,
                                   project=self.root)
 
+    def test_oversized_state_anchor_is_not_hashed_unbounded(self) -> None:
+        state = self.root / ".embraion/state/context"
+        state.mkdir(parents=True)
+        anchor = state / "ctx1.json"
+        write_json(anchor, {"context-id": "ctx1", "selected": []})
+        create_checkpoint("cp1", task_id="T1", phase="planning", context_id="ctx1", project=self.root)
+        anchor.write_text("x" * (1024 * 1024 + 1))
+        with self.assertRaisesRegex(RuntimeError, "Invalid local metadata"):
+            resume_checkpoint("cp1", project=self.root)
+
 
 if __name__ == "__main__":
     unittest.main()
