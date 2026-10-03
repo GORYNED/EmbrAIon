@@ -381,6 +381,50 @@ embraion session set --state review --validation passed
 
 ## Engineering controls
 
+### `embraion capabilities`
+
+Inspect optional `.embraion/external-capabilities.yaml` declarations and the evidence available for a host:
+
+```bash
+embraion capabilities --path . --host codex --json
+embraion capabilities --path . --host codex --observation host-observation.json --json
+```
+
+An inventory entry does not install or load a host capability. Local checks can verify a managed bundle's files; supplied host observations remain self-reported and do not prove live execution. See [External capabilities](../configuration/capabilities.md).
+
+### `embraion organization`
+
+Check changed files against incremental code-organization rules:
+
+```bash
+embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json
+embraion organization check --path . --config .embraion/organization.yaml --json
+```
+
+The base reference identifies existing debt; it is not a waiver for violations added by the change. See [Code organization](../configuration/organization.md).
+
+### `embraion checkpoint`
+
+Save a local, reference-only task checkpoint and inspect its freshness later:
+
+```bash
+embraion checkpoint create task-42-step-1 --task-id task-42 --phase implementing --acceptance-path docs/task-42.md --path .
+embraion checkpoint resume task-42-step-1 --path .
+```
+
+`create` also accepts `--decision-id`, `--next-action-id`, `--remaining-path`, `--context-id`, and `--run-id`. Both commands return JSON. Resume checks the project pin and knowledge hashes, referenced evidence, and a Git snapshot covering HEAD, index, and visible working files. It reports `valid`, `stale`, or `missing`; it does not grant review approval or user authorization. See [Task continuity](../guides/task-continuity.md).
+
+### `embraion knowledge`
+
+Create an explicit baseline for declared document/source relationships, then audit drift without writing:
+
+```bash
+embraion knowledge snapshot --path .
+embraion knowledge audit --path .
+```
+
+Both commands return JSON. `snapshot` writes ignored local hash metadata; `audit` reports changed or missing sources for review and does not rewrite documents. See [Knowledge maintenance](../guides/knowledge-maintenance.md).
+
 ### `embraion enforcement`
 
 Inspect project enforcement:
@@ -486,7 +530,10 @@ Run behavioral evals and compare baselines.
 embraion eval run --case reviewer-readonly --record execution-record.json
 embraion eval baseline --reports build/evals --output baseline.json
 embraion eval compare --baseline baseline.json --reports build/evals
+embraion eval skills run --suite evals/skills/code-organization.json --host codex --attempts 2 --output build/skill-evals.json --path . --route-class ordinary --data PRIVATE
 ```
+
+`eval run --record` evaluates a supplied execution record; it does not launch an AI host. `eval skills run` starts fresh native Codex sessions for baseline and candidate skill variants, subject to project routing and privacy gates. Optional `--model` and `--effort` must agree with resolved project settings when the route is explicit. Its report distinguishes observed behavior from narrow skill-read evidence; neither proves the skill caused an outcome. See [Live skill evaluations](../guides/skill-evals.md).
 
 ## Help
 

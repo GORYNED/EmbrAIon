@@ -22,6 +22,9 @@ For explicit model tuning, use the full request on the Bootstrap page. Manual ed
 | Does this project need domain-specific AI specialists? | `agents.yaml` |
 | Does this project use provider-neutral executable bindings? | optional `execution.yaml` |
 | Does this project maintain reviewed provider pricing sources? | optional `pricing.yaml` |
+| Which external software or host features are declared? | optional `external-capabilities.yaml` |
+| Which files should trigger knowledge review when changed? | optional `knowledge-maintenance.yaml` |
+| Which incremental code structure limits apply? | optional `organization.yaml` |
 
 ![Project configuration map](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
 
@@ -82,3 +85,6 @@ embraion projection diff --host codex --destination .
 - [Execution & providers](execution.md)
 - [Pricing & cost](pricing.md)
 - [Conversational configuration](ai-hosts.md)
+- [External capabilities](capabilities.md)
+- [Code organization](organization.md)
+- [Knowledge maintenance](../guides/knowledge-maintenance.md)

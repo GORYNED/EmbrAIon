@@ -91,9 +91,15 @@ Host получает запрос пользователя напрямую. In
 
 Runtime state нормализуется в privacy-safe session, context, validation и run records. Повторяющиеся outcomes могут создавать learning candidates, но canonical capability promotion всегда проходит review, validation, appropriate eval coverage и explicit approval.
 
+Локальные [контрольные точки](guides/task-continuity.md) сохраняют ограниченные ID, относительные пути свидетельств, хеши и снимок Git. Продолжение лишь сообщает об актуальности; изменение источника, pin, свидетельства, индекса или рабочего файла делает прежние выводы устаревшими. [Поддержка знаний](guides/knowledge-maintenance.md) использует явно созданный базовый снимок и аудит без записи, чтобы указать документы с изменёнными источниками. Эти механизмы не дают разрешение, не переписывают документы и не продвигают learning.
+
 ## Integrations
 
 External server/tool configuration инвентаризируется отдельно от Core policy. Inventory сохраняет metadata и drift, но не secret values.
+
+Необязательный [инвентарь внешних возможностей](configuration/capabilities.md) разделяет декларацию, установленную конфигурацию, обнаружение хостом, загрузку инструкции, готовность инструмента и выполнение. Локальный инвентарь и сообщения самого источника не подтверждают поздние этапы работы хоста. [Пакет Unity](guides/unity-capabilities.md) включается явно и остаётся extension, а не зависимостью Core или комплектом сторонних плагинов.
+
+[Инженерные навыки Core](guides/engineering-skills.md) остаются процедурами. [Живые проверки навыков](guides/skill-evals.md) создают новые сессии хоста для сравнения поведения; `eval run --record` оценивает предоставленную запись. Инкрементальная [проверка организации кода](configuration/organization.md) использует базу изменений, чтобы выявить новые нарушения, не отменяя правил для старого кода.
 
 Host adapters переводят канонические concepts EmbrAIon в файлы Codex, GitHub Copilot, Claude Code или Portable bundle. Generated host files — projections, а не второй source of project policy.
 

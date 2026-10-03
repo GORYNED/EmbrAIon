@@ -346,6 +346,50 @@ embraion session set --state review --validation passed
 
 ## Engineering controls
 
+### `embraion capabilities`
+
+Показать необязательные декларации `.embraion/external-capabilities.yaml` и доступные свидетельства для хоста:
+
+```bash
+embraion capabilities --path . --host codex --json
+embraion capabilities --path . --host codex --observation host-observation.json --json
+```
+
+Запись в инвентаре не устанавливает и не загружает возможность хоста. Локально можно проверить файлы управляемого пакета; предоставленные наблюдения хоста остаются сообщениями самого источника и не доказывают выполнение. См. [Внешние возможности](../configuration/capabilities.md).
+
+### `embraion organization`
+
+Проверить изменённые файлы по инкрементальным правилам организации кода:
+
+```bash
+embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json
+embraion organization check --path . --config .embraion/organization.yaml --json
+```
+
+Базовая ссылка отделяет старый долг и не освобождает новый код от правил. См. [Организация кода](../configuration/organization.md).
+
+### `embraion checkpoint`
+
+Сохранить локальные ссылки для продолжения задачи и позже проверить их актуальность:
+
+```bash
+embraion checkpoint create task-42-step-1 --task-id task-42 --phase implementing --acceptance-path docs/task-42.md --path .
+embraion checkpoint resume task-42-step-1 --path .
+```
+
+`create` также принимает `--decision-id`, `--next-action-id`, `--remaining-path`, `--context-id` и `--run-id`. Обе команды возвращают JSON. При продолжении проверяются pin и хеши знаний проекта, свидетельства и снимок Git, включающий HEAD, индекс и видимые рабочие файлы. Статус `valid`, `stale` или `missing` не даёт одобрения review или разрешения пользователя. См. [Продолжение задачи](../guides/task-continuity.md).
+
+### `embraion knowledge`
+
+Явно создать базовый снимок связей документов и исходных файлов, затем проверить изменения без записи:
+
+```bash
+embraion knowledge snapshot --path .
+embraion knowledge audit --path .
+```
+
+Обе команды возвращают JSON. `snapshot` сохраняет локальные хеши в игнорируемом каталоге; `audit` отмечает изменённые или отсутствующие источники для проверки и не переписывает документы. См. [Поддержка знаний](../guides/knowledge-maintenance.md).
+
 ### `embraion enforcement`
 
 Посмотреть project enforcement:
@@ -443,7 +487,10 @@ Learning evidence идентифицируется по run ID. Eval IDs сох�
 embraion eval run --case reviewer-readonly --record execution-record.json
 embraion eval baseline --reports build/evals --output baseline.json
 embraion eval compare --baseline baseline.json --reports build/evals
+embraion eval skills run --suite evals/skills/code-organization.json --host codex --attempts 2 --output build/skill-evals.json --path . --route-class ordinary --data PRIVATE
 ```
+
+`eval run --record` проверяет предоставленную запись выполнения и не запускает AI-хост. `eval skills run` создаёт новые нативные сессии Codex для базового и проверяемого вариантов навыка с учётом маршрутизации проекта и правил приватности. Необязательные `--model` и `--effort` должны совпадать с разрешёнными настройками проекта при явном маршруте. Отчёт отделяет наблюдаемое поведение от узкого свидетельства чтения файла навыка; ни одно из них само по себе не доказывает причину результата. См. [Живые проверки навыков](../guides/skill-evals.md).
 
 ## Help
 

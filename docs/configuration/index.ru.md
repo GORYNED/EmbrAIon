@@ -22,6 +22,9 @@ Lead использует канонический Core skill [Project Bootstrap
 | Нужны ли domain-specific AI specialists? | `agents.yaml` |
 | Используется ли provider-neutral execution? | опциональный `execution.yaml` |
 | Нужны ли проверенные pricing sources? | опциональный `pricing.yaml` |
+| Какие внешние программы или возможности хоста объявлены? | опциональный `external-capabilities.yaml` |
+| Какие изменения источников требуют проверки документа? | опциональный `knowledge-maintenance.yaml` |
+| Какие ограничения структуры кода проверяются постепенно? | опциональный `organization.yaml` |
 
 ![Карта конфигурации проекта](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
 
@@ -82,3 +85,6 @@ embraion projection diff --host codex --destination .
 - [Execution и провайдеры](execution.md)
 - [Pricing и стоимость](pricing.md)
 - [Разговорная настройка](ai-hosts.md)
+- [Внешние возможности](capabilities.md)
+- [Организация кода](organization.md)
+- [Поддержка знаний](../guides/knowledge-maintenance.md)

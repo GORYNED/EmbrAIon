@@ -95,9 +95,15 @@ See [How EmbrAIon works](getting-started/how-it-works.md) for the user-facing ex
 
 Runtime state is normalized into privacy-safe session, context, validation, and run records. Repeated outcomes may create learning candidates, but canonical capability promotion is always reviewed, validated, and explicitly approved.
 
+Local [task checkpoints](guides/task-continuity.md) retain bounded IDs, project-relative evidence paths, hashes, and the Git review snapshot. Resume only reports freshness; a changed source, pin, evidence record, index, or working file makes earlier conclusions stale. [Knowledge maintenance](guides/knowledge-maintenance.md) uses an explicit baseline and read-only audit to flag documents whose declared sources changed. Neither mechanism grants authorization, rewrites documentation, or promotes learning.
+
 ## Integrations
 
 External server/tool configuration is inventoried separately from Core policy. Inventory records metadata and drift, never secret values.
+
+The optional [external capability inventory](configuration/capabilities.md) separates declaration, installed configuration, host discovery, instruction loading, tool readiness, and execution. Local inventory and self-reported observations cannot establish later host stages as verified. The opt-in [Unity bundle](guides/unity-capabilities.md) is an extension, not a Core dependency or bundled third-party plugin.
+
+Core [engineering skills](guides/engineering-skills.md) remain procedures. [Live skill evaluations](guides/skill-evals.md) launch fresh host sessions to compare behavior, whereas `eval run --record` assesses a supplied record. Incremental [code organization](configuration/organization.md) checks use the change baseline to identify new violations without waiving existing rules.
 
 Host adapters translate canonical EmbrAIon concepts into the files understood by Codex, GitHub Copilot, Claude Code, or a Portable bundle. Generated host files are projections rather than a second source of project policy.
 
