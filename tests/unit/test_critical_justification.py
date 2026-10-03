@@ -93,6 +93,18 @@ class CriticalJustificationTests(unittest.TestCase):
                         project=self.project)
         result = execute({**request, "justification": "protected decision"}, project=self.project)
         self.assertEqual("handoff-required", result["status"])
+        events = [json.loads(line) for line in
+                  (self.project / ".embraion/state/telemetry.jsonl").read_text().splitlines()]
+        critical = [event for event in events if event["event"] == "critical-execution-requested"]
+        self.assertEqual(1, len(critical))
+        self.assertEqual("protected decision", critical[0]["justification"])
+        self.assertEqual("run", critical[0]["run-id"])
+        self.assertNotIn("prompt", critical[0])
+        secret = "fixture-" + "s" * 24
+        execute({**request, "justification": "protected decision; token=" + secret}, project=self.project)
+        audit_text = (self.project / ".embraion/state/telemetry.jsonl").read_text()
+        self.assertNotIn(secret, audit_text)
+        self.assertIn("<REDACTED>", audit_text)
         ordinary = {**request, "routeClass": "substantial", "candidates": [{"deployment": "native-main"}]}
         self.assertEqual("handoff-required", execute({**ordinary, "justification": "review reason"},
                                                       project=self.project)["status"])

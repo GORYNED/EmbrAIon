@@ -110,6 +110,18 @@ def execute(
         raise RuntimeError("Execution escalation requires a project task class.")
     registry = read_deployments_config(root)["deployments"]
     bindings = read_execution_config(root)["bindings"]
+    if request["routeClass"] == "critical":
+        from .runtime import _append_event
+        # Retain the reason even for direct stdin requests. This records an
+        # execution request, not a selected/started/successful adapter attempt.
+        # The common event writer redacts credentials before persistence.
+        _append_event(root, {
+            "event": "critical-execution-requested",
+            "run-id": request["runId"], "work-item-id": request["workItemId"],
+            "task-id": request["taskId"], "host": request["host"],
+            "role": request["role"], "route": request["routeClass"],
+            "data-class": request["dataClass"], "justification": request["justification"],
+        })
     adapter_map = adapters or {}
     credential_resolver = resolver or EnvironmentResolver()
     attempts: list[dict[str, Any]] = []
