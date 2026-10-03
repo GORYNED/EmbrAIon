@@ -150,6 +150,12 @@ class ClaudeGuardTests(unittest.TestCase):
         self.assertEqual({}, guard(self.payload("Glob", {"pattern": "docs/**/*.txt"}),
                                     self.project))
 
+    def test_glob_bracket_class_cannot_hide_protected_prefix(self) -> None:
+        self.assert_denied(self.payload("Glob", {"pattern": "[s]ecret/**"}))
+        self.assert_denied(self.payload("Glob", {"pattern": "[sd]ecret/**"}))
+        self.assertEqual({}, guard(self.payload("Glob", {"pattern": "docs/[ab]*.txt"}),
+                                    self.project))
+
     def test_scoped_agent_rejects_isolation_and_resume_without_propagation_proof(self) -> None:
         base = {"subagent_type": self.name, "prompt": "task"}
         self.assertEqual({}, guard(self.payload("Agent", base, agent_type="lead"), self.project))

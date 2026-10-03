@@ -20,7 +20,7 @@ _TOOL_INPUTS = {
                        "-i", "-n", "type", "head_limit", "offset", "multiline"}),
     "Glob": frozenset({"pattern", "path"}),
 }
-_GLOB_MARKERS = frozenset("*?[{}()|")
+_GLOB_MARKERS = frozenset("*?[]{}()|")
 _UNVERIFIED_EXPANSION = frozenset("{}()|")
 
 

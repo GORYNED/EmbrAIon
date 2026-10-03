@@ -31,13 +31,13 @@ class RouteValidationTests(unittest.TestCase):
     def test_reports_all_direct_override_selections_without_route_events(self) -> None:
         def add_overrides(routing):
             host = routing["overrides"]["alpha-host"]
-            host["roles"] = {"steward": {"deployment": "native-critical"}}
+            host["roles"] = {"worker": {"deployment": "native-basic"}}
             host["route-roles"]["substantial"] = {"reviewer": {"model": "project-model"}}
             host["task-classes"]["protected-decision"] = {"model": "task-model"}
 
         result = self.validate_with(add_overrides)
         self.assertTrue(result["valid"])
-        self.assertIn("overrides.alpha-host.roles.steward", result["override-selections"])
+        self.assertIn("overrides.alpha-host.roles.worker", result["override-selections"])
         self.assertIn("overrides.alpha-host.route-roles.substantial.reviewer", result["override-selections"])
         self.assertIn("overrides.alpha-host.task-classes.protected-decision", result["override-selections"])
         self.assertEqual(len(result["override-selections"]), result["override-selection-count"])
@@ -93,6 +93,34 @@ class RouteValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "disabled"):
             self.validate_with(lambda routing: routing["candidate-groups"].update(
                 {"unused": {"deployments": [{"deployment": "api-alternate"}]}}))
+
+    def test_unused_group_with_mixed_hosts_is_rejected(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "mixes deployment hosts"):
+            self.validate_with(lambda routing: routing["candidate-groups"].update({
+                "unused": {"deployments": [{"deployment": "api-economy"},
+                                           {"deployment": "native-basic"}]},
+            }))
+
+    def test_direct_overrides_check_only_known_route_and_role_capabilities(self) -> None:
+        cases = (
+            (lambda host: host["routes"].update(
+                {"bounded-read": {"deployment": "native-main"}}), "route class 'bounded-read'"),
+            (lambda host: host.setdefault("roles", {}).update(
+                {"steward": {"deployment": "native-critical"}}), "role 'steward'"),
+            (lambda host: host.setdefault("route-roles", {}).update(
+                {"ordinary": {"reviewer": {"deployment": "native-main"}}}), "route class 'ordinary'"),
+            (lambda host: host["task-classes"].update(
+                {"routine-review": {"deployment": "native-critical"}}), "route class 'substantial'"),
+            (lambda host: host["routes"].update(
+                {"bounded-read": {"model": "project-model", "fallbacks": [
+                    {"deployment": "native-main"}]}}), "route class 'bounded-read'"),
+            (lambda host: host.setdefault("roles", {}).update(
+                {"worker": {"model": "project-model", "fallbacks": [
+                    {"deployment": "native-critical"}]}}), "role 'worker'"),
+        )
+        for mutate_host, expected in cases:
+            with self.subTest(expected=expected), self.assertRaisesRegex(RuntimeError, expected):
+                self.validate_with(lambda routing: mutate_host(routing["overrides"]["alpha-host"]))
 
 
 if __name__ == "__main__":

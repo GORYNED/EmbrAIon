@@ -555,9 +555,13 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
     classes = config.get("task-classes") or {}
 
     def validate_selection(selection: dict[str, Any], *, location: str,
-                           host: str | None = None) -> None:
+                           host: str | None = None,
+                           route_class: str | None = None,
+                           role: str | None = None,
+                           task_class: str | None = None) -> None:
         primary = selection.get("deployment")
         seen: set[str] = set()
+        referenced: list[tuple[str, dict[str, Any]]] = []
         for item in ([selection] if primary else []) + list(selection.get("fallbacks") or []):
             deployment_id = item["deployment"]
             if deployment_id in seen:
@@ -582,6 +586,24 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
                 )
             if not isinstance(item.get("options") or {}, dict):
                 raise RuntimeError(f"{location}: options must be a mapping.")
+            referenced.append((deployment_id, deployment))
+
+        for deployment_id, deployment in referenced:
+            capabilities = deployment.get("capabilities") or {}
+            allowed_routes = set(capabilities.get("task-classes") or [])
+            if route_class and allowed_routes and not (
+                route_class in allowed_routes or
+                (route_class != "critical" and task_class in allowed_routes)
+            ):
+                raise RuntimeError(
+                    f"{location}: project deployment '{deployment_id}' does not allow "
+                    f"route class '{route_class}'."
+                )
+            allowed_roles = set(capabilities.get("roles") or [])
+            if role and allowed_roles and role not in allowed_roles:
+                raise RuntimeError(
+                    f"{location}: project deployment '{deployment_id}' does not allow role '{role}'."
+                )
 
     for group_id, group in (config.get("candidate-groups") or {}).items():
         ids = [item["deployment"] for item in group["deployments"]]
@@ -591,6 +613,9 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
             raise RuntimeError(f"Candidate group '{group_id}' has an unknown preferred deployment.")
         for index, item in enumerate(group["deployments"]):
             validate_selection(item, location=f"candidate-groups.{group_id}.deployments.{index}")
+        hosts = {registry[deployment_id]["host"] for deployment_id in ids}
+        if len(hosts) != 1:
+            raise RuntimeError(f"Candidate group '{group_id}' mixes deployment hosts.")
 
     checked_overrides: list[str] = []
     known_routes = _known_route_classes()
@@ -599,11 +624,11 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
             location = f"overrides.{host}.routes.{route_class}"
             if route_class not in known_routes:
                 raise RuntimeError(f"{location}: unknown route class '{route_class}'.")
-            validate_selection(selection, location=location, host=host)
+            validate_selection(selection, location=location, host=host, route_class=route_class)
             checked_overrides.append(location)
         for role, selection in (overrides.get("roles") or {}).items():
             location = f"overrides.{host}.roles.{role}"
-            validate_selection(selection, location=location, host=host)
+            validate_selection(selection, location=location, host=host, role=role)
             checked_overrides.append(location)
         for route_class, roles in (overrides.get("route-roles") or {}).items():
             if route_class not in known_routes:
@@ -612,13 +637,17 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
                 )
             for role, selection in roles.items():
                 location = f"overrides.{host}.route-roles.{route_class}.{role}"
-                validate_selection(selection, location=location, host=host)
+                validate_selection(selection, location=location, host=host,
+                                   route_class=route_class, role=role)
                 checked_overrides.append(location)
         for task_class, selection in (overrides.get("task-classes") or {}).items():
             location = f"overrides.{host}.task-classes.{task_class}"
             if task_class not in classes:
                 raise RuntimeError(f"{location}: unknown project task class '{task_class}'.")
-            validate_selection(selection, location=location, host=host)
+            profile = classes[task_class]
+            validate_selection(selection, location=location, host=host,
+                               route_class=profile["route-class"], role=profile.get("role"),
+                               task_class=task_class)
             checked_overrides.append(location)
 
     for task_class, profile in classes.items():
