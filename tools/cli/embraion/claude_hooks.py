@@ -48,15 +48,23 @@ def hook_project(payload: Any, project: Path | None = None) -> Path:
     # A launcher can have selected its runtime from the process cwd before it
     # reads stdin. Never apply that runtime to a differently pinned worktree.
     from . import __version__
-    from .versioning import package_version_for_pin, read_project_pin
+    from .versioning import _load_cached_runtime, package_version_for_pin, read_project_pin
+    from .artifacts import read_project_artifact_lock
+    from .common import framework_root
+    import sys
     import yaml
 
     try:
         pin = package_version_for_pin(read_project_pin(manifest))
+        lock = read_project_artifact_lock(manifest, required=False)
     except (yaml.YAMLError, AttributeError, TypeError):
         raise RuntimeError("Invalid Claude hook project context.") from None
     if pin != package_version_for_pin(__version__):
         raise RuntimeError("Claude hook runtime does not match the working-tree pin.")
+    if lock is not None:
+        runtime = _load_cached_runtime(Path(sys.prefix), pin, artifact_lock=lock)
+        if runtime is None or runtime.framework_root != framework_root():
+            raise RuntimeError("Claude hook runtime does not match the working-tree artifact.")
     return root
 
 

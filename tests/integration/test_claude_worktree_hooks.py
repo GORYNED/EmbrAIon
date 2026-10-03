@@ -91,10 +91,24 @@ class ClaudeWorktreeHookTests(unittest.TestCase):
             self.assertEqual("deny", result["hookSpecificOutput"]["permissionDecision"])
         for path in ("docs/safe.txt", str(self.worktree / "docs/safe.txt")):
             self.assertEqual("", self.hook("guard", self.payload("PreToolUse", inputs={"file_path": path})))
-        self.assertEqual("", self.hook("guard", self.payload("PreToolUse", cwd=str(self.worktree / "docs"))))
+        self.assertEqual("", self.hook("guard", self.payload("PreToolUse", cwd=str(self.worktree / "docs"),
+                                                            inputs={"file_path": "safe.txt"})))
         denied = json.loads(self.hook("guard", self.payload("PreToolUse", tool="Agent", inputs={
             "subagent_type": self.agent, "model": "sonnet"})))
         self.assertEqual("deny", denied["hookSpecificOutput"]["permissionDecision"])
+
+    def test_nested_cwd_read_and_search_cannot_bypass_protected_policy(self) -> None:
+        for tool, inputs in (("Read", {"file_path": "key.txt"}),
+                             ("Grep", {"pattern": "x", "path": "key.txt"}),
+                             ("Grep", {"pattern": "x"}),
+                             ("Glob", {"pattern": "*.txt"}),
+                             ("Glob", {"pattern": "*.txt", "path": "."})):
+            result = json.loads(self.hook("guard", self.payload("PreToolUse", tool=tool,
+                                cwd=str(self.worktree / "secret"), inputs=inputs)))
+            self.assertEqual("deny", result["hookSpecificOutput"]["permissionDecision"])
+        for tool, inputs in (("Grep", {"pattern": "safe"}), ("Glob", {"pattern": "*.txt"})):
+            self.assertEqual("", self.hook("guard", self.payload("PreToolUse", tool=tool,
+                             cwd=str(self.worktree / "docs"), inputs=inputs)))
 
     def test_invalid_context_never_falls_back_to_main(self) -> None:
         invalid = ("relative", "", "bad\x00path", 123, [], str(self.main / "missing"),
