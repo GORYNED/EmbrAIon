@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/external-capabilities.schema.json",
+  "title": "EmbrAIon External Capability Inventory",
+  "type": "object",
+  "required": ["schema-version", "capabilities"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "capabilities": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/capability"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "required": ["id", "kind", "source", "license", "hosts", "env-vars", "access", "data-class"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "maxLength": 80},
+        "kind": {"enum": ["managed-bundle", "host-managed"]},
+        "source": {"type": "string", "minLength": 1, "maxLength": 512},
+        "version": {"type": "string", "pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$", "maxLength": 100},
+        "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "license": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-.+ ]*$", "maxLength": 100},
+        "hosts": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["codex", "claude-code", "copilot"]}
+        },
+        "host-requirements": {
+          "type": "object",
+          "propertyNames": {"enum": ["codex", "claude-code", "copilot"]},
+          "additionalProperties": {
+            "type": "array", "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "maxLength": 80}
+          }
+        },
+        "env-vars": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "maxLength": 128}
+        },
+        "access": {"enum": ["read-only", "workspace-write", "external-execution"]},
+        "data-class": {"enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]},
+        "selected-skills": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "maxLength": 80}
+        }
+      },
+      "oneOf": [
+        {"required": ["version"], "not": {"required": ["digest"]}},
+        {"required": ["digest"], "not": {"required": ["version"]}}
+      ],
+      "allOf": [
+        {"if": {"properties": {"kind": {"const": "managed-bundle"}}},
+         "then": {"properties": {"id": {"const": "unity"}, "source": {"const": "builtin:unity"}, "selected-skills": {"minItems": 1}}, "required": ["version", "selected-skills"]}},
+        {"if": {"properties": {"kind": {"const": "host-managed"}}},
+         "then": {"properties": {"selected-skills": {"maxItems": 0}}}}
+      ],
+      "additionalProperties": false
+    }
+  }
+}
