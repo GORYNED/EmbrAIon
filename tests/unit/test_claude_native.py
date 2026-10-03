@@ -267,7 +267,8 @@ class ClaudeNativeTests(unittest.TestCase):
         self.configure()
         entry = self.install_fixture()
         payload = self.hook(entry["name"])
-        state = self.project / ".embraion/state"
+        # Match project_root's canonical path (macOS /var resolves to /private/var).
+        state = self.project.resolve() / ".embraion/state"
         state.mkdir(parents=True, exist_ok=True)
         real_open = os.open
         nofollow = getattr(os, "O_NOFOLLOW", 0)
