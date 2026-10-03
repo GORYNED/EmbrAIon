@@ -40,8 +40,12 @@ HOST_SKILL_DIRECTORIES = {
 HOST_COMPONENTS = {
     "codex": ("config", "agents", "skills"),
     "copilot": ("agents", "skills"),
-    "claude-code": ("agents", "skills"),
+    "claude-code": ("agents", "skills", "scoped-agents"),
     "portable": ("bundle",),
+}
+
+HOST_DEFAULT_COMPONENTS = {
+    "claude-code": ("agents", "skills"),
 }
 
 HOST_ACCESS_PROJECTIONS = {
@@ -80,7 +84,7 @@ def _normalize_components(
         raise RuntimeError(f"Host '{host}' must project the Core routing-authority skill.")
 
     if not components:
-        return supported
+        return HOST_DEFAULT_COMPONENTS.get(host, supported)
 
     requested = tuple(dict.fromkeys(str(item) for item in components))
     invalid = [item for item in requested if item not in supported]
@@ -111,6 +115,10 @@ def _component_for_path(host: str, relative: str) -> str | None:
         if normalized.startswith(".github/skills/"):
             return "skills"
     elif host == "claude-code":
+        if normalized.startswith(".claude/agents/embraion-") and normalized.endswith(".md"):
+            return "scoped-agents"
+        if normalized == ".claude/embraion-native.json":
+            return "scoped-agents"
         if normalized.startswith(".claude/agents/"):
             return "agents"
         if normalized == ".claude/rules/embraion.md":
@@ -763,6 +771,49 @@ def _append_lead_skill(root: Path, skills: Path) -> None:
     path.write_text(content, encoding="utf-8", newline="\n")
 
 
+def _generate_claude_scoped_agents(output: Path, project: Path | None) -> None:
+    """Project explicit assignments without changing reusable role profiles."""
+    if project is None:
+        raise RuntimeError("Claude scoped agents require an initialized project.")
+
+    from .claude_native import (
+        configured_assignments,
+        definition_digest,
+        definition_markdown,
+        projection_metadata,
+    )
+
+    assignments = configured_assignments(project)
+    if not assignments:
+        raise RuntimeError(
+            "No Claude scoped assignments are configured; add explicit "
+            "project assignments before selecting the scoped-agents component."
+        )
+
+    target = output / ".claude" / "agents"
+    target.mkdir(parents=True, exist_ok=True)
+    role_names = {str(agent["id"]) for agent in load_agents(framework_root(), project)}
+    written: dict[str, str] = {}
+    for assignment in assignments:
+        definition = assignment["plan"]["scoped-definition"]
+        name = str(definition["name"])
+        if not re.fullmatch(r"embraion-[a-z0-9-]+", name):
+            raise RuntimeError(f"Unsafe Claude scoped agent name: {name!r}")
+        if name in role_names:
+            raise RuntimeError(f"Claude scoped agent name collides with a role: {name}")
+        digest = definition_digest(definition)
+        if name in written:
+            if written[name] != digest:
+                raise RuntimeError(f"Conflicting Claude scoped agent definition: {name}")
+            continue
+        written[name] = digest
+        (target / f"{name}.md").write_text(
+            definition_markdown(definition), encoding="utf-8", newline="\n"
+        )
+
+    write_json(output / ".claude" / "embraion-native.json", projection_metadata(assignments))
+
+
 def _generate_portable(root: Path, output: Path) -> None:
     target = output / "embraion"
     target.mkdir(parents=True, exist_ok=True)
@@ -809,6 +860,8 @@ def generate_host(
             _generate_markdown_agents(root, output, "claude-code", project)
         if "skills" in selected:
             _generate_host_skills(root, output, host)
+        if "scoped-agents" in selected:
+            _generate_claude_scoped_agents(output, project)
     elif host == "portable":
         if "bundle" in selected:
             _generate_portable(root, output)

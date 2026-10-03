@@ -414,3 +414,7 @@ When you want to change project policy, knowledge, validation, or routing, prefe
 See [AI host examples](ai-hosts.md) for concrete workflows.
 
 Projection ownership is scoped by host and canonical destination: `.embraion/state/projections/<host>/<destination-id>.json`, with matching `<destination-id>.recovery.json` evidence. The root projection uses `root`; alternate destinations use a SHA-256 identity of the canonical project-relative path, or absolute path for external destinations. Filenames contain no absolute paths. Installs, inventories, config-mode evidence, and pruning are independent per destination. Matching legacy host-only ledgers are read without mutation and migrate automatically after a successful install; mismatched or ambiguous evidence is never assigned to another destination. A relocated project does not automatically inherit ownership from a recorded absolute destination.
+
+## `.embraion/claude-native.yaml`
+
+Optional bindings from routing roles to Claude native agents, with explicit role, route-class, data-class and access assignment tuples to install. This file contains no model or effort choices: definitions derive from routing and deployments. The `scoped-agents` component and guard/observer hooks are explicit opt-ins; see [Claude Code](../hosts/claude-code.md).

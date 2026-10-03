@@ -9,6 +9,16 @@
     "executed": {"const": false},
     "arguments": {"type": "object"},
     "definition-overrides": {"type": "object"},
+    "projection": {
+      "type": "object",
+      "required": ["path", "state", "loaded"],
+      "properties": {
+        "path": {"type": "string"},
+        "state": {"enum": ["current", "missing", "stale", "unverified"]},
+        "loaded": {"const": "unverified"}
+      },
+      "additionalProperties": false
+    },
     "scoped-definition": {
       "type": "object",
       "required": ["name", "description", "prompt", "tools"],

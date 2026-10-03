@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import re
 from pathlib import Path
@@ -10,8 +9,7 @@ from typing import Iterable
 
 from .common import project_root, read_yaml
 from .policy import read_deployments_config, read_routing_config
-from .project import (HOST_COMPONENTS, _load_projection_recovery,
-                      _load_projection_state, projection_plan)
+from .project import HOST_COMPONENTS, projection_plan
 
 
 _FACT_KEYS = (
@@ -171,17 +169,16 @@ def _verified_projection_files(root: Path) -> set[str]:
     verified: set[str] = set()
     for host in HOST_COMPONENTS:
         try:
-            plan = projection_plan(host, root)
-            ownership = (_load_projection_state(root, host, root) or
-                         _load_projection_recovery(root, host, root) or {})
-            files = ownership.get("files") if isinstance(ownership, dict) else None
-            if not isinstance(files, dict):
-                continue
-            for relative in plan.get("unchanged") or []:
-                target = root / relative
-                digest = files.get(relative)
-                if digest and target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == digest:
-                    verified.add(relative)
+            components = None
+            if host == "claude-code":
+                config = root / ".embraion/claude-native.yaml"
+                if config.exists() or config.is_symlink():
+                    components = ["agents", "skills", "scoped-agents"]
+            plan = projection_plan(host, root, components=components)
+            # The plan compares each target with freshly generated canonical bytes
+            # and checks path boundaries. A local ownership ledger is not needed
+            # for the narrow audit exemption, including in a fresh checkout.
+            verified.update(plan.get("unchanged") or [])
         except (RuntimeError, OSError, ValueError, AttributeError, TypeError):
             continue
     return verified

@@ -63,7 +63,7 @@ embraion install --host codex --destination . --component skills
 embraion install --host codex --destination . --component agents --component skills
 ```
 
-Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot and Claude Code support `agents` and `skills`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
+Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot supports `agents` and `skills`; Claude Code supports `agents`, `skills`, and optional `scoped-agents`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
 
 
 For a mature Codex repository that already owns `.codex/config.toml`, use merge ownership for only the EmbrAIon-required `[agents]` keys:
@@ -503,3 +503,20 @@ embraion --help
 ## Exit behavior
 
 Commands use non-zero exit codes for failed deterministic checks or invalid operations. Machine-readable output is available where documented through `--json`.
+
+## `embraion claude-native`
+
+Install native guard/observer hooks and inspect Claude Code execution evidence:
+
+```bash
+embraion install --host claude-code --component scoped-agents
+embraion claude-native install-hooks --dry-run
+embraion claude-native install-hooks
+embraion claude-native status
+```
+
+The explicit `scoped-agents` component requires `.embraion/claude-native.yaml`; the default Claude installation still includes only `agents` and `skills`. Definitions derive from project routing. Start a new Thread after installation and invoke the exact definition type returned by dispatch. See [Claude Code](../hosts/claude-code.md).
+
+`install-hooks` preserves unrelated settings and hooks in `.claude/settings.json`. `guard` reads a PreToolUse JSON event from stdin: it checks configured definitions, refuses invocation overrides and, with read-policy enabled, bounds configured scoped-agent reads. It does not restrict parent sessions, arbitrary agents or Bash. `observe` receives PostToolUse/SubagentStop events and stores only identity and reported effort in ignored local state. These two commands are hook entry points.
+
+`status` separates current file installation, observed execution and matching effort. Classic hooks do not expose the effective model, so its status remains `unverified`. File presence alone does not prove instructions loaded or an agent executed.

@@ -1,0 +1,176 @@
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from embraion.claude_native import (
+    configured_assignments,
+    definition_markdown,
+    observe,
+    observer_status,
+    projection_metadata,
+    read_config,
+)
+from embraion.common import write_json, write_yaml
+from embraion.project import init_project
+
+
+class ClaudeNativeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name)
+        init_project(self.project, name="ClaudeNativeFixture")
+
+    def configure(self, *, role="worker", native="worker", access="write", effort="high") -> None:
+        write_yaml(self.project / ".embraion/claude-native.yaml", {
+            "bindings": {role: native},
+            "assignments": [{"role": role, "route-class": "complex",
+                             "data-class": "PRIVATE", "access": access}],
+        })
+        write_yaml(self.project / ".embraion/routing.yaml", {"overrides": {"claude-code": {
+            "routes": {"complex": {"model": "claude-fable-5-1", "effort": effort}},
+        }}})
+
+    def install_fixture(self) -> dict:
+        records = configured_assignments(self.project)
+        metadata = projection_metadata(records)
+        write_json(self.project / ".claude/embraion-native.json", metadata)
+        for record in records:
+            definition = record["plan"]["scoped-definition"]
+            path = self.project / ".claude/agents" / (definition["name"] + ".md")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(definition_markdown(definition), encoding="utf-8", newline="\n")
+        return metadata["assignments"][0]
+
+    @staticmethod
+    def hook(name: str, *, event="PostToolUse", effort="high") -> dict:
+        return {"hook_event_name": event, "session_id": "session-1",
+                "agent_id": "agent-1", "agent_type": name,
+                "effort": {"level": effort}, "tool_input": {"secret": "never-log-this"},
+                "tool_result": "never-log-this", "transcript_path": "/private/never-log-this"}
+
+    def test_absent_opt_in_and_exact_configured_tuple(self) -> None:
+        self.assertIsNone(read_config(self.project))
+        self.assertEqual([], configured_assignments(self.project))
+        self.configure()
+        records = configured_assignments(self.project)
+        self.assertEqual(1, len(records))
+        self.assertEqual("worker", records[0]["native-agent"])
+        self.assertEqual("handoff-required", records[0]["plan"]["status"])
+        definition = records[0]["plan"]["scoped-definition"]
+        self.assertEqual("claude-fable-5-1", definition["model"])
+        self.assertEqual("high", definition["effort"])
+        self.assertEqual(["Read", "Grep", "Glob", "Write", "Edit", "Bash"], definition["tools"])
+
+    def test_bad_config_and_unscoped_route_fail_closed(self) -> None:
+        self.configure()
+        config_path = self.project / ".embraion/claude-native.yaml"
+        write_yaml(config_path, {"bindings": {"worker": "worker"},
+                                 "assignments": [{"role": "worker", "route-class": "complex",
+                                                  "data-class": "UNKNOWN", "access": "write"}]})
+        with self.assertRaises(RuntimeError):
+            configured_assignments(self.project)
+        self.configure()
+        (self.project / ".embraion/routing.yaml").unlink()
+        with self.assertRaisesRegex(RuntimeError, "explicit project routing"):
+            configured_assignments(self.project)
+        self.configure(role="reviewer", native="reviewer", access="write")
+        with self.assertRaisesRegex(RuntimeError, "writable specialist"):
+            configured_assignments(self.project)
+
+    def test_config_accepts_long_agent_id_and_rejects_symlink_or_bad_read_policy(self) -> None:
+        self.configure()
+        path = self.project / ".embraion/claude-native.yaml"
+        config = read_config(self.project)
+        config["bindings"]["worker"] = "project-" + "long-" * 14 + "worker"
+        config["read-policy"] = {"project-only": True, "deny-protected": True}
+        write_yaml(path, config)
+        self.assertTrue(read_config(self.project)["read-policy"]["project-only"])
+        config["read-policy"]["unexpected"] = True
+        write_yaml(path, config)
+        with self.assertRaises(RuntimeError):
+            read_config(self.project)
+        path.write_text("bindings: [never-log-this\n", encoding="utf-8")
+        with self.assertRaises(RuntimeError) as error:
+            read_config(self.project)
+        self.assertNotIn("never-log-this", str(error.exception))
+        path.unlink()
+        outside = self.project / "outside.yaml"
+        outside.write_text("bindings: {}\nassignments: []\n", encoding="utf-8")
+        path.symlink_to(outside)
+        with self.assertRaisesRegex(RuntimeError, "nested symlink"):
+            read_config(self.project)
+
+    def test_metadata_has_no_prompt_and_installation_detects_tampering(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        self.assertNotIn("prompt", json.dumps(entry))
+        self.assertEqual("verified", observer_status(self.project)["installation"])
+        agent_file = self.project / ".claude/agents" / (entry["name"] + ".md")
+        agent_file.write_text(agent_file.read_text() + "tamper", encoding="utf-8")
+        self.assertEqual("stale", observer_status(self.project)["installation"])
+        self.install_fixture()
+        metadata_file = self.project / ".claude/embraion-native.json"
+        metadata_file.write_text('{"schema-version": 1, "assignments": []}', encoding="utf-8")
+        self.assertEqual("stale", observer_status(self.project)["installation"])
+
+    def test_observer_records_only_exact_agent_and_safe_metadata(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        self.assertEqual("ignored", observe(self.hook("unrelated"), self.project)["status"])
+        self.assertEqual("ignored", observe(self.hook(entry["name"], event="UserPromptSubmit"), self.project)["status"])
+        result = observe(self.hook(entry["name"]), self.project)
+        self.assertEqual("observed", result["status"])
+        self.assertEqual("matched", result["effort-status"])
+        saved = (self.project / ".embraion/state/claude-native-evidence.jsonl").read_text()
+        self.assertNotIn("never-log-this", saved)
+        self.assertNotIn("tool_input", saved)
+        status = observer_status(self.project)
+        self.assertEqual("observed", status["execution"])
+        self.assertEqual("observed-match", status["effort"])
+        self.assertEqual("unverified", status["model"])
+        self.assertTrue(any("unscoped" in limitation for limitation in status["limitations"]))
+
+    def test_missing_effort_is_unverified_and_mismatch_is_recorded(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        missing = self.hook(entry["name"], event="SubagentStop")
+        missing.pop("effort")
+        self.assertEqual("unverified", observe(missing, self.project)["effort-status"])
+        self.assertEqual("unverified", observer_status(self.project)["effort"])
+        self.assertEqual("mismatch", observe(self.hook(entry["name"], effort="low"), self.project)["effort-status"])
+        self.assertEqual("mismatch", observer_status(self.project)["effort"])
+
+    def test_changed_route_invalidates_old_metadata_and_evidence(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        observe(self.hook(entry["name"]), self.project)
+        self.configure(effort="medium")
+        self.assertEqual("stale", observer_status(self.project)["installation"])
+        self.assertEqual("unverified", observe(self.hook(entry["name"]), self.project)["status"])
+
+    def test_nested_symlink_and_untrusted_effort_do_not_create_claims(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        payload = self.hook(entry["name"], effort="never-log-this")
+        self.assertEqual("unverified", observe(payload, self.project)["effort-status"])
+        evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
+        self.assertNotIn("never-log-this", evidence.read_text())
+        evidence.unlink()
+        external = self.project / "unrelated.txt"
+        external.write_text("preserve", encoding="utf-8")
+        evidence.symlink_to(external)
+        self.assertEqual("unverified", observe(self.hook(entry["name"]), self.project)["status"])
+        self.assertEqual("preserve", external.read_text())
+        evidence.unlink()
+        agent_file = self.project / ".claude/agents" / (entry["name"] + ".md")
+        agent_file.unlink()
+        agent_file.symlink_to(external)
+        self.assertEqual("stale", observer_status(self.project)["installation"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -552,20 +552,84 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     config = read_routing_config(root)
     registry = _deployment_registry(root)[1]
+    classes = config.get("task-classes") or {}
+
+    def validate_selection(selection: dict[str, Any], *, location: str,
+                           host: str | None = None) -> None:
+        primary = selection.get("deployment")
+        seen: set[str] = set()
+        for item in ([selection] if primary else []) + list(selection.get("fallbacks") or []):
+            deployment_id = item["deployment"]
+            if deployment_id in seen:
+                raise RuntimeError(f"{location}: duplicate deployment '{deployment_id}'.")
+            seen.add(deployment_id)
+            deployment = registry.get(deployment_id)
+            if deployment is None:
+                raise RuntimeError(f"{location}: unknown project deployment '{deployment_id}'.")
+            if deployment.get("enabled", True) is not True:
+                raise RuntimeError(f"{location}: project deployment '{deployment_id}' is disabled.")
+            if host is not None and deployment["host"] != host:
+                raise RuntimeError(
+                    f"{location}: project deployment '{deployment_id}' belongs to host "
+                    f"'{deployment['host']}', not '{host}'."
+                )
+            effort = item.get("effort") or deployment.get("default-effort")
+            supported = set(deployment.get("efforts") or [])
+            if effort and supported and effort not in supported:
+                raise RuntimeError(
+                    f"{location}: project deployment '{deployment_id}' does not support "
+                    f"effort '{effort}'."
+                )
+            if not isinstance(item.get("options") or {}, dict):
+                raise RuntimeError(f"{location}: options must be a mapping.")
+
     for group_id, group in (config.get("candidate-groups") or {}).items():
         ids = [item["deployment"] for item in group["deployments"]]
         if len(ids) != len(set(ids)) or any(item not in registry for item in ids):
             raise RuntimeError(f"Candidate group '{group_id}' contains duplicate or unknown deployments.")
         if any(value not in ids for value in (group.get("preferred") or {}).values()):
             raise RuntimeError(f"Candidate group '{group_id}' has an unknown preferred deployment.")
-    classes = config.get("task-classes") or {}
+        for index, item in enumerate(group["deployments"]):
+            validate_selection(item, location=f"candidate-groups.{group_id}.deployments.{index}")
+
+    checked_overrides: list[str] = []
+    known_routes = _known_route_classes()
+    for host, overrides in (config.get("overrides") or {}).items():
+        for route_class, selection in (overrides.get("routes") or {}).items():
+            location = f"overrides.{host}.routes.{route_class}"
+            if route_class not in known_routes:
+                raise RuntimeError(f"{location}: unknown route class '{route_class}'.")
+            validate_selection(selection, location=location, host=host)
+            checked_overrides.append(location)
+        for role, selection in (overrides.get("roles") or {}).items():
+            location = f"overrides.{host}.roles.{role}"
+            validate_selection(selection, location=location, host=host)
+            checked_overrides.append(location)
+        for route_class, roles in (overrides.get("route-roles") or {}).items():
+            if route_class not in known_routes:
+                raise RuntimeError(
+                    f"overrides.{host}.route-roles.{route_class}: unknown route class '{route_class}'."
+                )
+            for role, selection in roles.items():
+                location = f"overrides.{host}.route-roles.{route_class}.{role}"
+                validate_selection(selection, location=location, host=host)
+                checked_overrides.append(location)
+        for task_class, selection in (overrides.get("task-classes") or {}).items():
+            location = f"overrides.{host}.task-classes.{task_class}"
+            if task_class not in classes:
+                raise RuntimeError(f"{location}: unknown project task class '{task_class}'.")
+            validate_selection(selection, location=location, host=host)
+            checked_overrides.append(location)
+
     for task_class, profile in classes.items():
         resolved = resolve_task_route(task_class, project=root, justification="configuration validation",
                                       _emit_event=False)
         if not resolved["candidates"]:
             raise RuntimeError(f"Task class '{task_class}' has no candidates.")
     return {"valid": True, "task-classes": sorted(classes),
-            "candidate-groups": sorted(config.get("candidate-groups") or {})}
+            "candidate-groups": sorted(config.get("candidate-groups") or {}),
+            "override-selections": sorted(checked_overrides),
+            "override-selection-count": len(checked_overrides)}
 
 
 def _current_branch(project: Path) -> str | None:

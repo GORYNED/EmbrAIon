@@ -63,7 +63,7 @@ embraion install --host codex --destination . --component skills
 embraion install --host codex --destination . --component agents --component skills
 ```
 
-Поддерживаемые components host-specific: Codex поддерживает `config`, `agents` и `skills`; GitHub Copilot и Claude Code — `agents` и `skills`; Portable использует `bundle`. Невыбранные components остаются user-owned и исключаются из obsolete-file handling.
+Поддерживаемые components host-specific: Codex поддерживает `config`, `agents` и `skills`; GitHub Copilot — `agents` и `skills`; Claude Code — `agents`, `skills` и необязательный `scoped-agents`; Portable использует `bundle`. Невыбранные components остаются user-owned и исключаются из obsolete-file handling.
 
 Для зрелого Codex repo, который уже владеет `.codex/config.toml`, используйте merge ownership только для required `[agents]` keys EmbrAIon:
 
@@ -460,3 +460,20 @@ embraion --help
 ## Exit behavior
 
 Commands используют non-zero exit codes при failed deterministic checks или invalid operations. Machine-readable output доступен там, где документирован `--json`.
+
+## `embraion claude-native`
+
+Настроить защитные hooks и проверить данные фактического запуска Claude Code:
+
+```bash
+embraion install --host claude-code --component scoped-agents
+embraion claude-native install-hooks --dry-run
+embraion claude-native install-hooks
+embraion claude-native status
+```
+
+Компонент `scoped-agents` требует `.embraion/claude-native.yaml`; обычная установка Claude по-прежнему включает только `agents` и `skills`. Определения выводятся из проектной маршрутизации. Начните новый Thread после установки и вызывайте точное имя определения, полученное от dispatch. См. [Claude Code](../hosts/claude-code.md).
+
+`install-hooks` сохраняет остальные настройки и hooks в `.claude/settings.json`. `guard` читает JSON события PreToolUse из stdin: проверяет выбранные определения, запрещает подмену настроек и, при включённом read-policy, ограничивает чтение выбранных агентов. Он не ограничивает родительскую сессию, произвольных агентов или Bash. `observe` принимает PostToolUse/SubagentStop и сохраняет только идентификаторы и сообщённый effort в игнорируемом локальном состоянии. Эти две команды предназначены для hooks.
+
+`status` различает наличие актуальных файлов, наблюдавшееся выполнение и совпадение effort. Обычные hooks не сообщают эффективную модель; поэтому её статус остаётся `unverified`. Наличие файлов не доказывает загрузку инструкций или выполнение агента.

@@ -124,7 +124,7 @@ class ProjectionDestinationTests(unittest.TestCase):
                 self.assertIsNone(_load_projection_state(self.project, "codex", self.project))
         scoped.write_text("invalid json")
         self.assertIsNone(_load_projection_state(self.project, "codex", self.project))
-        self.assertTrue(audit_routing_authority(self.project))
+        self.assertEqual([], audit_routing_authority(self.project))
 
     def test_recovery_is_destination_scoped_and_validates_pin(self) -> None:
         scoped = self.root_install()

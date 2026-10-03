@@ -121,6 +121,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
+        "  claude-native Inspect scoped Claude agents and install metadata-only observer hooks",
         "  worktree   List, create, clean, or salvage Git worktrees",
         "  learning   Record evidence and manage gated learning candidates",
         "  eval       Run behavioral evals and compare baselines",
@@ -523,6 +524,39 @@ def _cmd_pricing_refresh(args: argparse.Namespace) -> int:
         print(f"Pricing refresh: {report['status']} ({report['digest']})")
         for change in report["changes"]:
             print(f"  {change['kind']}: {change['deployment']} {change['sku']}")
+    return 0
+
+
+def _cmd_claude_native(args: argparse.Namespace) -> int:
+    from .claude_native import observe, observer_status
+
+    if args.native_command == "status":
+        _print_json(observer_status())
+        return 0
+    if args.native_command == "install-hooks":
+        from .claude_hooks import install_observer_hooks
+        _print_json(install_observer_hooks(dry_run=args.dry_run))
+        return 0
+    if args.native_command == "guard":
+        from .claude_guard import guard
+        try:
+            payload = json.load(sys.stdin)
+            decision = guard(payload)
+        except (ValueError, TypeError, OSError, RuntimeError):
+            decision = {"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                        "permissionDecision": "deny",
+                        "permissionDecisionReason": "EmbrAIon cannot verify the native assignment configuration."}}
+        if decision:
+            _print_json(decision)
+        return 0
+    # Hook stdin can contain private tool inputs and answers. Neither echo it
+    # nor include parser exceptions in stdout/stderr.
+    try:
+        payload = json.load(sys.stdin)
+        observe(payload)
+    except (ValueError, TypeError, OSError, RuntimeError):
+        # This observer records evidence; it is not an enforcement hook.
+        return 0
     return 0
 
 
@@ -1301,10 +1335,10 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
         help=(
             "Install only this projection component; repeat to select multiple. "
-            "Omit to install the complete host projection."
+            "Omit for standard components; scoped-agents requires explicit opt-in."
         ),
     )
     install_parser.add_argument(
@@ -1346,10 +1380,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_diff.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
         help=(
             "Diff only this projection component; repeat to select multiple. "
-            "Omit to diff the complete host projection."
+            "Omit for standard components; scoped-agents requires explicit opt-in."
         ),
     )
     projection_diff.add_argument(
@@ -1378,10 +1412,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_verify.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
         help=(
             "Verify only this projection component; repeat to select multiple. "
-            "Omit to verify the complete host projection."
+            "Omit for standard components; scoped-agents requires explicit opt-in."
         ),
     )
     projection_verify.add_argument(
@@ -1562,7 +1596,7 @@ def build_parser() -> argparse.ArgumentParser:
     route_parser.add_argument("--escalation", choices=["quality", "critical"])
     route_parser.add_argument("--justification")
     route_parser.add_argument("--shape", help="Optional project work-shape key for candidate-group preference.")
-    route_parser.add_argument("--validate", action="store_true", help="Validate every configured task class and candidate group.")
+    route_parser.add_argument("--validate", action="store_true", help="Validate task candidates and every direct routing override.")
     route_parser.add_argument("--audit-authority", action="store_true", help="Find duplicate concrete routing facts outside .embraion.")
     route_parser.add_argument(
         "--data",
@@ -1855,6 +1889,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["all", "codex", "copilot", "claude-code"],
     )
     harness_audit.set_defaults(func=_cmd_harness_audit)
+
+    native = sub.add_parser("claude-native", help="Inspect startup scoped agents and observer evidence")
+    native_sub = native.add_subparsers(dest="native_command", required=True)
+    native_sub.add_parser("status", help="Inspect installed scoped definitions and reported hook evidence").set_defaults(func=_cmd_claude_native)
+    native_sub.add_parser("observe", help="Read a native hook event from stdin; store metadata only").set_defaults(func=_cmd_claude_native)
+    native_sub.add_parser("guard", help="Validate a scoped native call or read boundary from hook stdin").set_defaults(func=_cmd_claude_native)
+    native_hooks = native_sub.add_parser("install-hooks", help="Explicitly merge metadata-only hooks into Claude settings")
+    native_hooks.add_argument("--dry-run", action="store_true")
+    native_hooks.set_defaults(func=_cmd_claude_native)
 
     mcp = sub.add_parser("mcp", help="Inspect MCP configuration", description="Create a privacy-safe inventory of project MCP configuration.")
     mcp_sub = mcp.add_subparsers(
