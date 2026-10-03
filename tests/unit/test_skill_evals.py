@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import signal
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -40,7 +42,7 @@ if 'edit' in prompt:
     (root / 'answer.txt').write_text('done', encoding='utf-8')
 if mode == 'symlink':
     (root / 'answer.txt').unlink()
-    (root / 'answer.txt').symlink_to('/etc/passwd')
+    (root / 'answer.txt').symlink_to(root / 'input.txt')
 print(json.dumps({'type':'turn.completed','usage':{'input_tokens':12,'output_tokens':7}}), flush=True)
 '''
 
@@ -63,7 +65,32 @@ class SkillEvalTests(unittest.TestCase):
         self.suite.write_text(json.dumps(self.data), encoding="utf-8")
         self.host = self.root / "fake-host"
         self.host.write_text(FAKE_HOST, encoding="utf-8")
-        self.host.chmod(0o755)
+        real_popen = subprocess.Popen
+
+        def run_fake_with_python(argv, *args, **kwargs):
+            if argv and argv[0] == str(self.host):
+                argv = [sys.executable, *argv]
+            return real_popen(argv, *args, **kwargs)
+
+        popen_patch = patch("embraion.skill_evals.subprocess.Popen", side_effect=run_fake_with_python)
+        popen_patch.start()
+        self.addCleanup(popen_patch.stop)
+        def can_symlink(target: Path, *, directory: bool) -> bool:
+            probe = self.root / ("directory-symlink-probe" if directory else "file-symlink-probe")
+            try:
+                probe.symlink_to(target, target_is_directory=directory)
+                return probe.is_symlink()
+            except (OSError, NotImplementedError):
+                return False
+            finally:
+                if probe.is_symlink():
+                    try:
+                        probe.unlink()
+                    except OSError:
+                        probe.rmdir()
+
+        self.file_symlink_supported = can_symlink(fixture / "input.txt", directory=False)
+        self.directory_symlink_supported = can_symlink(fixture, directory=True)
 
     def run_eval(self, **kwargs: object) -> dict:
         return run_suite(self.suite, host="codex", model="gpt-test", effort="high", attempts=2, output=self.root / "report.json", codex_binary=str(self.host), **kwargs)
@@ -91,6 +118,8 @@ class SkillEvalTests(unittest.TestCase):
         try:
             for mode, expected in (("invalid", "invalid-host-events"), ("failed", "host-failed"), ("large", "output-limit"), ("timeout", "timeout"), ("symlink", "grading-error")):
                 with self.subTest(mode=mode):
+                    if mode == "symlink" and not self.file_symlink_supported:
+                        continue
                     os.environ["FAKE_MODE"] = mode
                     report = run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=self.root / "report.json", codex_binary=str(self.host), timeout_seconds=1)
                     self.assertEqual(expected, report["runs"][0]["host"]["status"])
@@ -106,28 +135,31 @@ class SkillEvalTests(unittest.TestCase):
             with self.subTest(unsafe=unsafe):
                 with self.assertRaises(ValueError):
                     _safe_relative(unsafe)
-        (self.root / "fixture" / "link").symlink_to(self.root / "outside")
-        with self.assertRaises(ValueError):
-            _source_files(self.root / "fixture")
-        (self.root / "fixture" / "link").unlink()
-        (self.root / "fixture-link").symlink_to(self.root / "fixture", target_is_directory=True)
-        with self.assertRaises(ValueError):
-            _reject_source_ancestors(self.root / "fixture-link", self.root)
-        self.data["cases"][0]["fixture"] = "fixture-link"
-        self.suite.write_text(json.dumps(self.data), encoding="utf-8")
-        with self.assertRaises(ValueError):
-            run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=self.root / "report.json", codex_binary=str(self.host))
+        if self.file_symlink_supported:
+            (self.root / "fixture" / "link").symlink_to(self.root / "fixture" / "input.txt")
+            with self.assertRaises(ValueError):
+                _source_files(self.root / "fixture")
+            (self.root / "fixture" / "link").unlink()
+        if self.directory_symlink_supported:
+            (self.root / "fixture-link").symlink_to(self.root / "fixture", target_is_directory=True)
+            with self.assertRaises(ValueError):
+                _reject_source_ancestors(self.root / "fixture-link", self.root)
+            self.data["cases"][0]["fixture"] = "fixture-link"
+            self.suite.write_text(json.dumps(self.data), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=self.root / "report.json", codex_binary=str(self.host))
 
     def test_termination_uses_platform_appropriate_process_api(self) -> None:
         process = Mock(pid=123)
-        with patch("embraion.skill_evals.os.killpg") as kill_group:
-            _terminate_host(process, windows=True)
-            process.kill.assert_called_once_with()
-            kill_group.assert_not_called()
-            process.kill.reset_mock()
-            _terminate_host(process, windows=False)
-            process.kill.assert_not_called()
-            kill_group.assert_called_once_with(123, signal.SIGKILL)
+        with patch("embraion.skill_evals.os.killpg", create=True) as kill_group:
+            with patch("embraion.skill_evals.signal.SIGKILL", 9, create=True):
+                _terminate_host(process, windows=True)
+                process.kill.assert_called_once_with()
+                kill_group.assert_not_called()
+                process.kill.reset_mock()
+                _terminate_host(process, windows=False)
+                process.kill.assert_not_called()
+                kill_group.assert_called_once_with(123, signal.SIGKILL)
 
     def test_grader_checks_actual_files(self) -> None:
         root = self.root / "fixture"
