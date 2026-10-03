@@ -19,6 +19,31 @@ SPECIALISTS = CORE_ROLES - {"lead"}
 
 
 class OrchestrationTests(unittest.TestCase):
+    def test_projected_contract_links_resolve_to_embedded_section(self) -> None:
+        for host, directory in (
+            ("codex", ".agents/skills"),
+            ("copilot", ".github/skills"),
+            ("claude-code", ".claude/skills"),
+        ):
+            with self.subTest(host=host), tempfile.TemporaryDirectory() as temporary:
+                project = Path(temporary)
+                init_project(project, name="ContractLink")
+                install(host, project, components=["skills"])
+                content = (project / directory / "orchestration/SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("## Assignment routing contract", content)
+                self.assertIn(
+                    "[canonical orchestration skill](#assignment-routing-contract)", content
+                )
+                self.assertNotIn("(../../core/skills/orchestration/SKILL.md)", content)
+                if host == "codex":
+                    install(host, project, components=["config"])
+                    instructions = self._config(project)["developer_instructions"]
+                    self.assertIn("## Assignment routing contract", instructions)
+                    self.assertIn(
+                        "[canonical orchestration skill](#assignment-routing-contract)", instructions
+                    )
+                    self.assertNotIn("(../../core/skills/orchestration/SKILL.md)", instructions)
+
     def _lead(self) -> dict:
         return read_yaml(framework_root() / "core/agents/lead.yaml")
 

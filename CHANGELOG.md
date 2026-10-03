@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.18.1 - 2026-10-03
+
+### Fixed
+
+- Installed Codex, Copilot, and Claude orchestration skills, plus Codex root instructions, link to their embedded assignment routing contract instead of a source-only relative path. Regenerate the orchestration skill and Codex config when upgrading.
+
 ## 0.18.0 - 2026-10-03
 
 ### Fixed
