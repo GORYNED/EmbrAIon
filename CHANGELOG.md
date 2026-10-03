@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Documentation
+
+- Record anonymized maintainer-reported Claude Code Desktop 0.19.1 checks on Windows, distinguishing worktree callback observations and host transcript model fields from unverified effective effort. Fix the Russian daily-workflow review link.
+
 ## 0.19.1 - 2026-10-03
 
 ### Fixed

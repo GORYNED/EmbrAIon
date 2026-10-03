@@ -132,6 +132,8 @@ embraion harness audit --host claude-code
 
 Необязательный [Mods probe](https://github.com/GORYNED/EmbrAIon/tree/main/adapters/claude-code/mods-probe) проверяет регистрацию и наблюдаемые настройки в сборках Claude с поддержкой function hooks. `embraion install` его не устанавливает; после регистрации нужен отдельный явный вызов native Agent. Тесты с имитацией API не доказывают загрузку в приложении или фактическое effort.
 
+[Отчёт проверки 0.19.1 на Windows](claude-code-check-0.19.1.md) сохраняет переданные сопровождающим наблюдения из двух локальных сессий Desktop в worktree и ограничения этих свидетельств.
+
 ## Дальнейшая настройка
 
 См. [Разговорную настройку](../configuration/ai-hosts.md) и [Подключение существующего репозитория](../getting-started/existing-repository.md).
