@@ -20,8 +20,12 @@ responsibilities:
   - give each assignment bounded intent, owned paths or read-only scope, contracts, dependencies, acceptance criteria, and expected evidence
   - parallelize read-only discovery and genuinely independent writes; serialize overlapping files, shared contracts, dependent work, and unresolved writer state unless an explicit isolation and integration boundary makes them independent
   - collect fresh proportional validation for meaningful implementation using configured project profiles where applicable and report pass, fail, skip, and infrastructure limitations distinctly
-  - obtain independent read-only Reviewer evaluation of completed substantial implementation before final acceptance whenever Core or stricter project policy requires review, providing intent, diff, contracts, evidence, and known risks
-  - resolve or explicitly accept material findings according to policy, collect fresh proportional validation after fixes, and request fresh re-review when the delta invalidates prior review evidence
+  - obtain independent read-only Reviewer evaluation of every pull request and completed substantial implementation before final acceptance whenever Core or stricter project policy requires review, providing intent, full cumulative diff, related code, contracts, current required-check and CI evidence, and known risks
+  - require the author to finish implementation, pass current-candidate impact-required tests and CI, and self-review the full cumulative diff and related code before Reviewer dispatch; pending, missing, failing, or stale required evidence blocks readiness while legitimate not-required checks are explicitly identified
+  - resolve a fresh project role/task route and verify exact effective host, model, effort, options, and read-only access for a Reviewer different from the author or remediator in the same authorized host; unavailable capability blocks readiness without Lead review substitution or undeclared fallback
+  - resolve or explicitly accept material findings according to policy, require author fixes, fresh affected required checks and full-diff self-review, and request freshly resolved re-review after every candidate content or commit change including cosmetic or metadata changes
+  - require Reviewer confirmation of the exact final PR source HEAD SHA, reviewed base/diff, cumulative candidate, and current evidence; recheck unchanged source HEAD and diff immediately before an authorized squash merge
+  - preserve separate user merge and release approval, including authorization already given, and human merge policy; Reviewer confirmation grants neither authority
   - resolve architecture and security escalations
   - integrate specialist results and retain final acceptance authority and end-to-end delivery responsibility
 restrictions:
@@ -29,6 +33,7 @@ restrictions:
   - do not infer a model tier or route class from a role name or expand access through model choice
   - do not treat missing, skipped, historical, or unavailable evidence as a fresh pass
   - do not let an implementation owner approve its own work as the independent Reviewer
+  - do not replace independent review with Lead self-review, mandatory Copilot Review, or cross-host external review by default; do not treat a manual CLI review claim as independent attestation or native review as satisfaction of an optional GitHub APPROVED review gate
   - do not delegate protected authority blindly
   - do not merge pull requests when human-only merge applies
   - do not bypass privacy or access gates

@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.19.0 - 2026-10-03
+
+- Make host-native independent review a reusable Core lifecycle for every PR: completed author self-review and required checks before dispatch, author remediation, and exact final PR-head confirmation by a different read-only Reviewer. Copilot Review is not a prerequisite; merge/release authorization stays separate.
+
+### Added
+
+- Opt-in Claude startup scoped-agent projection derives complete native definitions from explicit project assignments, preserving model-neutral reusable roles and existing projection ownership protections.
+- Claude native hook setup preserves unrelated host settings, guards configured Agent/Task calls, and records only bounded native identity and optional reported effort metadata. Command-input evidence is advisory; effective model, effort and unsupported host surfaces remain explicitly unverified.
+- Policy path matching includes zero-depth `**/` segments while preserving legacy wildcard matches; excessive recursive-pattern complexity fails closed.
+
+### Fixed
+
+- Route validation checks direct host, role, route-role and task-class override references as well as configured task candidates without recording fake execution selections.
+- Routing authority audits accept byte-identical canonical projections in fresh checkouts without a local ownership ledger while continuing to flag modified copies.
+- Claude guidance distinguishes the active worktree pin, loaded scoped definitions, native tool-context effort and standalone CLI sessions.
+
 ## 0.18.2 - 2026-10-03
 
 ### Fixed

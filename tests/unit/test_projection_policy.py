@@ -11,7 +11,7 @@ from unittest.mock import patch
 import yaml
 
 from embraion import __version__
-from embraion.common import read_json, read_yaml, write_json, write_yaml
+from embraion.common import framework_root, read_json, read_yaml, write_json, write_yaml
 from embraion.context import build_context
 from embraion.contracts import (
     PROJECT_CONTRACT_SLOT_NAMES,
@@ -491,10 +491,8 @@ class ProjectionPolicyTests(unittest.TestCase):
 
             codex_text = codex.read_text(encoding="utf-8")
             self.assertIn('sandbox_mode = "read-only"', codex_text)
-            self.assertIn(
-                "review intent, diff, contracts, evidence",
-                codex_text,
-            )
+            for responsibility in read_yaml(framework_root() / "core/agents/reviewer.yaml")["responsibilities"]:
+                self.assertIn(responsibility, codex_text)
             self.assertIn(
                 "focus on project-specific domain contracts",
                 codex_text,

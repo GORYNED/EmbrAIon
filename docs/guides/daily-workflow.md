@@ -11,8 +11,8 @@ EmbrAIon should make AI-assisted engineering more disciplined, **not more ceremo
 | --- | --- | --- |
 | 1 | Ask for the engineering outcome | Project knowledge, policy, roles, and optional routing are already attached to the repo |
 | 2 | Let the host implement | Host-native AI does the reasoning/tools |
-| 3 | Run affected validation | Real project commands produce evidence |
-| 4 | Review substantial work | Project review policy/evidence applies |
+| 3 | Finish author self-review and required tests/CI | Current-candidate evidence establishes review readiness |
+| 4 | Run a separate read-only Reviewer in the current host | Existing project routing supplies the reviewer; fixes receive checks and final SHA confirmation |
 | 5 | Merge/deliver | Optional enforcement can make selected gates deterministic |
 
 Example:
@@ -63,8 +63,10 @@ Ask:
 - Did the requested behavior change correctly?
 - Did relevant validation pass?
 - Were protected/canonical boundaries respected?
-- Was substantial work independently reviewed when required?
+- Did an independent Reviewer confirm the exact final PR-head SHA after fixes?
 - Is residual risk explicit?
+
+Every PR requires the [host-native review lifecycle](runs-review.md#host-native-independent-review). Start independent review only after implementation, self-review and required checks are complete. No Copilot Review service is required. Any subsequent commit invalidates reviewer confirmation; user merge/release authorization remains separate.
 
 If CI enforcement is installed, it can make selected gates deterministic at merge time.
 

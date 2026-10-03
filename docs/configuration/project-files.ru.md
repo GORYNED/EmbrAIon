@@ -101,6 +101,8 @@ Knowledge files остаются обычными файлами репозит�
 
 Владеет safety и source classification policy проекта.
 
+Шаблоны путей сохраняют прежние правила, включая `*` через разделители папок. Отдельный сегмент `**/` также соответствует нулю папок: `private/**/*.cs` защищает и `private/file.cs`, и вложенные файлы. Шаблоны длиннее 4 096 символов или с более чем восемью необязательными сегментами `**/` отклоняются, чтобы не пропустить защищённый путь молча.
+
 ```yaml
 sources:
   canonical:
@@ -305,3 +307,7 @@ Projection ownership ledgers также находятся в `.embraion/state/p
 См. [Разговорную настройку](ai-hosts.md).
 
 Projection ownership разделён по host и canonical destination: `.embraion/state/projections/<host>/<destination-id>.json` и соответствующий `<destination-id>.recovery.json`. Root projection использует `root`; alternate destinations используют SHA-256 канонического относительного пути внутри проекта либо абсолютного пути для внешнего destination. Filenames не содержат абсолютных путей. Installs, inventories, config-mode evidence и pruning независимы для каждого destination. Совпадающий legacy host-only ledger читается без mutation и автоматически мигрирует после successful install; несовпадающее или неоднозначное evidence не присваивается другому destination. Перенесённый проект не наследует ownership автоматически от recorded absolute destination.
+
+## `.embraion/claude-native.yaml`
+
+Необязательные привязки ролей к native агентам Claude и список сочетаний role, route-class, data-class и access для установки. Файл не задаёт model или effort: определения выводятся из routing и deployments. Компонент `scoped-agents` и защитные hooks включаются явно; см. [Claude Code](../hosts/claude-code.md).

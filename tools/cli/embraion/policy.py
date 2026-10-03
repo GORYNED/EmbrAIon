@@ -178,10 +178,31 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
 
 def path_matches(path: str, patterns: list[str]) -> bool:
     normalized = normalize_project_path(path)
-    return any(
-        fnmatchcase(normalized, pattern.replace("\\", "/"))
-        for pattern in patterns
-    )
+    prepared: list[tuple[str, list[int], list[str]]] = []
+    for pattern in patterns:
+        canonical = pattern.replace("\\", "/")
+        if len(canonical) > 4096:
+            raise RuntimeError("Policy path pattern exceeds the supported length.")
+        segments = canonical.split("/")
+        optional = [index for index, segment in enumerate(segments[:-1]) if segment == "**"]
+        if len(optional) > 8:
+            raise RuntimeError("Policy path pattern has too many recursive segments.")
+        prepared.append((canonical, optional, segments))
+
+    for canonical, optional, segments in prepared:
+        # Preserve every match the original fnmatchcase semantics allowed,
+        # including '*' crossing a slash.
+        if fnmatchcase(normalized, canonical):
+            return True
+        # Whole-segment '**/' also matches zero directory levels. At most eight
+        # such segments produce 255 additional bounded variants.
+        for mask in range(1, 1 << len(optional)):
+            omitted = {optional[bit] for bit in range(len(optional)) if mask & (1 << bit)}
+            variant = "/".join(segment for index, segment in enumerate(segments)
+                               if index not in omitted)
+            if fnmatchcase(normalized, variant):
+                return True
+    return False
 
 
 def classify_path(path: str, project: Path | None = None) -> list[str]:

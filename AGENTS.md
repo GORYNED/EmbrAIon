@@ -28,6 +28,14 @@ Agent role, access profile, route class, execution host, project model override,
 
 A role never implies broader permissions or a more expensive model. Model choice never expands access.
 
+## Review and merge gates
+
+Follow the canonical [review workflow](core/workflows/review.md). For every EmbrAIon pull request, the
+author reviews the full diff and related code before independent review. Required tests and GitHub CI
+remain merge gates. Independent reviewer approval never replaces user merge or release approval; without
+explicit user authorization, a human merges, and auto-merge is never enabled. Copilot Review is not
+requested or used as a gate. Copilot host support remains available for unrelated supported workflows.
+
 ## Data classes
 
 Use exactly three canonical data classes: `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`. Unknown classification fails closed.

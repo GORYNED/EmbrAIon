@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import shutil
+import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -12,7 +13,7 @@ from pathlib import Path
 from embraion.common import framework_root, read_yaml, write_yaml
 from embraion.execution import execute
 from embraion.project import HOST_COMPONENTS, HOST_SKILL_DIRECTORIES, init_project, install
-from embraion.routing_authority import audit_routing_authority
+from embraion.routing_authority import _verified_projection_files, audit_routing_authority
 from embraion.runtime import classify_review_assignment, resolve_task_route, route, validate_task_routes
 
 
@@ -200,23 +201,75 @@ class RoutingAuthorityTests(unittest.TestCase):
         self.assertIn(projected.relative_to(self.project).as_posix(),
                       {finding["path"] for finding in findings})
 
-    def test_byte_identical_unowned_projection_is_not_exempt(self) -> None:
+    def test_byte_identical_unowned_projection_is_exempt(self) -> None:
         install("codex", self.project)
         projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
         state = self.project / ".embraion/state/projections/codex/root.json"
         state.unlink()
+        self.assertEqual([], audit_routing_authority(self.project, paths=[projected]))
+        projected.write_text(projected.read_text(encoding="utf-8") +
+                             "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
         findings = audit_routing_authority(self.project, paths=[projected])
         self.assertIn(projected.relative_to(self.project).as_posix(),
                       {finding["path"] for finding in findings})
 
-    def test_invalid_projection_ownership_fails_closed(self) -> None:
+    def test_invalid_projection_ownership_does_not_override_canonical_comparison(self) -> None:
         install("codex", self.project)
         projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
         state = self.project / ".embraion/state/projections/codex/root.json"
         state.write_text("{invalid json", encoding="utf-8")
+        self.assertEqual([], audit_routing_authority(self.project, paths=[projected]))
+        projected.write_text(projected.read_text(encoding="utf-8") +
+                             "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
         findings = audit_routing_authority(self.project, paths=[projected])
         self.assertIn(projected.relative_to(self.project).as_posix(),
                       {finding["path"] for finding in findings})
+
+    def test_ledger_hash_matching_modified_projection_does_not_exempt_it(self) -> None:
+        install("codex", self.project)
+        projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
+        projected.write_text(projected.read_text(encoding="utf-8") +
+                             "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
+        state_path = self.project / ".embraion/state/projections/codex/root.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        relative = projected.relative_to(self.project).as_posix()
+        state["files"][relative] = hashlib.sha256(projected.read_bytes()).hexdigest()
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        findings = audit_routing_authority(self.project, paths=[projected])
+        self.assertIn(relative, {finding["path"] for finding in findings})
+
+    def test_nested_symlink_cannot_claim_canonical_projection_exemption(self) -> None:
+        install("codex", self.project)
+        projected = self.project / HOST_SKILL_DIRECTORIES["codex"] / "routing-configuration/SKILL.md"
+        relative = projected.relative_to(self.project).as_posix()
+        manual = self._write_case("manual-projection.md", projected.read_text(encoding="utf-8"))
+        projected.unlink()
+        projected.symlink_to(manual)
+        self.assertNotIn(relative, _verified_projection_files(self.project))
+
+    def test_scoped_claude_profile_matches_canonical_bytes_without_ledger(self) -> None:
+        write_yaml(self.project / ".embraion/claude-native.yaml", {
+            "bindings": {"worker": "worker"},
+            "assignments": [{"role": "worker", "route-class": "complex",
+                             "data-class": "PRIVATE", "access": "write"}],
+        })
+        routing_path = self.project / ".embraion/routing.yaml"
+        routing = read_yaml(routing_path)
+        routing["overrides"]["claude-code"] = {
+            "routes": {"complex": {"model": "claude-fable-5-1", "effort": "high"}},
+        }
+        write_yaml(routing_path, routing)
+        install("claude-code", self.project, components=["agents", "skills", "scoped-agents"])
+        scoped = next((self.project / ".claude/agents").glob("embraion-*.md"))
+        metadata = self.project / ".claude/embraion-native.json"
+        (self.project / ".embraion/state/projections/claude-code/root.json").unlink()
+        self.assertEqual([], audit_routing_authority(self.project, paths=[scoped, metadata]))
+
+        scoped.write_text(scoped.read_text(encoding="utf-8") +
+                          "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
+        findings = audit_routing_authority(self.project, paths=[scoped, metadata])
+        self.assertEqual({scoped.relative_to(self.project).as_posix()},
+                         {finding["path"] for finding in findings})
 
     def test_generated_evidence_is_exempt_only_inside_canonical_state(self) -> None:
         self._write_case(".embraion/state/reports/route.json", '{"model":"example-basic-v1"}\n')

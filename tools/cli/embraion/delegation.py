@@ -113,7 +113,12 @@ def prepare_native_assignment(
     if surface == "claude-agent":
         from .project import _agent_instructions, _claude_agent_name, _host_access_projection, load_agents
 
-        identity = native_agent or role
+        from .claude_native import read_config
+        try:
+            config = read_config(project)
+        except (RuntimeError, OSError, ValueError):
+            return block("Invalid Claude native binding configuration; inspect the project configuration.")
+        identity = native_agent or (config or {}).get("bindings", {}).get(role) or role
         agent = next((item for item in load_agents(framework_root(), project)
                       if item["id"] == identity and identity != "lead"), None)
         if agent is None:
@@ -140,9 +145,24 @@ def prepare_native_assignment(
                                                sort_keys=True).encode()).hexdigest()[:12]
             # Claude AgentSpec limits names to 64 characters; project IDs can
             # be longer. Hash the full identity to retain distinct bindings.
-            name = f"embraion-{identity[:42]}-{digest}"
+            name = f"embraion--{identity[:41]}-{digest}"
             plan["scoped-definition"] = {"name": name, **definition}
             plan["arguments"]["subagent_type"] = name
+            # Presence is useful for a new Thread's loader, but never establishes
+            # that an already-running session has loaded this definition.
+            if project is not None:
+                from .claude_native import definition_markdown
+                from .project import _projection_target
+                relative = f".claude/agents/{name}.md"
+                state = "missing"
+                try:
+                    path = _projection_target(project, relative)
+                    if path.is_file():
+                        state = ("current" if path.read_bytes() ==
+                                 definition_markdown(plan["scoped-definition"]).encode("utf-8") else "stale")
+                except (RuntimeError, OSError, ValueError):
+                    state = "unverified"
+                plan["projection"] = {"path": relative, "state": state, "loaded": "unverified"}
         else:
             plan["arguments"]["subagent_type"] = _claude_agent_name(identity)
         plan["requirements"].append("supply the bounded task prompt separately; subagent_type is usable only after its exact definition is loaded")

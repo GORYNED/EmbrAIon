@@ -60,12 +60,53 @@ The routing role and native agent identity are separate. For a configured `indep
 
 Every selected `critical` route now requires a nonblank `--justification`, including direct routing and dispatch. A normal API rename does not establish critical risk by itself; project policy must classify the actual impact. Existing critical callers must supply their reason when upgrading.
 
-Claude Code supports the `agents` and `skills` projection components. Mature repositories can adopt them independently:
+Claude Code supports the standard `agents` and `skills` components, plus explicitly selected `scoped-agents`. Default installs preserve the standard components. Mature repositories can adopt them independently:
 
 ```bash
 embraion install --host claude-code --destination . --component skills
 embraion install --host claude-code --destination . --component agents --component skills
 ```
+
+## Startup scoped agents
+
+To make an explicit route available in the desktop Thread's native Agent registry, configure `.embraion/claude-native.yaml` before starting that Thread. For a project whose existing Claude reviewer route already selects an eligible deployment:
+
+```yaml
+bindings:
+  reviewer: reviewer
+assignments:
+  - role: reviewer
+    route-class: complex
+    data-class: PRIVATE
+    access: review
+read-policy:
+  project-only: true
+  deny-protected: true
+```
+
+Bindings connect routing roles to native specialist IDs; assignments declare only the eligible combinations to project. Model, effort and deployment choices remain in routing/deployments. The component rejects host-default or ineligible combinations rather than inventing a selection. Generation inspects configuration without selecting an execution route, including for critical profiles; actual critical dispatch still requires justification. For a semantic role such as `independent-review`, bind it to `reviewer` explicitly. A task class selects its declared host candidates: a Claude role override cannot turn an API candidate into a desktop assignment.
+
+```bash
+embraion framework install
+embraion route --validate
+embraion install --host claude-code --component scoped-agents
+embraion projection verify --host claude-code --component agents --component skills --component scoped-agents
+embraion claude-native install-hooks --dry-run
+embraion claude-native install-hooks
+embraion claude-native status
+```
+
+Installation adds separate hash-named `.claude/agents/embraion--*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions.
+
+Start a **new working Thread** attached to this checkout after setup. Each local/cloud checkout needs its own version and projection verification. An old worktree retains its old framework pin; a global launcher update does not migrate it. Resolve each assignment through the project resolver. Dispatch discovers the configured native binding. Invoke the returned hash-named type in the active registry without a model override. File presence is not registry loading. An absent or stale type remains a handoff limitation; separate CLI authentication is not a prerequisite for a correctly loaded native Agent.
+
+## Native hooks and evidence
+
+Hook installation is explicit and merges only EmbrAIon's exact entries into `.claude/settings.json`, preserving unrelated settings and hooks. It refuses malformed settings or a changed conflicting entry. Host trust, hook support and a working `embraion` command still need verification in each surface.
+
+The PreToolUse guard refuses configured base-agent calls, stale scoped types, invocation model overrides, and explicit isolation/resume settings whose definition propagation or reuse is unverified. It verifies definition identity and bytes; it does not prove fresh task classification or critical justification, which still require canonical dispatch before invocation. With `read-policy`, it also confines scoped read/search tools to the project and rejects protected source paths or searches that can traverse them. This uses the project's current policy patterns; it does not change source classification or make unclassified data safe. It does not sandbox parent tools, arbitrary agents or shell access. The parent must still follow source-authority instructions and pass eligible bounded context.
+
+PostToolUse and SubagentStop record bounded session/agent identity and optional reported `effort.level` into ignored local state. Claude Code 2.1.277 early-access declarations permit that field; documented examples omit it, and delivery by an installed desktop/cloud build requires a real host check. The public observer accepts arbitrary JSON, so records are marked `unverified-command-input`. `claude-native status` reports installation, recorded callbacks and advisory `reported-effort` comparisons; `execution`, effective `effort` and `model` remain `unverified`; `callbacks: recorded` only identifies accepted metadata. A recorded callback does not prove assignment completion or host origin. Trusted response or supported native-step evidence is still required; session init null effort and an agent's own statements do not prove settings. No hook checks can undo a model call that already occurred. No private tool inputs, prompts, answers or transcript contents are recorded.
 
 Preview before writing:
 
