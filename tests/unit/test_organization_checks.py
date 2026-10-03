@@ -121,7 +121,12 @@ class OrganizationTests(unittest.TestCase):
     def test_paths_symlink_and_lfs(self) -> None:
         self.config({"namespaces": {"rules": [{"path": "Assets", "namespace": "Demo"}]}})
         self.write("Assets/Pointer.cs", "version https://git-lfs.github.com/spec/v1\noid sha256:123\n")
-        self.assertIn("lfs_pointer", self.codes(check_organization(self.root)))
+        self.assertEqual({"lfs_pointer"}, self.codes(check_organization(self.root)))
+        (self.root / "Assets/Pointer.cs").write_bytes(
+            b"version https://git-lfs.github.com/spec/v1\r\n"
+            b"oid sha256:123\r\nnamespace Wrong;\r\n"
+        )
+        self.assertEqual({"lfs_pointer"}, self.codes(check_organization(self.root)))
         with self.assertRaisesRegex(RuntimeError, "Invalid"):
             self.config({"namespaces": {"rules": [{"path": "../outside", "namespace": "Demo"}]}})
             check_organization(self.root)

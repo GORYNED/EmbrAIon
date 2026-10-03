@@ -19,7 +19,7 @@ MAX_FILES = 30000
 MAX_BYTES = 1024 * 1024
 GUID = re.compile(r"(?m)^guid:\s*([0-9a-fA-F]{32})\s*$")
 NAMESPACE_TOKENS = re.compile(r"\bnamespace\s+([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\s*([;{])|[{}]")
-LFS = b"version https://git-lfs.github.com/spec/v1\n"
+LFS = b"version https://git-lfs.github.com/spec/v1"
 BOUNDARY = {"Runtime": {"Runtime"}, "Editor": {"Runtime", "Editor"}, "Tests": {"Runtime", "Editor", "Tests"}}
 
 
@@ -155,7 +155,7 @@ def _finding(code: str, path: str, message: str, **details: str) -> dict[str, st
 
 
 def _text(data: bytes, path: str, issues: list[dict[str, str]]) -> str | None:
-    if data.startswith(LFS):
+    if data.partition(b"\n")[0].removesuffix(b"\r") == LFS:
         issues.append(_finding("lfs_pointer", path, "Git LFS pointer cannot be checked as asset data"))
         return None
     try:
