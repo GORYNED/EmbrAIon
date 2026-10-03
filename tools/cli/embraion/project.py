@@ -732,6 +732,11 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
     _append_lead_skill(root, target)
     entry = target / "orchestration/SKILL.md"
     guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
+    # The canonical contract is embedded above; the adapter's source-relative
+    # link does not exist in an installed consumer projection.
+    guidance = guidance.replace(
+        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+    )
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
     if host == "claude-code":
