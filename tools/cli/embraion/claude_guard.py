@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from .claude_native import _SAFE_ID, _installation, observer_status, read_config
-from .common import project_root
 from .policy import effective_policy, path_matches
 from .project import _projection_target
 
@@ -132,9 +131,14 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
     if tool not in _READ_TOOLS | _LAUNCH_TOOLS:
         return {}
     inputs = payload.get("tool_input")
-    root = project_root(project)
     agent_type = payload.get("agent_type")
     agent_id = payload.get("agent_id")
+    from .claude_hooks import hook_project
+
+    try:
+        root = hook_project(payload, project)
+    except (OSError, ValueError, RuntimeError):
+        return _deny("Scoped hook project context is unavailable or mismatched.")
 
     try:
         config = read_config(root)
