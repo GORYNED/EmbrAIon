@@ -15,6 +15,7 @@ capabilities:
   - { id: orchestration, type: skill, path: skills/orchestration, load: conditional, triggers: [engineering-request, orchestration] }
   - { id: project-bootstrap, type: skill, path: skills/project-bootstrap, load: conditional, triggers: [project-bootstrap, project-onboarding, configure-project, configure-embraion] }
   - { id: implementation, type: skill, path: skills/implementation, load: conditional, triggers: [implementation, writable-task] }
+  - { id: code-organization, type: skill, path: skills/code-organization, load: conditional, triggers: [new-file, new-type, move-file, rename-file, code-organization, structure-audit] }
   - { id: research, type: skill, path: skills/research, load: conditional, triggers: [research, discovery] }
   - { id: review, type: skill, path: skills/review, load: conditional, triggers: [review, substantial-change] }
   - { id: validation, type: skill, path: skills/validation, load: conditional, triggers: [validation, test, regression] }

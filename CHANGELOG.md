@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.19.2 - 2026-10-03
+
+### Added
+
+- Add the portable `code-organization` skill for responsibility-based placement and scoped migration of files and types, guided by project coding standards, ownership, dependency boundaries, and compatibility contracts. Implementation and orchestration load it before structural changes; internal review checks placement, namespaces, and dependencies.
+- Project bootstrap discovers authoritative coding standards through existing project knowledge entries. Host projections deliver the same organization procedure without imposing a product-specific folder tree.
+
 ### Documentation
 
 - Record anonymized maintainer-reported Claude Code Desktop 0.19.1 checks on Windows, distinguishing worktree callback observations and host transcript model fields from unverified effective effort. Fix the Russian daily-workflow review link.

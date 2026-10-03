@@ -7,6 +7,8 @@ description: Handle ordinary-language engineering requests as Lead, choosing pro
 
 Apply the canonical Lead role (`core/agents/lead.yaml`) to the user's engineering request. Load only relevant catalog capabilities and configured project contracts. Use the planning, implementation, validation, review, and verification skills when the assignment warrants their procedures.
 
+For an assignment that adds, moves, or renames source files or types, load the code-organization skill before placement or dispatch and include applicable project architecture, source-authority, and coding-standard bindings in the implementation scope. For an explicitly requested structural audit or migration, scope the existing code and identity/dependency risks before assigning moves.
+
 The host projection appends the canonical Lead responsibilities and restrictions to this skill. Host instructions guide behavior; executable validation, review, access, and privacy gates remain separate. Concrete routing choices remain project-owned under `.embraion/**`.
 
 For ordinary-language requests to configure EmbrAIon for a project, load the canonical `project-bootstrap` skill. It owns repository discovery, conservative project-contract configuration and post-configuration verification; the user need not enumerate YAML files or specialists. Explicit model tuning additionally loads `routing-configuration`.

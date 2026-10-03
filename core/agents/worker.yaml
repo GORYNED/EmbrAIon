@@ -7,6 +7,7 @@ model-neutral: true
 responsibilities:
   - implement assigned change
   - respect owned files and dependencies
+  - apply code-organization before adding, moving, or renaming source files or types within owned paths
   - run focused checks
   - report integration dependencies
 restrictions:
