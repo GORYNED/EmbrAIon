@@ -1,0 +1,9 @@
+schema-version: 1
+id: unity
+version: 0.20.0
+license: MIT
+skills:
+  unity-serialization-migration: skills/unity-serialization-migration
+  unity-lifecycle-review: skills/unity-lifecycle-review
+  unity-player-validation: skills/unity-player-validation
+  unity-asset-audit: skills/unity-asset-audit
