@@ -8,6 +8,7 @@ Each skill lives in its own directory and uses the standard filename `SKILL.md`.
 skills/
 ├── planning/SKILL.md
 ├── implementation/SKILL.md
+├── code-organization/SKILL.md
 ├── research/SKILL.md
 ├── review/SKILL.md
 ├── validation/SKILL.md
@@ -20,4 +21,4 @@ A skill describes **how** to perform a class of work. It does not own agent iden
 
 The `routing-configuration` skill directs every installed AI host to keep all manually maintained concrete routing, deployment capability, billing, pricing/SKU, and execution-binding facts in `.embraion/**` when a Product Owner requests routing changes in ordinary language.
 
-<sub>Last updated: 2026-09-27 20:17 UTC</sub>
+<sub>Last updated: 2026-10-03 20:53 UTC</sub>

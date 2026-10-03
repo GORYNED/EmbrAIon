@@ -329,6 +329,7 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "project-bootstrap",
                 "debugging",
                 "implementation",
+                "code-organization",
                 "orchestration",
                 "planning",
                 "research",
