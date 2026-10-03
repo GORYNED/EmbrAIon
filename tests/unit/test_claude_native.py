@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
 from pathlib import Path
+from unittest.mock import patch
 
 from embraion.claude_native import (
+    _lock_fd,
+    _prepare_lock_file,
+    _unlock_fd,
     configured_assignments,
     definition_markdown,
     observe,
@@ -15,6 +22,12 @@ from embraion.claude_native import (
 )
 from embraion.common import write_json, write_yaml
 from embraion.project import init_project
+
+
+def _exit_while_holding_lock(path: str) -> None:
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
+    _lock_fd(fd)
+    os._exit(0)
 
 
 class ClaudeNativeTests(unittest.TestCase):
@@ -206,6 +219,108 @@ class ClaudeNativeTests(unittest.TestCase):
         status = observer_status(self.project)
         self.assertEqual("observed", status["execution"])
         self.assertEqual("unverified", status["effort"])
+
+    def test_journal_exact_cap_and_busy_lock_preserve_existing_rows(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        payload = self.hook(entry["name"])
+        evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
+        self.assertEqual("observed", observe(payload, self.project)["status"])
+        row = evidence.read_bytes()
+        evidence.unlink()
+        with patch("embraion.claude_native._MAX_EVIDENCE_BYTES", len(row)):
+            self.assertEqual("observed", observe(payload, self.project)["status"])
+            exact = evidence.read_bytes()
+            self.assertEqual(len(row), len(exact))
+            self.assertEqual("evidence-limit", observe(payload, self.project)["reason"])
+            self.assertEqual(exact, evidence.read_bytes())
+            self.assertEqual("observed", observer_status(self.project)["execution"])
+        lock = self.project / ".embraion/state/claude-native-evidence.lock"
+        self.assertTrue(lock.is_file())
+        fd = os.open(lock, os.O_RDWR)
+        try:
+            _lock_fd(fd)
+            self.assertEqual("evidence-busy", observe(payload, self.project)["reason"])
+        finally:
+            _unlock_fd(fd)
+            os.close(fd)
+        self.assertEqual(exact, evidence.read_bytes())
+        self.assertEqual("observed", observe(payload, self.project)["status"])
+
+    def test_os_releases_lock_after_holder_process_exits(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        payload = self.hook(entry["name"])
+        self.assertEqual("observed", observe(payload, self.project)["status"])
+        lock = self.project / ".embraion/state/claude-native-evidence.lock"
+        child = Process(target=_exit_while_holding_lock, args=(str(lock),))
+        child.start()
+        child.join(timeout=5)
+        if child.is_alive():
+            child.terminate()
+            child.join(timeout=5)
+        self.assertEqual(0, child.exitcode)
+        self.assertTrue(lock.is_file())
+        self.assertEqual("observed", observe(payload, self.project)["status"])
+
+    def test_swapped_lock_and_journal_paths_never_write_outside_file(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        payload = self.hook(entry["name"])
+        state = self.project / ".embraion/state"
+        state.mkdir(parents=True, exist_ok=True)
+        real_open = os.open
+        nofollow = getattr(os, "O_NOFOLLOW", 0)
+        for filename, reason, original in (
+            ("claude-native-evidence.lock", "evidence-lock-changed", b""),
+            ("claude-native-evidence.jsonl", "evidence-journal-changed", b"outside-intact"),
+        ):
+            with self.subTest(filename=filename):
+                target = state / filename
+                outside = self.project / (filename + ".outside")
+                outside.write_bytes(original)
+                swapped = False
+
+                def swap_after_validation(path, flags, *args, **kwargs):
+                    nonlocal swapped
+                    if Path(path) == target and not swapped:
+                        target.symlink_to(outside)
+                        flags &= ~nofollow  # Simulate Windows without O_NOFOLLOW.
+                        swapped = True
+                    return real_open(path, flags, *args, **kwargs)
+
+                with patch("embraion.claude_native.os.open", side_effect=swap_after_validation):
+                    result = observe(payload, self.project)
+                self.assertTrue(swapped)
+                self.assertEqual(reason, result["reason"])
+                self.assertEqual(original, outside.read_bytes())
+                if filename.endswith(".lock"):
+                    fd = real_open(target, os.O_RDWR)
+                    try:
+                        self.assertFalse(_prepare_lock_file(fd, target, windows=True))
+                        self.assertEqual(original, outside.read_bytes())
+                    finally:
+                        os.close(fd)
+                target.unlink()
+
+    def test_concurrent_observers_cannot_cross_journal_cap(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        payload = self.hook(entry["name"])
+        evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
+        observe(payload, self.project)
+        row_size = len(evidence.read_bytes())
+        evidence.unlink()
+        cap = row_size * 3
+        with patch("embraion.claude_native._MAX_EVIDENCE_BYTES", cap):
+            with ThreadPoolExecutor(max_workers=12) as pool:
+                results = list(pool.map(lambda _: observe(payload, self.project), range(24)))
+            content = evidence.read_bytes()
+            self.assertLessEqual(len(content), cap)
+            rows = content.splitlines()
+            self.assertEqual(sum(result["status"] == "observed" for result in results), len(rows))
+            self.assertTrue(all(json.loads(row)["effort-status"] == "matched" for row in rows))
+            self.assertNotIn(b"never-log-this", content)
 
 
 if __name__ == "__main__":

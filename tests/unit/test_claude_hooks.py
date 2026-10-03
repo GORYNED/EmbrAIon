@@ -39,6 +39,7 @@ class ClaudeHookInstallationTests(unittest.TestCase):
         self.assertEqual(original, json.loads(self.path.read_text()))
         install_observer_hooks(self.project)
         installed = json.loads(self.path.read_text())
+        self.assertEqual("Agent|Task|Read|Grep|Glob", installed["hooks"]["PreToolUse"][-1]["matcher"])
         self.assertEqual(original["permissions"], installed["permissions"])
         self.assertEqual(original["env"], installed["env"])
         self.assertEqual(original["hooks"]["PostToolUse"][0], installed["hooks"]["PostToolUse"][0])

@@ -164,6 +164,23 @@ class ClaudeGuardTests(unittest.TestCase):
             with self.subTest(override=override):
                 self.assert_denied(self.payload("Agent", {**base, **override}, agent_type="lead"))
 
+    def test_legacy_task_launch_uses_the_same_scoped_guard(self) -> None:
+        current = {"subagent_type": self.name, "prompt": "task"}
+        self.assertEqual({}, guard(self.payload("Task", current, agent_type="lead"), self.project))
+        self.assertEqual({}, guard(self.payload("Task", {"subagent_type": "general-purpose",
+                                                     "prompt": "task"}, agent_type="lead"), self.project))
+        for inputs in (
+            {"subagent_type": "worker", "prompt": "task"},
+            {"subagent_type": "embraion--stale-profile", "prompt": "task"},
+            {**current, "model": "opus"},
+            {**current, "isolation": "remote"},
+            {**current, "resume": "old-agent"},
+        ):
+            with self.subTest(inputs=inputs):
+                self.assert_denied(self.payload("Task", inputs, agent_type="lead"))
+        (self.project / ".claude/embraion-native.json").write_text("{}", encoding="utf-8")
+        self.assert_denied(self.payload("Task", current, agent_type="lead"))
+
     def test_read_guard_is_opt_in_but_agent_binding_gate_remains_active(self) -> None:
         path = self.project / ".embraion/claude-native.yaml"
         config = read_yaml(path)

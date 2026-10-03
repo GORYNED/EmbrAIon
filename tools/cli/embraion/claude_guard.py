@@ -12,6 +12,7 @@ from .policy import effective_policy, path_matches
 from .project import _projection_target
 
 _READ_TOOLS = frozenset({"Read", "Grep", "Glob"})
+_LAUNCH_TOOLS = frozenset({"Agent", "Task"})
 _SCOPED_PREFIX = "embraion--"
 _AGENT_INPUTS = frozenset({"subagent_type", "description", "prompt", "run_in_background"})
 _TOOL_INPUTS = {
@@ -126,7 +127,7 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
     if not isinstance(payload, dict) or payload.get("hook_event_name") != "PreToolUse":
         return {}
     tool = payload.get("tool_name")
-    if tool not in _READ_TOOLS | {"Agent"}:
+    if tool not in _READ_TOOLS | _LAUNCH_TOOLS:
         return {}
     inputs = payload.get("tool_input")
     root = project_root(project)
@@ -138,14 +139,14 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
         installation, assignments = _installation(root) if config is not None else ("missing", [])
     except (OSError, ValueError, RuntimeError):
         # A malformed configuration cannot authorize a scoped invocation.
-        if tool == "Agent" and isinstance(inputs, dict) and str(inputs.get("subagent_type", "")).startswith(_SCOPED_PREFIX):
+        if tool in _LAUNCH_TOOLS and isinstance(inputs, dict) and str(inputs.get("subagent_type", "")).startswith(_SCOPED_PREFIX):
             return _deny("Scoped agent configuration is unavailable.")
         if tool in _READ_TOOLS and isinstance(agent_type, str) and agent_type.startswith(_SCOPED_PREFIX):
             return _deny("Scoped agent configuration is unavailable.")
         return {}
 
     scoped_names = {record["plan"]["scoped-definition"]["name"] for record in assignments}
-    if tool == "Agent":
+    if tool in _LAUNCH_TOOLS:
         if config is None or not isinstance(inputs, dict):
             return {}
         requested = inputs.get("subagent_type")

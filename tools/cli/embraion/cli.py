@@ -121,7 +121,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
-        "  claude-native Inspect scoped Claude agents and install metadata-only observer hooks",
+        "  claude-native Inspect scoped Claude agents and install guard/observer hooks",
         "  worktree   List, create, clean, or salvage Git worktrees",
         "  learning   Record evidence and manage gated learning candidates",
         "  eval       Run behavioral evals and compare baselines",
@@ -1895,7 +1895,7 @@ def build_parser() -> argparse.ArgumentParser:
     native_sub.add_parser("status", help="Inspect installed scoped definitions and reported hook evidence").set_defaults(func=_cmd_claude_native)
     native_sub.add_parser("observe", help="Read a native hook event from stdin; store metadata only").set_defaults(func=_cmd_claude_native)
     native_sub.add_parser("guard", help="Validate a scoped native call or read boundary from hook stdin").set_defaults(func=_cmd_claude_native)
-    native_hooks = native_sub.add_parser("install-hooks", help="Explicitly merge metadata-only hooks into Claude settings")
+    native_hooks = native_sub.add_parser("install-hooks", help="Explicitly merge guard and metadata observer hooks into Claude settings")
     native_hooks.add_argument("--dry-run", action="store_true")
     native_hooks.set_defaults(func=_cmd_claude_native)
 

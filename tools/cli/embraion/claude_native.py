@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import errno
 import os
 import re
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +21,7 @@ from .runtime import _resolve_route
 
 METADATA_PATH = ".claude/embraion-native.json"
 EVIDENCE_PATH = "claude-native-evidence.jsonl"
+EVIDENCE_LOCK = "claude-native-evidence.lock"
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 _HOOK_EVENTS = frozenset({"PostToolUse", "SubagentStop"})
 _EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max"})
@@ -155,6 +158,104 @@ def _installation(project: Path) -> tuple[str, list[dict[str, Any]]]:
     return "verified", assignments
 
 
+def _append_evidence(root: Path, row: bytes) -> str | None:
+    """Atomically reserve the journal cap for this observer without waiting."""
+    from .project import _projection_target
+
+    state_root(root)
+    try:
+        path = _projection_target(root, ".embraion/state/" + EVIDENCE_PATH)
+        lock = _projection_target(root, ".embraion/state/" + EVIDENCE_LOCK)
+    except RuntimeError:
+        return "evidence-path-symlink"
+    if len(row) > _MAX_EVIDENCE_BYTES:
+        return "evidence-limit"
+    binary = getattr(os, "O_BINARY", 0)
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    try:
+        lock_fd = os.open(lock, os.O_RDWR | os.O_CREAT | binary | nofollow, 0o600)
+    except OSError:
+        return "evidence-write-failed"
+    try:
+        if not _prepare_lock_file(lock_fd, lock, windows=os.name == "nt"):
+            os.close(lock_fd)
+            return "evidence-lock-changed"
+    except OSError:
+        os.close(lock_fd)
+        return "evidence-write-failed"
+    try:
+        _lock_fd(lock_fd)
+    except OSError as error:
+        os.close(lock_fd)
+        return ("evidence-busy" if error.errno in {errno.EACCES, errno.EAGAIN, errno.EBUSY, errno.EDEADLK}
+                else "evidence-write-failed")
+    reason: str | None = None
+    try:
+        if not _opened_regular_matches(lock_fd, lock):
+            return "evidence-lock-changed"
+        flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | binary | nofollow
+        with os.fdopen(os.open(path, flags, 0o600), "wb") as stream:
+            if not _opened_regular_matches(stream.fileno(), path):
+                reason = "evidence-journal-changed"
+            elif os.fstat(stream.fileno()).st_size + len(row) > _MAX_EVIDENCE_BYTES:
+                reason = "evidence-limit"
+            else:
+                stream.write(row)
+                stream.flush()
+    except OSError:
+        reason = "evidence-write-failed"
+    finally:
+        try:
+            _unlock_fd(lock_fd)
+        except OSError:
+            reason = "evidence-lock-release-failed"
+        finally:
+            os.close(lock_fd)
+    return reason
+
+
+def _opened_regular_matches(fd: int, path: Path) -> bool:
+    """Check the opened inode before writing, including when O_NOFOLLOW is absent."""
+    try:
+        entry = path.lstat()
+        return stat.S_ISREG(entry.st_mode) and os.path.samestat(os.fstat(fd), entry)
+    except OSError:
+        return False
+
+
+def _prepare_lock_file(fd: int, path: Path, *, windows: bool) -> bool:
+    """Validate the opened file before Windows writes its one-byte lock region."""
+    if not _opened_regular_matches(fd, path):
+        return False
+    if windows and os.fstat(fd).st_size == 0:
+        os.write(fd, b"\0")
+    return True
+
+
+def _lock_fd(fd: int) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock_fd(fd: int) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(fd, fcntl.LOCK_UN)
+
+
 def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
     """Record only bounded native identity and effort metadata from a hook."""
     root = project_root(project)
@@ -184,27 +285,16 @@ def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
     if not isinstance(observed_effort, str) or observed_effort not in _EFFORTS:
         observed_effort = None
     effort_status = _effort_status(expected_effort, observed_effort)
-    record = {"schema-version": 1, "timestamp-utc": datetime.now(timezone.utc).isoformat(),
+    record = {"schema-version": 1, "timestamp-utc": datetime.now(timezone.utc).isoformat(timespec="microseconds"),
               "event": payload["hook_event_name"], "session-id": session_id,
               "agent-id": agent_id, "agent-type": agent_type,
               "definition-digest": digests.pop(),
               "expected-effort": expected_effort, "observed-effort": observed_effort,
               "effort-status": effort_status}
-    from .project import _projection_target
-
-    state_root(root)
-    try:
-        path = _projection_target(root, ".embraion/state/" + EVIDENCE_PATH)
-    except RuntimeError:
-        return {"status": "unverified", "reason": "evidence-path-symlink"}
-    if path.exists() and path.stat().st_size > _MAX_EVIDENCE_BYTES:
-        return {"status": "unverified", "reason": "evidence-limit"}
-    flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
-    try:
-        with os.fdopen(os.open(path, flags, 0o600), "w", encoding="utf-8") as stream:
-            stream.write(json.dumps(record, separators=(",", ":")) + "\n")
-    except OSError:
-        return {"status": "unverified", "reason": "evidence-write-failed"}
+    row = (json.dumps(record, separators=(",", ":")) + "\n").encode("utf-8")
+    reason = _append_evidence(root, row)
+    if reason is not None:
+        return {"status": "unverified", "reason": reason}
     return {"status": "observed", "event": record["event"],
             "agent-type": agent_type, "effort-status": effort_status,
             "model-status": "unverified"}

@@ -14,7 +14,7 @@ COMMAND = "embraion claude-native observe"
 GUARD_COMMAND = "embraion claude-native guard"
 HOOKS = {
     "PreToolUse": {
-        "matcher": "Agent|Read|Grep|Glob",
+        "matcher": "Agent|Task|Read|Grep|Glob",
         "hooks": [{"type": "command", "command": GUARD_COMMAND, "timeout": 10}],
     },
     "PostToolUse": {
