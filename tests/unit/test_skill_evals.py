@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import signal
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from embraion.common import framework_root
-from embraion.skill_evals import _digest, _grade, _load_suite, _source_files, run_suite
+from embraion.skill_evals import _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
 
 
 FAKE_HOST = '''#!/usr/bin/env python3
@@ -100,13 +102,32 @@ class SkillEvalTests(unittest.TestCase):
                 os.environ["FAKE_MODE"] = prior
 
     def test_rejects_unsafe_paths_and_symlinks(self) -> None:
-        self.data["cases"][0]["fixture"] = "../outside"
-        self.suite.write_text(json.dumps(self.data), encoding="utf-8")
-        with self.assertRaises(ValueError):
-            _load_suite(self.suite)
+        for unsafe in ("../outside", "./fixture", "fixture/./file", "fixture//file", "fixture/../file", "C:/secret", "C:secret", "\\\\server\\share", "fixture\\..\\secret", "fixture\0bad"):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaises(ValueError):
+                    _safe_relative(unsafe)
         (self.root / "fixture" / "link").symlink_to(self.root / "outside")
         with self.assertRaises(ValueError):
             _source_files(self.root / "fixture")
+        (self.root / "fixture" / "link").unlink()
+        (self.root / "fixture-link").symlink_to(self.root / "fixture", target_is_directory=True)
+        with self.assertRaises(ValueError):
+            _reject_source_ancestors(self.root / "fixture-link", self.root)
+        self.data["cases"][0]["fixture"] = "fixture-link"
+        self.suite.write_text(json.dumps(self.data), encoding="utf-8")
+        with self.assertRaises(ValueError):
+            run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=self.root / "report.json", codex_binary=str(self.host))
+
+    def test_termination_uses_platform_appropriate_process_api(self) -> None:
+        process = Mock(pid=123)
+        with patch("embraion.skill_evals.os.killpg") as kill_group:
+            _terminate_host(process, windows=True)
+            process.kill.assert_called_once_with()
+            kill_group.assert_not_called()
+            process.kill.reset_mock()
+            _terminate_host(process, windows=False)
+            process.kill.assert_not_called()
+            kill_group.assert_called_once_with(123, signal.SIGKILL)
 
     def test_grader_checks_actual_files(self) -> None:
         root = self.root / "fixture"

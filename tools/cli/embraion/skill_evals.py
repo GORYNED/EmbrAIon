@@ -11,7 +11,7 @@ import signal
 import subprocess
 import tempfile
 import time
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from jsonschema import Draft202012Validator
@@ -26,10 +26,24 @@ READ_COMMAND = re.compile(r"(?:^|\s)(?:cat|sed|head|tail|rg|grep|less|more|type)
 
 
 def _safe_relative(value: str) -> Path:
-    path = Path(value)
-    if not value or path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+    if (not isinstance(value, str) or not value or "\\" in value or "\0" in value
+            or any(part in {"", ".", ".."} for part in value.split("/"))
+            or PureWindowsPath(value).drive or PureWindowsPath(value).root):
         raise ValueError("suite contains an unsafe relative path")
-    return path
+    return Path(value)
+
+
+def _reject_source_ancestors(source: Path, trusted_base: Path) -> None:
+    """Reject links in the path below a trusted root before resolving it."""
+    try:
+        relative = source.relative_to(trusted_base)
+    except ValueError as error:
+        raise ValueError("source path escapes trusted root") from error
+    current = trusted_base
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("fixture or skill source has a symlink ancestor")
 
 
 def _source_files(source: Path) -> list[tuple[Path, Path]]:
@@ -151,6 +165,16 @@ def _events(path: Path, skill_ids: list[str]) -> dict[str, Any]:
     return {"completed": completed, "failed": failed, "tool-calls": tool_calls, "tokens": tokens, "observed-reads": sorted(reads)}
 
 
+def _terminate_host(process: subprocess.Popen[bytes], *, windows: bool) -> None:
+    if windows:
+        process.kill()
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
 def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path) -> dict[str, Any]:
     argv = [binary, "exec", "--ignore-user-config", "--ephemeral", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check", "--cd", str(root), "--output-last-message", str(scratch / "last-message.txt")]
     if model:
@@ -164,26 +188,20 @@ def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effor
     prompt_path = scratch / "prompt.txt"
     prompt_path.write_text(prompt, encoding="utf-8")
 
-    def stop_group(pid: int) -> None:
-        try:
-            os.killpg(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-
     with stdout.open("wb") as out, stderr.open("wb") as err, prompt_path.open("rb") as prompt_stream:
         try:
-            process = subprocess.Popen(argv, cwd=root, stdin=prompt_stream, stdout=out, stderr=err, start_new_session=True)
+            process = subprocess.Popen(argv, cwd=root, stdin=prompt_stream, stdout=out, stderr=err, start_new_session=os.name != "nt")
         except OSError:
             return {"status": "host-unavailable", "duration-seconds": 0.0}
         status = "completed"
         while process.poll() is None:
             if time.monotonic() - start > timeout:
                 status = "timeout"
-                stop_group(process.pid)
+                _terminate_host(process, windows=os.name == "nt")
                 break
             if stdout.stat().st_size > MAX_EVENT_BYTES or stderr.stat().st_size > MAX_EVENT_BYTES:
                 status = "output-limit"
-                stop_group(process.pid)
+                _terminate_host(process, windows=os.name == "nt")
                 break
             time.sleep(0.05)
         process.wait()
@@ -248,6 +266,7 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
             if version in skill:
                 relative = _safe_relative(skill[version])
                 source = source_root / relative
+                _reject_source_ancestors(source, source_root)
                 if not source.resolve().is_relative_to(source_root) or not (source / "SKILL.md").is_file():
                     raise ValueError("skill path must be a framework skill directory")
                 item[version] = {"path": source, "digest": _digest(source)}
@@ -259,6 +278,7 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
     records: list[dict[str, Any]] = []
     for case in data["cases"]:
         fixture = suite.parent / _safe_relative(case["fixture"])
+        _reject_source_ancestors(fixture, suite.parent)
         if not fixture.resolve().is_relative_to(suite.parent):
             raise ValueError("fixture path escapes suite directory")
         fixture_digest = _digest(fixture)

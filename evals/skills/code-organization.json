@@ -9,7 +9,7 @@
       "id": "bounded-class-addition-en",
       "polarity": "positive",
       "fixture": "fixtures/python-service",
-      "prompt": "Add a Python class named InvoiceFormatter that returns a display label from an invoice's number. Place it with the invoice feature, use the existing package style, and keep the change bounded. Do not make unrelated edits.",
+      "prompt": "Add a Python class named InvoiceFormatter in acme/invoices/formatter.py that returns a display label from an invoice's number. Use the existing package style, and keep the change bounded. Do not make unrelated edits.",
       "checks": [
         {"type": "file-exists", "path": "acme/invoices/formatter.py"},
         {"type": "file-contains", "path": "acme/invoices/formatter.py", "text": "class InvoiceFormatter"},
@@ -21,7 +21,7 @@
       "id": "bounded-class-addition-ru",
       "polarity": "positive",
       "fixture": "fixtures/python-service",
-      "prompt": "Добавь Python-класс InvoiceFormatter, который формирует отображаемую метку из номера счёта. Размести его рядом с кодом счетов, соблюдай структуру пакета и не меняй несвязанные файлы.",
+      "prompt": "Добавь в acme/invoices/formatter.py Python-класс InvoiceFormatter, который формирует отображаемую метку из номера счёта. Соблюдай структуру пакета и не меняй несвязанные файлы.",
       "checks": [
         {"type": "file-exists", "path": "acme/invoices/formatter.py"},
         {"type": "file-contains", "path": "acme/invoices/formatter.py", "text": "class InvoiceFormatter"},
