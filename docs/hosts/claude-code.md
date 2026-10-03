@@ -130,6 +130,8 @@ For each supported desktop surface, check a new and resumed Thread: confirm the 
 
 The optional [Mods probe](https://github.com/GORYNED/EmbrAIon/tree/main/adapters/claude-code/mods-probe) tests registration and routing evidence in builds supporting Claude function hooks. It is not installed by `embraion install`, and requires an explicit native Agent invocation after registration. Its mock tests do not prove live loading or effective effort.
 
+The [0.19.1 Windows check report](claude-code-check-0.19.1.md) records maintainer-supplied observations from two local Desktop worktree sessions and their evidence limits.
+
 ## Further configuration
 
 See [Configure with Your AI Client](../configuration/ai-hosts.md) for conversational routing/configuration examples, and [Adopt an Existing Repository](../getting-started/existing-repository.md) for selective adoption.

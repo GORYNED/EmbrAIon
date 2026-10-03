@@ -83,6 +83,7 @@ plugins:
             Execution & providers: Execution и провайдеры
             Pricing & cost: Pricing и стоимость
             Hosts: AI-хосты
+            Claude Code 0.19.1 check: Проверка Claude Code 0.19.1
             Portable bundle: Portable bundle
             Use: Использование
             Daily workflow: Ежедневный процесс
@@ -169,6 +170,7 @@ nav:
       - Codex: hosts/codex.md
       - GitHub Copilot: hosts/copilot.md
       - Claude Code: hosts/claude-code.md
+      - Claude Code 0.19.1 check: hosts/claude-code-check-0.19.1.md
       - Portable bundle: hosts/portable.md
   - Use:
       - Overview: guides/index.md
