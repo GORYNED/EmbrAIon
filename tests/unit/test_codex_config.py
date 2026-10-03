@@ -178,10 +178,16 @@ name = "one"
                 self.assertIn(contract, skill)
                 if host != "portable":
                     guidance = (framework_root() / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
+                    guidance = guidance.replace(
+                        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+                    )
                     self.assertIn(guidance, skill)
                 else:
                     for native_host in ("codex", "copilot", "claude-code"):
                         guidance = (framework_root() / "adapters" / native_host / "orchestration.md").read_text(encoding="utf-8").strip()
+                        guidance = guidance.replace(
+                            "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+                        )
                         self.assertNotIn(guidance, skill)
 
     def test_codex_skills_only_receive_native_dispatch_contract_idempotently(self) -> None:
@@ -192,6 +198,9 @@ name = "one"
             entry = project / ".agents/skills/orchestration/SKILL.md"
             first = entry.read_bytes()
             guidance = (framework_root() / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
+            guidance = guidance.replace(
+                "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+            )
             self.assertIn(guidance, first.decode("utf-8"))
             self.assertEqual(1, first.decode("utf-8").count(guidance))
             self.assertFalse((project / ".codex/config.toml").exists())
