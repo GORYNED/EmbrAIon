@@ -104,7 +104,7 @@ class OrchestrationTests(unittest.TestCase):
             ("parallelize", "independent writes", "serialize", "shared contracts"),
             ("fresh proportional validation", "project profiles", "pass", "fail", "skip", "infrastructure"),
             ("independent read-only reviewer", "completed substantial", "before final acceptance", "policy"),
-            ("material findings", "fresh proportional validation", "re-review"),
+            ("material findings", "fresh affected required checks", "re-review"),
             ("integrate", "final acceptance authority", "delivery responsibility"),
         ):
             with self.subTest(terms=terms):
@@ -130,6 +130,66 @@ class OrchestrationTests(unittest.TestCase):
                 self.assertIn("../agents/lead.yaml", text)
                 self.assertIn("../rules/review.md", text)
                 self.assertIn("final acceptance", text)
+
+    def test_review_lifecycle_projects_to_every_host_and_reviewer_profile(self) -> None:
+        host_paths = (
+            ("codex", ".agents/skills", ".codex/agents/reviewer.toml"),
+            ("copilot", ".github/skills", ".github/agents/reviewer.agent.md"),
+            ("claude-code", ".claude/skills", ".claude/agents/reviewer.md"),
+        )
+        for host, skill_path, reviewer_path in host_paths:
+            with self.subTest(host=host), tempfile.TemporaryDirectory() as temporary:
+                project = Path(temporary)
+                init_project(project, name="ReviewLifecycle")
+                install(host, project, components=["skills", "agents"])
+
+                orchestration = (
+                    project / skill_path / "orchestration/SKILL.md"
+                ).read_text(encoding="utf-8").lower()
+                lifecycle = orchestration.split("## review lifecycle and authority", 1)[1]
+                for phrase in (
+                    "every pull request", "substantial implementation",
+                    "trivial non-pr work", "impact-required tests and ci",
+                    "self-review the full cumulative diff and related code",
+                    "pending, missing, failing, stale, or unavailable required evidence",
+                    "different read-only agent", "same authorized host",
+                    "exact resolved model, effort, options, access, and effective settings",
+                    "capability is unavailable, block readiness",
+                    "freshly resolved re-review", "cosmetic or metadata changes",
+                    "current full pr source head sha", "reviewed base/diff",
+                    "reviewer confirmation does not authorize merge or release",
+                    "separate user approval", "optional github `--require-review` gate",
+                ):
+                    with self.subTest(host=host, phrase=phrase):
+                        self.assertIn(phrase, lifecycle)
+                self.assertLess(
+                    lifecycle.index("impact-required tests and ci"),
+                    lifecycle.index("self-review the full cumulative diff and related code"),
+                )
+                self.assertLess(
+                    lifecycle.index("self-review the full cumulative diff and related code"),
+                    lifecycle.index("resolve a fresh independent reviewer assignment"),
+                )
+                self.assertNotIn("(../../workflows/review.md)", lifecycle)
+
+                reviewer = (project / reviewer_path).read_text(encoding="utf-8").lower()
+                for phrase in (
+                    "author self-review before reviewing", "full cumulative diff",
+                    "current full pr source head sha", "reviewed base/diff",
+                    "later candidate content or commit change as invalidating confirmation",
+                    "do not implement fixes", "do not waive required checks",
+                    "do not review as the author or remediator", "read-only",
+                    "same authorized host", "merge or release authority",
+                ):
+                    with self.subTest(host=host, reviewer_phrase=phrase):
+                        self.assertIn(phrase, reviewer)
+                if host == "codex":
+                    profile = tomllib.loads((project / reviewer_path).read_text(encoding="utf-8"))
+                    self.assertEqual("read-only", profile["sandbox_mode"])
+                    install(host, project, components=["config"])
+                    root = self._config(project)["developer_instructions"].lower()
+                    self.assertIn("## review lifecycle and authority", root)
+                    self.assertIn("current full pr source head sha", root)
 
     def test_codex_host_projection_requires_preimplementation_specialist_dispatch(self) -> None:
         text = (framework_root() / "adapters/codex/orchestration.md").read_text(encoding="utf-8").lower()

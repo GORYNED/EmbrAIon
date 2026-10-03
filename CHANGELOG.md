@@ -4,6 +4,8 @@
 
 ## 0.19.0 - 2026-10-03
 
+- Make host-native independent review a reusable Core lifecycle for every PR: completed author self-review and required checks before dispatch, author remediation, and exact final PR-head confirmation by a different read-only Reviewer. Copilot Review is not a prerequisite; merge/release authorization stays separate.
+
 ### Added
 
 - Opt-in Claude startup scoped-agent projection derives complete native definitions from explicit project assignments, preserving model-neutral reusable roles and existing projection ownership protections.

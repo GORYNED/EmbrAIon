@@ -16,7 +16,11 @@
 
 ## Validation
 
-<!-- Commands, tests, checks, or evidence. -->
+<!-- Commands, tests, checks, or evidence. Tests and GitHub CI must pass before merge. -->
+
+## Independent review
+
+<!-- Record author self-review, independent reviewer, and exact final commit SHA explicitly confirmed by the reviewer. Any later change requires rereview. -->
 
 ## Security / privacy
 
@@ -33,7 +37,11 @@
 - [ ] Documentation was updated when public behavior or contracts changed.
 - [ ] No credentials, private keys, tokens, passwords, or sensitive personal data were added.
 - [ ] Compatibility and migration impact are described above.
-- [ ] I reviewed the contribution for generated or AI-assisted mistakes.
+- [ ] The author reviewed the full diff and related code.
+- [ ] A different read-only reviewer reviewed the diff, related code, contracts, and tests, then confirmed the exact final commit SHA.
+- [ ] Tests and GitHub CI passed after the final review fixes.
+- [ ] User merge or release approval is recorded; reviewer approval does not substitute for it.
+- [ ] Copilot Review was not requested or used as a gate.
 - [ ] I understand accepted pull requests are merged with **Squash merge**.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md), [SECURITY.md](../SECURITY.md), and [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md).

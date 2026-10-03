@@ -15,6 +15,8 @@ EmbrAIon uses versioned framework releases published from validated release comm
 
 ## Release gate
 
+Before an authorized release merge, complete author self-review, required tests/CI and the independent host-native Reviewer cycle. Reviewer explicitly confirms the current full source PR-head SHA after all fixes. Any later candidate change requires renewed confirmation. User merge and release authorization remain separate gates; Copilot Review is not required. The resulting squash commit has a new SHA and triggers the automated checks below.
+
 A release commit uses the exact message:
 
 ```text
