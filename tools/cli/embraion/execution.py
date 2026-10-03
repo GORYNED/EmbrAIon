@@ -84,6 +84,8 @@ def execute(
     The result and sink intentionally omit prompt/context bytes and credential values.
     """
     _validate(request, "execution-request.schema.json")
+    if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
+        raise RuntimeError("Critical task routing requires justification.")
     identities = [item["deployment"] for item in request["candidates"]]
     if len(identities) != len(set(identities)):
         raise RuntimeError("Execution candidate repeats a deployment.")
@@ -94,6 +96,7 @@ def execute(
             request["taskClass"], data_class=request["dataClass"], role=request["role"],
             access=request["access"], escalation=request.get("escalation"),
             justification=request.get("justification"), shape=request.get("shape"), project=root,
+            _emit_event=False,
         )
         expected_route = resolved["selected"]["route"]
         if request["routeClass"] != expected_route:
@@ -103,10 +106,22 @@ def execute(
         actual_ids = [item["deployment"] for item in request["candidates"]]
         if any(item not in allowed_ids for item in actual_ids) or actual_ids != [item for item in allowed_ids if item in actual_ids]:
             raise RuntimeError("Execution candidates do not follow the project effective route.")
-    elif request.get("escalation") or request.get("justification"):
+    elif request.get("escalation"):
         raise RuntimeError("Execution escalation requires a project task class.")
     registry = read_deployments_config(root)["deployments"]
     bindings = read_execution_config(root)["bindings"]
+    if request["routeClass"] == "critical":
+        from .runtime import _append_event
+        # Retain the reason even for direct stdin requests. This records an
+        # execution request, not a selected/started/successful adapter attempt.
+        # The common event writer redacts credentials before persistence.
+        _append_event(root, {
+            "event": "critical-execution-requested",
+            "run-id": request["runId"], "work-item-id": request["workItemId"],
+            "task-id": request["taskId"], "host": request["host"],
+            "role": request["role"], "route": request["routeClass"],
+            "data-class": request["dataClass"], "justification": request["justification"],
+        })
     adapter_map = adapters or {}
     credential_resolver = resolver or EnvironmentResolver()
     attempts: list[dict[str, Any]] = []

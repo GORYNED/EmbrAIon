@@ -89,6 +89,7 @@ def start_run(
     context_id: str | None = None,
     substantial: bool = False,
     project: Path | None = None,
+    justification: str | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     if access == "write" and not owned_paths:
@@ -106,7 +107,9 @@ def start_run(
         route_class,
         data_class,
         role=role,
+        access=access,
         project=root,
+        justification=justification,
     )
     now = datetime.now(timezone.utc).isoformat()
     record = redact_value(
@@ -123,6 +126,7 @@ def start_run(
                 "effort": selected.get("effort"),
                 "options": selected.get("options") or {},
                 "data-class": data_class,
+                **({"justification": justification} if route_class == "critical" else {}),
             },
             "access": access,
             "owned-paths": owned_paths,

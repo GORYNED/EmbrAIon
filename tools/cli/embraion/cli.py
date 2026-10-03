@@ -472,10 +472,10 @@ def _cmd_route(args: argparse.Namespace) -> int:
     else:
         if not args.host or not args.route_class:
             raise RuntimeError("Route requires --host and --route-class, or --task-class.")
-        if args.escalation or args.justification or args.shape:
+        if args.escalation or args.shape:
             raise RuntimeError("Escalation and shape require --task-class.")
         _print_json(route(args.host, args.route_class, args.data or "PRIVATE", role=args.role,
-                          access=args.access))
+                          access=args.access, justification=args.justification))
     return 0
 
 
@@ -489,7 +489,9 @@ def _cmd_dispatch(args: argparse.Namespace) -> int:
         args.access,
         args.owned_path or [],
         native_surface=args.native_surface,
+        native_agent=args.native_agent,
         task_class=args.task_class,
+        justification=args.justification,
         verified_native_fields=args.verified_native_field,
     )
     _print_json(record)
@@ -619,6 +621,7 @@ def _cmd_run_start(args: argparse.Namespace) -> int:
             args.owned_path or [],
             context_id=args.context_id,
             substantial=args.substantial,
+            justification=args.justification,
         )
     )
     return 0
@@ -1600,7 +1603,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dispatch.add_argument("--owned-path", action="append")
     dispatch.add_argument("--task-class", help="Resolve the selected project task-class candidate before preparing dispatch.")
+    dispatch.add_argument("--justification", help="Reason required when dispatch selects a critical route.")
     dispatch.add_argument("--native-surface", help="Prepare native arguments/definition overrides; this never executes a host.")
+    dispatch.add_argument("--native-agent", help="Native agent definition to prepare, independent of the routing role.")
     dispatch.add_argument("--verified-native-field", action="append", help="Conditional field observed in the installed native schema; retain evidence before invocation.")
     dispatch.set_defaults(func=_cmd_dispatch)
 
@@ -1682,6 +1687,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_start.add_argument("--owned-path", action="append")
     run_start.add_argument("--context-id")
     run_start.add_argument("--substantial", action="store_true")
+    run_start.add_argument("--justification", help="Reason required for a critical run; retained in redacted evidence.")
     run_start.set_defaults(func=_cmd_run_start)
 
     run_complete = run_sub.add_parser("complete", help="Complete an execution evidence record")

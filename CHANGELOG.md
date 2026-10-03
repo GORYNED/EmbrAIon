@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.18.0 - 2026-10-03
+
+### Fixed
+
+- Claude skills install an owned, unconditional orchestration entry rule without replacing user `CLAUDE.md` imports or unrelated skills.
+- Claude native plans preserve full model IDs and effort in complete scoped definitions, retain specialist permissions, and separate project routing roles from native agent identities. Loading and effective settings still require host evidence.
+- Claude native names use bounded machine IDs rather than display titles containing spaces or slashes; regenerate profiles and use the emitted identity when upgrading.
+- Harness readiness checks required projection files and reports missing paths; it explicitly leaves instruction loading, runtime settings, and execution unverified.
+
+### Changed
+
+- Every selected critical route now requires a nonblank justification, including direct route, dispatch, run start, and execution requests. Existing critical callers must provide their reason. Optional escalation inspection and configuration validation do not count as selected execution routes.
+
+### Added
+
+- An opt-in Claude Mods capability probe registers one reviewed scoped definition on request and observes native routing evidence. It is never installed automatically; mock tests do not establish live host support.
+
 ## 0.17.1 - 2026-09-30
 
 ### Fixed

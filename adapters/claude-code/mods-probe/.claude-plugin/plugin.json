@@ -1,0 +1,5 @@
+{
+  "name": "embraion-mods-probe",
+  "version": "0.1.0",
+  "description": "Opt-in Claude Mods probe for scoped EmbrAIon agent registration and native routing evidence."
+}

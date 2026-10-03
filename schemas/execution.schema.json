@@ -70,12 +70,17 @@
         "resolution": {
           "enum": [
             "host-default",
-            "project-override"
+            "project-override",
+            "project-deployment"
           ]
         },
         "options": {
           "type": "object",
           "additionalProperties": true
+        },
+        "justification": {
+          "type": "string",
+          "pattern": "\\S"
         }
       },
       "additionalProperties": false
@@ -138,6 +143,9 @@
             "type": "string"
           },
           "status": {
+            "type": "string"
+          },
+          "evidence-id": {
             "type": "string"
           }
         },

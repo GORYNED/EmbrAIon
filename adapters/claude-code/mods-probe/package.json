@@ -1,0 +1,6 @@
+{
+  "name": "embraion-mods-probe",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=18"}
+}
