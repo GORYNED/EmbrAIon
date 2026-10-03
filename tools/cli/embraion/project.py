@@ -595,6 +595,14 @@ def _agent_instructions(agent: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
+def _projected_orchestration_guidance(root: Path, host: str) -> str:
+    guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
+    # Both projection paths embed the canonical contract in the same content.
+    return guidance.replace(
+        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+    )
+
+
 def _generate_codex(
     root: Path,
     output: Path,
@@ -606,7 +614,7 @@ def _generate_codex(
     if "config" in components:
         target.mkdir(parents=True, exist_ok=True)
         lead = next(agent for agent in load_agents(root) if agent["id"] == "lead")
-        instructions = (root / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
+        instructions = _projected_orchestration_guidance(root, "codex")
         contract = (root / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         instructions += "\n\n" + contract
         instructions += "\n\n" + _agent_instructions(lead)
@@ -731,12 +739,7 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
         entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     _append_lead_skill(root, target)
     entry = target / "orchestration/SKILL.md"
-    guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
-    # The canonical contract is embedded above; the adapter's source-relative
-    # link does not exist in an installed consumer projection.
-    guidance = guidance.replace(
-        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
-    )
+    guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
     if host == "claude-code":

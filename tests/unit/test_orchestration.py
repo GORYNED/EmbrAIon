@@ -35,6 +35,14 @@ class OrchestrationTests(unittest.TestCase):
                     "[canonical orchestration skill](#assignment-routing-contract)", content
                 )
                 self.assertNotIn("(../../core/skills/orchestration/SKILL.md)", content)
+                if host == "codex":
+                    install(host, project, components=["config"])
+                    instructions = self._config(project)["developer_instructions"]
+                    self.assertIn("## Assignment routing contract", instructions)
+                    self.assertIn(
+                        "[canonical orchestration skill](#assignment-routing-contract)", instructions
+                    )
+                    self.assertNotIn("(../../core/skills/orchestration/SKILL.md)", instructions)
 
     def _lead(self) -> dict:
         return read_yaml(framework_root() / "core/agents/lead.yaml")
