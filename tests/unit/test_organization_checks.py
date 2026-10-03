@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+import traceback
 import unittest
 from pathlib import Path
 
@@ -136,6 +137,29 @@ class OrganizationTests(unittest.TestCase):
         self.assertEqual("skipped", check_organization(self.root)["status"])
         with self.assertRaisesRegex(RuntimeError, "Git operation failed"):
             check_organization(self.root, base_ref="missing-branch")
+
+    def test_invalid_yaml_does_not_expose_values(self) -> None:
+        secret = "fixture-credential-canary-7392"
+        self.write(".embraion/organization.yaml", "namespaces: [\n  credential: " + secret + "\n")
+        with self.assertRaisesRegex(RuntimeError, "Invalid organization configuration YAML") as caught:
+            check_organization(self.root)
+        self.assertNotIn(secret, "".join(traceback.format_exception(caught.exception)))
+
+    def test_schema_error_reports_location_without_values(self) -> None:
+        secret = "fixture-credential-canary-7392"
+        self.config({"namespaces": {"rules": [{"path": "Assets", "namespace": secret}]}})
+        with self.assertRaisesRegex(RuntimeError, "at namespaces.rules.0.namespace") as caught:
+            check_organization(self.root)
+        self.assertNotIn(secret, "".join(traceback.format_exception(caught.exception)))
+
+    def test_symlinked_configuration_parent_is_rejected(self) -> None:
+        self.write("settings/organization.yaml", "namespaces:\n  rules: []\n")
+        try:
+            (self.root / ".embraion").symlink_to(self.root / "settings", target_is_directory=True)
+        except OSError:
+            self.skipTest("symlinks unavailable")
+        with self.assertRaisesRegex(RuntimeError, "symbolic link"):
+            check_organization(self.root)
 
 
 if __name__ == "__main__":

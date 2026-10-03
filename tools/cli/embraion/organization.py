@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from jsonschema import Draft202012Validator
+import yaml
 
 from .common import framework_root, project_root, read_json, read_yaml
 
@@ -58,19 +59,34 @@ def _selected(path: str, config: dict[str, Any]) -> bool:
 
 
 def _read_config(root: Path, path: Path) -> dict[str, Any] | None:
-    if path.is_symlink():
-        raise RuntimeError(f"Organization configuration must not be a symlink: {path}")
-    if not path.exists():
-        return None
-    if not path.is_file() or path.stat().st_size > MAX_BYTES:
-        raise RuntimeError(f"Invalid organization configuration file: {path}")
-    data = read_yaml(path)
+    relative = path.relative_to(root)
+    if not relative.parts or ".." in relative.parts:
+        raise RuntimeError("Organization configuration path escapes project root")
+    current = root
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise RuntimeError("Organization configuration path contains a symbolic link")
+    try:
+        if not path.exists():
+            return None
+        if not path.is_file() or path.stat().st_size > MAX_BYTES:
+            raise RuntimeError("Invalid organization configuration file")
+        data = read_yaml(path)
+    except (OSError, UnicodeError, yaml.YAMLError):
+        raise RuntimeError("Invalid organization configuration YAML") from None
     schema = read_json(framework_root() / "schemas" / "organization.schema.json")
     errors = sorted(Draft202012Validator(schema).iter_errors(data), key=lambda e: str(e.absolute_path))
     if errors:
         error = errors[0]
-        at = ".".join(map(str, error.absolute_path)) or "<root>"
-        raise RuntimeError(f"Invalid .embraion/organization.yaml at {at}: {error.message}")
+        known = {"exclude", "namespaces", "assemblies", "unity_meta", "enabled",
+                 "rules", "path", "namespace", "require_declaration", "exceptions",
+                 "allow_missing", "roots", "path_rules", "layer", "allowed_edges",
+                 "from", "to", "enforce_platforms", "require_for_extensions",
+                 "check_move_identity"}
+        at = ".".join(str(part) if isinstance(part, int) or part in known else "<key>"
+                      for part in error.absolute_path) or "<root>"
+        raise RuntimeError(f"Invalid .embraion/organization.yaml at {at}")
     # JSON Schema deliberately limits path syntax; this also catches duplicate path
     # rules, which are ambiguous even when they contain identical values.
     for section, key in (("namespaces", "rules"), ("assemblies", "path_rules")):
