@@ -82,6 +82,7 @@ test('rejects a different model before spawn and missing effort before the model
   const denied = await h.spawn({ subagentType: target, model: 'claude-other', fork: false })
   assert.match(denied.deny, /exact model/)
   assert.equal(h.calls.spawnNext, 0)
+  assert.equal(JSON.parse((await h.command('status')).text).routeEvidence, 'mismatch')
   await h.spawn({ subagentType: target, fork: false })
   const blocked = await h.step({ agentId: 'agent-1', model: definition.model, turnId: 'turn-1', index: 0, messageCount: 1 })
   assert.equal(blocked.chunks.length, 0)

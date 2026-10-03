@@ -137,6 +137,17 @@ class NativeAssignmentTests(unittest.TestCase):
             names.append(name)
         self.assertNotEqual(*names)
 
+    def test_scoped_definition_schema_rejects_unusable_native_fields(self):
+        plan = self.plan(self.selected("claude-code"), "claude-agent")
+        for field, value in (("name", "Video/CV"), ("name", "space name"),
+                             ("description", ""), ("description", "  "),
+                             ("tools", []), ("tools", [""]), ("tools", ["  "]),
+                             ("effort", "unknown")):
+            with self.subTest(field=field, value=value):
+                malformed = {**plan, "scoped-definition": {**plan["scoped-definition"], field: value}}
+                with self.assertRaises(jsonschema.ValidationError):
+                    jsonschema.validate(malformed, self.schema)
+
     def test_vscode_effort_requires_the_exact_verified_native_field(self):
         selected = self.selected("copilot")
         self.blocked(self.plan(selected, "copilot-vscode", verified_native_fields=["reasoningEffort"]))

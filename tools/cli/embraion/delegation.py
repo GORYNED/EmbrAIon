@@ -118,6 +118,8 @@ def prepare_native_assignment(
                       if item["id"] == identity and identity != "lead"), None)
         if agent is None:
             return block("No native specialist definition for this routing role; select an explicit native-agent binding.")
+        if not agent.get("purpose", "").strip():
+            return block("The native specialist requires a nonblank description.")
         agent = dict(agent)
         read_access = {"inspect", "plan", "review", "external-read", "read-only"}
         narrower_access = access in read_access and agent.get("access") != "read-only"

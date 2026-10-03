@@ -16,6 +16,6 @@ In that interactive session, run `/embraion-probe load <local-plan.json>`, using
 
 The published Mods declaration notes that a plugin's own `$.agent.spawn` can bypass its own hooks. This probe deliberately has no such call. It observes native model-origin Agent invocations. It does not establish project privacy classification, effective file permissions, tool availability, or a successful completed assignment. Those remain required checks under EmbrAIon's routing contract. Claude Mods is early access, and this plugin must be tested against the installed build before relying on its status.
 
-Local mock checks: `node --test adapters/claude-code/mods-probe/hooks/register.test.mjs`. In a live build, use `claude plugin test adapters/claude-code/mods-probe` if supported and inspect the installed `/plugin-types` declaration. The source was prepared against Anthropic's published `mods/types/claude-code.d.ts` from Claude Code 2.1.277 and the published Mods guide; this workspace has no `claude` executable, so live loading and execution remain unverified.
+Local mock checks (Node 18 or newer): `node adapters/claude-code/mods-probe/hooks/register.test.mjs`. In a live build, use `claude plugin test adapters/claude-code/mods-probe` if supported and inspect the installed `/plugin-types` declaration. The source was prepared against Anthropic's published `mods/types/claude-code.d.ts` from Claude Code 2.1.277 and the published Mods guide; this workspace has no `claude` executable, so live loading and execution remain unverified.
 
-<sub>Last updated: 2026-10-03 00:52 UTC</sub>
+<sub>Last updated: 2026-10-03 01:04 UTC</sub>

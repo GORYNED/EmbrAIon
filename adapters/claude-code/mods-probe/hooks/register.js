@@ -28,10 +28,10 @@ export function validatePlan(plan) {
   }
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(definition.name) ||
       plan.arguments.subagent_type !== definition.name ||
-      typeof definition.description !== 'string' || !definition.description ||
-      typeof definition.prompt !== 'string' || !definition.prompt ||
+      typeof definition.description !== 'string' || !definition.description.trim() ||
+      typeof definition.prompt !== 'string' || !definition.prompt.trim() ||
       !Array.isArray(definition.tools) || !definition.tools.length ||
-      !definition.tools.every(tool => typeof tool === 'string' && !!tool)) {
+      !definition.tools.every(tool => typeof tool === 'string' && !!tool.trim())) {
     throw Error('Scoped definition does not match the planned native agent type')
   }
   if (!VERSIONED_MODEL.test(definition.model) || definition.model !== overrides.model) {
@@ -71,7 +71,7 @@ export const register = on => {
     if ((event.kind === 'spawn-model-mismatch' || event.kind === 'response-model-mismatch') && event.agentId) {
       blockedIds.add(event.agentId)
     }
-    if (event.kind === 'registration-mismatch' || event.kind === 'spawn-model-mismatch' ||
+    if (event.kind === 'registration-mismatch' || event.kind === 'spawn-model-mismatch' || event.kind === 'spawn-blocked' ||
         event.kind === 'step-blocked' || event.kind === 'response-model-mismatch') mismatch = true
     events.push(event)
     if (events.length > 20) events.shift()
