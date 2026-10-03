@@ -55,7 +55,12 @@ class EngineeringSkillTests(unittest.TestCase):
                     self.assertEqual("conditional", matches[0]["load"])
                     self.assertEqual(f"skills/{skill_id}", matches[0]["path"])
                     projected = generated / "codex/.agents/skills" / skill_id / "SKILL.md"
-                    self.assertEqual(source.read_bytes(), projected.read_bytes())
+                    projected_bytes = projected.read_bytes()
+                    self.assertEqual(
+                        source.read_text(encoding="utf-8").encode("utf-8"),
+                        projected_bytes,
+                    )
+                    self.assertNotIn(b"\r\n", projected_bytes)
 
             for skill_id in UNITY_IDS:
                 self.assertFalse((generated / "codex/.agents/skills" / skill_id).exists())
