@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from embraion.claude_hooks import COMMAND, HOOKS, install_observer_hooks, observer_hooks_status
+from embraion.claude_hooks import COMMAND, HOOKS, hook_project, install_observer_hooks, observer_hooks_status
 from embraion.claude_native import observer_status
 from embraion.cli import main
 from embraion.common import write_json, write_yaml
@@ -102,6 +102,46 @@ class ClaudeHookInstallationTests(unittest.TestCase):
             self.assertEqual(0, main(["claude-native", "guard"]))
         self.assertNotIn("do-not-echo", stdout.getvalue() + stderr.getvalue())
         self.assertEqual("deny", json.loads(stdout.getvalue())["hookSpecificOutput"]["permissionDecision"])
+
+    def test_same_version_artifact_identity_and_runtime_origin_are_required(self):
+        import os
+        from embraion import __version__
+        from embraion.common import framework_root, read_yaml
+
+        manifest = self.project / ".embraion/project.yaml"
+        data = read_yaml(manifest)
+        artifact = {"schema": 1, "source": "github-release", "release": "v" + __version__,
+                    "asset": "embraion-" + __version__ + "-py3-none-any.whl", "digest": "sha256:" + "a" * 64}
+        data["framework"]["artifact"] = artifact
+        write_yaml(manifest, data)
+        payload = {"cwd": str(self.project)}
+        # A standalone same-version distribution is not a digest-bound runtime.
+        with self.assertRaisesRegex(RuntimeError, "artifact"):
+            hook_project(payload)
+        runtime = self.project / "runtime-fixture"
+        python = runtime / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        python.parent.mkdir(parents=True)
+        python.touch()
+        active_framework = framework_root()
+        marker = {"version": __version__, "framework-root": str(active_framework),
+                  "artifact": {"repository": "GORYNED/EmbrAIon", "version": __version__, **artifact}}
+        write_json(runtime / ".embraion-runtime.json", marker)
+        with patch("sys.prefix", str(runtime)):
+            self.assertEqual(self.project.resolve(), hook_project(payload))
+            data["framework"]["artifact"]["digest"] = "sha256:" + "b" * 64
+            write_yaml(manifest, data)
+            with self.assertRaisesRegex(RuntimeError, "artifact"):
+                hook_project(payload)
+            data["framework"]["artifact"] = "malformed"
+            write_yaml(manifest, data)
+            with self.assertRaises(RuntimeError):
+                hook_project(payload)
+            data["framework"]["artifact"] = {**artifact, "digest": "sha256:" + "a" * 64}
+            write_yaml(manifest, data)
+            marker["framework-root"] = str(self.project)
+            write_json(runtime / ".embraion-runtime.json", marker)
+            with self.assertRaisesRegex(RuntimeError, "artifact"):
+                hook_project(payload)
 
 
 if __name__ == "__main__":

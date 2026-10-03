@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.19.1 - 2026-10-03
+
+### Fixed
+
+- Claude guard and observer use the hook event working directory to select policy and evidence storage, so desktop commands launched from the main checkout correctly target the active worktree. Relative tool paths use the event working directory while protected policy remains rooted in its worktree. Invalid event context or a different worktree runtime version or artifact identity fails closed instead of falling back to main. Legacy events without a working directory retain their existing behavior.
+
 ## 0.19.0 - 2026-10-03
 
 - Make host-native independent review a reusable Core lifecycle for every PR: completed author self-review and required checks before dispatch, author remediation, and exact final PR-head confirmation by a different read-only Reviewer. Copilot Review is not a prerequisite; merge/release authorization stays separate.

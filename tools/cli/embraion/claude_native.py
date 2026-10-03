@@ -259,9 +259,14 @@ def _unlock_fd(fd: int) -> None:
 
 def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
     """Record only bounded native identity and effort metadata from a hook."""
-    root = project_root(project)
     if not isinstance(payload, dict) or payload.get("hook_event_name") not in _HOOK_EVENTS:
         return {"status": "ignored", "reason": "unsupported-event"}
+    from .claude_hooks import hook_project
+
+    try:
+        root = hook_project(payload, project)
+    except (OSError, ValueError, RuntimeError):
+        return {"status": "unverified", "reason": "invalid-hook-project"}
     agent_id, agent_type = payload.get("agent_id"), payload.get("agent_type")
     session_id = payload.get("session_id")
     if not all(isinstance(value, str) and _SAFE_ID.fullmatch(value)

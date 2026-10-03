@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from .claude_native import _SAFE_ID, _installation, observer_status, read_config
-from .common import project_root
 from .policy import effective_policy, path_matches
 from .project import _projection_target
 
@@ -43,12 +42,13 @@ def _deny(reason: str) -> dict[str, Any]:
                                    "permissionDecisionReason": reason}}
 
 
-def _relative_path(root: Path, raw: Any) -> str | None:
+def _relative_path(root: Path, raw: Any, *, cwd: Path | None = None) -> str | None:
     if not isinstance(raw, str) or not raw.strip() or "\x00" in raw:
         return None
     path = Path(raw)
     try:
-        relative = path.relative_to(root) if path.is_absolute() else path
+        target_path = path if path.is_absolute() else (cwd or root) / path
+        relative = target_path.relative_to(root)
         target = _projection_target(root, relative.as_posix())
         return target.relative_to(root).as_posix()
     except (OSError, ValueError, RuntimeError):
@@ -81,11 +81,11 @@ def _overlaps_protected(scope: str, patterns: list[str], root: Path) -> bool:
     return False
 
 
-def _search_scope(tool: str, inputs: dict[str, Any], root: Path) -> str | None:
+def _search_scope(tool: str, inputs: dict[str, Any], root: Path, *, cwd: Path | None = None) -> str | None:
     raw_path = inputs.get("path", ".")
     if isinstance(raw_path, str) and any(marker in raw_path for marker in _GLOB_MARKERS):
         return None
-    scope = _relative_path(root, raw_path)
+    scope = _relative_path(root, raw_path, cwd=cwd)
     if scope is None:
         return None
     if tool == "Grep":
@@ -132,9 +132,15 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
     if tool not in _READ_TOOLS | _LAUNCH_TOOLS:
         return {}
     inputs = payload.get("tool_input")
-    root = project_root(project)
     agent_type = payload.get("agent_type")
     agent_id = payload.get("agent_id")
+    from .claude_hooks import hook_project
+
+    try:
+        root = hook_project(payload, project)
+        cwd = Path(payload["cwd"]).resolve() if "cwd" in payload else root
+    except (OSError, ValueError, RuntimeError):
+        return _deny("Scoped hook project context is unavailable or mismatched.")
 
     try:
         config = read_config(root)
@@ -183,7 +189,7 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
     if patterns is None:
         return _deny("Protected project policy is unavailable.")
     if tool == "Read":
-        relative = _relative_path(root, inputs.get("file_path"))
+        relative = _relative_path(root, inputs.get("file_path"), cwd=cwd)
         if relative is None:
             return _deny("Scoped read must stay within the project boundary.")
         try:
@@ -192,7 +198,7 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
         except RuntimeError:
             return _deny("Protected project policy is unavailable.")
         return {}
-    scope = _search_scope(tool, inputs, root)
+    scope = _search_scope(tool, inputs, root, cwd=cwd)
     if scope is None:
         return _deny("Scoped search has an ambiguous project scope.")
     if _overlaps_protected(scope, patterns, root):

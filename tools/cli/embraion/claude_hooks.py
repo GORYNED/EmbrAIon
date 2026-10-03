@@ -27,6 +27,47 @@ HOOKS = {
 }
 
 
+def hook_project(payload: Any, project: Path | None = None) -> Path:
+    """Use the event's working tree, never the hook process's launch folder.
+
+    Legacy payloads without cwd retain explicit-project/process-cwd behavior.
+    A present but invalid cwd never falls back to another project's policy.
+    """
+    if not isinstance(payload, dict) or "cwd" not in payload:
+        return project_root(project)
+    raw = payload["cwd"]
+    if not isinstance(raw, str) or not raw or len(raw) > 32768 or "\x00" in raw:
+        raise RuntimeError("Invalid Claude hook project context.")
+    start = Path(raw)
+    if not start.is_absolute() or not start.is_dir():
+        raise RuntimeError("Invalid Claude hook project context.")
+    root = project_root(start)
+    manifest = _projection_target(root, ".embraion/project.yaml")
+    if not manifest.is_file() or (project is not None and root != project_root(project)):
+        raise RuntimeError("Invalid Claude hook project context.")
+    # A launcher can have selected its runtime from the process cwd before it
+    # reads stdin. Never apply that runtime to a differently pinned worktree.
+    from . import __version__
+    from .versioning import _load_cached_runtime, package_version_for_pin, read_project_pin
+    from .artifacts import read_project_artifact_lock
+    from .common import framework_root
+    import sys
+    import yaml
+
+    try:
+        pin = package_version_for_pin(read_project_pin(manifest))
+        lock = read_project_artifact_lock(manifest, required=False)
+    except (yaml.YAMLError, AttributeError, TypeError):
+        raise RuntimeError("Invalid Claude hook project context.") from None
+    if pin != package_version_for_pin(__version__):
+        raise RuntimeError("Claude hook runtime does not match the working-tree pin.")
+    if lock is not None:
+        runtime = _load_cached_runtime(Path(sys.prefix), pin, artifact_lock=lock)
+        if runtime is None or runtime.framework_root != framework_root():
+            raise RuntimeError("Claude hook runtime does not match the working-tree artifact.")
+    return root
+
+
 def install_observer_hooks(project: Path | None = None, *, dry_run: bool = False) -> dict[str, Any]:
     """Merge only our exact hook entries; never replace other host settings."""
     from .claude_native import observer_status

@@ -133,3 +133,5 @@ The optional [Mods probe](https://github.com/GORYNED/EmbrAIon/tree/main/adapters
 ## Further configuration
 
 See [Configure with Your AI Client](../configuration/ai-hosts.md) for conversational routing/configuration examples, and [Adopt an Existing Repository](../getting-started/existing-repository.md) for selective adoption.
+
+Hook events that include `cwd` select that working tree for policy checks and metadata storage, even when the desktop launches the hook command from the main checkout. Relative read/search paths are interpreted from the event directory, including nested directories; policy stays rooted in the working tree. Run `claude-native status` in that same working tree. Invalid event paths or a working-tree version or artifact lock that differs from the active cached runtime are rejected; legacy events without `cwd` retain process-directory behavior. Metadata remains advisory and does not prove effective model or effort.
