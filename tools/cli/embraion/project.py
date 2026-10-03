@@ -27,6 +27,7 @@ from .common import (
     write_yaml,
 )
 from .codex_config import merge_codex_config, orchestration_block
+from .capabilities import projected_skills
 from .policy import read_agents_config
 from .versioning import ensure_cached_runtime
 
@@ -731,7 +732,19 @@ def _generate_markdown_agents(
         )
 
 
-def _generate_host_skills(root: Path, output: Path, host: str) -> None:
+def _copy_selected_builtin_skills(root: Path, project: Path | None, host: str, target: Path) -> None:
+    if project is None:
+        return
+    for name, source in projected_skills(root, project, host).items():
+        destination = target / name
+        if destination.exists() or destination.is_symlink():
+            raise RuntimeError(f"Selected built-in skill collides with an existing skill: {name}")
+        shutil.copytree(source, destination)
+        entry = destination / "SKILL.md"
+        entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+
+
+def _generate_host_skills(root: Path, output: Path, host: str, project: Path | None = None) -> None:
     relative = HOST_SKILL_DIRECTORIES.get(host)
     if relative is None:
         raise RuntimeError(f"Host '{host}' has no routing-authority skill projection.")
@@ -752,6 +765,7 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
     guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
+    _copy_selected_builtin_skills(root, project, host, target)
     if host == "claude-code":
         # A skill description is conditional discovery, not a startup contract.
         # Keep this small entry point owned alongside the skill it activates.
@@ -814,7 +828,7 @@ def _generate_claude_scoped_agents(output: Path, project: Path | None) -> None:
     write_json(output / ".claude" / "embraion-native.json", projection_metadata(assignments))
 
 
-def _generate_portable(root: Path, output: Path) -> None:
+def _generate_portable(root: Path, output: Path, project: Path | None = None) -> None:
     target = output / "embraion"
     target.mkdir(parents=True, exist_ok=True)
 
@@ -831,6 +845,7 @@ def _generate_portable(root: Path, output: Path) -> None:
     shutil.copy2(root / "core/catalog.yaml", target / "catalog.yaml")
     shutil.copytree(root / "core/skills", target / "skills", dirs_exist_ok=True)
     _append_lead_skill(root, target / "skills")
+    _copy_selected_builtin_skills(root, project, "portable", target / "skills")
     for directory in ("agents", "workflows", "rules", "knowledge"):
         shutil.copytree(root / "core" / directory, target / directory, dirs_exist_ok=True)
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
@@ -849,22 +864,22 @@ def generate_host(
     if host == "codex":
         _generate_codex(root, output, selected, project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
     elif host == "copilot":
         if "agents" in selected:
             _generate_markdown_agents(root, output, "copilot", project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
     elif host == "claude-code":
         if "agents" in selected:
             _generate_markdown_agents(root, output, "claude-code", project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
         if "scoped-agents" in selected:
             _generate_claude_scoped_agents(output, project)
     elif host == "portable":
         if "bundle" in selected:
-            _generate_portable(root, output)
+            _generate_portable(root, output, project)
     else:
         raise RuntimeError(f"Unsupported host: {host}")
 

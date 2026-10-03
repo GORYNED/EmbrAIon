@@ -217,7 +217,7 @@ def diagnose_external_capabilities(framework_root: Path, project: Path, host: st
                                    environ: Mapping[str, str] | None = None,
                                    now: datetime | None = None) -> dict[str, Any]:
     """Inspect local metadata and label supplied host claims as self-reported."""
-    if host not in {"codex", "claude-code", "copilot"}:
+    if host not in {"codex", "claude-code", "copilot", "portable"}:
         raise RuntimeError("Unsupported capability host.")
     at = now or datetime.now(timezone.utc)
     if at.tzinfo is None:

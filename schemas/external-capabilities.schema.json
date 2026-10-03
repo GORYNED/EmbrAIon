@@ -25,11 +25,11 @@
         "license": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-.+ ]*$", "maxLength": 100},
         "hosts": {
           "type": "array", "minItems": 1, "uniqueItems": true,
-          "items": {"enum": ["codex", "claude-code", "copilot"]}
+          "items": {"enum": ["codex", "claude-code", "copilot", "portable"]}
         },
         "host-requirements": {
           "type": "object",
-          "propertyNames": {"enum": ["codex", "claude-code", "copilot"]},
+          "propertyNames": {"enum": ["codex", "claude-code", "copilot", "portable"]},
           "additionalProperties": {
             "type": "array", "uniqueItems": true,
             "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", "maxLength": 80}
