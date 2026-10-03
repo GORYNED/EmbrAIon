@@ -357,12 +357,13 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
 
             for optional_name, optional_schema in optional_project_schemas.items():
                 optional_manifest = manifest.parent / optional_name
+                optional_relative = optional_manifest.relative_to(root).as_posix()
                 if optional_manifest.is_symlink():
-                    add("project-schema", str(optional_manifest.relative_to(root)), "Optional configuration must not be a symbolic link")
+                    add("project-schema", optional_relative, "Optional configuration must not be a symbolic link")
                     continue
                 if optional_manifest.is_file():
                     if not optional_schema.is_file():
-                        add("project-schema", str(optional_manifest.relative_to(root)), "Missing optional configuration schema")
+                        add("project-schema", optional_relative, "Missing optional configuration schema")
                         continue
                     try:
                         optional_data = (read_json(optional_manifest) if optional_name.endswith(".json")
@@ -370,12 +371,12 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                         messages = _schema_errors(optional_data, optional_schema)
                         if optional_name == "external-capabilities.yaml" and messages:
                             # Schema messages may contain user-supplied credential values.
-                            add("project-schema", str(optional_manifest.relative_to(root)), "Invalid external capability metadata")
+                            add("project-schema", optional_relative, "Invalid external capability metadata")
                         else:
                             for message in messages:
-                                add("project-schema", str(optional_manifest.relative_to(root)), message)
+                                add("project-schema", optional_relative, message)
                     except Exception:
-                        add("project-schema", str(optional_manifest.relative_to(root)), "Invalid optional configuration")
+                        add("project-schema", optional_relative, "Invalid optional configuration")
 
             policy_manifest = manifest.parent / "policy.yaml"
             if not policy_manifest.is_file():
@@ -533,14 +534,15 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
 
     skill_eval_schema = root / "schemas/skill-eval.schema.json"
     for path in sorted((root / "evals/skills").glob("*.json")):
+        relative = path.relative_to(root).as_posix()
         if not skill_eval_schema.is_file():
-            add("skill-eval-schema", str(path.relative_to(root)), "Missing skill evaluation schema")
+            add("skill-eval-schema", relative, "Missing skill evaluation schema")
             continue
         try:
             for message in _schema_errors(read_json(path), skill_eval_schema):
-                add("skill-eval-schema", str(path.relative_to(root)), message)
+                add("skill-eval-schema", relative, message)
         except Exception:
-            add("skill-eval-schema", str(path.relative_to(root)), "Invalid skill evaluation JSON")
+            add("skill-eval-schema", relative, "Invalid skill evaluation JSON")
 
     for code, path, message in _unity_extension_issues(root, current_framework_version):
         add(code, path, message)
