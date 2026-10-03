@@ -718,7 +718,9 @@ def _generate_markdown_agents(
                 "",
             ]
         )
-        (target / f"{agent['id']}{suffix}").write_text("\n".join(lines), encoding="utf-8")
+        (target / f"{agent['id']}{suffix}").write_text(
+            "\n".join(lines), encoding="utf-8", newline="\n"
+        )
 
 
 def _generate_host_skills(root: Path, output: Path, host: str) -> None:

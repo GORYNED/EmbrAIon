@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.18.2 - 2026-10-03
+
+### Fixed
+
+- Generate Claude and Copilot agent profiles with LF on every platform. Windows projection verification now accepts unchanged LF checkouts while preserving conflict protection for actual local edits.
+
 ## 0.18.1 - 2026-10-03
 
 ### Fixed
