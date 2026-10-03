@@ -260,7 +260,24 @@ def _load_suite(path: Path) -> dict[str, Any]:
 
 def _check_output_destination(output: Path, suite: Path, source_dirs: list[Path]) -> None:
     destination = output.absolute()
-    for component in (destination, *destination.parents):
+    owners = (suite.parent, framework_root(), Path.cwd(), Path(tempfile.gettempdir()))
+    ancestors = tuple(reversed(destination.parents))
+    literal_boundaries = [owner.absolute() for owner in owners if owner.absolute() in ancestors]
+    owner_boundaries: list[Path] = []
+    for owner in owners:
+        canonical_owner = owner.resolve()
+        for ancestor in ancestors:
+            if ancestor.resolve() == canonical_owner:
+                owner_boundaries.append(ancestor)
+                break
+    candidates = literal_boundaries or owner_boundaries
+    boundary = max(candidates, key=lambda path: len(path.parts), default=destination.parent)
+    components = []
+    current = destination
+    while current != boundary:
+        components.append(current)
+        current = current.parent
+    for component in components:
         if component.is_symlink():
             raise ValueError("skill evaluation output path contains a symlink")
     resolved = destination.resolve()

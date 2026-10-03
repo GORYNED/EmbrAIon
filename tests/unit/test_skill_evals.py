@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from embraion.common import framework_root
-from embraion.skill_evals import MAX_SUITE_BYTES, _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
+from embraion.skill_evals import MAX_SUITE_BYTES, _check_output_destination, _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
 
 
 FAKE_HOST = '''#!/usr/bin/env python3
@@ -214,6 +214,26 @@ class SkillEvalTests(unittest.TestCase):
                         run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=destination, codex_binary=str(self.host))
             invoke.assert_not_called()
         self.assertEqual(originals, {path: path.read_bytes() for path in originals})
+
+    def test_output_allows_system_alias_above_owner_but_rejects_link_inside(self) -> None:
+        if not self.directory_symlink_supported:
+            return
+        sources = [self.root / "fixture", framework_root() / "core/skills/code-organization"]
+        with tempfile.TemporaryDirectory(dir=self.root.parent) as outer:
+            alias = Path(outer) / "system-alias"
+            alias.symlink_to(self.root.parent, target_is_directory=True)
+            with patch("embraion.skill_evals.tempfile.gettempdir", return_value=str(self.root / "not-the-system-temp-root")):
+                _check_output_destination(alias / self.root.name / "report.json", self.suite, sources)
+        reports = self.root / "reports"
+        reports.mkdir()
+        internal_alias = self.root / "internal-alias"
+        internal_alias.symlink_to(reports, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "contains a symlink"):
+            _check_output_destination(internal_alias / "report.json", self.suite, sources)
+        cross_owner_alias = self.root / "cross-owner-alias"
+        cross_owner_alias.symlink_to(framework_root(), target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "contains a symlink"):
+            _check_output_destination(cross_owner_alias / "report.json", self.suite, sources)
 
     def test_composed_skills_with_previous_variant_and_unverified_trigger(self) -> None:
         import os
