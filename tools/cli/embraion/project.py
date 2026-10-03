@@ -115,7 +115,7 @@ def _component_for_path(host: str, relative: str) -> str | None:
         if normalized.startswith(".github/skills/"):
             return "skills"
     elif host == "claude-code":
-        if normalized.startswith(".claude/agents/embraion-") and normalized.endswith(".md"):
+        if normalized.startswith(".claude/agents/embraion--") and normalized.endswith(".md"):
             return "scoped-agents"
         if normalized == ".claude/embraion-native.json":
             return "scoped-agents"
@@ -797,7 +797,7 @@ def _generate_claude_scoped_agents(output: Path, project: Path | None) -> None:
     for assignment in assignments:
         definition = assignment["plan"]["scoped-definition"]
         name = str(definition["name"])
-        if not re.fullmatch(r"embraion-[a-z0-9-]+", name):
+        if len(name) > 64 or not re.fullmatch(r"embraion--[a-z0-9][a-z0-9-]*[a-z0-9]", name):
             raise RuntimeError(f"Unsafe Claude scoped agent name: {name!r}")
         if name in role_names:
             raise RuntimeError(f"Claude scoped agent name collides with a role: {name}")

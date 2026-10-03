@@ -96,7 +96,7 @@ embraion claude-native install-hooks
 embraion claude-native status
 ```
 
-Installation adds separate hash-named `.claude/agents/embraion-*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions.
+Installation adds separate hash-named `.claude/agents/embraion--*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions.
 
 Start a **new working Thread** attached to this checkout after setup. Each local/cloud checkout needs its own version and projection verification. An old worktree retains its old framework pin; a global launcher update does not migrate it. Resolve each assignment through the project resolver. Dispatch discovers the configured native binding. Invoke the returned hash-named type in the active registry without a model override. File presence is not registry loading. An absent or stale type remains a handoff limitation; separate CLI authentication is not a prerequisite for a correctly loaded native Agent.
 

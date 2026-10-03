@@ -145,7 +145,7 @@ def prepare_native_assignment(
                                                sort_keys=True).encode()).hexdigest()[:12]
             # Claude AgentSpec limits names to 64 characters; project IDs can
             # be longer. Hash the full identity to retain distinct bindings.
-            name = f"embraion-{identity[:42]}-{digest}"
+            name = f"embraion--{identity[:41]}-{digest}"
             plan["scoped-definition"] = {"name": name, **definition}
             plan["arguments"]["subagent_type"] = name
             # Presence is useful for a new Thread's loader, but never establishes

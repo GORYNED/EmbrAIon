@@ -98,7 +98,7 @@ class ClaudeGuardTests(unittest.TestCase):
                 self.assert_denied(self.payload("Read", {"file_path": "secret/key.txt"},
                                                 agent_id=agent_id))
         self.assert_denied(self.payload("Read", {"file_path": "docs/safe.txt"},
-                                        agent_type="embraion-stale-profile", agent_id=None))
+                                        agent_type="embraion--stale-profile", agent_id=None))
         self.assertEqual({}, guard(self.payload("Read", {"file_path": "secret/key.txt"},
                                                  agent_type="general-purpose", agent_id=None), self.project))
         metadata = self.project / ".claude/embraion-native.json"
@@ -167,6 +167,27 @@ class ClaudeGuardTests(unittest.TestCase):
                                     self.project))
         self.assert_denied(self.payload("Agent", {"subagent_type": "worker", "prompt": "task"},
                                         agent_type="lead"))
+
+    def test_single_hyphen_project_agent_is_unrelated_unless_explicitly_bound(self) -> None:
+        base_name = "embraion-helper"
+        self.assertEqual({}, guard(self.payload("Agent", {"subagent_type": base_name,
+                                                      "prompt": "task"}, agent_type="lead"), self.project))
+        self.assertEqual({}, guard(self.payload("Read", {"file_path": "secret/key.txt"},
+                                                 agent_type=base_name, agent_id=None), self.project))
+
+        write_yaml(self.project / ".embraion/agents.yaml", {"agents": [{
+            "id": base_name, "extends": "worker", "purpose": "Project specialist.",
+            "access": "workspace-write", "responsibilities": ["Implement bounded project work."],
+        }]})
+        config_path = self.project / ".embraion/claude-native.yaml"
+        config = read_yaml(config_path)
+        config["bindings"]["worker"] = base_name
+        write_yaml(config_path, config)
+        self.install_fixture()
+        self.assert_denied(self.payload("Agent", {"subagent_type": base_name,
+                                                 "prompt": "task"}, agent_type="lead"))
+        self.assertEqual({}, guard(self.payload("Read", {"file_path": "secret/key.txt"},
+                                                 agent_type=base_name, agent_id=None), self.project))
 
 
 if __name__ == "__main__":

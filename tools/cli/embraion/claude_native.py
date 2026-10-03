@@ -23,6 +23,25 @@ _SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 _HOOK_EVENTS = frozenset({"PostToolUse", "SubagentStop"})
 _EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max"})
 _MAX_EVIDENCE_BYTES = 1_000_000
+_EVIDENCE_FIELDS = frozenset({"schema-version", "timestamp-utc", "event", "session-id",
+                              "agent-id", "agent-type", "definition-digest",
+                              "expected-effort", "observed-effort", "effort-status"})
+
+
+def _effort_status(expected: str | None, observed: str | None) -> str:
+    if expected is None or observed is None:
+        return "unverified"
+    return "matched" if expected == observed else "mismatch"
+
+
+def _utc_timestamp(value: Any) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?\+00:00", value):
+        return False
+    try:
+        return datetime.fromisoformat(value).utcoffset().total_seconds() == 0
+    except ValueError:
+        return False
 
 
 def read_config(project: Path | None = None) -> dict[str, Any] | None:
@@ -164,8 +183,7 @@ def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
     observed_effort = effort.get("level") if isinstance(effort, dict) else None
     if not isinstance(observed_effort, str) or observed_effort not in _EFFORTS:
         observed_effort = None
-    effort_status = ("unverified" if observed_effort is None or expected_effort is None else
-                     "matched" if observed_effort == expected_effort else "mismatch")
+    effort_status = _effort_status(expected_effort, observed_effort)
     record = {"schema-version": 1, "timestamp-utc": datetime.now(timezone.utc).isoformat(),
               "event": payload["hook_event_name"], "session-id": session_id,
               "agent-id": agent_id, "agent-type": agent_type,
@@ -215,8 +233,8 @@ def observer_status(project: Path | None = None) -> dict[str, Any]:
         return result
     if not path.is_file() or path.stat().st_size > _MAX_EVIDENCE_BYTES:
         return result
-    digests = {record["plan"]["scoped-definition"]["name"]:
-               definition_digest(record["plan"]["scoped-definition"]) for record in assignments}
+    definitions = {record["plan"]["scoped-definition"]["name"]:
+                   record["plan"]["scoped-definition"] for record in assignments}
     statuses: list[str] = []
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -227,11 +245,22 @@ def observer_status(project: Path | None = None) -> dict[str, Any]:
             item = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if not isinstance(item, dict) or item.get("schema-version") != 1 or \
-                not isinstance(item.get("agent-type"), str) or \
-                item.get("definition-digest") != digests.get(item["agent-type"]):
+        if not isinstance(item, dict) or set(item) != _EVIDENCE_FIELDS or \
+                type(item["schema-version"]) is not int or item["schema-version"] != 1 or \
+                not _utc_timestamp(item["timestamp-utc"]):
             continue
-        if item.get("event") not in _HOOK_EVENTS or item.get("effort-status") not in {"matched", "mismatch", "unverified"}:
+        if any(not isinstance(item[key], str) or not _SAFE_ID.fullmatch(item[key])
+               for key in ("session-id", "agent-id", "agent-type")):
+            continue
+        definition = definitions.get(item["agent-type"])
+        if definition is None or item["definition-digest"] != definition_digest(definition) or \
+                not isinstance(item["event"], str) or item["event"] not in _HOOK_EVENTS or \
+                item["expected-effort"] != definition.get("effort"):
+            continue
+        observed = item["observed-effort"]
+        if observed is not None and (not isinstance(observed, str) or observed not in _EFFORTS):
+            continue
+        if item["effort-status"] != _effort_status(definition.get("effort"), observed):
             continue
         result["execution"] = "observed"
         statuses.append(item["effort-status"])

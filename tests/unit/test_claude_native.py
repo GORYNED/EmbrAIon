@@ -171,6 +171,42 @@ class ClaudeNativeTests(unittest.TestCase):
         agent_file.symlink_to(external)
         self.assertEqual("stale", observer_status(self.project)["installation"])
 
+    def test_status_rejects_incomplete_or_forged_evidence_rows(self) -> None:
+        self.configure()
+        entry = self.install_fixture()
+        observe(self.hook(entry["name"]), self.project)
+        evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
+        genuine = json.loads(evidence.read_text().strip())
+        minimal = {key: genuine[key] for key in
+                   ("schema-version", "agent-type", "definition-digest", "event", "effort-status")}
+        variants = [minimal]
+        for field in ("session-id", "agent-id", "timestamp-utc", "observed-effort"):
+            forged = dict(genuine)
+            forged.pop(field)
+            variants.append(forged)
+        for field, value in (("session-id", "secret / invalid"),
+                             ("agent-id", ""),
+                             ("timestamp-utc", "2026-10-03T00:00:00+01:00"),
+                             ("event", ["PostToolUse"]),
+                             ("expected-effort", "low"),
+                             ("observed-effort", "never-log-this"),
+                             ("effort-status", "mismatch")):
+            forged = dict(genuine)
+            forged[field] = value
+            variants.append(forged)
+        for forged in variants:
+            with self.subTest(forged=forged):
+                evidence.write_text(json.dumps(forged) + "\n", encoding="utf-8")
+                status = observer_status(self.project)
+                self.assertEqual("unverified", status["execution"])
+                self.assertEqual("unverified", status["effort"])
+        evidence.unlink()
+        unknown = self.hook(entry["name"], effort="never-log-this")
+        self.assertEqual("unverified", observe(unknown, self.project)["effort-status"])
+        status = observer_status(self.project)
+        self.assertEqual("observed", status["execution"])
+        self.assertEqual("unverified", status["effort"])
+
 
 if __name__ == "__main__":
     unittest.main()

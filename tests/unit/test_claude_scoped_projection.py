@@ -100,6 +100,54 @@ class ClaudeScopedProjectionTests(unittest.TestCase):
             self.assertNotEqual(old_name, new_name)
             self.assertTrue((project / ".claude/agents" / f"{new_name}.md").is_file())
 
+    def test_scoped_prune_preserves_project_agent_with_similar_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._project(Path(temporary))
+            config_path = project / ".embraion/agents.yaml"
+            config = read_yaml(config_path)
+            config["agents"] = [{
+                "id": "embraion-helper",
+                "purpose": "Assist this project.",
+                "access": "workspace-write",
+                "responsibilities": ["Assist this project."],
+            }]
+            write_yaml(config_path, config)
+
+            install("claude-code", project)
+            base = project / ".claude/agents/embraion-helper.md"
+            original = base.read_bytes()
+            plan = install("claude-code", project, components=["scoped-agents"], prune=True)
+
+            self.assertEqual(original, base.read_bytes())
+            self.assertNotIn(".claude/agents/embraion-helper.md", plan["obsolete-owned"])
+            self.assertNotIn(".claude/agents/embraion-helper.md", plan["obsolete-modified"])
+            name = self._metadata(project)["assignments"][0]["name"]
+            self.assertTrue(name.startswith("embraion--"))
+            self.assertTrue((project / ".claude/agents" / f"{name}.md").is_file())
+
+    def test_long_project_agent_name_stays_within_native_name_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._project(Path(temporary))
+            specialist = "a" * 40 + "-worker"
+            config_path = project / ".embraion/agents.yaml"
+            config = read_yaml(config_path)
+            config["agents"] = [{
+                "id": specialist,
+                "purpose": "Assist this project.",
+                "access": "workspace-write",
+                "responsibilities": ["Assist this project."],
+            }]
+            write_yaml(config_path, config)
+            native_path = project / ".embraion/claude-native.yaml"
+            native = read_yaml(native_path)
+            native["bindings"]["worker"] = specialist
+            write_yaml(native_path, native)
+
+            install("claude-code", project, components=["scoped-agents"])
+            name = self._metadata(project)["assignments"][0]["name"]
+            self.assertTrue(name.startswith("embraion--"))
+            self.assertLessEqual(len(name), 64)
+
     def test_user_modified_obsolete_scoped_file_is_preserved(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = self._project(Path(temporary))

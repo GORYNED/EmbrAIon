@@ -12,6 +12,7 @@ from .policy import effective_policy, path_matches
 from .project import _projection_target
 
 _READ_TOOLS = frozenset({"Read", "Grep", "Glob"})
+_SCOPED_PREFIX = "embraion--"
 _AGENT_INPUTS = frozenset({"subagent_type", "description", "prompt", "run_in_background"})
 _TOOL_INPUTS = {
     "Read": frozenset({"file_path", "offset", "limit", "pages"}),
@@ -137,9 +138,9 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
         installation, assignments = _installation(root) if config is not None else ("missing", [])
     except (OSError, ValueError, RuntimeError):
         # A malformed configuration cannot authorize a scoped invocation.
-        if tool == "Agent" and isinstance(inputs, dict) and str(inputs.get("subagent_type", "")).startswith("embraion-"):
+        if tool == "Agent" and isinstance(inputs, dict) and str(inputs.get("subagent_type", "")).startswith(_SCOPED_PREFIX):
             return _deny("Scoped agent configuration is unavailable.")
-        if tool in _READ_TOOLS and isinstance(agent_type, str) and agent_type.startswith("embraion-"):
+        if tool in _READ_TOOLS and isinstance(agent_type, str) and agent_type.startswith(_SCOPED_PREFIX):
             return _deny("Scoped agent configuration is unavailable.")
         return {}
 
@@ -150,7 +151,7 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
         requested = inputs.get("subagent_type")
         if requested in set(config["bindings"].values()):
             return _deny("Use the freshly resolved scoped agent type for this assignment.")
-        if not isinstance(requested, str) or not requested.startswith("embraion-"):
+        if not isinstance(requested, str) or not requested.startswith(_SCOPED_PREFIX):
             return {}
         if requested not in scoped_names or installation != "verified" or not _verified(root):
             return _deny("Scoped agent definition is unavailable or stale.")
@@ -160,7 +161,7 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
 
     if not isinstance(agent_type, str):
         return {}
-    if agent_type not in scoped_names and not (config is not None and agent_type.startswith("embraion-")):
+    if agent_type not in scoped_names and not (config is not None and agent_type.startswith(_SCOPED_PREFIX)):
         return {}
     if not isinstance(agent_id, str) or _SAFE_ID.fullmatch(agent_id) is None:
         return _deny("Scoped agent identity is unavailable.")
