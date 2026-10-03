@@ -109,6 +109,8 @@ Knowledge files remain ordinary repository files. `knowledge.yaml` stores refere
 
 This file owns project safety and source classification policy.
 
+Path patterns preserve existing shell-style matching, including `*` across separators. A whole `**/` segment also matches zero directories, so `private/**/*.cs` protects both `private/file.cs` and nested files. Matching rejects patterns longer than 4,096 characters or with more than eight optional `**/` segments rather than silently missing a protected path.
+
 ```yaml
 sources:
   canonical:

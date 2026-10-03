@@ -463,7 +463,7 @@ Commands используют non-zero exit codes при failed deterministic ch
 
 ## `embraion claude-native`
 
-Настроить защитные hooks и проверить данные фактического запуска Claude Code:
+Настроить защитные hooks и просмотреть справочные данные событий Claude Code:
 
 ```bash
 embraion install --host claude-code --component scoped-agents
@@ -476,4 +476,4 @@ embraion claude-native status
 
 `install-hooks` сохраняет остальные настройки и hooks в `.claude/settings.json`. `guard` читает JSON события PreToolUse из stdin: проверяет выбранные определения, запрещает подмену настроек и, при включённом read-policy, ограничивает чтение выбранных агентов. Он не ограничивает родительскую сессию, произвольных агентов или Bash. `observe` принимает PostToolUse/SubagentStop и сохраняет только идентификаторы и сообщённый effort в игнорируемом локальном состоянии. Эти две команды предназначены для hooks.
 
-`status` различает наличие актуальных файлов, наблюдавшееся выполнение и совпадение effort. Обычные hooks не сообщают эффективную модель; поэтому её статус остаётся `unverified`. Наличие файлов не доказывает загрузку инструкций или выполнение агента.
+`status` различает установку файлов, записанные события и справочное сравнение `reported-effort`. Источник ввода помечен `evidence-origin: unverified-command-input`; `execution`, фактические `effort` и `model` остаются `unverified`; `callbacks: recorded` означает принятую запись. Тесты с искусственным JSON и локальные записи не доказывают передачу поля приложением, загрузку инструкций, завершение запуска или применение настроек.

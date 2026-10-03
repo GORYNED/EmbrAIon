@@ -26,7 +26,8 @@ _SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 _HOOK_EVENTS = frozenset({"PostToolUse", "SubagentStop"})
 _EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max"})
 _MAX_EVIDENCE_BYTES = 1_000_000
-_EVIDENCE_FIELDS = frozenset({"schema-version", "timestamp-utc", "event", "session-id",
+_EVIDENCE_SOURCE = "unverified-command-input"
+_EVIDENCE_FIELDS = frozenset({"schema-version", "timestamp-utc", "source", "event", "session-id",
                               "agent-id", "agent-type", "definition-digest",
                               "expected-effort", "observed-effort", "effort-status"})
 
@@ -286,6 +287,7 @@ def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
         observed_effort = None
     effort_status = _effort_status(expected_effort, observed_effort)
     record = {"schema-version": 1, "timestamp-utc": datetime.now(timezone.utc).isoformat(timespec="microseconds"),
+              "source": _EVIDENCE_SOURCE,
               "event": payload["hook_event_name"], "session-id": session_id,
               "agent-id": agent_id, "agent-type": agent_type,
               "definition-digest": digests.pop(),
@@ -295,8 +297,9 @@ def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
     reason = _append_evidence(root, row)
     if reason is not None:
         return {"status": "unverified", "reason": reason}
-    return {"status": "observed", "event": record["event"],
-            "agent-type": agent_type, "effort-status": effort_status,
+    return {"status": "recorded", "event": record["event"],
+            "agent-type": agent_type, "reported-effort": "match" if effort_status == "matched" else effort_status,
+            "evidence-origin": _EVIDENCE_SOURCE,
             "model-status": "unverified"}
 
 
@@ -305,11 +308,15 @@ def observer_status(project: Path | None = None) -> dict[str, Any]:
     installation, assignments = _installation(root)
     result: dict[str, Any] = {"installation": installation,
                               "assignment-count": len(assignments),
-                              "execution": "unverified", "effort": "unverified",
+                              "execution": "unverified", "callbacks": "none",
+                              "effort": "unverified",
+                              "reported-effort": "unverified",
+                              "evidence-origin": _EVIDENCE_SOURCE,
                               "model": "unverified",
                               "limitations": [
                                   "Classic Claude hook payloads do not expose the resolved model.",
                                   "This observer does not enforce parent or unscoped agents.",
+                                  "A recorded callback does not prove agent execution, completion, or applied effort.",
                               ]}
     from .claude_hooks import observer_hooks_status
     result["hooks"] = observer_hooks_status(root)
@@ -337,6 +344,7 @@ def observer_status(project: Path | None = None) -> dict[str, Any]:
             continue
         if not isinstance(item, dict) or set(item) != _EVIDENCE_FIELDS or \
                 type(item["schema-version"]) is not int or item["schema-version"] != 1 or \
+                item["source"] != _EVIDENCE_SOURCE or \
                 not _utc_timestamp(item["timestamp-utc"]):
             continue
         if any(not isinstance(item[key], str) or not _SAFE_ID.fullmatch(item[key])
@@ -352,10 +360,10 @@ def observer_status(project: Path | None = None) -> dict[str, Any]:
             continue
         if item["effort-status"] != _effort_status(definition.get("effort"), observed):
             continue
-        result["execution"] = "observed"
+        result["callbacks"] = "recorded"
         statuses.append(item["effort-status"])
     if "mismatch" in statuses:
-        result["effort"] = "mismatch"
+        result["reported-effort"] = "mismatch"
     elif "matched" in statuses:
-        result["effort"] = "observed-match"
+        result["reported-effort"] = "match"
     return result

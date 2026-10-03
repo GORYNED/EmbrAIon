@@ -73,6 +73,38 @@ class ClaudeGuardTests(unittest.TestCase):
             self.assert_denied(self.payload("Read", {"file_path": "docs/outside/private.txt"}))
         self.assert_denied(self.payload("Read", {"file_path": "../secret/key.txt"}))
 
+    def test_read_denies_zero_depth_recursive_protected_paths(self) -> None:
+        policy_path = self.project / ".embraion/policy.yaml"
+        policy = read_yaml(policy_path)
+        policy["sources"]["protected"] = [
+            "Assets/Project/Wireless/SDK/**/*.cs",
+            "Assets/Project/Wired/MeasureX/**/*.dll",
+            "Assets/StreamingAssets/Sensors/**/*.mxd",
+        ]
+        write_yaml(policy_path, policy)
+        for file_path in (
+            "Assets/Project/Wireless/SDK/Adapter.cs",
+            "Assets/Project/Wireless/SDK/nested/Adapter.cs",
+            "Assets/Project/Wired/MeasureX/driver.dll",
+            "Assets/StreamingAssets/Sensors/device.mxd",
+        ):
+            with self.subTest(file_path=file_path):
+                self.assert_denied(self.payload("Read", {"file_path": file_path}))
+        self.assertEqual({}, guard(self.payload("Read", {"file_path":
+                                                      "Assets/Project/Wireless/SDK/sibling.txt"}),
+                                    self.project))
+        with patch("embraion.claude_guard._case_insensitive_paths", return_value=True):
+            self.assert_denied(self.payload("Read", {"file_path":
+                                                    "assets/project/wireless/sdk/ADAPTER.CS"}))
+
+    def test_overcomplex_protected_pattern_denies_scoped_read_and_search(self) -> None:
+        policy_path = self.project / ".embraion/policy.yaml"
+        policy = read_yaml(policy_path)
+        policy["sources"]["protected"] = ["**/" * 9 + "secret.txt"]
+        write_yaml(policy_path, policy)
+        self.assert_denied(self.payload("Read", {"file_path": "docs/safe.txt"}))
+        self.assert_denied(self.payload("Grep", {"pattern": "safe", "path": "docs"}))
+
     def test_broad_search_denied_but_scoped_config_search_allowed(self) -> None:
         self.assert_denied(self.payload("Grep", {"pattern": "never-log-this"}))
         self.assert_denied(self.payload("Glob", {"pattern": "**/*"}))

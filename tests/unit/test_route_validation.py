@@ -94,6 +94,36 @@ class RouteValidationTests(unittest.TestCase):
             self.validate_with(lambda routing: routing["candidate-groups"].update(
                 {"unused": {"deployments": [{"deployment": "api-alternate"}]}}))
 
+    def test_provider_references_in_unused_group_and_direct_selections(self) -> None:
+        deployments_path = self.project / ".embraion/deployments.yaml"
+        original = read_yaml(deployments_path)
+        cases = (
+            lambda routing: routing["candidate-groups"].update({
+                "unused": {"deployments": [{"deployment": "native-spare"}]}}),
+            lambda routing: routing["overrides"]["alpha-host"]["routes"].update({
+                "bounded-write": {"deployment": "native-spare"}}),
+            lambda routing: routing["overrides"]["alpha-host"]["routes"].update({
+                "bounded-write": {"model": "project-model", "fallbacks": [
+                    {"deployment": "native-spare"}]}}),
+        )
+        for mutate in cases:
+            with self.subTest(mutate=mutate):
+                definitions = copy.deepcopy(original)
+                definitions["deployments"]["native-spare"]["provider"] = "undeclared-provider"
+                write_yaml(deployments_path, definitions)
+                with self.assertRaisesRegex(RuntimeError, "unknown provider 'undeclared-provider'"):
+                    self.validate_with(mutate)
+        self.assertFalse((self.project / ".embraion/state/telemetry.jsonl").exists())
+
+    def test_declared_and_provider_neutral_native_deployments_are_valid(self) -> None:
+        self.assertTrue(validate_task_routes(self.project)["valid"])
+        deployments_path = self.project / ".embraion/deployments.yaml"
+        definitions = read_yaml(deployments_path)
+        definitions["deployments"]["native-basic"].pop("provider")
+        write_yaml(deployments_path, definitions)
+        self.assertTrue(validate_task_routes(self.project)["valid"])
+        self.assertFalse((self.project / ".embraion/state/telemetry.jsonl").exists())
+
     def test_unused_group_with_mixed_hosts_is_rejected(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "mixes deployment hosts"):
             self.validate_with(lambda routing: routing["candidate-groups"].update({

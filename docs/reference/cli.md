@@ -506,7 +506,7 @@ Commands use non-zero exit codes for failed deterministic checks or invalid oper
 
 ## `embraion claude-native`
 
-Install native guard/observer hooks and inspect Claude Code execution evidence:
+Install native guard/observer hooks and inspect advisory Claude Code callback metadata:
 
 ```bash
 embraion install --host claude-code --component scoped-agents
@@ -519,4 +519,4 @@ The explicit `scoped-agents` component requires `.embraion/claude-native.yaml`; 
 
 `install-hooks` preserves unrelated settings and hooks in `.claude/settings.json`. `guard` reads a PreToolUse JSON event from stdin: it checks configured definitions, refuses invocation overrides and, with read-policy enabled, bounds configured scoped-agent reads. It does not restrict parent sessions, arbitrary agents or Bash. `observe` receives PostToolUse/SubagentStop events and stores only identity and reported effort in ignored local state. These two commands are hook entry points.
 
-`status` separates current file installation, observed execution and matching effort. Classic hooks do not expose the effective model, so its status remains `unverified`. File presence alone does not prove instructions loaded or an agent executed.
+`status` separates file installation from recorded callback metadata and advisory `reported-effort` comparisons. Observer input has `evidence-origin: unverified-command-input`; `execution`, effective `effort` and `model` remain `unverified`; `callbacks: recorded` denotes accepted metadata. Synthetic parser tests and local records do not prove host delivery, instruction loading, invocation completion or applied settings.

@@ -7,7 +7,8 @@
 ### Added
 
 - Opt-in Claude startup scoped-agent projection derives complete native definitions from explicit project assignments, preserving model-neutral reusable roles and existing projection ownership protections.
-- Claude native hook setup preserves unrelated host settings, guards configured Agent/Task calls, and records only bounded native identity and host-reported effort metadata. Effective model and unsupported host surfaces remain explicitly unverified.
+- Claude native hook setup preserves unrelated host settings, guards configured Agent/Task calls, and records only bounded native identity and optional reported effort metadata. Command-input evidence is advisory; effective model, effort and unsupported host surfaces remain explicitly unverified.
+- Policy path matching includes zero-depth `**/` segments while preserving legacy wildcard matches; excessive recursive-pattern complexity fails closed.
 
 ### Fixed
 

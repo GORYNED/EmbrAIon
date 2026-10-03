@@ -111,7 +111,9 @@ def _verified(root: Path) -> bool:
 
 def _protected_patterns(root: Path) -> list[str] | None:
     try:
-        return list(effective_policy(root)["sources"].get("protected") or [])
+        patterns = list(effective_policy(root)["sources"].get("protected") or [])
+        path_matches("", patterns)  # Validate bounded pattern complexity for every read tool.
+        return patterns
     except (OSError, ValueError, RuntimeError):
         return None
 
@@ -184,8 +186,11 @@ def guard(payload: Any, project: Path | None = None) -> dict[str, Any]:
         relative = _relative_path(root, inputs.get("file_path"))
         if relative is None:
             return _deny("Scoped read must stay within the project boundary.")
-        if _matches_protected(relative, patterns, root):
-            return _deny("Scoped read overlaps protected project content.")
+        try:
+            if _matches_protected(relative, patterns, root):
+                return _deny("Scoped read overlaps protected project content.")
+        except RuntimeError:
+            return _deny("Protected project policy is unavailable.")
         return {}
     scope = _search_scope(tool, inputs, root)
     if scope is None:

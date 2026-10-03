@@ -136,14 +136,19 @@ class ClaudeNativeTests(unittest.TestCase):
         self.assertEqual("ignored", observe(self.hook("unrelated"), self.project)["status"])
         self.assertEqual("ignored", observe(self.hook(entry["name"], event="UserPromptSubmit"), self.project)["status"])
         result = observe(self.hook(entry["name"]), self.project)
-        self.assertEqual("observed", result["status"])
-        self.assertEqual("matched", result["effort-status"])
+        self.assertEqual("recorded", result["status"])
+        self.assertEqual("match", result["reported-effort"])
+        self.assertEqual("unverified-command-input", result["evidence-origin"])
         saved = (self.project / ".embraion/state/claude-native-evidence.jsonl").read_text()
         self.assertNotIn("never-log-this", saved)
         self.assertNotIn("tool_input", saved)
+        self.assertIn('"source":"unverified-command-input"', saved)
         status = observer_status(self.project)
-        self.assertEqual("observed", status["execution"])
-        self.assertEqual("observed-match", status["effort"])
+        self.assertEqual("unverified", status["execution"])
+        self.assertEqual("recorded", status["callbacks"])
+        self.assertEqual("unverified", status["effort"])
+        self.assertEqual("match", status["reported-effort"])
+        self.assertEqual("unverified-command-input", status["evidence-origin"])
         self.assertEqual("unverified", status["model"])
         self.assertTrue(any("unscoped" in limitation for limitation in status["limitations"]))
 
@@ -152,10 +157,13 @@ class ClaudeNativeTests(unittest.TestCase):
         entry = self.install_fixture()
         missing = self.hook(entry["name"], event="SubagentStop")
         missing.pop("effort")
-        self.assertEqual("unverified", observe(missing, self.project)["effort-status"])
+        self.assertEqual("unverified", observe(missing, self.project)["reported-effort"])
         self.assertEqual("unverified", observer_status(self.project)["effort"])
-        self.assertEqual("mismatch", observe(self.hook(entry["name"], effort="low"), self.project)["effort-status"])
-        self.assertEqual("mismatch", observer_status(self.project)["effort"])
+        self.assertEqual("unverified", observer_status(self.project)["execution"])
+        self.assertEqual("recorded", observer_status(self.project)["callbacks"])
+        self.assertEqual("mismatch", observe(self.hook(entry["name"], effort="low"), self.project)["reported-effort"])
+        self.assertEqual("unverified", observer_status(self.project)["effort"])
+        self.assertEqual("mismatch", observer_status(self.project)["reported-effort"])
 
     def test_changed_route_invalidates_old_metadata_and_evidence(self) -> None:
         self.configure()
@@ -169,7 +177,7 @@ class ClaudeNativeTests(unittest.TestCase):
         self.configure()
         entry = self.install_fixture()
         payload = self.hook(entry["name"], effort="never-log-this")
-        self.assertEqual("unverified", observe(payload, self.project)["effort-status"])
+        self.assertEqual("unverified", observe(payload, self.project)["reported-effort"])
         evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
         self.assertNotIn("never-log-this", evidence.read_text())
         evidence.unlink()
@@ -193,7 +201,7 @@ class ClaudeNativeTests(unittest.TestCase):
         minimal = {key: genuine[key] for key in
                    ("schema-version", "agent-type", "definition-digest", "event", "effort-status")}
         variants = [minimal]
-        for field in ("session-id", "agent-id", "timestamp-utc", "observed-effort"):
+        for field in ("session-id", "agent-id", "timestamp-utc", "observed-effort", "source"):
             forged = dict(genuine)
             forged.pop(field)
             variants.append(forged)
@@ -203,6 +211,7 @@ class ClaudeNativeTests(unittest.TestCase):
                              ("event", ["PostToolUse"]),
                              ("expected-effort", "low"),
                              ("observed-effort", "never-log-this"),
+                             ("source", "verified-host-runtime"),
                              ("effort-status", "mismatch")):
             forged = dict(genuine)
             forged[field] = value
@@ -212,29 +221,34 @@ class ClaudeNativeTests(unittest.TestCase):
                 evidence.write_text(json.dumps(forged) + "\n", encoding="utf-8")
                 status = observer_status(self.project)
                 self.assertEqual("unverified", status["execution"])
+                self.assertEqual("none", status["callbacks"])
                 self.assertEqual("unverified", status["effort"])
+                self.assertEqual("unverified", status["reported-effort"])
         evidence.unlink()
         unknown = self.hook(entry["name"], effort="never-log-this")
-        self.assertEqual("unverified", observe(unknown, self.project)["effort-status"])
+        self.assertEqual("unverified", observe(unknown, self.project)["reported-effort"])
         status = observer_status(self.project)
-        self.assertEqual("observed", status["execution"])
+        self.assertEqual("unverified", status["execution"])
+        self.assertEqual("recorded", status["callbacks"])
         self.assertEqual("unverified", status["effort"])
+        self.assertEqual("unverified", status["reported-effort"])
 
     def test_journal_exact_cap_and_busy_lock_preserve_existing_rows(self) -> None:
         self.configure()
         entry = self.install_fixture()
         payload = self.hook(entry["name"])
         evidence = self.project / ".embraion/state/claude-native-evidence.jsonl"
-        self.assertEqual("observed", observe(payload, self.project)["status"])
+        self.assertEqual("recorded", observe(payload, self.project)["status"])
         row = evidence.read_bytes()
         evidence.unlink()
         with patch("embraion.claude_native._MAX_EVIDENCE_BYTES", len(row)):
-            self.assertEqual("observed", observe(payload, self.project)["status"])
+            self.assertEqual("recorded", observe(payload, self.project)["status"])
             exact = evidence.read_bytes()
             self.assertEqual(len(row), len(exact))
             self.assertEqual("evidence-limit", observe(payload, self.project)["reason"])
             self.assertEqual(exact, evidence.read_bytes())
-            self.assertEqual("observed", observer_status(self.project)["execution"])
+            self.assertEqual("unverified", observer_status(self.project)["execution"])
+            self.assertEqual("recorded", observer_status(self.project)["callbacks"])
         lock = self.project / ".embraion/state/claude-native-evidence.lock"
         self.assertTrue(lock.is_file())
         fd = os.open(lock, os.O_RDWR)
@@ -245,13 +259,13 @@ class ClaudeNativeTests(unittest.TestCase):
             _unlock_fd(fd)
             os.close(fd)
         self.assertEqual(exact, evidence.read_bytes())
-        self.assertEqual("observed", observe(payload, self.project)["status"])
+        self.assertEqual("recorded", observe(payload, self.project)["status"])
 
     def test_os_releases_lock_after_holder_process_exits(self) -> None:
         self.configure()
         entry = self.install_fixture()
         payload = self.hook(entry["name"])
-        self.assertEqual("observed", observe(payload, self.project)["status"])
+        self.assertEqual("recorded", observe(payload, self.project)["status"])
         lock = self.project / ".embraion/state/claude-native-evidence.lock"
         child = Process(target=_exit_while_holding_lock, args=(str(lock),))
         child.start()
@@ -261,7 +275,7 @@ class ClaudeNativeTests(unittest.TestCase):
             child.join(timeout=5)
         self.assertEqual(0, child.exitcode)
         self.assertTrue(lock.is_file())
-        self.assertEqual("observed", observe(payload, self.project)["status"])
+        self.assertEqual("recorded", observe(payload, self.project)["status"])
 
     def test_swapped_lock_and_journal_paths_never_write_outside_file(self) -> None:
         self.configure()
@@ -319,8 +333,9 @@ class ClaudeNativeTests(unittest.TestCase):
             content = evidence.read_bytes()
             self.assertLessEqual(len(content), cap)
             rows = content.splitlines()
-            self.assertEqual(sum(result["status"] == "observed" for result in results), len(rows))
+            self.assertEqual(sum(result["status"] == "recorded" for result in results), len(rows))
             self.assertTrue(all(json.loads(row)["effort-status"] == "matched" for row in rows))
+            self.assertTrue(all(json.loads(row)["source"] == "unverified-command-input" for row in rows))
             self.assertNotIn(b"never-log-this", content)
 
 

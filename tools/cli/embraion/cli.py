@@ -1890,7 +1890,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     harness_audit.set_defaults(func=_cmd_harness_audit)
 
-    native = sub.add_parser("claude-native", help="Inspect startup scoped agents and observer evidence")
+    native = sub.add_parser("claude-native", help="Inspect startup scoped agents and advisory callback metadata")
     native_sub = native.add_subparsers(dest="native_command", required=True)
     native_sub.add_parser("status", help="Inspect installed scoped definitions and reported hook evidence").set_defaults(func=_cmd_claude_native)
     native_sub.add_parser("observe", help="Read a native hook event from stdin; store metadata only").set_defaults(func=_cmd_claude_native)
