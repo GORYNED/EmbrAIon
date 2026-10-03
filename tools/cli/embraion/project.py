@@ -113,6 +113,8 @@ def _component_for_path(host: str, relative: str) -> str | None:
     elif host == "claude-code":
         if normalized.startswith(".claude/agents/"):
             return "agents"
+        if normalized == ".claude/rules/embraion.md":
+            return "skills"
         if normalized.startswith(".claude/skills/"):
             return "skills"
     elif host == "portable" and normalized.startswith("embraion/"):
@@ -660,6 +662,13 @@ def _host_access_projection(
     return dict(projection)
 
 
+def _claude_agent_name(identity: str) -> str:
+    """Use machine IDs, not titles containing spaces or slashes, in native names."""
+    if len(identity) <= 64:
+        return identity
+    return identity[:51] + "-" + hashlib.sha256(identity.encode()).hexdigest()[:12]
+
+
 def _generate_markdown_agents(
     root: Path,
     output: Path,
@@ -681,7 +690,7 @@ def _generate_markdown_agents(
 
         lines = [
             "---",
-            f"name: {__import__('json').dumps(str(agent['title']), ensure_ascii=False)}",
+            f"name: {json.dumps(_claude_agent_name(agent['id']) if host == 'claude-code' else str(agent['title']), ensure_ascii=False)}",
             f"description: {__import__('json').dumps(agent.get('purpose', ''), ensure_ascii=False)}",
         ]
         access_projection = _host_access_projection(host, agent)
@@ -725,6 +734,15 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
     guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
+    if host == "claude-code":
+        # A skill description is conditional discovery, not a startup contract.
+        # Keep this small entry point owned alongside the skill it activates.
+        activation = output / ".claude/rules/embraion.md"
+        activation.parent.mkdir(parents=True, exist_ok=True)
+        activation.write_text(
+            (root / "adapters/claude-code/activation.md").read_text(encoding="utf-8"),
+            encoding="utf-8", newline="\n",
+        )
 
 
 def _append_lead_skill(root: Path, skills: Path) -> None:
@@ -927,6 +945,7 @@ def _host_has_projection_candidates(host: str, destination: Path) -> bool:
         "claude-code": (
             destination / ".claude" / "agents",
             destination / ".claude" / "skills",
+            destination / ".claude" / "rules" / "embraion.md",
         ),
         "portable": (destination / "embraion",),
     }

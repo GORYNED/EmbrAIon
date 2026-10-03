@@ -1,0 +1,4 @@
+{
+  "description": "Register one scoped definition on request, then observe its native spawn and model steps.",
+  "modules": ["./register.js"]
+}

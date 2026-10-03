@@ -47,7 +47,7 @@ delegation-surfaces:
     host: claude-code
     mechanism: Agent (Task on older versions)
     mode: runtime
-    model: {location: arguments, field: model}
+    model: {location: definition-overrides, field: model}
     effort: {location: definition-overrides, field: effort}
     effort-levels: [low, medium, high, xhigh, max]
     definition-handoff: true

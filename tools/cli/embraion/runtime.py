@@ -273,7 +273,28 @@ def _resolve_fallbacks(
     return resolved
 
 
-def route(
+def _record_route_selection(project: Path, selected: dict[str, Any], *,
+                            data_class: str, role: str | None,
+                            justification: str | None = None) -> None:
+    event = {
+        "event": "route-selected",
+        "host": selected["host"],
+        "route": selected["route"],
+        "role": role,
+        "resolution": selected["resolution"],
+        "deployment": selected.get("deployment"),
+        "provider": selected.get("provider"),
+        "model": selected.get("model"),
+        "effort": selected.get("effort"),
+        "fallback-count": len(selected.get("fallbacks") or []),
+        "data-class": data_class,
+    }
+    if selected["route"] == "critical":
+        event["justification"] = justification
+    _append_event(project, event)
+
+
+def _resolve_route(
     host: str,
     route_class: str,
     data_class: str,
@@ -350,23 +371,30 @@ def route(
         "billing": billing,
         "data": data_class,
     }
-    _append_event(
-        project_path,
-        {
-            "event": "route-selected",
-            "host": host,
-            "route": route_class,
-            "role": role,
-            "resolution": result["resolution"],
-            "deployment": result["deployment"],
-            "provider": result["provider"],
-            "model": result["model"],
-            "effort": result["effort"],
-            "fallback-count": len(fallbacks),
-            "data-class": data_class,
-        },
-    )
     return result
+
+
+def route(
+    host: str,
+    route_class: str,
+    data_class: str,
+    *,
+    role: str | None = None,
+    access: str | None = None,
+    project: Path | None = None,
+    task_class: str | None = None,
+    justification: str | None = None,
+) -> dict[str, Any]:
+    """Resolve an explicitly selected host route and enforce critical justification."""
+    if route_class == "critical" and not (justification or "").strip():
+        raise RuntimeError("Critical task routing requires justification.")
+    selected = _resolve_route(host, route_class, data_class, role=role, access=access,
+                              project=project, task_class=task_class)
+    if route_class == "critical":
+        selected["justification"] = justification
+    _record_route_selection(project_root(project), selected, data_class=data_class,
+                            role=role, justification=justification)
+    return selected
 
 
 _DATA_RANK = {"PUBLIC": 0, "PRIVATE": 1, "CONFIDENTIAL": 2}
@@ -395,6 +423,7 @@ def resolve_task_route(
     justification: str | None = None,
     project: Path | None = None,
     shape: str | None = None,
+    _emit_event: bool = True,
 ) -> dict[str, Any]:
     """Resolve a project task class without making availability a quality decision."""
     root = project_root(project)
@@ -452,8 +481,8 @@ def resolve_task_route(
             )
             return [{**resolved, "source": source, "route": candidate_route,
                      "resolution": "project-deployment"}]
-        selected = route(host, candidate_route, candidate_data, role=selected_role,
-                         access=candidate_access, project=root, task_class=task_class)
+        selected = _resolve_route(host, candidate_route, candidate_data, role=selected_role,
+                                  access=candidate_access, project=root, task_class=task_class)
         primary = {key: selected.get(key) for key in ("deployment", "provider", "model", "effort", "options", "billing")}
         results = [{**primary, "host": host, "route": candidate_route,
                     "resolution": selected["resolution"],
@@ -496,6 +525,13 @@ def resolve_task_route(
     selected = escalations[escalation] if escalation else candidates[0]
     if selected["route"] == "critical" and not (justification or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
+    if selected["route"] == "critical":
+        selected["justification"] = justification
+    if _emit_event:
+        _record_route_selection(root, {**selected,
+                                       "fallbacks": candidates[1:] if escalation is None else []},
+                                data_class=selected_data, role=selected_role,
+                                justification=justification)
     return {
         "task-class": task_class,
         "route": route_class,
@@ -524,7 +560,8 @@ def validate_task_routes(project: Path | None = None) -> dict[str, Any]:
             raise RuntimeError(f"Candidate group '{group_id}' has an unknown preferred deployment.")
     classes = config.get("task-classes") or {}
     for task_class, profile in classes.items():
-        resolved = resolve_task_route(task_class, project=root, justification="configuration validation")
+        resolved = resolve_task_route(task_class, project=root, justification="configuration validation",
+                                      _emit_event=False)
         if not resolved["candidates"]:
             raise RuntimeError(f"Task class '{task_class}' has no candidates.")
     return {"valid": True, "task-classes": sorted(classes),
@@ -551,11 +588,16 @@ def create_dispatch(
     owned_paths: list[str],
     *,
     native_surface: str | None = None,
+    native_agent: str | None = None,
     task_class: str | None = None,
+    justification: str | None = None,
     project: Path | None = None,
     verified_native_fields: list[str] | None = None,
 ) -> dict[str, Any]:
     project = project_root(project)
+
+    if native_agent and not native_surface:
+        raise RuntimeError("A native-agent binding requires a native-surface.")
 
     if _normalized_access_mode(access) == "workspace-write":
         if not owned_paths:
@@ -573,7 +615,8 @@ def create_dispatch(
         profile = (read_routing_config(project).get("task-classes") or {}).get(task_class) or {}
         role = role or profile.get("role") or "worker"
         effective = resolve_task_route(task_class, role=role, data_class=data_class,
-                                       access=access, project=project)
+                                       access=access, project=project,
+                                       justification=justification)
         selected = {**effective["selected"], "fallbacks": effective["fallbacks"]}
         data_class = effective["data"]
         host = selected["host"]
@@ -584,7 +627,8 @@ def create_dispatch(
         role = role or "worker"
         data_class = data_class or "PRIVATE"
         selected = route(host, route_class, data_class, role=role,
-                         access=access, project=project)
+                         access=access, project=project,
+                         justification=justification)
     dispatch_id = uuid.uuid4().hex
 
     record = {
@@ -609,11 +653,16 @@ def create_dispatch(
         "state": "planned",
         "created-utc": datetime.now(timezone.utc).isoformat(),
     }
+    if route_class == "critical":
+        record["justification"] = justification
 
     if native_surface:
         from .delegation import prepare_native_assignment
-        record["native-plan"] = prepare_native_assignment(selected, native_surface, role=role,
-                                                          verified_native_fields=verified_native_fields)
+        record["native-plan"] = prepare_native_assignment(
+            selected, native_surface, role=role, native_agent=native_agent,
+            project=project, access=access,
+            verified_native_fields=verified_native_fields,
+        )
         if record["native-plan"]["status"] == "capability-limitation":
             record["state"] = "blocked"
         elif record["native-plan"]["status"] == "handoff-required":

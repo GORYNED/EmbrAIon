@@ -9,6 +9,19 @@
     "executed": {"const": false},
     "arguments": {"type": "object"},
     "definition-overrides": {"type": "object"},
+    "scoped-definition": {
+      "type": "object",
+      "required": ["name", "description", "prompt", "tools"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 64},
+        "description": {"type": "string"},
+        "prompt": {"type": "string", "minLength": 1},
+        "tools": {"type": "array", "items": {"type": "string"}},
+        "model": {"type": "string", "minLength": 1},
+        "effort": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
     "requirements": {"type": "array", "items": {"type": "string"}},
     "limitations": {"type": "array", "items": {"type": "string"}},
     "reuse": {"enum": ["fresh-assignment", "verified-existing-agent"]},

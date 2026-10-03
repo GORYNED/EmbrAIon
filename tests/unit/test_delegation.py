@@ -58,7 +58,7 @@ class NativeAssignmentTests(unittest.TestCase):
                             surface == "copilot-vscode" and selected["effort"] is not None):
                         self.blocked(plan)
                         continue
-                    status = "handoff-required" if surface == "claude-agent" and selected["effort"] else "prepared"
+                    status = "handoff-required" if surface == "claude-agent" and shape != "host-default" else "prepared"
                     self.assertEqual(status, plan["status"])
                     args, definitions = {}, {}
                     if surface == "codex-native":
@@ -74,6 +74,18 @@ class NativeAssignmentTests(unittest.TestCase):
                             definitions.update(model=selected["model"], modelPolicy="required")
                         if selected["effort"] is not None:
                             definitions["reasoningEffort"] = selected["effort"]
+                    elif surface == "claude-agent":
+                        if shape != "host-default":
+                            definition = plan["scoped-definition"]
+                            args["subagent_type"] = definition["name"]
+                            self.assertIn("do not recursively delegate", definition["prompt"])
+                            self.assertTrue(definition["tools"])
+                        else:
+                            args["subagent_type"] = "worker"
+                        for field in ("model", "effort"):
+                            if selected[field] is not None:
+                                definitions[field] = selected[field]
+                                self.assertEqual(selected[field], plan["scoped-definition"][field])
                     else:
                         if selected["model"] is not None:
                             args["model"] = selected["model"]
@@ -81,6 +93,49 @@ class NativeAssignmentTests(unittest.TestCase):
                             definitions["effort"] = selected["effort"]
                     self.assertEqual(args, plan["arguments"])
                     self.assertEqual(definitions, plan["definition-overrides"])
+
+    def test_claude_binding_keeps_routing_role_and_native_permissions_separate(self):
+        selected = self.selected("claude-code")
+        selected["role"] = "independent-review"
+        plan = prepare_native_assignment(selected, "claude-agent", role="independent-review",
+                                         native_agent="reviewer", project=self.project, access="workspace-write")
+        jsonschema.validate(plan, self.schema)
+        self.assertEqual("handoff-required", plan["status"])
+        self.assertEqual(["Read", "Grep", "Glob"], plan["scoped-definition"]["tools"])
+        self.assertNotIn("model", plan["arguments"])
+        self.assertNotIn("effort", plan["arguments"])
+        self.blocked(prepare_native_assignment(selected, "claude-agent", role="independent-review"))
+
+    def test_claude_host_default_read_only_worker_needs_narrowed_definition(self):
+        selected = self.selected("claude-code", "host-default")
+        plan = self.plan(selected, "claude-agent", access="inspect")
+        self.assertEqual("handoff-required", plan["status"])
+        self.assertEqual(["Read", "Grep", "Glob"], plan["scoped-definition"]["tools"])
+        self.assertNotIn("model", plan["scoped-definition"])
+        self.assertNotIn("effort", plan["scoped-definition"])
+        self.blocked(self.plan(selected, "claude-agent", access="unknown"))
+
+    def test_claude_scope_identity_changes_with_settings_and_role_contract(self):
+        selected = self.selected("claude-code")
+        first = self.plan(selected, "claude-agent", project=self.project)
+        self.assertEqual(first, self.plan(selected, "claude-agent", project=self.project))
+        changed = self.plan({**selected, "model": "other-selector"}, "claude-agent", project=self.project)
+        self.assertNotEqual(first["arguments"], changed["arguments"])
+
+    def test_claude_long_project_agent_ids_produce_bounded_distinct_names(self):
+        ids = ["project-" + "long-" * 12 + suffix for suffix in ("one", "two")]
+        write_yaml(self.project / ".embraion/agents.yaml", {"agents": [
+            {"id": identity, "extends": "worker", "purpose": "Same project work.",
+             "access": "workspace-write", "responsibilities": ["Implement bounded project work."]}
+            for identity in ids]})
+        selected = self.selected("claude-code")
+        names = []
+        for identity in ids:
+            plan = self.plan(selected, "claude-agent", project=self.project, native_agent=identity)
+            name = plan["scoped-definition"]["name"]
+            self.assertLessEqual(len(name), 64)
+            names.append(name)
+        self.assertNotEqual(*names)
 
     def test_vscode_effort_requires_the_exact_verified_native_field(self):
         selected = self.selected("copilot")

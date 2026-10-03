@@ -287,6 +287,10 @@ Task-class resolution собирает ordered effective candidates, отдел�
 
 Создать bounded privacy-aware execution plan.
 
+Каждый выбранный маршрут `critical` требует `--justification "конкретный риск"` у `route` и `dispatch`. Прямой запрос execution также требует непустого `justification` при `routeClass: critical`.
+
+`dispatch --native-surface claude-agent` готовит полное временное описание агента с явно выбранными model/effort, но не запускает его. `--native-agent reviewer` выбирает native specialist независимо от `--role` — роли маршрутизации проекта. Загрузку описания и проверку фактических настроек см. в [Claude Code](../hosts/claude-code.md).
+
 ```bash
 embraion dispatch   --task "Implement feature"   --role worker   --host codex   --route-class bounded-write   --data PRIVATE   --access write   --owned-path "src/**"
 ```

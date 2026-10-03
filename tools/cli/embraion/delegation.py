@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
@@ -16,6 +19,9 @@ def prepare_native_assignment(
     role: str,
     existing: dict[str, Any] | None = None,
     verified_native_fields: list[str] | None = None,
+    native_agent: str | None = None,
+    project: Path | None = None,
+    access: str | None = None,
 ) -> dict[str, Any]:
     """Static translation is not proof of installed capabilities or applied settings."""
     surfaces = read_yaml(framework_root() / "adapters/harness-capabilities.yaml")["delegation-surfaces"]
@@ -42,10 +48,13 @@ def prepare_native_assignment(
         # A partially translated choice must never look dispatchable.
         plan["arguments"] = {}
         plan["definition-overrides"] = {}
+        plan.pop("scoped-definition", None)
         return plan
 
     if not spec or spec["mode"] != "runtime":
         return block("This surface has no verified native delegation mechanism; Portable is an interchange bundle.")
+    if native_agent is not None and surface != "claude-agent":
+        return block("Explicit native-agent binding is currently supported only for Claude definitions.")
     plan["mechanism"] = spec["mechanism"]
     plan["sources"] = spec["sources"]
     resolution = selected.get("resolution")
@@ -101,9 +110,43 @@ def prepare_native_assignment(
         plan[binding["location"]][binding["field"]] = value
     if plan["definition-overrides"]:
         plan["requirements"].append("merge these derived fields into a scoped native definition preserving the selected role and access; load/select it before dispatch")
-    if spec.get("definition-handoff") and settings["effort"] is not None:
+    if surface == "claude-agent":
+        from .project import _agent_instructions, _claude_agent_name, _host_access_projection, load_agents
+
+        identity = native_agent or role
+        agent = next((item for item in load_agents(framework_root(), project)
+                      if item["id"] == identity and identity != "lead"), None)
+        if agent is None:
+            return block("No native specialist definition for this routing role; select an explicit native-agent binding.")
+        agent = dict(agent)
+        read_access = {"inspect", "plan", "review", "external-read", "read-only"}
+        narrower_access = access in read_access and agent.get("access") != "read-only"
+        if access in read_access:
+            agent["access"] = "read-only"
+        elif access not in {None, "write", "workspace-write"}:
+            return block("Unknown native assignment access; permissions cannot be inferred.")
+        # A writable assignment cannot widen a read-only specialist's tool set.
+        tools = list(_host_access_projection("claude-code", agent)["tools"])
+        if plan["definition-overrides"] or narrower_access:
+            definition = {
+                "description": agent.get("purpose", ""),
+                "prompt": _agent_instructions(agent),
+                "tools": tools,
+                **plan["definition-overrides"],
+            }
+            digest = hashlib.sha256(json.dumps({"role": identity, "definition": definition},
+                                               sort_keys=True).encode()).hexdigest()[:12]
+            # Claude AgentSpec limits names to 64 characters; project IDs can
+            # be longer. Hash the full identity to retain distinct bindings.
+            name = f"embraion-{identity[:42]}-{digest}"
+            plan["scoped-definition"] = {"name": name, **definition}
+            plan["arguments"]["subagent_type"] = name
+        else:
+            plan["arguments"]["subagent_type"] = _claude_agent_name(identity)
+        plan["requirements"].append("supply the bounded task prompt separately; subagent_type is usable only after its exact definition is loaded")
+    if spec.get("definition-handoff") and (plan["definition-overrides"] or plan.get("scoped-definition")):
         plan["status"] = "handoff-required"
-        plan["requirements"].append("load the effort definition through the native agent loader or a fresh --agents session; do not invent an Agent effort argument")
+        plan["requirements"].append("load the complete scoped definition through the native agent loader or a fresh --agents session; do not invent Agent model IDs or effort arguments")
 
     if existing:
         matches = (existing.get("effective-settings-verified") is True
@@ -115,6 +158,9 @@ def prepare_native_assignment(
         else:
             matches = matches and all(value is None or existing.get(key) == value for key, value in settings.items())
             matches = matches and (existing.get("options") or {}) == options
+        if surface == "claude-agent":
+            matches = (matches and existing.get("native-agent") == plan["arguments"]["subagent_type"]
+                       and existing.get("effective-tools") == tools)
         if matches:
             plan["reuse"] = "verified-existing-agent"
     return plan

@@ -293,6 +293,10 @@ Task-class resolution composes the project's ordered effective candidates, keeps
 
 Create a bounded privacy-aware execution plan.
 
+Every selected `critical` route requires `--justification "concrete risk"` on both `route` and `dispatch`. Direct execution requests likewise require nonblank `justification` for `routeClass: critical`.
+
+`dispatch --native-surface claude-agent` prepares a complete scoped definition for explicit model/effort and never executes it. `--native-agent reviewer` binds a native specialist independently of `--role` (the project routing role). See [Claude Code](../hosts/claude-code.md) for definition loading and evidence requirements.
+
 ```bash
 embraion dispatch \
   --task "Implement feature" \
