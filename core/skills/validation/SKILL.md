@@ -8,11 +8,11 @@ description: Plan and execute proportional validation while distinguishing fresh
 ## Procedure
 
 1. Classify the change impact.
-2. Select the smallest checks that can falsify the intended behavior.
+2. Select the smallest checks that can falsify the intended behavior. Use test-design when risk requires a separate test strategy; use an installed Unity domain skill for a relevant Unity Editor, asset, or Player risk.
 3. Prefer a configured project profile from `.embraion/validation.yaml` when it matches the needed evidence.
 4. Run it through `embraion validation run <profile>`; use `--run-id` when execution evidence should receive the result automatically.
 5. Expand validation only when impact justifies it.
-6. Record exact fresh results, expected skips, and infrastructure limits.
+6. Record exact fresh results, expected skips, and infrastructure limits. For UI claims, label live user interaction separately from static inspection, screenshots, and build results. On resumption, check candidate and environment identity before reusing earlier results.
 7. Preserve failing evidence until the cause is understood.
 
 ## Guardrails

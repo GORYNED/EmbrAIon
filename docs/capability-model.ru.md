@@ -18,3 +18,9 @@ Canonical capability должна иметь один primary type. Cross-refere
 Routing намеренно model-agnostic. Concrete model names, provider rates, lifecycle state и host availability не являются canonical Core capabilities.
 
 EmbrAIon предоставляет reusable **механизмы** deployment eligibility, provider-neutral execution, pricing refresh/snapshots, health и evidence. Конкретные models, providers, rates, source URLs и availability facts остаются project- или host-owned.
+
+Навыки Core описывают повторяемые [инженерные процедуры](guides/engineering-skills.md): миграцию совместимости, проектирование тестов, обновление зависимостей, исследование производительности и создание навыков. [Живая проверка навыка](guides/skill-evals.md) сравнивает базовое и новое поведение в свежих сессиях хоста; проверка предоставленной записи оценивает только эту запись. Событие чтения навыка не доказывает, что он вызвал результат.
+
+Необязательные [внешние возможности](configuration/capabilities.md) имеют отдельный lifecycle деклараций и наблюдений. Запись в инвентаре не доказывает установку, обнаружение хостом, загрузку инструкции, готовность инструмента или выполнение. [Пакет Unity](guides/unity-capabilities.md) включается явно и находится вне нейтрального Core. Факты проекта и review gates продолжают действовать.
+
+Детерминированная [проверка организации кода](configuration/organization.md) применяется к изменениям постепенно. Старый долг служит базой сравнения, но не исключением для новых нарушений. [Контрольные точки](guides/task-continuity.md) и [аудит знаний](guides/knowledge-maintenance.md) сохраняют локальные ссылки для проверки актуальности; они не продвигают learning и не дают одобрения.

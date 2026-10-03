@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/organization.schema.json",
+  "title": "EmbrAIon Organization Configuration",
+  "type": "object",
+  "properties": {
+    "exclude": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+    "namespaces": {
+      "type": "object", "required": ["rules"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "rules": {"type": "array", "items": {"type": "object", "required": ["path", "namespace"], "properties": {
+          "path": {"$ref": "#/$defs/path"}, "namespace": {"$ref": "#/$defs/namespace"},
+          "require_declaration": {"type": "boolean"},
+          "exceptions": {"type": "array", "items": {"type": "object", "required": ["path"], "properties": {
+            "path": {"$ref": "#/$defs/path"}, "namespace": {"$ref": "#/$defs/namespace"},
+            "allow_missing": {"type": "boolean"}
+          }, "additionalProperties": false}}
+        }, "additionalProperties": false}}
+      }, "additionalProperties": false
+    },
+    "assemblies": {
+      "type": "object", "required": ["roots", "path_rules"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "roots": {"type": "array", "items": {"$ref": "#/$defs/path"}, "minItems": 1},
+        "enforce_platforms": {"type": "boolean"},
+        "path_rules": {"type": "array", "items": {"type": "object", "required": ["path", "layer"], "properties": {
+          "path": {"$ref": "#/$defs/path"}, "layer": {"enum": ["Runtime", "Editor", "Tests"]}
+        }, "additionalProperties": false}},
+        "allowed_edges": {"type": "array", "items": {"type": "object", "required": ["from", "to"], "properties": {
+          "from": {"type": "string", "minLength": 1}, "to": {"type": "string", "minLength": 1}
+        }, "additionalProperties": false}}
+      }, "additionalProperties": false
+    },
+    "unity_meta": {
+      "type": "object", "required": ["roots"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "roots": {"type": "array", "items": {"$ref": "#/$defs/path"}, "minItems": 1},
+        "require_for_extensions": {"type": "array", "items": {"type": "string", "pattern": "^\\.[A-Za-z0-9]+$"}, "uniqueItems": true},
+        "check_move_identity": {"type": "boolean"}
+      }, "additionalProperties": false
+    }
+  }, "additionalProperties": false,
+  "$defs": {
+    "path": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?!.*[\\r\\n])[A-Za-z0-9_.*?@+ /-]+$"},
+    "namespace": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"}
+  }
+}

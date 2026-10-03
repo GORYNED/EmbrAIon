@@ -16,6 +16,7 @@ sources:
     - requirements-docs.txt
     - mkdocs.yml
     - core/**
+    - extensions/**
     - adapters/**
     - tools/**
     - schemas/**

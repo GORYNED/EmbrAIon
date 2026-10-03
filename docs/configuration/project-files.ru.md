@@ -42,6 +42,8 @@ capabilities:
 
 На текущем уровне contract EmbrAIon не использует arbitrary `capabilities` для model selection или обхода policy.
 
+Эти metadata отличаются от необязательного [инвентаря внешних возможностей](capabilities.md) со строгой schema. Декларация в нём не устанавливает интеграцию и не доказывает загрузку возможности хостом.
+
 ## `.embraion/knowledge.yaml`
 
 Указывает EmbrAIon на project-owned knowledge.
@@ -263,6 +265,20 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 
 См. [Pricing и стоимость](pricing.md).
 
+## Опциональный `.embraion/external-capabilities.yaml`
+
+Строгий версионированный инвентарь описывает необязательные управляемые пакеты и интеграции хоста. По умолчанию файла нет. Указывайте версию или digest, источник, лицензию, требования к хосту, доступ, класс данных и **имена** переменных окружения. Декларация не означает установку, разрешение или подтверждённую загрузку хостом. `embraion capabilities --path . --host codex --json` показывает границы локальных свидетельств; последующие этапы работы хоста остаются непроверенными без доверенного наблюдения. См. [Внешние возможности](capabilities.md).
+
+Необязательный пакет Unity находится вне нейтрального Core. Проект явно выбирает навыки из manifest; пакет не устанавливает Unity или сторонние плагины. См. [Возможности Unity](../guides/unity-capabilities.md).
+
+## Опциональный `.embraion/knowledge-maintenance.yaml`
+
+Задайте связи документов и исходных файлов, затем после проверки явно запустите `embraion knowledge snapshot --path .`. `embraion knowledge audit --path .` сравнивает локальные хеши и показывает изменённые или отсутствующие источники для проверки. Команда не переписывает документы и не выводит изменение внешней версии без наблюдаемых metadata. См. [Поддержка знаний](../guides/knowledge-maintenance.md).
+
+## Опциональный `.embraion/organization.yaml`
+
+Проект может задать ограничения на организацию кода. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` проверяет изменения постепенно. Старые нарушения не освобождают новый код от правил. См. [Организация кода](organization.md).
+
 ## Project settings не должны переопределять Core
 
 Не копируйте generic-механизмы EmbrAIon в project configuration.
@@ -289,6 +305,8 @@ Runtime может создать:
 ```
 
 Это не каноническая project configuration и обычно не должно отслеживаться Git.
+
+Ссылки контрольных точек и базовые снимки аудита знаний также хранятся в `state/`; они не заменяют policy проекта, Git и свидетельства review.
 
 Projection ownership ledgers также находятся в `.embraion/state/projections/`. В свежем worktree ledger может отсутствовать; во время намеренного framework update EmbrAIon может восстановить ownership только по byte-for-byte совпадению с projection точного previous pin. Изменённые или недоказанные файлы остаются conflicts.
 

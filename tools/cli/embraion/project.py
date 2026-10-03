@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,7 @@ from .common import (
     write_yaml,
 )
 from .codex_config import merge_codex_config, orchestration_block
+from .capabilities import _builtin_skills, projected_skills, read_external_capabilities
 from .policy import read_agents_config
 from .versioning import ensure_cached_runtime
 
@@ -329,6 +331,13 @@ def _config_upgrade_inputs(
         ),
     }
 
+    external_inventory = config_root / "external-capabilities.yaml"
+    if external_inventory.exists() or external_inventory.is_symlink():
+        definitions[external_inventory] = (
+            {"schema-version": 1, "capabilities": []},
+            Path("schemas/external-capabilities.schema.json"),
+        )
+
     # Missing modular files are safe to materialize from framework defaults.
     # This keeps version-only legacy overlays upgradeable without a manual migration.
     return definitions
@@ -373,9 +382,23 @@ def normalize_project_config(
     definitions = _config_upgrade_inputs(destination, version=version)
     candidates: dict[Path, dict[str, Any]] = {}
     originals: dict[Path, dict[str, Any]] = {}
+    external_inventory = destination / ".embraion" / "external-capabilities.yaml"
+    has_external_inventory = external_inventory in definitions
+    validated_external = (
+        read_external_capabilities(framework_root(), destination)
+        if has_external_inventory else None
+    )
+    original_manifest = read_yaml(manifest)
+    original_framework = original_manifest.get("framework") if isinstance(original_manifest, dict) else None
+    old_pin = original_framework.get("version") if isinstance(original_framework, dict) else None
+    if validated_external and any(item["kind"] == "managed-bundle" for item in validated_external["capabilities"]):
+        if (not isinstance(old_pin, str) or not old_pin
+                or original_framework.get("repository") != "GORYNED/EmbrAIon"):
+            raise RuntimeError("Cannot update managed built-in capability without a valid existing framework pin.")
 
     for config_path, (defaults, schema_path) in definitions.items():
-        loaded = read_yaml(config_path) if config_path.is_file() else {}
+        loaded = (validated_external if config_path == external_inventory
+                  else read_yaml(config_path) if config_path.is_file() else {})
         if loaded is None:
             loaded = {}
         if not isinstance(loaded, dict):
@@ -383,8 +406,8 @@ def normalize_project_config(
                 f"Invalid project configuration mapping: {config_path}"
             )
 
-        originals[config_path] = loaded
-        candidate = _merge_missing_defaults(loaded, defaults)
+        originals[config_path] = deepcopy(loaded)
+        candidate = _merge_missing_defaults(deepcopy(loaded), defaults)
 
         if config_path == manifest:
             framework = dict(candidate.get("framework") or {})
@@ -394,7 +417,24 @@ def normalize_project_config(
                 framework["artifact"] = dict(artifact)
             candidate["framework"] = framework
 
-        _validate_upgrade_candidate(config_path, candidate, schema_path)
+        if config_path == external_inventory:
+            for item in candidate["capabilities"]:
+                if item["kind"] != "managed-bundle":
+                    continue
+                if item["version"] not in {old_pin, version}:
+                    raise RuntimeError("Managed built-in capability version does not match the old or target framework pin.")
+                item["version"] = version
+                # The target framework owns the bundle. Check its manifest and
+                # selected sources before writing any project configuration.
+                _builtin_skills(framework_root(), item, version)
+
+        if config_path == external_inventory:
+            try:
+                _validate_upgrade_candidate(config_path, candidate, schema_path)
+            except RuntimeError as error:
+                raise RuntimeError("Cannot safely update external capability metadata.") from error
+        else:
+            _validate_upgrade_candidate(config_path, candidate, schema_path)
         candidates[config_path] = candidate
 
     changed = [
@@ -731,7 +771,19 @@ def _generate_markdown_agents(
         )
 
 
-def _generate_host_skills(root: Path, output: Path, host: str) -> None:
+def _copy_selected_builtin_skills(root: Path, project: Path | None, host: str, target: Path) -> None:
+    if project is None:
+        return
+    for name, source in projected_skills(root, project, host).items():
+        destination = target / name
+        if destination.exists() or destination.is_symlink():
+            raise RuntimeError(f"Selected built-in skill collides with an existing skill: {name}")
+        shutil.copytree(source, destination)
+        entry = destination / "SKILL.md"
+        entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+
+
+def _generate_host_skills(root: Path, output: Path, host: str, project: Path | None = None) -> None:
     relative = HOST_SKILL_DIRECTORIES.get(host)
     if relative is None:
         raise RuntimeError(f"Host '{host}' has no routing-authority skill projection.")
@@ -752,6 +804,7 @@ def _generate_host_skills(root: Path, output: Path, host: str) -> None:
     guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
+    _copy_selected_builtin_skills(root, project, host, target)
     if host == "claude-code":
         # A skill description is conditional discovery, not a startup contract.
         # Keep this small entry point owned alongside the skill it activates.
@@ -814,7 +867,7 @@ def _generate_claude_scoped_agents(output: Path, project: Path | None) -> None:
     write_json(output / ".claude" / "embraion-native.json", projection_metadata(assignments))
 
 
-def _generate_portable(root: Path, output: Path) -> None:
+def _generate_portable(root: Path, output: Path, project: Path | None = None) -> None:
     target = output / "embraion"
     target.mkdir(parents=True, exist_ok=True)
 
@@ -831,6 +884,7 @@ def _generate_portable(root: Path, output: Path) -> None:
     shutil.copy2(root / "core/catalog.yaml", target / "catalog.yaml")
     shutil.copytree(root / "core/skills", target / "skills", dirs_exist_ok=True)
     _append_lead_skill(root, target / "skills")
+    _copy_selected_builtin_skills(root, project, "portable", target / "skills")
     for directory in ("agents", "workflows", "rules", "knowledge"):
         shutil.copytree(root / "core" / directory, target / directory, dirs_exist_ok=True)
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
@@ -849,22 +903,22 @@ def generate_host(
     if host == "codex":
         _generate_codex(root, output, selected, project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
     elif host == "copilot":
         if "agents" in selected:
             _generate_markdown_agents(root, output, "copilot", project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
     elif host == "claude-code":
         if "agents" in selected:
             _generate_markdown_agents(root, output, "claude-code", project)
         if "skills" in selected:
-            _generate_host_skills(root, output, host)
+            _generate_host_skills(root, output, host, project)
         if "scoped-agents" in selected:
             _generate_claude_scoped_agents(output, project)
     elif host == "portable":
         if "bundle" in selected:
-            _generate_portable(root, output)
+            _generate_portable(root, output, project)
     else:
         raise RuntimeError(f"Unsupported host: {host}")
 

@@ -46,3 +46,7 @@ Assignment-routing eval fixtures проверяют grading и regression behavi
 ## Совместимость pre-1.0
 
 Patch releases предназначены для совместимых fixes/improvements. Minor releases могут намеренно развивать framework contracts. Project pinning сохраняет upgrades explicit.
+
+## Изменения необязательных capabilities
+
+Необязательные inventory, правила структуры и связи knowledge-maintenance версии 0.20 добавляются без изменения поведения существующих overlays. Перед публикацией проверяйте схемы, пути выбранного bundle, ресурсы установленного wheel и все host projections. Проводите настоящую оценку skill при доступном авторизованном native host; явно сообщайте сбои host и недоступные evidence. Детерминированные fixtures и fake-host tests не заменяют live behavioral evidence и не обосновывают заявления об улучшении. Релиз не устанавливает provider login или credentials.

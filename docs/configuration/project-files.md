@@ -42,6 +42,8 @@ capabilities:
 
 At the current contract level, EmbrAIon does not use arbitrary `capabilities` values to select models or bypass policy. Treat it as an extension point and project metadata, not as a security or routing mechanism.
 
+This metadata is separate from the optional, schema-checked [external capability inventory](capabilities.md). A declaration there records requirements and lifecycle evidence; it does not install an integration or prove that a host loaded it.
+
 ## `.embraion/knowledge.yaml`
 
 This file points EmbrAIon at project-owned knowledge.
@@ -366,6 +368,20 @@ to inspect the current validated snapshot.
 
 See [Pricing & cost](pricing.md) for refresh, snapshot, staleness, usage-semantics, and cost-evidence behavior.
 
+## Optional `.embraion/external-capabilities.yaml`
+
+This strict, versioned inventory declares optional managed bundles or host-managed integrations. The file is absent by default. Include only version/digest, source, license, host requirements, access, data class, and environment-variable **names**. A declaration is not an installation, authorization, or proof of host loading. `embraion capabilities --path . --host codex --json` reports what local evidence can establish; later host stages remain unverified without trusted live observation. See [External capabilities](capabilities.md).
+
+The optional Unity bundle lives outside vendor-neutral Core. A project selects listed skills explicitly; the bundle does not install Unity or third-party plugins. See [Unity capabilities](../guides/unity-capabilities.md).
+
+## Optional `.embraion/knowledge-maintenance.yaml`
+
+Declare which project document depends on which source files, then explicitly run `embraion knowledge snapshot --path .` after reviewing the relationships. `embraion knowledge audit --path .` compares local hashes and reports changed or missing sources for review. It does not rewrite documentation or infer external version drift without observed metadata. See [Knowledge maintenance](../guides/knowledge-maintenance.md).
+
+## Optional `.embraion/organization.yaml`
+
+Project-owned code organization limits can supplement the Core procedure. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` checks changed files incrementally. Existing debt does not waive a new violation. See [Code organization](organization.md).
+
 ## Project settings should not reimplement Core
 
 Do not copy generic EmbrAIon mechanisms into project configuration just to customize a repository.
@@ -396,6 +412,8 @@ During normal operation EmbrAIon may create:
 ```
 
 These are not canonical project configuration and should normally remain untracked.
+
+Local checkpoint references and knowledge audit baselines also live under `state/`; they are not project policy or a substitute for source control and review evidence.
 
 Host projection ownership ledgers also live under `.embraion/state/projections/`. Because that state is intentionally gitignored, a fresh worktree may not have the ledger created by an earlier install. During an intentional framework update, EmbrAIon can create temporary recovery evidence by comparing tracked host files byte-for-byte with the exact projection of the project's previous pin. Only exact matches are eligible; modified or otherwise unproven files remain conflicts. A successful install replaces that recovery evidence with the normal local ownership ledger.
 

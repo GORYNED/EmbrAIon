@@ -335,6 +335,11 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "research",
                 "review",
                 "routing-configuration",
+                "skill-authoring",
+                "compatibility-migration",
+                "test-design",
+                "performance-investigation",
+                "dependency-upgrade",
                 "validation",
                 "verification",
             }

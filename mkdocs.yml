@@ -76,6 +76,8 @@ plugins:
             Policy & protected paths: Политика и защищённые пути
             Validation configuration: Настройка валидации
             Project agents: Агенты проекта
+            External capabilities: Внешние возможности
+            Code organization: Организация кода
             Conversational configuration: Разговорная настройка
             Advanced: Расширенная настройка
             Project deployments: Deployments проекта
@@ -89,6 +91,11 @@ plugins:
             Daily workflow: Ежедневный процесс
             Validation & evidence: Валидация и evidence
             Runs & review: Runs и ревью
+            Engineering skills: Инженерные навыки
+            Live skill evaluations: Живые проверки навыков
+            Task continuity: Продолжение задачи
+            Knowledge maintenance: Поддержка знаний
+            Unity capabilities: Возможности Unity
             Troubleshooting: Решение проблем
             Examples: Примеры
             Reference: Справочник
@@ -159,6 +166,8 @@ nav:
           - Policy & protected paths: configuration/policy.md
           - Validation configuration: configuration/validation.md
           - Project agents: configuration/agents.md
+          - External capabilities: configuration/capabilities.md
+          - Code organization: configuration/organization.md
           - Conversational configuration: configuration/ai-hosts.md
       - Advanced:
           - Project deployments: configuration/deployments.md
@@ -177,6 +186,11 @@ nav:
       - Daily workflow: guides/daily-workflow.md
       - Validation & evidence: validation.md
       - Runs & review: guides/runs-review.md
+      - Engineering skills: guides/engineering-skills.md
+      - Live skill evaluations: guides/skill-evals.md
+      - Task continuity: guides/task-continuity.md
+      - Knowledge maintenance: guides/knowledge-maintenance.md
+      - Unity capabilities: guides/unity-capabilities.md
       - Enforcement: guides/enforcement.md
       - Troubleshooting: guides/troubleshooting.md
       - Examples:

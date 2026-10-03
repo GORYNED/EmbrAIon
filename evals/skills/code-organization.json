@@ -1,0 +1,55 @@
+{
+  "schema-version": 1,
+  "id": "code-organization",
+  "skills": [
+    {"id": "code-organization", "candidate": "core/skills/code-organization"}
+  ],
+  "cases": [
+    {
+      "id": "bounded-class-addition-en",
+      "polarity": "positive",
+      "fixture": "fixtures/python-service",
+      "prompt": "Add a Python class named InvoiceFormatter in acme/invoices/formatter.py that returns a display label from an invoice's number. Use the existing package style, and keep the change bounded. Do not make unrelated edits.",
+      "checks": [
+        {"type": "file-exists", "path": "acme/invoices/formatter.py"},
+        {"type": "file-contains", "path": "acme/invoices/formatter.py", "text": "class InvoiceFormatter"},
+        {"type": "changed-paths-within", "paths": ["acme/invoices"]},
+        {"type": "unchanged-path", "path": "acme/users/profile.py"}
+      ]
+    },
+    {
+      "id": "bounded-class-addition-ru",
+      "polarity": "positive",
+      "fixture": "fixtures/python-service",
+      "prompt": "Добавь в acme/invoices/formatter.py Python-класс InvoiceFormatter, который формирует отображаемую метку из номера счёта. Соблюдай структуру пакета и не меняй несвязанные файлы.",
+      "checks": [
+        {"type": "file-exists", "path": "acme/invoices/formatter.py"},
+        {"type": "file-contains", "path": "acme/invoices/formatter.py", "text": "class InvoiceFormatter"},
+        {"type": "changed-paths-within", "paths": ["acme/invoices"]},
+        {"type": "unchanged-path", "path": "acme/users/profile.py"}
+      ]
+    },
+    {
+      "id": "docs-typo-no-trigger",
+      "polarity": "negative",
+      "fixture": "fixtures/python-service",
+      "prompt": "In README.md, change 'Invoce service' to 'Invoice service'. Make no other edits.",
+      "checks": [
+        {"type": "file-contains", "path": "README.md", "text": "Invoice service"},
+        {"type": "changed-paths-within", "paths": ["README.md"]},
+        {"type": "unchanged-path", "path": "acme/invoices/invoice.py"}
+      ]
+    },
+    {
+      "id": "docs-typo-no-trigger-ru",
+      "polarity": "negative",
+      "fixture": "fixtures/python-service",
+      "prompt": "В README.md исправь 'Invoce service' на 'Invoice service'. Другие файлы не меняй.",
+      "checks": [
+        {"type": "file-contains", "path": "README.md", "text": "Invoice service"},
+        {"type": "changed-paths-within", "paths": ["README.md"]},
+        {"type": "unchanged-path", "path": "acme/invoices/invoice.py"}
+      ]
+    }
+  ]
+}

@@ -7,6 +7,11 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .capabilities import diagnose_external_capabilities
+from .checkpoints import create_checkpoint, resume_checkpoint
+from .knowledge_audit import audit_knowledge, snapshot_knowledge
+from .organization import check_organization
+from .skill_evals import run_suite
 from .artifacts import read_project_artifact_lock, verify_project_artifact
 from .bootstrap import _safe_path as bootstrap_safe_path, apply_bootstrap, plan_bootstrap
 from .common import find_project_root, framework_root, project_root
@@ -121,6 +126,10 @@ def _print_main_help(file: object | None = None) -> None:
         "  security   Scan a path for secrets and policy drift",
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
+        "  capabilities Diagnose declared external and selected built-in capabilities",
+        "  organization Check configured namespace, assembly, and Unity metadata rules",
+        "  checkpoint Record or inspect local task continuity anchors",
+        "  knowledge  Snapshot or audit declared documentation/source relationships",
         "  claude-native Inspect scoped Claude agents and install guard/observer hooks",
         "  worktree   List, create, clean, or salvage Git worktrees",
         "  learning   Record evidence and manage gated learning candidates",
@@ -1001,6 +1010,80 @@ def _cmd_learning_transition(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_capabilities(args: argparse.Namespace) -> int:
+    project = project_root(Path(args.path))
+    observation = None
+    if args.observation:
+        path = Path(args.observation)
+        if not path.is_file() or path.stat().st_size > 65536:
+            raise RuntimeError("Invalid or oversized capability observation file.")
+        try:
+            observation = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeError) as error:
+            raise RuntimeError("Invalid capability observation JSON.") from error
+    report = diagnose_external_capabilities(framework_root(), project, args.host, observation=observation)
+    if args.json:
+        _print_json(report)
+    else:
+        for entry in report["capabilities"]:
+            print(f"{entry['id']}: " + ", ".join(f"{stage}={value['status']}" for stage, value in entry["stages"].items()))
+        print(f"Observation: {report['observation-status']}; host loading and execution require independent evidence.")
+    return 1 if any(item.get("issue") for item in report["capabilities"]) else 0
+
+
+def _cmd_organization_check(args: argparse.Namespace) -> int:
+    report = check_organization(Path(args.path), base_ref=args.base_ref, head_ref=args.head_ref,
+                               include_worktree=args.include_worktree,
+                               config_path=Path(args.config) if args.config else None)
+    if args.json:
+        _print_json(report)
+    else:
+        print(f"Organization: {report['status']} ({report.get('mode', 'unconfigured')})")
+        for finding in report.get("findings", []):
+            print(f"{finding.get('status', '')}: {finding.get('path', '')}: {finding.get('code', '')}: {finding.get('message', '')}")
+    return 0 if report["passed"] else 1
+
+
+def _cmd_checkpoint(args: argparse.Namespace) -> int:
+    project = Path(args.path)
+    if args.checkpoint_command == "create":
+        report = create_checkpoint(args.id, task_id=args.task_id, phase=args.phase,
+            decision_id=args.decision_id, next_action_id=args.next_action_id,
+            acceptance_path=args.acceptance_path, remaining_path=args.remaining_path,
+            context_id=args.context_id, run_id=args.run_id, project=project)
+    else:
+        report = resume_checkpoint(args.id, project=project)
+    _print_json(report)
+    return 1 if report.get("status") in {"stale", "missing"} else 0
+
+
+def _cmd_knowledge(args: argparse.Namespace) -> int:
+    function = snapshot_knowledge if args.knowledge_command == "snapshot" else audit_knowledge
+    _print_json(function(project=Path(args.path)))
+    return 0
+
+
+def _cmd_eval_skills_run(args: argparse.Namespace) -> int:
+    project = project_root(Path(args.path))
+    selected = route(args.host, args.route_class, args.data, role="worker", access="workspace-write", project=project)
+    if selected.get("options") or selected.get("provider"):
+        raise RuntimeError("Live Codex eval cannot apply this route's provider or additional options; use an applicable declared route.")
+    model, effort = selected.get("model"), selected.get("effort")
+    if selected["resolution"] != "host-default":
+        if ((args.model is not None and args.model != model)
+                or (args.effort is not None and args.effort != effort)):
+            raise RuntimeError("Live eval model/effort must match the resolved project route.")
+    else:
+        model, effort = args.model, args.effort
+    try:
+        report = run_suite(Path(args.suite), host=args.host, model=model, effort=effort,
+                           attempts=args.attempts, output=Path(args.output), timeout_seconds=args.timeout)
+    except (ValueError, OSError) as error:
+        raise RuntimeError("Cannot run live skill evaluation: " + redact_text(str(error))) from error
+    _print_json(report)
+    return 0 if all(row["behavior-passed"] for row in report["runs"] if row["variant"] == "candidate") else 1
+
+
 def _cmd_eval_run(args: argparse.Namespace) -> int:
     report = run_case(
         args.case,
@@ -1211,8 +1294,13 @@ def _print_doctor_report(
         )
         print(f"[OK] Worktrees checked ({report['worktrees']})")
 
+    for name, result in (report.get("project-controls") or {}).items():
+        status = result.get("status", "declared; host loading and execution unverified")
+        print(f"[INFO] {name}: {status}")
+    for message in report.get("project-control-errors", []):
+        print(f"[ERROR] {message}")
     print()
-    if validation_errors or high_security:
+    if validation_errors or high_security or report.get("project-control-errors"):
         print("Doctor found issues that need attention.")
     elif validation_warnings or security:
         print("Doctor completed with warnings.")
@@ -1228,9 +1316,26 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     security: list[dict[str, str]] = []
     mcp_count = 0
     worktree_count = 0
+    project_controls: dict[str, object] = {}
+    control_errors: list[str] = []
 
     if project is not None:
         security = collect_findings(project)
+        for name, inspect_control in (
+            ("capabilities", lambda: diagnose_external_capabilities(root, project, "codex")),
+            ("organization", lambda: check_organization(project)),
+            ("knowledge", lambda: audit_knowledge(project=project)),
+        ):
+            try:
+                result = inspect_control()
+                project_controls[name] = result
+                if name == "organization" and not result["passed"]:
+                    control_errors.append("organization findings require attention")
+                if name == "capabilities" and any(item.get("issue") for item in result["capabilities"]):
+                    control_errors.append("capability configuration is unverified or incomplete")
+            except (RuntimeError, ValueError, OSError) as error:
+                control_errors.append(name + ": " + redact_text(str(error)))
+                project_controls[name] = {"status": "error"}
 
         try:
             mcp = save_mcp_inventory(project)
@@ -1246,6 +1351,8 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     report = {
         "framework": __version__,
         "project": str(project) if project is not None else None,
+        "project-controls": project_controls,
+        "project-control-errors": control_errors,
         "project-diagnostics": "enabled" if project is not None else "skipped-no-project",
         "validation-errors": sum(
             1 for item in validation if item["severity"] == "error"
@@ -1268,7 +1375,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         for item in security
     )
 
-    return 1 if report["validation-errors"] or has_high_security else 0
+    return 1 if report["validation-errors"] or has_high_security or control_errors else 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1969,11 +2076,64 @@ def build_parser() -> argparse.ArgumentParser:
             action=action,
         )
 
+    capabilities_parser = sub.add_parser("capabilities", help="Diagnose optional external capability declarations")
+    capabilities_parser.add_argument("--path", default=".")
+    capabilities_parser.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    capabilities_parser.add_argument("--observation")
+    capabilities_parser.add_argument("--json", action="store_true")
+    capabilities_parser.set_defaults(func=_cmd_capabilities)
+
+    organization_parser = sub.add_parser("organization", help="Check project-configured source organization")
+    organization_sub = organization_parser.add_subparsers(dest="organization_command", required=True)
+    organization_check = organization_sub.add_parser("check")
+    organization_check.add_argument("--path", default=".")
+    organization_check.add_argument("--base-ref")
+    organization_check.add_argument("--head-ref", default="HEAD")
+    organization_check.add_argument("--include-worktree", action="store_true")
+    organization_check.add_argument("--config")
+    organization_check.add_argument("--json", action="store_true")
+    organization_check.set_defaults(func=_cmd_organization_check)
+
+    checkpoint_parser = sub.add_parser("checkpoint", help="Record or inspect local task continuity metadata")
+    checkpoint_sub = checkpoint_parser.add_subparsers(dest="checkpoint_command", required=True)
+    for command in ("create", "resume"):
+        command_parser = checkpoint_sub.add_parser(command)
+        command_parser.add_argument("id")
+        command_parser.add_argument("--path", default=".")
+        if command == "create":
+            command_parser.add_argument("--task-id", required=True)
+            command_parser.add_argument("--phase", required=True, choices=["planning", "implementing", "validating", "reviewing", "blocked", "complete"])
+            for name in ("decision-id", "next-action-id", "acceptance-path", "remaining-path", "context-id", "run-id"):
+                command_parser.add_argument("--" + name)
+        command_parser.set_defaults(func=_cmd_checkpoint)
+
+    knowledge_parser = sub.add_parser("knowledge", help="Explicitly snapshot or read-only audit knowledge source relationships")
+    knowledge_sub = knowledge_parser.add_subparsers(dest="knowledge_command", required=True)
+    for command in ("snapshot", "audit"):
+        command_parser = knowledge_sub.add_parser(command)
+        command_parser.add_argument("--path", default=".")
+        command_parser.set_defaults(func=_cmd_knowledge)
+
     eval_parser = sub.add_parser("eval", help="Run behavioral evaluations", description="Run behavioral eval cases, build baselines, and compare reports.")
     eval_sub = eval_parser.add_subparsers(
         dest="eval-command",
         required=True,
     )
+
+    eval_skills = eval_sub.add_parser("skills", help="Evaluate skills in real isolated host sessions")
+    eval_skills_sub = eval_skills.add_subparsers(dest="eval_skills_command", required=True)
+    eval_skills_run = eval_skills_sub.add_parser("run")
+    eval_skills_run.add_argument("--suite", required=True)
+    eval_skills_run.add_argument("--host", default="codex", choices=["codex"])
+    eval_skills_run.add_argument("--model")
+    eval_skills_run.add_argument("--effort")
+    eval_skills_run.add_argument("--attempts", type=int, default=2)
+    eval_skills_run.add_argument("--output", required=True)
+    eval_skills_run.add_argument("--timeout", type=int, default=180)
+    eval_skills_run.add_argument("--path", default=".")
+    eval_skills_run.add_argument("--route-class", default="ordinary", choices=["bounded-write", "ordinary", "substantial", "complex"])
+    eval_skills_run.add_argument("--data", default="PRIVATE", choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"])
+    eval_skills_run.set_defaults(func=_cmd_eval_skills_run)
 
     eval_run = eval_sub.add_parser("run", help="Run one eval case", description="Evaluate an execution record against a behavioral eval case.")
     eval_run.add_argument("--case", required=True)

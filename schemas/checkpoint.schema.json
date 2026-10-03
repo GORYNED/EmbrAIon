@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Local Task Checkpoint",
+  "type": "object",
+  "required": ["schema-version", "checkpoint-id", "task-id", "phase", "git-snapshot", "anchors", "created-utc"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "checkpoint-id": {"$ref": "#/$defs/id"},
+    "task-id": {"$ref": "#/$defs/id"},
+    "phase": {"enum": ["planning", "implementing", "validating", "reviewing", "blocked", "complete"]},
+    "decision-id": {"$ref": "#/$defs/optional-id"},
+    "next-action-id": {"$ref": "#/$defs/optional-id"},
+    "acceptance-path": {"type": ["string", "null"]},
+    "remaining-path": {"type": ["string", "null"]},
+    "context-id": {"$ref": "#/$defs/optional-id"},
+    "run-id": {"$ref": "#/$defs/optional-id"},
+    "framework-pin": {"type": ["string", "null"]},
+    "git-snapshot": {"type": ["string", "null"]},
+    "anchors": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}},
+    "created-utc": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$"},
+    "optional-id": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/id"}]}
+  },
+  "additionalProperties": false
+}
