@@ -74,6 +74,20 @@ class ClaudeHookInstallationTests(unittest.TestCase):
                     install_observer_hooks(self.project)
                 self.assertEqual(original, self.path.read_bytes())
 
+    def test_exact_hook_does_not_hide_malformed_or_conflicting_siblings(self):
+        for event, expected in HOOKS.items():
+            altered = json.loads(json.dumps(expected))
+            altered["hooks"][0]["timeout"] = 60
+            for sibling in ({"hooks": "bad"}, {"hooks": ["bad"]}, altered):
+                for entries in ([expected, sibling], [sibling, expected]):
+                    for dry_run in (True, False):
+                        with self.subTest(event=event, entries=entries, dry_run=dry_run):
+                            write_json(self.path, {"hooks": {event: entries}})
+                            original = self.path.read_bytes()
+                            with self.assertRaises(RuntimeError):
+                                install_observer_hooks(self.project, dry_run=dry_run)
+                            self.assertEqual(original, self.path.read_bytes())
+
     def test_hook_cli_never_echoes_private_payload_on_bad_json(self):
         import io
         stdout, stderr = io.StringIO(), io.StringIO()

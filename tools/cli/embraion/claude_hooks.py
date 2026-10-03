@@ -50,14 +50,14 @@ def install_observer_hooks(project: Path | None = None, *, dry_run: bool = False
         entries = hooks.setdefault(event, [])
         if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
             raise RuntimeError("Existing Claude hook entries are malformed; settings were preserved.")
-        if expected in entries:
-            continue
         for entry in entries:
             commands = entry.get("hooks", [])
-            if not isinstance(commands, list):
+            if not isinstance(commands, list) or any(not isinstance(command, dict) for command in commands):
                 raise RuntimeError("Existing Claude hook commands are malformed; settings were preserved.")
-            if any(isinstance(command, dict) and command.get("command") in {COMMAND, GUARD_COMMAND} for command in commands):
+            if entry != expected and any(command.get("command") in {COMMAND, GUARD_COMMAND} for command in commands):
                 raise RuntimeError("An existing EmbrAIon observer hook differs; review it before installation.")
+        if expected in entries:
+            continue
         entries.append(expected)
         added.append(event)
     if added and not dry_run:
