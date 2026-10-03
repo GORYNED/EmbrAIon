@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,7 @@ from .evidence import review_snapshot
 
 ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")
 PHASES = {"planning", "implementing", "validating", "reviewing", "blocked", "complete"}
+MAX_METADATA_BYTES = 1024 * 1024
 
 
 def _id(value: str, label: str) -> str:
@@ -25,7 +27,8 @@ def _id(value: str, label: str) -> str:
 
 
 def _safe_file(root: Path, relative: str, *, state: bool = False) -> Path:
-    if not isinstance(relative, str) or not relative or "\\" in relative:
+    if (not isinstance(relative, str) or not relative or "\\" in relative
+            or "\x00" in relative or re.match(r"^[A-Za-z]:", relative)):
         raise RuntimeError("Invalid project-relative path.")
     rel = Path(relative)
     if rel.is_absolute() or any(part in {"", ".", ".."} for part in relative.split("/")):
@@ -49,6 +52,35 @@ def _hash(path: Path) -> str | None:
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _read_metadata_object(path: Path, label: str) -> dict[str, Any]:
+    """Read bounded local metadata without echoing its contents on failure."""
+    try:
+        with path.open("rb") as stream:
+            payload = stream.read(MAX_METADATA_BYTES + 1)
+        if len(payload) > MAX_METADATA_BYTES:
+            raise ValueError("oversized")
+        value = json.loads(payload)
+    except (OSError, UnicodeError, ValueError):
+        raise RuntimeError(f"Invalid {label}.") from None
+    if not isinstance(value, dict):
+        raise RuntimeError(f"Invalid {label}.")
+    return value
+
+
+def _read_yaml_object(path: Path, label: str) -> dict[str, Any]:
+    try:
+        with path.open("rb") as stream:
+            payload = stream.read(MAX_METADATA_BYTES + 1)
+        if len(payload) > MAX_METADATA_BYTES:
+            raise ValueError("oversized")
+        value = yaml.safe_load(payload) or {}
+    except (OSError, UnicodeError, ValueError, yaml.YAMLError):
+        raise RuntimeError(f"Invalid {label}.") from None
+    if not isinstance(value, dict):
+        raise RuntimeError(f"Invalid {label}.")
+    return value
+
+
 def _checkpoint_path(root: Path, checkpoint_id: str) -> Path:
     _id(checkpoint_id, "checkpoint ID")
     return _safe_file(root, f".embraion/state/checkpoints/{checkpoint_id}.json", state=True)
@@ -60,9 +92,7 @@ def _anchors(root: Path, *, context_id: str | None, run_id: str | None,
     knowledge_file = _safe_file(root, ".embraion/knowledge.yaml")
     if not knowledge_file.is_file():
         raise RuntimeError("Missing project knowledge configuration.")
-    knowledge = yaml.safe_load(knowledge_file.read_text(encoding="utf-8")) or {}
-    if not isinstance(knowledge, dict):
-        raise RuntimeError("Invalid project knowledge configuration.")
+    knowledge = _read_yaml_object(knowledge_file, "project knowledge configuration")
     entries = [value for key, value in knowledge.items() if key != "slots"]
     slots = knowledge.get("slots") or {}
     if not isinstance(slots, dict):
@@ -85,24 +115,36 @@ def _anchors(root: Path, *, context_id: str | None, run_id: str | None,
         run_file = _safe_file(root, run_path, state=True)
         if not run_file.is_file():
             raise RuntimeError("Missing run evidence.")
-        run = read_json(run_file)
+        run = _read_metadata_object(run_file, "run evidence")
         if run.get("run-id") != run_id:
             raise RuntimeError("Run evidence ID mismatch.")
-        for item in run.get("validation") or []:
+        validation = run.get("validation") or []
+        if not isinstance(validation, list):
+            raise RuntimeError("Invalid run evidence.")
+        for item in validation:
+            if not isinstance(item, dict) or not isinstance(item.get("evidence-id"), str):
+                raise RuntimeError("Invalid run evidence.")
             evidence_id = _id(item["evidence-id"], "validation evidence ID")
             evidence_path = f".embraion/state/validation/{evidence_id}.json"
             evidence = _safe_file(root, evidence_path, state=True)
-            if not evidence.is_file() or read_json(evidence).get("evidence-id") != evidence_id:
+            if not evidence.is_file() or _read_metadata_object(evidence, "validation evidence").get("evidence-id") != evidence_id:
                 raise RuntimeError("Validation evidence ID mismatch or missing.")
             paths.append(evidence_path)
     if context_id:
         context_file = _safe_file(root, f".embraion/state/context/{context_id}.json", state=True)
         if not context_file.is_file():
             raise RuntimeError("Missing context evidence.")
-        context = read_json(context_file)
+        context = _read_metadata_object(context_file, "context evidence")
         if context.get("context-id") != context_id:
             raise RuntimeError("Context evidence ID mismatch.")
-        for item in context.get("selected") or []:
+        selected = context.get("selected") or []
+        if not isinstance(selected, list):
+            raise RuntimeError("Invalid context evidence.")
+        for item in selected:
+            if (not isinstance(item, dict) or not isinstance(item.get("path"), str)
+                    or not isinstance(item.get("sha256"), str)
+                    or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"])):
+                raise RuntimeError("Invalid context evidence.")
             _safe_file(root, item["path"])
             if _hash(root / item["path"]) != "sha256:" + item["sha256"]:
                 raise RuntimeError("Selected context knowledge is stale.")
@@ -139,13 +181,16 @@ def create_checkpoint(
                        acceptance_path=acceptance_path, remaining_path=remaining_path)
     # The entire Git-visible tree is an anchor, including untracked files.
     snapshot = review_snapshot(root)
-    manifest = yaml.safe_load((root / ".embraion/project.yaml").read_text()) or {}
+    manifest = _read_yaml_object(_safe_file(root, ".embraion/project.yaml"), "project configuration")
+    framework = manifest.get("framework") or {}
+    if not isinstance(framework, dict):
+        raise RuntimeError("Invalid project configuration.")
     record = {
         "schema-version": 1, "checkpoint-id": checkpoint_id, "task-id": task_id,
         "phase": phase, "decision-id": decision_id, "next-action-id": next_action_id,
         "acceptance-path": acceptance_path, "remaining-path": remaining_path,
         "context-id": context_id, "run-id": run_id,
-        "framework-pin": (manifest.get("framework") or {}).get("version"),
+        "framework-pin": framework.get("version"),
         "git-snapshot": snapshot, "anchors": anchors,
         "created-utc": datetime.now(timezone.utc).isoformat(),
     }
@@ -159,10 +204,19 @@ def resume_checkpoint(checkpoint_id: str, *, project: Path | None = None) -> dic
     path = _checkpoint_path(root, checkpoint_id)
     if not path.is_file():
         return {"checkpoint-id": checkpoint_id, "status": "missing", "reasons": ["checkpoint-missing"]}
-    record = read_json(path)
+    record = _read_metadata_object(path, "checkpoint record")
     schema = read_json(framework_root() / "schemas/checkpoint.schema.json")
     if (record.get("checkpoint-id") != checkpoint_id
             or not Draft202012Validator(schema).is_valid(record)):
+        raise RuntimeError("Invalid checkpoint record.")
+    required = {".embraion/project.yaml", ".embraion/knowledge.yaml"}
+    for field, prefix in (("acceptance-path", ""), ("remaining-path", ""),
+                          ("context-id", ".embraion/state/context/"),
+                          ("run-id", ".embraion/state/runs/")):
+        value = record.get(field)
+        if value:
+            required.add(f"{prefix}{value}.json" if prefix else value)
+    if not required.issubset(record["anchors"]):
         raise RuntimeError("Invalid checkpoint record.")
     reasons: list[str] = []
     missing: list[str] = []
@@ -186,7 +240,7 @@ def resume_checkpoint(checkpoint_id: str, *, project: Path | None = None) -> dic
     if record.get("run-id"):
         run_path = f".embraion/state/runs/{_id(record['run-id'], 'run ID')}.json"
         if run_path not in missing and run_path not in changed:
-            run = read_json(_safe_file(root, run_path, state=True))
+            run = _read_metadata_object(_safe_file(root, run_path, state=True), "run evidence")
             if run.get("run-id") != record["run-id"]:
                 reasons.append("run-id-mismatch")
             if run.get("review") == "passed" and run.get("review-snapshot") != snapshot:

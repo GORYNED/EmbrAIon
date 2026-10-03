@@ -62,6 +62,35 @@ class KnowledgeAuditTests(unittest.TestCase):
         self.assertEqual("needs-review", result["status"])
         self.assertIn("source-or-document-changed", result["documents"][0]["reasons"])
 
+    def test_invalid_config_does_not_echo_values(self) -> None:
+        config = self.root / ".embraion/knowledge-maintenance.yaml"
+        sensitive = "token=" + "not-a-real-secret-" * 2
+        for payload in (
+            "documents:\n  - id: architecture\n    path: [" + sensitive + "]\n    sources: [src/app.py]\n",
+            "documents: [" + sensitive,
+            "x" * (1024 * 1024 + 1),
+        ):
+            config.write_text(payload)
+            with self.assertRaises(RuntimeError) as caught:
+                audit_knowledge(project=self.root)
+            self.assertNotIn(sensitive, str(caught.exception))
+        for path in ("C:/private.txt", "D:private.txt", "src/name\x00.py"):
+            config.write_text("documents:\n  - id: architecture\n    path: docs/architecture.md\n"
+                              f"    sources: [{path!r}]\n")
+            with self.assertRaises(RuntimeError):
+                audit_knowledge(project=self.root)
+
+    def test_invalid_baseline_never_reports_current(self) -> None:
+        snapshot_knowledge(project=self.root)
+        path = self.root / ".embraion/state/knowledge-audit/baseline.json"
+        sensitive = "token=" + "not-a-real-secret-" * 2
+        for payload in ("[1]", "{" + sensitive, "x" * (1024 * 1024 + 1),
+                        '{"schema-version": 1, "config-hash": "bad", "documents": []}'):
+            path.write_text(payload)
+            with self.assertRaisesRegex(RuntimeError, "Invalid knowledge baseline") as caught:
+                audit_knowledge(project=self.root)
+            self.assertNotIn(sensitive, str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

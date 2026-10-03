@@ -2,25 +2,53 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import yaml
 from jsonschema import Draft202012Validator
 
-from .checkpoints import _hash, _safe_file
+from .checkpoints import _hash, _read_metadata_object, _read_yaml_object, _safe_file
 from .common import framework_root, project_root, read_json, write_json
+
+DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
+
+
+def _read_baseline(path: Path) -> dict[str, Any]:
+    baseline = _read_metadata_object(path, "knowledge baseline")
+    documents = baseline.get("documents")
+    if (baseline.get("schema-version") != 1
+            or not isinstance(baseline.get("config-hash"), str)
+            or not DIGEST.fullmatch(baseline["config-hash"])
+            or not isinstance(documents, list)):
+        raise RuntimeError("Invalid knowledge baseline.")
+    ids: set[str] = set()
+    for item in documents:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+            raise RuntimeError("Invalid knowledge baseline.")
+        paths = item.get("sources")
+        hashes = item.get("hashes")
+        if (item["id"] in ids or not isinstance(item.get("path"), str)
+                or not isinstance(paths, list) or not all(isinstance(p, str) for p in paths)
+                or not isinstance(hashes, dict)
+                or set(hashes) != {item["path"], *paths}
+                or not all(isinstance(p, str) and isinstance(h, str) and DIGEST.fullmatch(h)
+                           for p, h in hashes.items())):
+            raise RuntimeError("Invalid knowledge baseline.")
+        ids.add(item["id"])
+    return baseline
 
 def _config(root: Path) -> tuple[dict[str, Any] | None, str | None]:
     path = _safe_file(root, ".embraion/knowledge-maintenance.yaml")
     if not path.exists():
         return None, None
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data = _read_yaml_object(path, "knowledge maintenance configuration")
     schema = read_json(framework_root() / "schemas/knowledge-audit.schema.json")
     errors = list(Draft202012Validator(schema).iter_errors(data))
     if errors:
-        raise RuntimeError("Invalid knowledge-maintenance.yaml: " + "; ".join(error.message for error in errors))
+        location = ".".join(str(part) for part in errors[0].absolute_path) or "<root>"
+        raise RuntimeError(f"Invalid knowledge-maintenance.yaml at {location}.")
     ids = [item["id"] for item in data["documents"]]
     if len(ids) != len(set(ids)):
         raise RuntimeError("Duplicate knowledge document ID.")
@@ -57,7 +85,7 @@ def snapshot_knowledge(*, project: Path | None = None) -> dict[str, Any]:
     observations = _observations(root, config)
     missing = sorted({path for item in observations for path, digest in item["hashes"].items() if digest is None})
     if missing:
-        raise RuntimeError("Cannot snapshot missing knowledge source or document: " + ", ".join(missing))
+        raise RuntimeError("Cannot snapshot missing knowledge source or document.")
     baseline = {
         "schema-version": 1, "config-hash": config_hash,
         "documents": observations,
@@ -74,7 +102,7 @@ def audit_knowledge(*, project: Path | None = None) -> dict[str, Any]:
     if config is None:
         return {"status": "unconfigured", "documents": [], "reasons": ["configuration-missing"]}
     baseline_path = _baseline_path(root)
-    baseline = read_json(baseline_path) if baseline_path.is_file() else None
+    baseline = _read_baseline(baseline_path) if baseline_path.is_file() else None
     previous = {item["id"]: item for item in baseline.get("documents", [])} if baseline else {}
     results = []
     for item in _observations(root, config):
