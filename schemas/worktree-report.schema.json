@@ -20,6 +20,17 @@
           "path": {"type": ["string", "null"]},
           "branch": {"type": ["string", "null"]},
           "resource-id": {"type": ["string", "null"]},
+          "provenance": {
+            "type": "object",
+            "required": ["status", "host", "task-ids", "creation-source"],
+            "properties": {
+              "status": {"enum": ["registered", "unknown"]},
+              "host": {"type": ["string", "null"]},
+              "task-ids": {"type": "array", "items": {"type": "string"}},
+              "creation-source": {"enum": ["embraion-create", "host-native", null]}
+            },
+            "additionalProperties": false
+          },
           "head": {"type": "string"},
           "remote-head": {"type": ["string", "null"]},
           "recovery": {"type": "string"},

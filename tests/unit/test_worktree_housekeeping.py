@@ -174,6 +174,33 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertEqual(self.head(), self.head(branch))
         self.assertEqual(1, len(self.worktrees()))
 
+    def test_report_identifies_registered_host_and_never_guesses_reused_or_user_branch(self) -> None:
+        target = self.managed_worktree()
+        personal = "codex/personal"
+        git(self.repo, "branch", personal)
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], patches[3]:
+            report = worktree.gc_report(repo=self.repo)
+        self.assert_report_schema(report)
+        managed = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual({"status": "registered", "host": "codex",
+                          "task-ids": ["managed-task"], "creation-source": "embraion-create"},
+                         managed["provenance"])
+        user = next(row for row in report["resources"] if row.get("branch") == personal)
+        self.assertEqual("unknown", user["provenance"]["status"])
+        self.assertIsNone(user["provenance"]["host"])
+        data = worktree.registry.load_registry(self.repo)
+        resource = next(iter(data["resources"].values()))
+        resource["branch-reflog-id"] = "0" * 64
+        worktree.registry.save_registry(self.repo, data)
+        with self.github_evidence()[0]:
+            report = worktree.gc_report(repo=self.repo)
+        managed = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("unknown", managed["provenance"]["status"])
+        self.assertIsNone(managed["provenance"]["host"])
+        self.assertTrue(target.is_dir())
+        self.assertEqual(2, len(self.worktrees()))
+
     def test_prepare_rejects_preexisting_path_without_touching_its_content(self) -> None:
         target = self.sandbox / "existing"
         target.mkdir()

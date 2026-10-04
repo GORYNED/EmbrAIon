@@ -858,7 +858,7 @@ def _assess(repo: Path, config: dict[str, Any], base: str, data: dict[str, Any],
         if resource.get("kind") == "branch":
             rows.append(_branch_row(repo, resource, data, config, base, evidence))
     if not inventory:
-        return rows
+        return _report_provenance(repo, rows, resources)
     known = {row.get("branch") for row in rows if row.get("branch")}
     local = run(["git", "--no-optional-locks", "-c", "core.fsmonitor=false", "-C", str(repo),
                  "for-each-ref", "--format=%(refname:short)", "refs/heads"]).stdout.splitlines()
@@ -882,6 +882,21 @@ def _assess(repo: Path, config: dict[str, Any], base: str, data: dict[str, Any],
     except (OSError, subprocess.SubprocessError):
         rows.append({"kind": "branch", "path": None, "branch": None,
                      "resource-id": None, "status": "preserved", "reason": "remote-inventory-unavailable"})
+    return _report_provenance(repo, rows, resources)
+
+
+def _report_provenance(repo: Path, rows: list[dict[str, Any]],
+                       resources: dict[str, Any]) -> list[dict[str, Any]]:
+    """Expose recorded host/task identity without expanding cleanup authority."""
+    for row in rows:
+        resource = resources.get(row.get("resource-id"))
+        identified = resource is not None and registry.verify_resource(repo, resource)
+        row["provenance"] = {
+            "status": "registered" if identified else "unknown",
+            "host": resource["host"] if identified else None,
+            "task-ids": list(resource["task-ids"]) if identified else [],
+            "creation-source": resource["creation-source"] if identified else None,
+        }
     return rows
 
 

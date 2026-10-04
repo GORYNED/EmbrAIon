@@ -38,6 +38,12 @@ Automatic and remote deletion default to off. Agent ownership is mandatory and c
 disabled. Unknown branches, including old `claude/*` and `codex/*` resources, remain in the
 preservation report. No prefix, author, or missing remote branch authorizes adoption.
 
+`gc --json` includes `provenance` for each resource: registered host, task IDs and creation
+source when the current resource identity matches its registry record. An unregistered,
+reused or unverified resource reports `status: unknown`, with no guessed host. This metadata
+helps identify the creating workflow; completion, integration and remote ownership remain
+separate deletion gates. Host-native registration does not prove archive capability.
+
 `worktree create` captures creation provenance. Creation invokes automatic cleanup only
 with explicit `--independent-task`; `--subtask` or omitted scope preserves other resources.
 To register a supported native creation,
@@ -74,4 +80,4 @@ Applied operations preserve exact commits and required local state before deleti
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 03:31 UTC</sub>
+<sub>Last updated: 2026-10-04 03:43 UTC</sub>
