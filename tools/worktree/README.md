@@ -76,8 +76,13 @@ fetch/push endpoints preserve it. Git SHA leases detect changed tips, but cannot
 distinguish deletion and recreation of the same name at the identical SHA; ambiguous PR
 reuse is preserved, and recovery snapshots retain the exact commits.
 
+After verified remote deletion, cleanup removes only the matching direct
+`refs/remotes/origin/<branch>` ref. Changed or symbolic tracking refs are preserved;
+other cached refs are never pruned. Local ownership checks reject symbolic refs and
+filesystem aliases before deletion, and compare-and-delete never dereferences them.
+
 Applied operations preserve exact commits and required local state before deletion and
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 03:43 UTC</sub>
+<sub>Last updated: 2026-10-04 04:27 UTC</sub>

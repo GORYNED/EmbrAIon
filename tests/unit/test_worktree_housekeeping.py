@@ -598,6 +598,80 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertTrue(Path(row["recovery"]).is_dir())
         self.assertTrue(report["cleanup-id"])
 
+    def test_verified_remote_deletion_removes_only_matching_tracking_ref(self) -> None:
+        target = self.managed_worktree()
+        self.publish_managed_branch()
+        branch = "task/managed-task"
+        head = self.head(branch)
+        tracking_ref = f"refs/remotes/origin/{branch}"
+        retained_ref = "refs/remotes/origin/retained"
+        git(self.repo, "update-ref", tracking_ref, head)
+        git(self.repo, "update-ref", retained_ref, head)
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        real_run = worktree.run
+        remote_deletes: list[list[str]] = []
+
+        def delete_bare_ref(command, *args, **kwargs):
+            if "push" in command:
+                remote_deletes.append(command)
+                self.assertIn(f"--force-with-lease=refs/heads/{branch}:{head}", command)
+                git(self.remote, "update-ref", "-d", f"refs/heads/{branch}", head)
+                return subprocess.CompletedProcess(command, 0, "", "")
+            return real_run(command, *args, **kwargs)
+
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=delete_bare_ref):
+            report = worktree.gc_report(apply=True, repo=self.repo)
+
+        self.assertEqual(1, len(remote_deletes))
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("removed", row["status"])
+        self.assertTrue(row["removed-remote-branch"])
+        self.assertTrue(row["removed-tracking-ref"])
+        self.assertIsNone(self.bare_head(self.repo, branch))
+        self.assertNotEqual(0, git(self.repo, "show-ref", "--verify", "--quiet",
+                                    tracking_ref, check=False).returncode)
+        self.assertEqual(head, git(self.repo, "rev-parse", retained_ref).stdout.strip())
+
+    def test_verified_remote_deletion_preserves_changed_tracking_ref(self) -> None:
+        target = self.managed_worktree()
+        self.publish_managed_branch()
+        branch = "task/managed-task"
+        head = self.head(branch)
+        (self.repo / "README.md").write_text("advanced main\n", encoding="utf-8")
+        git(self.repo, "add", "README.md")
+        git(self.repo, "commit", "-m", "advance local main")
+        changed_head = self.head()
+        tracking_ref = f"refs/remotes/origin/{branch}"
+        git(self.repo, "update-ref", tracking_ref, changed_head)
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        real_run = worktree.run
+
+        def delete_bare_ref(command, *args, **kwargs):
+            if "push" in command:
+                git(self.remote, "update-ref", "-d", f"refs/heads/{branch}", head)
+                return subprocess.CompletedProcess(command, 0, "", "")
+            return real_run(command, *args, **kwargs)
+
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=delete_bare_ref):
+            report = worktree.gc_report(apply=True, repo=self.repo)
+
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertTrue(row["removed-remote-branch"])
+        self.assertTrue(row["preserved-tracking-ref"])
+        self.assertEqual(changed_head, git(self.repo, "rev-parse", tracking_ref).stdout.strip())
+
     def test_git_sha_lease_rejects_advanced_bare_remote_and_accepts_exact_head(self) -> None:
         branch = "task/lease"
         original = self.head()
@@ -978,6 +1052,73 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         restored = worktree.restore_cleanup(report["cleanup-id"], repo=self.repo)
         self.assertEqual("restored", restored["resources"][0]["status"])
         self.assertIn(f"refs/heads/{branch}", self.branches())
+
+    def test_symbolic_owned_branch_never_inherits_same_sha_user_branch(self) -> None:
+        branch = "task/symbolic-owned"
+        personal = "personal/same-head"
+        worktree.create_branch(branch, task_id="symbolic-task", host="codex", repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        first = worktree.registry._first_reflog(self.repo, branch)
+        git(self.repo, "branch", personal, self.head(branch))
+        git(self.repo, "symbolic-ref", f"refs/heads/{branch}", f"refs/heads/{personal}")
+        self.assertEqual(first, worktree.registry._first_reflog(self.repo, branch))
+        self.assertFalse(worktree.registry.verify_resource(self.repo, resource))
+
+        worktree.update_task_state("symbolic-task", "completed", repo=self.repo)
+        report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row.get("resource-id") == resource["resource-id"])
+        self.assertEqual("preserved", row["status"])
+        self.assertEqual("ownership-identity-mismatch", row["reason"])
+        self.assertEqual(f"refs/heads/{personal}", git(
+            self.repo, "symbolic-ref", f"refs/heads/{branch}").stdout.strip())
+        self.assertEqual(self.head(), self.head(personal))
+
+        # The final compare-and-delete must never dereference a symbolic ref
+        # even if another actor switches it after a previous integrity check.
+        git(self.repo, "update-ref", "--no-deref", "-d", f"refs/heads/{branch}",
+            self.head(personal), check=False)
+        self.assertEqual(self.head(), self.head(personal))
+
+    def test_preparation_rejects_symlinked_branch_ref_parent(self) -> None:
+        common = worktree.registry.common_dir(self.repo)
+        parent = common / "refs" / "heads" / "task"
+        outside = self.sandbox / "outside-refs"
+        outside.mkdir()
+        try:
+            parent.symlink_to(outside, target_is_directory=True)
+        except (OSError, PermissionError):
+            self.skipTest("Windows sandbox forbids directory symlinks")
+        with self.assertRaises(ValueError):
+            worktree.prepare_task("unsafe-ref", branch="task/new", repo=self.repo)
+        self.assertEqual([], list(outside.iterdir()))
+
+    def test_registered_branch_with_hardlinked_loose_ref_is_unowned(self) -> None:
+        branch = "task/hardlinked"
+        worktree.create_branch(branch, task_id="hardlink-task", host="codex", repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        loose = worktree.registry.common_dir(self.repo) / "refs" / "heads" / "task" / "hardlinked"
+        outside = self.sandbox / "outside-ref"
+        outside.write_text(self.head(branch) + "\n", encoding="ascii")
+        loose.unlink()
+        try:
+            loose.hardlink_to(outside)
+        except (OSError, PermissionError):
+            self.skipTest("Windows sandbox forbids fixture hardlinks")
+        self.assertFalse(worktree.registry.verify_resource(self.repo, resource))
+        self.assertEqual(self.head(), self.head(branch))
+
+    def test_registered_branch_with_hardlinked_packed_refs_is_unowned(self) -> None:
+        branch = "task/packed-alias"
+        worktree.create_branch(branch, task_id="packed-task", host="codex", repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        outside = self.sandbox / "outside-packed-refs"
+        outside.write_text("# pack-refs with: peeled fully-peeled sorted\n", encoding="ascii")
+        packed = worktree.registry.common_dir(self.repo) / "packed-refs"
+        try:
+            packed.hardlink_to(outside)
+        except (OSError, PermissionError):
+            self.skipTest("Windows sandbox forbids fixture hardlinks")
+        self.assertFalse(worktree.registry.verify_resource(self.repo, resource))
 
     def test_reused_registered_branch_links_new_active_task_after_checkout_is_released(self) -> None:
         branch = "task/branch-reuse"

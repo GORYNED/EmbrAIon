@@ -169,8 +169,23 @@ def _branch_ref(branch: str) -> str:
     return f"refs/heads/{branch}"
 
 
-def branch_sha(repo: Path, branch: str) -> str | None:
+def _direct_branch_ref(repo: Path, branch: str) -> str:
+    """Reject symbolic refs and filesystem aliases before reading or writing."""
     ref = _branch_ref(branch)
+    directory = common_dir(repo)
+    _safe_file(directory / "packed-refs", allow_missing=True)
+    _safe_file(directory / Path(ref), allow_missing=True)
+    symbolic = run(["git", "--no-optional-locks", "-c", "core.fsmonitor=false",
+                    "-C", str(repo), "symbolic-ref", "--quiet", ref], check=False)
+    # Git returns 1 for an ordinary direct ref (including an absent new ref).
+    # A symbolic ref returns 0; any other error is unknown ownership.
+    if symbolic.returncode != 1:
+        raise ValueError("branch ref is symbolic or unknown")
+    return ref
+
+
+def branch_sha(repo: Path, branch: str) -> str | None:
+    ref = _direct_branch_ref(repo, branch)
     result = run(["git", "--no-optional-locks", "-c", "core.fsmonitor=false", "-C", str(repo),
                   "rev-parse", "--verify", f"{ref}^{{commit}}"], check=False)
     return result.stdout.strip() if result.returncode == 0 else None

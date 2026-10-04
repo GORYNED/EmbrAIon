@@ -37,7 +37,9 @@
           "removed-worktree": {"type": "boolean"},
           "removed-local-branch": {"type": "boolean"},
           "removed-remote-branch": {"type": "boolean"},
-          "failed-operation": {"enum": ["recheck", "backup", "worktree-remove", "local-branch-delete", "remote-branch-delete", "registry-update"]}
+          "removed-tracking-ref": {"type": "boolean"},
+          "preserved-tracking-ref": {"type": "string", "minLength": 1},
+          "failed-operation": {"enum": ["recheck", "backup", "worktree-remove", "local-branch-delete", "remote-branch-delete", "remote-tracking-delete", "registry-update"]}
         },
         "additionalProperties": true
       }

@@ -989,7 +989,8 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                     # proof and deletion, including a squash-merged branch.
                     operation = "local-branch-delete"
                     _recheck_branch_operation(root, row, resource, base, remote=False)
-                    run(["git", "-C", str(root), "update-ref", "-d", f"refs/heads/{branch}", row["head"]])
+                    run(["git", "-C", str(root), "update-ref", "--no-deref", "-d",
+                         f"refs/heads/{branch}", row["head"]])
                     row["removed-local-branch"] = True
                     row.update(status="removed", reason="local-branch-removed")
                     write_json(journal, report)
@@ -1005,6 +1006,38 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                          endpoint, f":refs/heads/{branch}"])
                     row["removed-remote-branch"] = True
                     row.update(status="removed", reason="remote-branch-removed")
+                    write_json(journal, report)
+                    # An explicit endpoint push does not update origin's cached
+                    # ref. Remove only the direct ref at the verified old tip.
+                    operation = "remote-tracking-delete"
+                    if _push_endpoint(root) != endpoint:
+                        raise ValueError("origin changed after remote deletion")
+                    if github.remote_head(root, branch) is not None:
+                        row["preserved-tracking-ref"] = "remote-ref-reappeared"
+                    else:
+                        tracking = f"refs/remotes/origin/{branch}"
+                        directory = registry.common_dir(root)
+                        registry._safe_file(directory / "packed-refs", allow_missing=True)
+                        registry._safe_file(directory / Path(tracking), allow_missing=True)
+                        present = run(["git", "-C", str(root), "show-ref", "--verify",
+                                       "--quiet", tracking], check=False)
+                        if present.returncode not in {0, 1}:
+                            raise ValueError("tracking ref state is unknown")
+                        if present.returncode == 0:
+                            symbolic = run(["git", "-C", str(root), "symbolic-ref",
+                                            "--quiet", tracking], check=False)
+                            if symbolic.returncode == 0:
+                                row["preserved-tracking-ref"] = "symbolic-tracking-ref"
+                            elif symbolic.returncode != 1:
+                                raise ValueError("tracking ref identity is unknown")
+                            elif registry.git_value(root, "rev-parse", "--verify", tracking) != row["remote-head"]:
+                                row["preserved-tracking-ref"] = "tracking-head-changed"
+                            else:
+                                if _push_endpoint(root) != endpoint:
+                                    raise ValueError("origin changed before tracking deletion")
+                                run(["git", "-C", str(root), "update-ref", "--no-deref",
+                                     "-d", tracking, row["remote-head"]])
+                                row["removed-tracking-ref"] = True
                     write_json(journal, report)
                 if resource:
                     operation = "registry-update"
