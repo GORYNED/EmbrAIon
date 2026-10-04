@@ -78,7 +78,7 @@ def create_worktree(
     host: str = "embraion",
 ) -> Path:
     repo = project_root()
-    run(["git", "-C", str(repo), "fetch", "origin"])
+    run(["git", "-C", str(repo), "fetch", "--no-prune", "--no-prune-tags", "origin"])
 
     target = destination or (repo.parent / f"{repo.name}-{branch.replace('/', '-')}")
     task = task_id or f"manual-{registry.new_id()}"
@@ -101,7 +101,7 @@ def create_branch(branch: str, base: str = "origin/main", task_id: str | None = 
                   host: str = "embraion", repo: Path | None = None) -> str:
     """Create a branch-only managed resource from an absent branch."""
     root = (repo or project_root()).resolve()
-    run(["git", "-C", str(root), "fetch", "origin"])
+    run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     task = task_id or f"manual-{registry.new_id()}"
     prepared = prepare_task(task, host=host, branch=branch, base=base, repo=root)
     sha = registry.git_value(root, "rev-parse", "--verify", f"{base}^{{commit}}")
@@ -117,7 +117,7 @@ def create_detached_worktree(destination: Path, base: str = "origin/main",
                              repo: Path | None = None) -> Path:
     """Create a detached managed worktree; its exact Git directory is registered."""
     root = (repo or project_root()).resolve()
-    run(["git", "-C", str(root), "fetch", "origin"])
+    run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     task = task_id or f"manual-{registry.new_id()}"
     target = Path(destination).absolute()
     prepared = prepare_task(task, host=host, path=target, base=base, repo=root)
@@ -453,7 +453,7 @@ def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[st
                               base: str, *, remote: bool) -> None:
     """Refresh task, checkout, policy and provider evidence before each ref operation."""
     branch = row["branch"]
-    run(["git", "-C", str(repo), "fetch", "origin"])
+    run(["git", "-C", str(repo), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     config = housekeeping_config(repo)
     enabled = "remote-branches" if remote else "local-branches"
     if (not config[enabled] or branch in {"main", "master"}
@@ -795,7 +795,7 @@ def gc_report(base: str = "origin/main", apply: bool = False,
         except (OSError, ValueError, RuntimeError):
             return unavailable_registry()
         # Refresh without pruning refs; candidate identity is recomputed after refresh.
-        fetch = run(["git", "-C", str(root), "fetch", "origin"], check=False)
+        fetch = run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"], check=False)
         report["cleanup-id"] = registry.new_id()
         rows = _assess(root, config, base, data, include_legacy)
         if fetch.returncode:
@@ -818,7 +818,7 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                 # snapshot and once more after it. Git and GitHub can change
                 # independently of a prior dry-run or assessment.
                 def fresh() -> dict[str, Any] | None:
-                    run(["git", "-C", str(root), "fetch", "origin"])
+                    run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"])
                     current = _assess(root, housekeeping_config(root), base, registry.load_registry(root), include_legacy,
                                       inventory=False)
                     return next((value for value in current

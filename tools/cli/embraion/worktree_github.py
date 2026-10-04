@@ -114,6 +114,7 @@ def pr_identity(evidence: dict[str, Any], branch: str, head: str) -> dict[str, A
     for pull in evidence.get("pulls", []):
         if (pull.get("head", {}).get("ref") == branch
                 and pull.get("head", {}).get("sha") == head
+                and pull.get("head", {}).get("repo", {}).get("full_name", "").lower() == evidence["name"].lower()
                 and pull.get("merged_at") and isinstance(pull.get("number"), int)):
             return {"repository": evidence["name"], "number": pull["number"],
                     "head-sha": head, "merge-sha": pull["merge_commit_sha"],
