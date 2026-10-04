@@ -31,7 +31,7 @@ capabilities:
   - { id: engineering, type: workflow, path: workflows/engineering.md, load: conditional, triggers: [substantial-work] }
   - { id: review-cycle, type: workflow, path: workflows/review.md, load: conditional, triggers: [independent-review] }
   - { id: delivery, type: workflow, path: workflows/delivery.md, load: conditional, triggers: [handoff, pull-request, release] }
-  - { id: worktree, type: workflow, path: workflows/worktree.md, load: conditional, triggers: [isolated-write, parallel-work] }
+  - { id: worktree, type: workflow, path: workflows/worktree.md, load: conditional, triggers: [isolated-write, parallel-work, independent-write, task-housekeeping] }
   - { id: learning, type: workflow, path: workflows/learning.md, load: conditional, triggers: [repeated-pattern, repeated-failure, capability-improvement] }
 
   - { id: integration-safety, type: rule, path: rules/integrations.md, load: conditional, triggers: [external-tool, mcp, server, integration] }

@@ -173,6 +173,13 @@ def _default_project_overlay(name: str) -> dict[str, Any]:
         },
         "project": {"name": name},
         "capabilities": {},
+        "housekeeping": {
+            "on-task-start": False,
+            "local-branches": True,
+            "remote-branches": False,
+            "worktrees": True,
+            "preserve-branches": [],
+        },
     }
 
 

@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from . import __version__
 from .capabilities import diagnose_external_capabilities
@@ -60,7 +61,10 @@ from .security import (
     save_mcp_inventory,
 )
 from .validation import collect_issues
-from .worktree import create_worktree, gc_worktrees, list_worktrees, salvage_worktree
+from .worktree import (
+    create_branch, create_detached_worktree, create_worktree, gc_report, list_worktrees, prepare_task,
+    publish_branch, register_worktree, restore_cleanup, salvage_worktree,
+)
 from .versioning import (
     cache_home,
     find_project_manifest,
@@ -82,7 +86,9 @@ def _subprocess_error_message(error: subprocess.CalledProcessError) -> str:
     for value in (error.stderr, error.stdout):
         if value and value.strip():
             return value.strip()
-    return str(error)
+    # Exception stringification includes the full command, which can contain
+    # credentials. Empty-output failures need only the exit code.
+    return f"External command failed with exit code {error.returncode}."
 
 
 def _print_main_help(file: object | None = None) -> None:
@@ -709,6 +715,7 @@ def _cmd_session_start(args: argparse.Namespace) -> int:
             model=args.model,
             effort=args.effort,
             access=args.access,
+            independent=args.independent_task,
         )
     )
     return 0
@@ -950,35 +957,85 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
         if args.path
         else None
     )
+    if args.detach:
+        if args.branch or destination is None:
+            raise ValueError("--detach requires --path and no branch name.")
+        created = create_detached_worktree(destination, base=args.base or "origin/main",
+                                            task_id=args.task_id, host=args.host,
+                                            independent=args.independent_task)
+        print(f"Created {created}")
+        return 0
+    if not args.branch:
+        raise ValueError("A branch name is required unless --detach is selected.")
+    if args.branch_only:
+        if destination is not None:
+            raise ValueError("--branch-only cannot be combined with --path.")
+        created_branch = create_branch(args.branch, base=args.base or "origin/main",
+                                      task_id=args.task_id, host=args.host,
+                                      independent=args.independent_task)
+        print(f"Created branch {created_branch}")
+        return 0
     created = create_worktree(
         args.branch,
         destination=destination,
         base=args.base or "origin/main",
+        task_id=args.task_id,
+        host=args.host,
+        independent=args.independent_task,
     )
     print(f"Created {created}")
     return 0
 
 
 def _cmd_worktree_gc(args: argparse.Namespace) -> int:
-    candidates = gc_worktrees(
-        base=args.base,
-        apply=args.apply,
-    )
+    report = gc_report(base=args.base, apply=args.apply)
+    _print_worktree_report(report, json_output=args.json)
+    return int(any(item.get("status") == "failed" for item in report["resources"]))
 
-    if not candidates:
+
+def _print_worktree_report(report: dict[str, Any], *, json_output: bool) -> None:
+    if json_output:
+        _print_json(report)
+        return
+    for item in report.get("resources", []):
+        print(f"{item['status'].upper()} {item.get('branch') or item.get('path') or item.get('kind')} "
+              f"({item['reason']})")
+    if not report.get("resources"):
         print("No safely removable worktrees found.")
-        return 0
+    if report.get("cleanup-id"):
+        print(f"Recovery: {report['cleanup-id']}")
+    if report.get("dry-run"):
+        print("Dry run only. Re-run with --apply to remove eligible resources.")
 
-    for item in candidates:
-        print(
-            f"CANDIDATE {item.get('branch')} "
-            f"{item['path']} {item.get('head')}"
-        )
 
-    if not args.apply:
-        print("Dry run only. Re-run with --apply to remove these candidates.")
-
+def _cmd_worktree_prepare(args: argparse.Namespace) -> int:
+    report = prepare_task(args.task_id, host=args.host, branch=args.branch,
+                          path=Path(args.path).resolve() if args.path else None,
+                          base=args.base, writable=not args.read_only,
+                          independent=not args.subtask)
+    _print_worktree_report(report, json_output=args.json)
+    if report.get("receipt-id") and not args.json:
+        print(f"Creation receipt: {report['receipt-id']}")
     return 0
+
+
+def _cmd_worktree_register(args: argparse.Namespace) -> int:
+    _print_json(register_worktree(args.task_id, args.host,
+                                  path=Path(args.path).resolve() if args.path else None,
+                                  receipt_id=args.receipt_id))
+    return 0
+
+
+def _cmd_worktree_publish(args: argparse.Namespace) -> int:
+    _print_json(publish_branch(args.task_id, args.branch))
+    return 0
+
+
+def _cmd_worktree_restore(args: argparse.Namespace) -> int:
+    report = restore_cleanup(args.cleanup_id)
+    _print_json(report)
+    return int(any(item.get("status") in {"failed", "preserved"}
+                   for item in report.get("resources", [])))
 
 
 def _cmd_worktree_salvage(args: argparse.Namespace) -> int:
@@ -1890,6 +1947,11 @@ def build_parser() -> argparse.ArgumentParser:
     session_start.add_argument("--model")
     session_start.add_argument("--effort")
     session_start.add_argument("--access", default="plan")
+    session_scope = session_start.add_mutually_exclusive_group()
+    session_scope.add_argument("--independent-task", action="store_true",
+                               help="Confirm a new independent task eligible for opted-in housekeeping")
+    session_scope.add_argument("--subtask", action="store_true",
+                               help="Start a subtask without automatic housekeeping")
     session_start.set_defaults(func=_cmd_session_start)
 
     session_show = session_sub.add_parser("show", help="Show session state", description="Show the current normalized EmbrAIon session/task state.")
@@ -2027,15 +2089,53 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_list.set_defaults(func=_cmd_worktree_list)
 
     worktree_create = worktree_sub.add_parser("create", help="Create a worktree", description="Create an isolated Git worktree for a branch.")
-    worktree_create.add_argument("branch")
+    worktree_create.add_argument("branch", nargs="?")
     worktree_create.add_argument("--path")
     worktree_create.add_argument("--base")
+    worktree_create.add_argument("--task-id", help="Bind newly created resources to a task.")
+    worktree_create.add_argument("--host", default="codex", choices=["codex", "claude-code", "portable"])
+    worktree_create_modes = worktree_create.add_mutually_exclusive_group()
+    worktree_create_modes.add_argument("--branch-only", action="store_true", help="Create a managed branch without a checkout.")
+    worktree_create_modes.add_argument("--detach", action="store_true", help="Create a managed detached worktree at --path.")
+    create_scope = worktree_create.add_mutually_exclusive_group()
+    create_scope.add_argument("--independent-task", action="store_true",
+                              help="Confirm independent task scope for opted-in housekeeping")
+    create_scope.add_argument("--subtask", action="store_true",
+                              help="Create a subtask resource without automatic housekeeping")
     worktree_create.set_defaults(func=_cmd_worktree_create)
 
     worktree_gc = worktree_sub.add_parser("gc", help="Find safe cleanup candidates", description="Find safely removable worktrees; use --apply to remove them.")
     worktree_gc.add_argument("--base", default="origin/main")
     worktree_gc.add_argument("--apply", action="store_true")
+    worktree_gc.add_argument("--json", action="store_true")
     worktree_gc.set_defaults(func=_cmd_worktree_gc)
+
+    worktree_prepare = worktree_sub.add_parser("prepare", help="Perform opted-in housekeeping before an independent task")
+    worktree_prepare.add_argument("--task-id", required=True)
+    worktree_prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "portable"])
+    worktree_prepare.add_argument("--branch", help="Capture nonexistence before creating this branch.")
+    worktree_prepare.add_argument("--path", help="Exact expected path of the new worktree.")
+    worktree_prepare.add_argument("--base", default="origin/main")
+    worktree_prepare.add_argument("--read-only", action="store_true")
+    worktree_prepare.add_argument("--subtask", action="store_true")
+    worktree_prepare.add_argument("--json", action="store_true")
+    worktree_prepare.set_defaults(func=_cmd_worktree_prepare)
+
+    worktree_register = worktree_sub.add_parser("register", help="Register a new resource against its pre-creation receipt")
+    worktree_register.add_argument("--task-id", required=True)
+    worktree_register.add_argument("--host", required=True, choices=["codex", "claude-code", "portable"])
+    worktree_register.add_argument("--receipt-id", required=True)
+    worktree_register.add_argument("--path")
+    worktree_register.set_defaults(func=_cmd_worktree_register)
+
+    worktree_publish = worktree_sub.add_parser("publish", help="Create or update a remote branch with verified agent provenance")
+    worktree_publish.add_argument("--task-id", required=True)
+    worktree_publish.add_argument("--branch", required=True)
+    worktree_publish.set_defaults(func=_cmd_worktree_publish)
+
+    worktree_restore = worktree_sub.add_parser("restore", help="Restore local resources from a retained cleanup snapshot")
+    worktree_restore.add_argument("--cleanup-id", required=True)
+    worktree_restore.set_defaults(func=_cmd_worktree_restore)
 
     worktree_salvage = worktree_sub.add_parser("salvage", help="Salvage worktree evidence", description="Copy useful evidence from a worktree before cleanup.")
     worktree_salvage.add_argument("path")
@@ -2173,7 +2273,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         return int(args.func(args))
-    except RuntimeError as error:
+    except (RuntimeError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
     except subprocess.CalledProcessError as error:

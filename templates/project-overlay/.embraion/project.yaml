@@ -8,3 +8,11 @@ project:
   name: ExampleProject
 
 capabilities: {}
+
+# Automatic cleanup is opt-in; ownership checks cannot be disabled.
+housekeeping:
+  on-task-start: false
+  local-branches: true
+  remote-branches: false
+  worktrees: true
+  preserve-branches: []

@@ -6,6 +6,18 @@ Apply the assignment routing contract in the [canonical orchestration skill](../
 
 ## Native assignment settings
 
+Before independent writable task work, apply the [Core worktree workflow](../../core/workflows/worktree.md)
+with `embraion worktree prepare --task-id <stable-task-id> --host codex`.
+Native task startup interception is not assumed: Lead invokes the CLI when no verified
+startup mechanism exists. Review, subtasks and plan/read-only work do not trigger deletion.
+
+For a known native creation, capture `--branch <branch> --path <absolute-path>` before
+creation, retain the receipt, then invoke `worktree register --task-id <id> --host codex
+--receipt-id <receipt> --path <path>`. Opaque already-created resources without a receipt
+remain unmanaged. Use supported host snapshot/archive operations for native-managed
+worktrees; the portable CLI cannot substitute raw Git removal for unavailable host activity
+or archive capability.
+
 Native preparation translates a project `fork_turns` option only for `'none'` or a bounded positive string; a full-history option cannot replace explicit routing. Other options need a verified translation.
 
 Inspect the active tool schema before invocation: a desktop tool namespace or fork field is not a contract for every Codex surface. Where `collaboration.spawn_agent` exposes these fields, pass resolved role as `agent_type`, non-null model as `model`, and non-null effort as `reasoning_effort`, independently. Explicit model or effort requires `fork_turns='none'` or a bounded positive integer string; a full-history fork (`'all'` or omitted) cannot accept overrides. Supply bounded assignment context in the message.

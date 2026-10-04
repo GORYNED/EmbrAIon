@@ -4,6 +4,17 @@ Apply the assignment routing contract in the [canonical orchestration skill](../
 
 ## Native assignment settings
 
+Before independent writable work, apply the [Core worktree workflow](../../core/workflows/worktree.md)
+with `embraion worktree prepare --task-id <stable-task-id> --host claude-code`.
+Native startup interception requires verified capability; otherwise Lead invokes the preflight.
+Review, subtasks and plan/read-only work do not trigger deletion. Observer hooks remain observers.
+
+Capture `--branch <branch> --path <absolute-path>` before known native creation and use
+the returned receipt with `worktree register --task-id <id> --host claude-code
+--receipt-id <receipt> --path <path>` afterwards. A `.claude/worktrees` path alone does not
+prove ownership or inactivity. Preserve opaque pre-created or native-managed resources when
+creation evidence, host activity, or supported archive capability is unavailable.
+
 Inspect the installed `Agent` tool schema (older installations may expose `Task`). Its per-call `model` field may accept only a fixed alias enum; do not pass a full model ID merely because definitions accept it, and do not guess an equivalent alias. Current subagent definitions in `.claude/agents/*.md` or the `--agents` JSON configuration support `model` and `effort`; definition model selectors may be host aliases, full IDs, or `inherit`. A mandatory explicit selection must not become inheritance through an alias or fork behavior.
 
 A per-call `effort` argument on `Agent` is not established by the published contract. Apply explicit model and/or effort through a complete assignment-specific native definition containing the role description, prompt, permitted tools, and selected settings. Load and select that definition, or use a supported session/handoff mechanism with verified effective settings. Do not invent an `Agent` effort field or modify a reusable role definition to carry one assignment's route. A prepared definition still requires native loading and invocation evidence.

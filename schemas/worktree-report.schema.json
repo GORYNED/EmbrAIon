@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Worktree Cleanup Report",
+  "type": "object",
+  "required": ["schema-version", "dry-run", "cleanup-id", "resources"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "dry-run": {"type": "boolean"},
+    "cleanup-id": {"type": ["string", "null"]},
+    "receipt-id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "status", "reason"],
+        "properties": {
+          "kind": {"enum": ["worktree", "branch"]},
+          "status": {"enum": ["candidate", "preserved", "removed", "failed", "restored"]},
+          "reason": {"type": "string", "minLength": 1},
+          "path": {"type": ["string", "null"]},
+          "branch": {"type": ["string", "null"]},
+          "resource-id": {"type": ["string", "null"]},
+          "provenance": {
+            "type": "object",
+            "required": ["status", "host", "task-ids", "creation-source"],
+            "properties": {
+              "status": {"enum": ["registered", "unknown"]},
+              "host": {"type": ["string", "null"]},
+              "task-ids": {"type": "array", "items": {"type": "string"}},
+              "creation-source": {"enum": ["embraion-create", "host-native", null]}
+            },
+            "additionalProperties": false
+          },
+          "head": {"type": "string"},
+          "remote-head": {"type": ["string", "null"]},
+          "recovery": {"type": "string"},
+          "removed-worktree": {"type": "boolean"},
+          "removed-local-branch": {"type": "boolean"},
+          "removed-remote-branch": {"type": "boolean"},
+          "removed-tracking-ref": {"type": "boolean"},
+          "preserved-tracking-ref": {"type": "string", "minLength": 1},
+          "failed-operation": {"enum": ["recheck", "backup", "worktree-remove", "local-branch-delete", "remote-branch-delete", "remote-tracking-delete", "registry-update"]}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

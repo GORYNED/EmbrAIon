@@ -1,0 +1,16 @@
+schema-version: 1
+id: github-housekeeping
+purpose: Verify merged pull requests and preserve exact remote ref identity during opted-in housekeeping.
+metadata-client: gh
+mutation-client: git
+authentication: existing-host-credentials
+env-vars: [GH_TOKEN, GITHUB_TOKEN]
+secret-values: forbidden
+scope: current-repository
+access-expansion: forbidden
+operations:
+  metadata: [repository, branches, pull-requests, branch-protection, rules]
+  create-ref: explicit-publish-expected-absent-lease
+  delete-ref: expected-sha-lease
+unknown-state: preserve
+host-archive: unsupported

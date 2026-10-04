@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -795,13 +796,16 @@ def start_session(
     model: str | None = None,
     effort: str | None = None,
     access: str = "plan",
+    independent: bool = False,
 ) -> dict[str, Any]:
+    if not isinstance(independent, bool):
+        raise ValueError("independent task scope must be a boolean")
     project = project_root()
 
     record = {
         "schema-version": 1,
         "session-id": session_id,
-        "task": {"id": task},
+        "task": {"id": task, "independent": independent},
         "agent": {"role": role},
         "execution": {
             "host": host,
@@ -818,6 +822,19 @@ def start_session(
 
     record = redact_value(record)
     write_json(state_root(project) / "session.json", record)
+    if role == "lead" and access == "workspace-write":
+        from .worktree import prepare_task, update_task_state
+
+        try:
+            update_task_state(task, "active", repo=project)
+            if independent:
+                record["housekeeping"] = prepare_task(task, host=host, repo=project,
+                                                     independent=True)
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+            # An unavailable cleanup is not permission to discard evidence or
+            # prevent unrelated task work. The active local session is retained.
+            record["housekeeping"] = {"status": "preserved", "reason": "housekeeping-unavailable"}
+        write_json(state_root(project) / "session.json", record)
     _append_event(
         project,
         {
@@ -862,6 +879,16 @@ def update_session(
 
     record["updated-utc"] = datetime.now(timezone.utc).isoformat()
     write_json(path, record)
+
+    if (state and record.get("agent", {}).get("role") == "lead"
+            and record.get("execution", {}).get("access") == "workspace-write"):
+        from .worktree import update_task_state
+
+        try:
+            update_task_state(record["task"]["id"], state, repo=project_root())
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+            record["housekeeping-warning"] = "task-state-update-unavailable"
+            write_json(path, record)
 
     _append_event(
         project,
