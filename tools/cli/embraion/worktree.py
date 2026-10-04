@@ -464,6 +464,10 @@ def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[st
     current = registry.branch_sha(repo, branch)
     if current != row["head"] and not (remote and current is None and row.get("removed-local-branch")):
         raise ValueError("local branch changed before deletion")
+    if resource and current is not None:
+        branch_resource = resource | {"kind": "branch", "path": None, "gitdir": None}
+        if not registry.verify_resource(repo, branch_resource):
+            raise ValueError("branch incarnation changed")
     if not resource or resource.get("legacy-compatible"):
         if remote or not _directly_integrated(repo, row["head"], base):
             raise ValueError("legacy branch is not directly integrated")
@@ -475,10 +479,6 @@ def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[st
         raise ValueError("resource task or provenance changed")
     if resource.get("origin-id") != _origin_identity(repo):
         raise ValueError("origin changed before deletion")
-    if current is not None:
-        branch_resource = resource | {"kind": "branch", "path": None, "gitdir": None}
-        if not registry.verify_resource(repo, branch_resource):
-            raise ValueError("branch incarnation changed")
     if remote and not resource.get("remote-owned"):
         raise ValueError("remote ownership is unproven")
     evidence = github.github_evidence(repo)
@@ -846,7 +846,8 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                     row["removed-worktree"] = True
                     row.update(status="removed", reason="worktree-removed")
                     write_json(journal, report)
-                if branch and config["local-branches"]:
+                if (branch and config["local-branches"] and resource is not None
+                        and not resource.get("legacy-compatible")):
                     # Compare-and-delete prevents branch advancement between
                     # proof and deletion, including a squash-merged branch.
                     operation = "local-branch-delete"
@@ -854,6 +855,9 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                     run(["git", "-C", str(root), "update-ref", "-d", f"refs/heads/{branch}", row["head"]])
                     row["removed-local-branch"] = True
                     row.update(status="removed", reason="local-branch-removed")
+                    write_json(journal, report)
+                elif branch and config["local-branches"]:
+                    row["preserved-local-branch"] = "legacy-ownership-unproven"
                     write_json(journal, report)
                 if resource and not resource.get("legacy-compatible") and branch and config["remote-branches"] and row.get("remote-head"):
                     # A deletion lease rejects any new remote commit after assessment.

@@ -54,7 +54,8 @@ New registered resources require authoritative merged PR evidence, exact source 
 integration into the current target. GitHub metadata uses the existing authenticated `gh`
 client and remote deletion uses an expected-SHA Git lease; credentials are not stored in
 the inventory or report. Unknown API, protection, rules, or authorization state preserves
-resources. Existing legacy markers retain only conservative direct-ancestry local cleanup.
+resources. Existing legacy markers retain conservative direct-ancestry worktree cleanup;
+the marker alone grants no authority to delete local or remote branches.
 
 Remote authority is bound to the original remote identity and its absence before local
 creation. A pre-existing remote branch cannot be adopted by creating a matching local
@@ -64,4 +65,4 @@ Applied operations preserve exact commits and required local state before deleti
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 02:07 UTC</sub>
+<sub>Last updated: 2026-10-04 02:44 UTC</sub>

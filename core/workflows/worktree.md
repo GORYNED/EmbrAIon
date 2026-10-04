@@ -31,7 +31,9 @@ For a merged PR, verify the repository, head branch and SHA, target branch, merg
 ancestry, and absence of open PRs using the branch as head or base. Preserve divergent,
 reused, protected, default, explicitly preserved, and unknown resources. Squash integration
 requires exact PR head evidence; patch similarity is insufficient. Legacy markers retain
-their conservative local direct-ancestry behavior and never grant remote deletion rights.
+their conservative local direct-ancestry worktree behavior. A legacy marker alone never
+grants local or remote branch deletion rights. Legacy compatibility cleanup releases
+worktrees and preserves their branch refs.
 
 Never remove the primary or current worktree. Check all linked tasks and worktrees,
 Git operations, locks, staged, unstaged and untracked files. Preserve unknown ignored

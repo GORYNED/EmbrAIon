@@ -173,6 +173,24 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertTrue(target.is_dir())
         self.assertIn("refs/heads/task/personal", self.branches())
 
+    def test_legacy_marker_never_grants_local_branch_deletion_authority(self) -> None:
+        branch = "codex/legacy"
+        target = self.sandbox / "legacy"
+        git(self.repo, "worktree", "add", "-b", branch, str(target), "origin/main")
+        worktree.write_json(worktree.registry.gitdir(target) / "embraion-worktree.json", {
+            "schema-version": 1, "path": str(target), "branch": branch,
+        })
+        worktree.write_json(target / ".embraion/state/runs/old.json", {"state": "completed"})
+        # A recreated ref must not inherit branch ownership from the old marker.
+        head = self.head(branch)
+        git(self.repo, "update-ref", "-d", f"refs/heads/{branch}", head)
+        git(self.repo, "update-ref", "--create-reflog", f"refs/heads/{branch}", head)
+        report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row["path"] == str(target))
+        self.assertEqual("removed", row["status"])
+        self.assertEqual("legacy-ownership-unproven", row["preserved-local-branch"])
+        self.assertEqual(head, self.head(branch))
+
     def test_receipt_binds_exact_task_host_path_and_branch(self) -> None:
         target = self.sandbox / "managed"
         receipt = worktree.prepare_task(
