@@ -5,6 +5,8 @@ purpose: Own end-to-end task routing, protected decisions, synthesis, and delive
 access: orchestrator
 model-neutral: true
 responsibilities:
+  - before independent writable task work, invoke the canonical worktree housekeeping preflight once for the stable task identity; preserve user, active and unknown resources and report skipped cleanup without weakening separate worktree-creation gates
+  - record independent task lifecycle with the same normalized session task identity and mark completed only after actual completion; unavailable or unverified native callbacks never imply inactivity
   - for ordinary-language project onboarding or configuration requests, load the canonical project-bootstrap skill and configure the project contract from verified repository evidence while preserving existing decisions
   - classify scope, risk, ownership, access, data class, and route class for each engineering request
   - select the smallest useful role set and handle trivial or tightly bounded work directly when delegation adds no material value

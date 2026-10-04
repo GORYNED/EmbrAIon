@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EmbrAIon Worktree Registry",
+  "type": "object",
+  "required": ["schema-version", "receipts", "resources", "tasks"],
+  "properties": {
+    "schema-version": {"const": 2},
+    "receipts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["task-id", "host", "branch", "path", "base-sha", "created-utc"],
+        "properties": {
+          "task-id": {"type": "string", "minLength": 1},
+          "host": {"type": "string", "minLength": 1},
+          "branch": {"type": ["string", "null"]},
+          "path": {"type": ["string", "null"]},
+          "base-sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+          "origin-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "remote-absent": {"type": "boolean"},
+          "created-utc": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "resource-id", "task-ids", "host", "creation-source", "path", "branch", "gitdir", "common-dir", "head-at-registration", "created-utc", "state"],
+        "properties": {
+          "kind": {"enum": ["worktree", "branch"]},
+          "resource-id": {"type": "string", "minLength": 1},
+          "task-ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "host": {"type": "string", "minLength": 1},
+          "creation-source": {"enum": ["host-native", "embraion-create"]},
+          "legacy-compatible": {"type": "boolean"},
+          "creation-reflog-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "branch-reflog-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "path": {"type": ["string", "null"]},
+          "branch": {"type": ["string", "null"]},
+          "gitdir": {"type": ["string", "null"]},
+          "common-dir": {"type": "string", "minLength": 1},
+          "head-at-registration": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+          "origin-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "remote-owned": {"type": "boolean"},
+          "remote": {"const": "origin"},
+          "pr": {
+            "type": ["object", "null"],
+            "required": ["repository", "number", "head-sha", "merge-sha", "target"],
+            "properties": {
+              "repository": {"type": "string", "minLength": 1},
+              "number": {"type": "integer", "minimum": 1},
+              "head-sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+              "merge-sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+              "target": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          },
+          "created-utc": {"type": "string", "minLength": 1},
+          "state": {"enum": ["active", "removed"]},
+          "cleanup-id": {"type": "string"}
+        },
+        "allOf": [
+          {"if": {"properties": {"kind": {"const": "branch"}}},
+           "then": {"properties": {"path": {"type": "null"}, "gitdir": {"type": "null"}, "branch": {"type": "string", "minLength": 1}}}},
+          {"if": {"properties": {"kind": {"const": "worktree"}}},
+           "then": {"properties": {"path": {"type": "string", "minLength": 1}, "gitdir": {"type": "string", "minLength": 1}}}}
+        ],
+        "additionalProperties": false
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "state": {"enum": ["queued", "active", "blocked", "review", "completed", "cancelled", "failed", "incomplete"]},
+          "gc-run": {"type": "boolean"},
+          "updated-utc": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

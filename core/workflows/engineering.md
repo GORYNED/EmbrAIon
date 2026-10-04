@@ -4,6 +4,9 @@ Apply the canonical [Lead contract](../agents/lead.yaml) proportionally to each 
 
 For substantial work:
 
+Before writable independent task work, apply the [worktree housekeeping workflow](worktree.md).
+This preflight also applies to bounded independent writable tasks; it is not triggered by read-only work.
+
 1. Lead performs planning, ownership, privacy, compatibility, and impact routing, resolving the relevant configured Project Contract Slots before assigning project-specific work.
 2. Use Spec Kit as an optional recommended companion when specification-driven structure is useful.
 3. Lead selects the smallest useful role set, classifies each concrete assignment, and resolves project routing, deployments, and policy-approved execution hosts. Sequence dependent work and parallelize only independent assignments under the [safe parallelism rule](../rules/parallelism.md).

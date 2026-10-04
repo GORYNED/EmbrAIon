@@ -82,7 +82,21 @@
       "additionalProperties": true
     },
     "routing": false,
-    "deployments": false
+    "deployments": false,
+    "housekeeping": {
+      "type": "object",
+      "properties": {
+        "on-task-start": {"type": "boolean", "default": false},
+        "local-branches": {"type": "boolean", "default": true},
+        "remote-branches": {"type": "boolean", "default": false},
+        "worktrees": {"type": "boolean", "default": true},
+        "preserve-branches": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "$defs": {},
   "additionalProperties": true

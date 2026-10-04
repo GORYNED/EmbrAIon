@@ -1,0 +1,7 @@
+{
+  "evidence-kind": "synthetic-grading-fixture",
+  "live-host-execution": false,
+  "ownership": {"user-preserved": true, "unknown-preserved": true, "prefix-is-proof": false},
+  "startup": {"writable-preflight": true, "read-only-deletes": false, "repeat-deletes": false},
+  "safety": {"snapshot-before-delete": true, "remote-exact-sha": true}
+}
