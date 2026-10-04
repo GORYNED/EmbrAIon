@@ -20,9 +20,16 @@ Resources created by the host require a receipt captured before creation and ver
 registration afterwards; an existing user branch cannot be adopted implicitly. Shared
 registry records retain resource identity and lifecycle evidence across worktrees.
 
+Remote ownership requires positive creation evidence from a supported adapter. The
+portable `worktree publish --task-id <id> --branch <branch>` explicitly creates an absent
+remote ref with a create-only lease and records its verified creation. A local receipt or
+an external push never grants remote deletion authority; existing remote refs are preserved.
+
 Keep the stable task identity in normalized session state: start the independent writable
 Lead session with `session start --session-id <session-id> --task <task-id> --role lead
---host <host> --access workspace-write`. Record `session set --state completed` only when
+--host <host> --access workspace-write --independent-task`. Scope must be explicit: a
+session without `--independent-task`, or with `--subtask`, never starts automatic cleanup.
+Record `session set --state completed` only when
 the task is actually finished. Review, blocked and incomplete work remains nonterminal;
 cancelled or failed tasks are not new automatic cleanup candidates. Native host callbacks
 are lifecycle authority only when their provenance and delivery have been verified.

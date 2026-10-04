@@ -10,6 +10,7 @@ scope: current-repository
 access-expansion: forbidden
 operations:
   metadata: [repository, branches, pull-requests, branch-protection, rules]
+  create-ref: explicit-publish-expected-absent-lease
   delete-ref: expected-sha-lease
 unknown-state: preserve
 host-archive: unsupported

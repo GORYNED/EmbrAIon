@@ -46,11 +46,14 @@ class WorktreeHousekeepingCliTests(unittest.TestCase):
         git(self.remote, "symbolic-ref", "HEAD", "refs/heads/main")
 
     def cli(self, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+        return self.command("worktree", *args, check=check)
+
+    def command(self, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
         environment = os.environ.copy()
         environment["PYTHONPATH"] = str(SOURCE_ROOT)
         environment["EMBRAION_DISABLE_VERSION_RESOLUTION"] = "1"
         return subprocess.run(
-            [sys.executable, "-m", "embraion.cli", "worktree", *args],
+            [sys.executable, "-m", "embraion.cli", *args],
             cwd=self.repo,
             env=environment,
             check=check,
@@ -95,6 +98,42 @@ class WorktreeHousekeepingCliTests(unittest.TestCase):
         self.assertTrue(target.is_dir())
         self.assertEqual(git(target, "rev-parse", "HEAD"),
                          git(self.repo, "rev-parse", "refs/heads/task/prepare"))
+
+    def test_session_scope_controls_opted_in_housekeeping(self) -> None:
+        manifest = self.repo / ".embraion/project.yaml"
+        manifest.parent.mkdir()
+        manifest.write_text("housekeeping:\n  on-task-start: true\n", encoding="utf-8")
+        registry_path = self.sandbox / "git-data/embraion/worktrees/registry.json"
+        for task, flags in (("unknown", []), ("sub", ["--subtask"])):
+            result = json.loads(self.command("session", "start", "--session-id", task,
+                                            "--task", task, "--access", "workspace-write", *flags).stdout)
+            self.assertNotIn("housekeeping", result)
+            self.assertFalse(json.loads(registry_path.read_text())["tasks"][task].get("gc-run", False))
+        result = json.loads(self.command("session", "start", "--session-id", "independent",
+                                        "--task", "independent", "--access", "workspace-write",
+                                        "--independent-task").stdout)
+        self.assertIn("housekeeping", result)
+        self.assertTrue(json.loads(registry_path.read_text())["tasks"]["independent"]["gc-run"])
+
+    def test_creation_scope_and_explicit_remote_publication(self) -> None:
+        manifest = self.repo / ".embraion/project.yaml"
+        manifest.parent.mkdir()
+        manifest.write_text("housekeeping:\n  on-task-start: true\n", encoding="utf-8")
+        registry_path = self.sandbox / "git-data/embraion/worktrees/registry.json"
+        for task, flags in (("unknown", []), ("sub", ["--subtask"]),
+                            ("independent", ["--independent-task"])):
+            self.cli("create", f"task/{task}", "--branch-only", "--task-id", task, *flags)
+            data = json.loads(registry_path.read_text())
+            self.assertEqual(task == "independent", data["tasks"][task].get("gc-run", False))
+        publication = json.loads(self.cli("publish", "--task-id", "independent",
+                                          "--branch", "task/independent").stdout)
+        self.assertEqual("expected-empty-lease", publication["method"])
+        self.assertEqual(git(self.repo, "rev-parse", "task/independent"),
+                         git(self.remote, "rev-parse", "refs/heads/task/independent"))
+        before = registry_path.read_bytes()
+        self.assertNotEqual(0, self.cli("publish", "--task-id", "independent",
+                                       "--branch", "task/independent", check=False).returncode)
+        self.assertEqual(before, registry_path.read_bytes())
 
 
 if __name__ == "__main__":

@@ -76,13 +76,15 @@ def create_worktree(
     base: str = "origin/main",
     task_id: str | None = None,
     host: str = "embraion",
+    independent: bool = False,
 ) -> Path:
     repo = project_root()
     run(["git", "-C", str(repo), "fetch", "--no-prune", "--no-prune-tags", "origin"])
 
     target = destination or (repo.parent / f"{repo.name}-{branch.replace('/', '-')}")
     task = task_id or f"manual-{registry.new_id()}"
-    prepared = prepare_task(task, host=host, branch=branch, path=target, base=base, repo=repo)
+    prepared = prepare_task(task, host=host, branch=branch, path=target, base=base,
+                            independent=independent, repo=repo)
     base_sha = registry.git_value(repo, "rev-parse", "--verify", f"{base}^{{commit}}")
     run(["git", "-C", str(repo), "update-ref", "--create-reflog",
          "-m", f"embraion-create:{prepared['receipt-id']}", f"refs/heads/{branch}",
@@ -98,12 +100,14 @@ def create_worktree(
 
 
 def create_branch(branch: str, base: str = "origin/main", task_id: str | None = None,
-                  host: str = "embraion", repo: Path | None = None) -> str:
+                  host: str = "embraion", repo: Path | None = None,
+                  independent: bool = False) -> str:
     """Create a branch-only managed resource from an absent branch."""
     root = (repo or project_root()).resolve()
     run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     task = task_id or f"manual-{registry.new_id()}"
-    prepared = prepare_task(task, host=host, branch=branch, base=base, repo=root)
+    prepared = prepare_task(task, host=host, branch=branch, base=base,
+                            independent=independent, repo=root)
     sha = registry.git_value(root, "rev-parse", "--verify", f"{base}^{{commit}}")
     run(["git", "-C", str(root), "update-ref", "--create-reflog", "-m",
          f"embraion-create:{prepared['receipt-id']}", f"refs/heads/{branch}", sha, "0" * 40])
@@ -114,13 +118,14 @@ def create_branch(branch: str, base: str = "origin/main", task_id: str | None = 
 
 def create_detached_worktree(destination: Path, base: str = "origin/main",
                              task_id: str | None = None, host: str = "embraion",
-                             repo: Path | None = None) -> Path:
+                             repo: Path | None = None, independent: bool = False) -> Path:
     """Create a detached managed worktree; its exact Git directory is registered."""
     root = (repo or project_root()).resolve()
     run(["git", "-C", str(root), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     task = task_id or f"manual-{registry.new_id()}"
     target = Path(destination).absolute()
-    prepared = prepare_task(task, host=host, path=target, base=base, repo=root)
+    prepared = prepare_task(task, host=host, path=target, base=base,
+                            independent=independent, repo=root)
     run(["git", "-C", str(root), "worktree", "add", "--detach", str(target), base])
     register_worktree(task, host, path=target, receipt_id=prepared["receipt-id"],
                       creation_source="embraion-create", repo=root)
@@ -222,6 +227,21 @@ def _origin_identity(repo: Path) -> str:
     return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
 
+def _push_endpoint(repo: Path) -> str:
+    """Bind a remote mutation to the single endpoint used for fresh reads."""
+    # Git can rewrite an explicit URL again when pushing. Without a stable
+    # server-side endpoint identity, any effective URL rewrite is ambiguous.
+    rewrites = run(["git", "-C", str(repo), "config", "--name-only", "--get-regexp",
+                    r"^url\..*\.(insteadof|pushinsteadof)$"], check=False)
+    if rewrites.returncode not in {0, 1} or rewrites.stdout.strip():
+        raise ValueError("origin URL rewrite is unsupported for remote mutation")
+    fetch = registry.git_value(repo, "remote", "get-url", "--all", "origin").splitlines()
+    push = registry.git_value(repo, "remote", "get-url", "--push", "--all", "origin").splitlines()
+    if len(fetch) != 1 or len(push) != 1 or not fetch[0] or fetch[0] != push[0]:
+        raise ValueError("origin has ambiguous or different fetch/push endpoints")
+    return fetch[0]
+
+
 def prepare_task(task_id: str, host: str = "codex", branch: str | None = None,
                  path: Path | None = None, base: str = "origin/main", writable: bool = True,
                  independent: bool = True, repo: Path | None = None) -> dict[str, Any]:
@@ -230,7 +250,7 @@ def prepare_task(task_id: str, host: str = "codex", branch: str | None = None,
         raise ValueError("task id and host are required")
     config = housekeeping_config(root)
     report = {"schema-version": 1, "dry-run": True, "cleanup-id": None, "resources": []}
-    if config["on-task-start"] and writable and independent:
+    if config["on-task-start"] and writable is True and independent is True:
         with registry.registry_lock(root):
             data = registry.load_registry(root)
             task = data["tasks"].setdefault(task_id, {"state": "active"})
@@ -334,7 +354,9 @@ def register_worktree(task_id: str, host: str, path: Path | None = None,
                     "common-dir": str(registry.common_dir(root)),
                     "head-at-registration": actual_head,
                     "origin-id": receipt["origin-id"],
-                    "remote-owned": receipt.get("remote-absent", False),
+                    # Absence observed before local creation is not remote
+                    # ownership. Only publish_branch can establish that.
+                    "remote-owned": False,
                     "remote": "origin", "pr": None,
                     "created-utc": registry.timestamp(), "state": "active"}
         if creation_identity is not None:
@@ -345,6 +367,81 @@ def register_worktree(task_id: str, host: str, path: Path | None = None,
         del data["receipts"][receipt_id]
         registry.save_registry(root, data)
         return resource.copy()
+
+
+def _published_remote(resource: dict[str, Any], branch: str, head: str,
+                      origin_id: str) -> bool:
+    """A prior absence observation or legacy remote-owned flag grants nothing."""
+    receipt = resource.get("remote-publish")
+    return (resource.get("remote-owned") is True and isinstance(receipt, dict)
+            and receipt.get("method") == "expected-empty-lease"
+            and receipt.get("resource-id") == resource.get("resource-id")
+            and receipt.get("branch") == branch
+            and receipt.get("head-sha") == head
+            and receipt.get("origin-id") == origin_id
+            and isinstance(receipt.get("publish-id"), str)
+            and bool(re.fullmatch(r"[0-9a-f]{32}", receipt["publish-id"])))
+
+
+def _confirmed_new_branch(output: str, ref: str) -> bool:
+    """Git can report success for an already equal ref; require creation."""
+    updates = []
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) >= 3:
+            updates.append(fields)
+    return (len(updates) == 1 and updates[0][0] == "*"
+            and updates[0][1].rsplit(":", 1)[-1] == ref
+            and "[new branch]" in updates[0][2])
+
+
+def publish_branch(task_id: str, branch: str, repo: Path | None = None) -> dict[str, Any]:
+    """Create a remote branch once, recording only a verified agent push."""
+    root = (repo or project_root()).resolve()
+    if not task_id or not _valid_branch(branch):
+        raise ValueError("valid task id and branch are required")
+    with registry.registry_lock(root):
+        data = registry.load_registry(root)
+        matches = [resource for resource in data["resources"].values()
+                   if resource.get("branch") == branch and task_id in resource.get("task-ids", [])]
+        if len(matches) != 1:
+            raise ValueError("registered task branch is missing or ambiguous")
+        resource = matches[0]
+        if (resource.get("state") != "active" or resource.get("creation-source") != "embraion-create"
+                or resource.get("legacy-compatible") or resource.get("remote-publish") is not None
+                or resource.get("remote-owned") is True or not registry.verify_resource(root, resource)):
+            raise ValueError("branch lacks source-created publication provenance")
+        origin_id = _origin_identity(root)
+        if resource.get("origin-id") != origin_id:
+            raise ValueError("origin changed since registration")
+        endpoint = _push_endpoint(root)
+        head = registry.branch_sha(root, branch)
+        if head is None:
+            raise ValueError("registered local branch is missing")
+        if github.remote_head(root, branch) is not None:
+            raise ValueError("remote branch already exists; adoption is forbidden")
+        ref = f"refs/heads/{branch}"
+        # An equal ref created concurrently may produce an up-to-date success;
+        # the porcelain creation flag below prevents adopting that ref.
+        pushed = run(["git", "-C", str(root), "push", "--porcelain",
+                      f"--force-with-lease={ref}:", endpoint, f"{head}:{ref}"])
+        if not _confirmed_new_branch(pushed.stdout, ref):
+            raise ValueError("remote did not confirm new branch creation")
+        if (registry.branch_sha(root, branch) != head or not registry.verify_resource(root, resource)
+                or _origin_identity(root) != origin_id or _push_endpoint(root) != endpoint
+                or github.remote_head(root, branch) != head.lower()):
+            raise ValueError("published branch changed before verification")
+        publication = {"method": "expected-empty-lease", "publish-id": registry.new_id(),
+                       "resource-id": resource["resource-id"], "branch": branch,
+                       "head-sha": head, "origin-id": origin_id,
+                       "published-utc": registry.timestamp()}
+        resource["remote-publish"] = publication
+        resource["remote-owned"] = True
+        registry.save_registry(root, data)
+        recorded = registry.load_registry(root)["resources"].get(resource["resource-id"])
+        if recorded != resource or not _published_remote(recorded, branch, head, origin_id):
+            raise ValueError("remote publication receipt was not persisted")
+        return publication.copy()
 
 
 def update_task_state(task_id: str, state: str, repo: Path | None = None) -> dict[str, Any]:
@@ -450,9 +547,10 @@ def _verify_state_snapshot(item: dict[str, Any], backup: Path) -> None:
 
 
 def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[str, Any] | None,
-                              base: str, *, remote: bool) -> None:
+                              base: str, *, remote: bool) -> str | None:
     """Refresh task, checkout, policy and provider evidence before each ref operation."""
     branch = row["branch"]
+    endpoint = _push_endpoint(repo) if remote else None
     run(["git", "-C", str(repo), "fetch", "--no-prune", "--no-prune-tags", "origin"])
     config = housekeeping_config(repo)
     enabled = "remote-branches" if remote else "local-branches"
@@ -479,7 +577,7 @@ def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[st
         raise ValueError("resource task or provenance changed")
     if resource.get("origin-id") != _origin_identity(repo):
         raise ValueError("origin changed before deletion")
-    if remote and not resource.get("remote-owned"):
+    if remote and not _published_remote(resource, branch, row["head"], _origin_identity(repo)):
         raise ValueError("remote ownership is unproven")
     evidence = github.github_evidence(repo)
     if branch == evidence["default-branch"] or base != f"origin/{evidence['default-branch']}":
@@ -492,6 +590,9 @@ def _recheck_branch_operation(repo: Path, row: dict[str, Any], resource: dict[st
     expected = row.get("remote-head")
     if github.remote_head(repo, branch) != expected:
         raise ValueError("remote branch changed before deletion")
+    if remote and _push_endpoint(repo) != endpoint:
+        raise ValueError("origin endpoint changed during remote verification")
+    return endpoint
 
 
 def _assert_no_reparse(path: Path) -> None:
@@ -620,9 +721,16 @@ def _resource_row(repo: Path, item: dict[str, Any], resource: dict[str, Any] | N
                 if remote_sha is not None and remote_sha != head.lower():
                     result["reason"] = "remote-head-changed"
                     return result
-                if remote_sha is not None and config["remote-branches"] and not resource.get("remote-owned"):
+                if (remote_sha is not None and config["remote-branches"]
+                        and not _published_remote(resource, branch, head, _origin_identity(repo))):
                     result["reason"] = "remote-ownership-unproven"
                     return result
+                if remote_sha is not None and config["remote-branches"]:
+                    try:
+                        _push_endpoint(repo)
+                    except (OSError, ValueError, subprocess.SubprocessError):
+                        result["reason"] = "remote-endpoint-unproven"
+                        return result
                 result["remote-head"] = remote_sha
             elif not _directly_integrated(path, head, base):
                 result["reason"] = "detached-head-not-integrated"
@@ -702,9 +810,16 @@ def _branch_row(repo: Path, resource: dict[str, Any], data: dict[str, Any],
         if remote is not None and remote != head.lower():
             row["reason"] = "remote-head-changed"
             return row
-        if remote is not None and config["remote-branches"] and not resource.get("remote-owned"):
+        if (remote is not None and config["remote-branches"]
+                and not _published_remote(resource, branch, head, _origin_identity(repo))):
             row["reason"] = "remote-ownership-unproven"
             return row
+        if remote is not None and config["remote-branches"]:
+            try:
+                _push_endpoint(repo)
+            except (OSError, ValueError, subprocess.SubprocessError):
+                row["reason"] = "remote-endpoint-unproven"
+                return row
         if not config["local-branches"] and remote is None:
             row["reason"] = "no-enabled-branch-operation"
             return row
@@ -862,10 +977,10 @@ def gc_report(base: str = "origin/main", apply: bool = False,
                 if resource and not resource.get("legacy-compatible") and branch and config["remote-branches"] and row.get("remote-head"):
                     # A deletion lease rejects any new remote commit after assessment.
                     operation = "remote-branch-delete"
-                    _recheck_branch_operation(root, row, resource, base, remote=True)
+                    endpoint = _recheck_branch_operation(root, row, resource, base, remote=True)
                     run(["git", "-C", str(root), "push",
                          f"--force-with-lease=refs/heads/{branch}:{row['remote-head']}",
-                         "origin", f":refs/heads/{branch}"])
+                         endpoint, f":refs/heads/{branch}"])
                     row["removed-remote-branch"] = True
                     row.update(status="removed", reason="remote-branch-removed")
                     write_json(journal, report)

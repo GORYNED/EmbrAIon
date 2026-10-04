@@ -63,7 +63,7 @@ from .security import (
 from .validation import collect_issues
 from .worktree import (
     create_branch, create_detached_worktree, create_worktree, gc_report, list_worktrees, prepare_task,
-    register_worktree, restore_cleanup, salvage_worktree,
+    publish_branch, register_worktree, restore_cleanup, salvage_worktree,
 )
 from .versioning import (
     cache_home,
@@ -713,6 +713,7 @@ def _cmd_session_start(args: argparse.Namespace) -> int:
             model=args.model,
             effort=args.effort,
             access=args.access,
+            independent=args.independent_task,
         )
     )
     return 0
@@ -958,7 +959,8 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
         if args.branch or destination is None:
             raise ValueError("--detach requires --path and no branch name.")
         created = create_detached_worktree(destination, base=args.base or "origin/main",
-                                            task_id=args.task_id, host=args.host)
+                                            task_id=args.task_id, host=args.host,
+                                            independent=args.independent_task)
         print(f"Created {created}")
         return 0
     if not args.branch:
@@ -966,7 +968,10 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
     if args.branch_only:
         if destination is not None:
             raise ValueError("--branch-only cannot be combined with --path.")
-        print(f"Created branch {create_branch(args.branch, base=args.base or 'origin/main', task_id=args.task_id, host=args.host)}")
+        created_branch = create_branch(args.branch, base=args.base or "origin/main",
+                                      task_id=args.task_id, host=args.host,
+                                      independent=args.independent_task)
+        print(f"Created branch {created_branch}")
         return 0
     created = create_worktree(
         args.branch,
@@ -974,6 +979,7 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
         base=args.base or "origin/main",
         task_id=args.task_id,
         host=args.host,
+        independent=args.independent_task,
     )
     print(f"Created {created}")
     return 0
@@ -1015,6 +1021,11 @@ def _cmd_worktree_register(args: argparse.Namespace) -> int:
     _print_json(register_worktree(args.task_id, args.host,
                                   path=Path(args.path).resolve() if args.path else None,
                                   receipt_id=args.receipt_id))
+    return 0
+
+
+def _cmd_worktree_publish(args: argparse.Namespace) -> int:
+    _print_json(publish_branch(args.task_id, args.branch))
     return 0
 
 
@@ -1934,6 +1945,11 @@ def build_parser() -> argparse.ArgumentParser:
     session_start.add_argument("--model")
     session_start.add_argument("--effort")
     session_start.add_argument("--access", default="plan")
+    session_scope = session_start.add_mutually_exclusive_group()
+    session_scope.add_argument("--independent-task", action="store_true",
+                               help="Confirm a new independent task eligible for opted-in housekeeping")
+    session_scope.add_argument("--subtask", action="store_true",
+                               help="Start a subtask without automatic housekeeping")
     session_start.set_defaults(func=_cmd_session_start)
 
     session_show = session_sub.add_parser("show", help="Show session state", description="Show the current normalized EmbrAIon session/task state.")
@@ -2074,11 +2090,16 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_create.add_argument("branch", nargs="?")
     worktree_create.add_argument("--path")
     worktree_create.add_argument("--base")
-    worktree_create.add_argument("--task-id", help="Bind newly created resources to an independent task.")
+    worktree_create.add_argument("--task-id", help="Bind newly created resources to a task.")
     worktree_create.add_argument("--host", default="codex", choices=["codex", "claude-code", "portable"])
     worktree_create_modes = worktree_create.add_mutually_exclusive_group()
     worktree_create_modes.add_argument("--branch-only", action="store_true", help="Create a managed branch without a checkout.")
     worktree_create_modes.add_argument("--detach", action="store_true", help="Create a managed detached worktree at --path.")
+    create_scope = worktree_create.add_mutually_exclusive_group()
+    create_scope.add_argument("--independent-task", action="store_true",
+                              help="Confirm independent task scope for opted-in housekeeping")
+    create_scope.add_argument("--subtask", action="store_true",
+                              help="Create a subtask resource without automatic housekeeping")
     worktree_create.set_defaults(func=_cmd_worktree_create)
 
     worktree_gc = worktree_sub.add_parser("gc", help="Find safe cleanup candidates", description="Find safely removable worktrees; use --apply to remove them.")
@@ -2104,6 +2125,11 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_register.add_argument("--receipt-id", required=True)
     worktree_register.add_argument("--path")
     worktree_register.set_defaults(func=_cmd_worktree_register)
+
+    worktree_publish = worktree_sub.add_parser("publish", help="Create an absent remote branch with verified agent provenance")
+    worktree_publish.add_argument("--task-id", required=True)
+    worktree_publish.add_argument("--branch", required=True)
+    worktree_publish.set_defaults(func=_cmd_worktree_publish)
 
     worktree_restore = worktree_sub.add_parser("restore", help="Restore local resources from a retained cleanup snapshot")
     worktree_restore.add_argument("--cleanup-id", required=True)

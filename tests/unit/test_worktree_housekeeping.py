@@ -98,6 +98,31 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
                                      host="codex")
         return target
 
+    def bare_head(self, _repo: Path, branch: str) -> str | None:
+        result = git(self.remote, "rev-parse", "--verify", f"refs/heads/{branch}", check=False)
+        return result.stdout.strip() if result.returncode == 0 else None
+
+    def publish_managed_branch(self, task_id: str = "managed-task") -> dict[str, object]:
+        branch = f"task/{task_id}"
+        real_run = worktree.run
+
+        def receive_create(command, *args, **kwargs):
+            if "push" not in command:
+                return real_run(command, *args, **kwargs)
+            ref = f"refs/heads/{branch}"
+            self.assertIn(f"--force-with-lease={ref}:", command)
+            self.assertIsNone(self.bare_head(self.repo, branch))
+            head = self.head(branch)
+            self.assertIn(f"{head}:{ref}", command)
+            copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+            git(self.remote, "update-ref", ref, head, "0" * 40)
+            return subprocess.CompletedProcess(command, 0,
+                                               f"*\t{head}:{ref}\t[new branch]\n", "")
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=receive_create):
+            return worktree.publish_branch(task_id, branch, repo=self.repo)
+
     def github_evidence(self):
         return (
             patch.object(worktree.github, "github_evidence", return_value={"default-branch": "main"}),
@@ -261,6 +286,8 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         with patch.object(worktree, "gc_report", return_value=report) as gc:
             worktree.prepare_task("read-only", writable=False, repo=self.repo)
             worktree.prepare_task("subtask", independent=False, repo=self.repo)
+            worktree.prepare_task("unknown-scope", independent="unknown", repo=self.repo)
+            worktree.prepare_task("unknown-access", writable="unknown", repo=self.repo)
             worktree.prepare_task("writable", repo=self.repo)
             worktree.prepare_task("writable", repo=self.repo)
 
@@ -330,7 +357,17 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
     def test_remote_only_unregistered_branch_is_reported_and_preserved(self) -> None:
         branch = "codex/user-remote-only"
         git(self.remote, "update-ref", f"refs/heads/{branch}", self.head())
-        report = worktree.gc_report(apply=True, repo=self.repo)
+        real_run = worktree.run
+
+        def bare_inventory(command, *args, **kwargs):
+            if "ls-remote" in command and "--heads" in command and "origin" in command:
+                return subprocess.CompletedProcess(
+                    command, 0, f"{self.head()}\trefs/heads/{branch}\n", ""
+                )
+            return real_run(command, *args, **kwargs)
+
+        with patch.object(worktree, "run", side_effect=bare_inventory):
+            report = worktree.gc_report(apply=True, repo=self.repo)
         row = next(row for row in report["resources"] if row["branch"] == branch)
         self.assertEqual("unowned-remote-branch", row["reason"])
         self.assertEqual(self.head(), git(self.remote, "rev-parse", f"refs/heads/{branch}").stdout.strip())
@@ -342,7 +379,10 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         outside.write_text('{"state":"completed"}\n', encoding="utf-8")
         state = target / ".embraion" / "state" / "runs" / "run.json"
         state.parent.mkdir(parents=True)
-        state.hardlink_to(outside)
+        try:
+            state.hardlink_to(outside)
+        except PermissionError:
+            self.skipTest("Windows sandbox forbids creating fixture hardlinks")
         patches = self.github_evidence()
         with patches[0], patches[1], patches[2], patches[3]:
             report = worktree.gc_report(apply=True, repo=self.repo)
@@ -502,6 +542,8 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
 
     def test_remote_deletion_uses_sha_lease_and_retains_recovery_on_race(self) -> None:
         target = self.managed_worktree()
+        publication = self.publish_managed_branch()
+        self.assertEqual(self.head("task/managed-task"), publication["head-sha"])
         worktree.update_task_state("managed-task", "completed", repo=self.repo)
         head = self.head("task/managed-task")
         project = self.repo / ".embraion" / "project.yaml"
@@ -552,6 +594,24 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertEqual(0, current.returncode, current.stderr)
         self.assertNotEqual(0, git(self.remote, "rev-parse", "--verify",
                                    f"refs/heads/{branch}", check=False).returncode)
+
+    def test_git_expected_empty_lease_creates_once_without_adopting_existing_ref(self) -> None:
+        branch = "task/create-only"
+        git(self.repo, "branch", branch, "HEAD")
+        ref = f"refs/heads/{branch}"
+        command = ("push", "--porcelain", f"--force-with-lease={ref}:", "origin", f"{ref}:{ref}")
+        created = git(self.repo, *command, check=False)
+        if "NtCreateDirectoryObject" in created.stderr:
+            self.skipTest("Windows sandbox blocks Git's local transport helper")
+        self.assertEqual(0, created.returncode, created.stderr)
+        self.assertTrue(worktree._confirmed_new_branch(created.stdout, ref), created.stdout)
+        self.assertEqual(self.head(branch), self.bare_head(self.repo, branch))
+
+        repeated = git(self.repo, *command, check=False)
+        # Git may report an already equal ref as success despite the empty
+        # lease. The porcelain status distinguishes creation from adoption.
+        self.assertFalse(worktree._confirmed_new_branch(repeated.stdout, ref))
+        self.assertEqual(self.head(branch), self.bare_head(self.repo, branch))
 
     def test_removed_managed_worktree_can_restore_and_path_conflict_fails_closed(self) -> None:
         target = self.managed_worktree()
@@ -620,6 +680,131 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertTrue(target.is_dir())
         self.assertEqual(head, bare_head(self.repo, branch))
 
+    def test_user_published_remote_after_local_receipt_is_never_adopted(self) -> None:
+        target = self.managed_worktree()
+        branch = "task/managed-task"
+        head = self.head(branch)
+        copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+        git(self.remote, "update-ref", f"refs/heads/{branch}", head, "0" * 40)
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+
+        data = worktree.registry.load_registry(self.repo)
+        resource = next(iter(data["resources"].values()))
+        self.assertFalse(resource["remote-owned"])
+        self.assertNotIn("remote-publish", resource)
+        # A legacy flag alone cannot upgrade the later user-created ref.
+        resource["remote-owned"] = True
+        worktree.registry.save_registry(self.repo, data)
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("remote-ownership-unproven", row["reason"])
+        self.assertTrue(target.exists())
+        self.assertIn(f"refs/heads/{branch}", self.branches())
+        self.assertEqual(head, self.bare_head(self.repo, branch))
+
+    def test_verified_publish_creates_receipt_and_remote_candidate(self) -> None:
+        target = self.managed_worktree()
+        publication = self.publish_managed_branch()
+        branch = "task/managed-task"
+        self.assertEqual("expected-empty-lease", publication["method"])
+        data = worktree.registry.load_registry(self.repo)
+        resource = next(iter(data["resources"].values()))
+        self.assertTrue(resource["remote-owned"])
+        self.assertEqual(publication, resource["remote-publish"])
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            report = worktree.gc_report(repo=self.repo)
+        self.assert_report_schema(report)
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("candidate", row["status"])
+        self.assertEqual(self.head(branch), row["remote-head"])
+
+    def test_publish_create_race_never_records_or_adopts_remote(self) -> None:
+        target = self.managed_worktree()
+        branch = "task/managed-task"
+        head = self.head(branch)
+        real_run = worktree.run
+
+        def concurrent_create(command, *args, **kwargs):
+            if "push" in command:
+                copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+                git(self.remote, "update-ref", f"refs/heads/{branch}", head, "0" * 40)
+                return real_run(command, *args, **kwargs)
+            return real_run(command, *args, **kwargs)
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=concurrent_create):
+            with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        data = worktree.registry.load_registry(self.repo)
+        resource = next(iter(data["resources"].values()))
+        self.assertFalse(resource["remote-owned"])
+        self.assertNotIn("remote-publish", resource)
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        self.assertTrue(target.exists())
+        self.assertEqual(head, self.bare_head(self.repo, branch))
+
+    def test_publish_requires_porcelain_new_branch_not_up_to_date(self) -> None:
+        ref = "refs/heads/task/same-sha"
+        head = self.head()
+        self.assertFalse(worktree._confirmed_new_branch(
+            f"=\t{head}:{ref}\t[up to date]\n", ref))
+        self.assertFalse(worktree._confirmed_new_branch("", ref))
+        self.assertTrue(worktree._confirmed_new_branch(
+            f"*\t{head}:{ref}\t[new branch]\n", ref))
+
+    def test_pushurl_mismatch_refuses_publication_without_touching_either_remote(self) -> None:
+        self.managed_worktree()
+        other = self.sandbox / "other.git"
+        subprocess.run(["git", "init", "--bare", str(other)], check=True, capture_output=True)
+        git(self.repo, "config", "remote.origin.pushurl", str(other))
+        branch = "task/managed-task"
+
+        with self.assertRaisesRegex(ValueError, "fetch/push endpoints"):
+            worktree.publish_branch("managed-task", branch, repo=self.repo)
+
+        self.assertIsNone(self.bare_head(self.repo, branch))
+        self.assertNotEqual(0, git(other, "rev-parse", "--verify", f"refs/heads/{branch}",
+                                   check=False).returncode)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertFalse(resource["remote-owned"])
+        self.assertNotIn("remote-publish", resource)
+
+    def test_url_rewrite_chain_refuses_publication_before_any_remote_push(self) -> None:
+        redirected = self.sandbox / "redirected.git"
+        chained = self.sandbox / "chained.git"
+        for bare in (redirected, chained):
+            subprocess.run(["git", "init", "--bare", str(bare)], check=True,
+                           capture_output=True)
+        copy_missing_objects(self.sandbox / "git-data" / "objects", redirected / "objects")
+        git(redirected, "update-ref", "refs/heads/main", self.head())
+        git(self.repo, "config", "--add", f"url.{redirected}.insteadOf", str(self.remote))
+        git(self.repo, "config", "--add", f"url.{chained}.pushInsteadOf", str(redirected))
+        with patch.object(worktree.github, "remote_head", return_value=None):
+            self.managed_worktree()
+        with self.assertRaisesRegex(ValueError, "URL rewrite"):
+            worktree.publish_branch("managed-task", "task/managed-task", repo=self.repo)
+        for bare in (self.remote, redirected, chained):
+            self.assertNotEqual(0, git(bare, "rev-parse", "--verify",
+                                       "refs/heads/task/managed-task", check=False).returncode)
+
     def test_origin_change_preserves_registered_worktree(self) -> None:
         target = self.managed_worktree()
         worktree.update_task_state("managed-task", "completed", repo=self.repo)
@@ -683,9 +868,9 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
     def provider_change_after_local_delete(self, change: str) -> None:
         branch = "task/managed-task"
         target = self.managed_worktree()
+        self.publish_managed_branch()
         worktree.update_task_state("managed-task", "completed", repo=self.repo)
         head = self.head(branch)
-        git(self.remote, "update-ref", f"refs/heads/{branch}", head)
         project = self.repo / ".embraion" / "project.yaml"
         project.parent.mkdir()
         project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")

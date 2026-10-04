@@ -796,13 +796,16 @@ def start_session(
     model: str | None = None,
     effort: str | None = None,
     access: str = "plan",
+    independent: bool = False,
 ) -> dict[str, Any]:
+    if not isinstance(independent, bool):
+        raise ValueError("independent task scope must be a boolean")
     project = project_root()
 
     record = {
         "schema-version": 1,
         "session-id": session_id,
-        "task": {"id": task},
+        "task": {"id": task, "independent": independent},
         "agent": {"role": role},
         "execution": {
             "host": host,
@@ -824,7 +827,9 @@ def start_session(
 
         try:
             update_task_state(task, "active", repo=project)
-            record["housekeeping"] = prepare_task(task, host=host, repo=project)
+            if independent:
+                record["housekeeping"] = prepare_task(task, host=host, repo=project,
+                                                     independent=True)
         except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
             # An unavailable cleanup is not permission to discard evidence or
             # prevent unrelated task work. The active local session is retained.

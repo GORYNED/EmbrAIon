@@ -375,6 +375,8 @@ Manage normalized task/session state.
 
 ```bash
 embraion session start --session-id task-001 --task "Implement feature"
+embraion session start --session-id task-001 --task task-001 --role lead --access workspace-write --independent-task
+embraion session start --session-id subtask-001 --task subtask-001 --role lead --access workspace-write --subtask
 embraion session show
 embraion session set --state review --validation passed
 ```
@@ -498,10 +500,15 @@ embraion worktree list
 embraion worktree create ai/my-task
 embraion worktree gc
 embraion worktree gc --apply
+embraion worktree gc --json
+embraion worktree prepare --task-id task-001 --host codex --json
+embraion worktree create ai/my-task --task-id task-001 --independent-task
+embraion worktree publish --task-id task-001 --branch ai/my-task
+embraion worktree restore --cleanup-id <cleanup-id>
 embraion worktree salvage /path/to/worktree
 ```
 
-GC only removes worktrees created by `embraion worktree create` with matching ownership metadata in the Git worktree directory. It requires terminal local run/session evidence, a clean integrated checkout, and no lock or unfinished Git operation. Missing, malformed, active, blocked, or otherwise unproven evidence preserves the worktree. Older and manually created worktrees remain untouched.
+See the [worktree tool guide](../../tools/worktree/README.md) and [canonical workflow](../../core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; external pushes do not register remote ownership. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
 
 ### `embraion learning`
 

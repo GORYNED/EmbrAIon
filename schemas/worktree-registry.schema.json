@@ -44,6 +44,20 @@
           "head-at-registration": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
           "origin-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
           "remote-owned": {"type": "boolean"},
+          "remote-publish": {
+            "type": "object",
+            "required": ["method", "publish-id", "resource-id", "branch", "head-sha", "origin-id", "published-utc"],
+            "properties": {
+              "method": {"const": "expected-empty-lease"},
+              "publish-id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+              "resource-id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+              "branch": {"type": "string", "minLength": 1},
+              "head-sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40,64}$"},
+              "origin-id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "published-utc": {"type": "string", "minLength": 1}
+            },
+            "additionalProperties": false
+          },
           "remote": {"const": "origin"},
           "pr": {
             "type": ["object", "null"],

@@ -9,7 +9,8 @@ embraion worktree gc
 embraion worktree gc --json
 embraion worktree gc --apply
 embraion worktree prepare --task-id my-task --json
-embraion worktree create ai/my-task --task-id my-task
+embraion worktree create ai/my-task --task-id my-task --independent-task
+embraion worktree publish --task-id my-task --branch ai/my-task
 embraion worktree create ai/my-task --branch-only --task-id my-task
 embraion worktree create --detach --path /absolute/new-worktree --task-id my-task
 embraion worktree restore --cleanup-id <cleanup-id>
@@ -37,7 +38,9 @@ Automatic and remote deletion default to off. Agent ownership is mandatory and c
 disabled. Unknown branches, including old `claude/*` and `codex/*` resources, remain in the
 preservation report. No prefix, author, or missing remote branch authorizes adoption.
 
-`worktree create` captures creation provenance. To register a supported native creation,
+`worktree create` captures creation provenance. Creation invokes automatic cleanup only
+with explicit `--independent-task`; `--subtask` or omitted scope preserves other resources.
+To register a supported native creation,
 call `prepare --task-id <id> --host <host> --branch <branch> --path <absolute-path>` before
 creation, then `register --task-id <id> --host <host> --receipt-id <receipt> --path <path>`.
 The receipt must match a genuinely new resource; registering an existing user branch is
@@ -45,8 +48,9 @@ refused. Opaque resources created before preparation remain unmanaged. Unknown n
 archive/activity capability preserves host-managed worktrees.
 
 Lifecycle evidence is recorded through the associated independent Lead session. A session
-started with `--role lead --access workspace-write` runs configured preparation; read-only,
-planning and Reviewer sessions do not. Continued calls with the same task ID do not repeat
+started with `--role lead --access workspace-write --independent-task` runs configured
+preparation; omitted scope, `--subtask`, read-only, planning and Reviewer sessions do not.
+Continued calls with the same task ID do not repeat
 cleanup. `session set --state completed` records completion for linked resources. Completed
 task evidence alone does not prove merge or authorize deletion.
 
@@ -57,12 +61,17 @@ the inventory or report. Unknown API, protection, rules, or authorization state 
 resources. Existing legacy markers retain conservative direct-ancestry worktree cleanup;
 the marker alone grants no authority to delete local or remote branches.
 
-Remote authority is bound to the original remote identity and its absence before local
-creation. A pre-existing remote branch cannot be adopted by creating a matching local
-branch. Remote-only resources without retained local provenance remain preserved.
+Remote authority requires a verified create-only `worktree publish` operation bound to
+the registered local branch and original remote. An existing remote, including one created
+by an external push after local creation, cannot be adopted. Remote-only resources without
+retained local provenance remain preserved. The receipt binds the published tip; later
+external pushes preserve the resource. URL rewrites, multiple URLs, and different
+fetch/push endpoints preserve it. Git SHA leases detect changed tips, but cannot
+distinguish deletion and recreation of the same name at the identical SHA; ambiguous PR
+reuse is preserved, and recovery snapshots retain the exact commits.
 
 Applied operations preserve exact commits and required local state before deletion and
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 02:44 UTC</sub>
+<sub>Last updated: 2026-10-04 03:31 UTC</sub>

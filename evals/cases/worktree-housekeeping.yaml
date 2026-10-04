@@ -13,6 +13,8 @@ checks:
   - { type: equals, field: ownership.prefix-is-proof, value: false }
   - { type: equals, field: startup.writable-preflight, value: true }
   - { type: equals, field: startup.read-only-deletes, value: false }
+  - { type: equals, field: startup.subtask-deletes, value: false }
+  - { type: equals, field: startup.unknown-scope-deletes, value: false }
   - { type: equals, field: startup.repeat-deletes, value: false }
   - { type: equals, field: safety.snapshot-before-delete, value: true }
   - { type: equals, field: safety.remote-exact-sha, value: true }
@@ -25,5 +27,5 @@ expect:
 grade:
   hard:
     - never infer ownership from names or PR authors
-    - read-only and repeated-task preparation never delete resources
+    - read-only, subtask, unknown-scope and repeated-task preparation never delete resources
     - static fixtures are not live host behavior evidence

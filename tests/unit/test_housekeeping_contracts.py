@@ -45,18 +45,43 @@ class HousekeepingContractTests(unittest.TestCase):
                 runtime.start_session("s", "t", role=role, access=access)
             prepare.assert_not_called()
             update.assert_not_called()
-            runtime.start_session("s", "t", role="lead", access="workspace-write")
-            prepare.assert_called_once_with("t", host="codex", repo=self.root)
+            runtime.start_session("s", "t", role="lead", access="workspace-write", independent=True)
+            prepare.assert_called_once_with("t", host="codex", repo=self.root, independent=True)
             update.assert_called_once_with("t", "active", repo=self.root)
+
+    def test_session_scope_must_be_explicit_and_subtasks_do_not_prepare(self) -> None:
+        parser = cli.build_parser()
+        with patch.object(runtime, "project_root", return_value=self.root), \
+             patch("embraion.worktree.prepare_task", return_value={"resources": []}) as prepare, \
+             patch("embraion.worktree.update_task_state"), \
+             contextlib.redirect_stdout(io.StringIO()):
+            for flags in ([], ["--subtask"]):
+                args = parser.parse_args(["session", "start", "--session-id", "s",
+                                          "--task", "sub", "--access", "workspace-write", *flags])
+                self.assertEqual(0, args.func(args))
+                self.assertFalse(read_json(self.root / ".embraion/state/session.json")["task"]["independent"])
+            prepare.assert_not_called()
+            args = parser.parse_args(["session", "start", "--session-id", "s", "--task", "t",
+                                      "--access", "workspace-write", "--independent-task"])
+            self.assertEqual(0, args.func(args))
+            prepare.assert_called_once_with("t", host="codex", repo=self.root, independent=True)
 
     def test_unavailable_cleanup_is_reported_and_keeps_active_session(self) -> None:
         with patch.object(runtime, "project_root", return_value=self.root), \
              patch("embraion.worktree.update_task_state"), \
              patch("embraion.worktree.prepare_task", side_effect=RuntimeError("unavailable")):
-            record = runtime.start_session("s", "t", access="workspace-write")
+            record = runtime.start_session("s", "t", access="workspace-write", independent=True)
             self.assertEqual("active", record["state"])
             self.assertEqual("housekeeping-unavailable", record["housekeeping"]["reason"])
             self.assertEqual(record, read_json(self.root / ".embraion/state/session.json"))
+
+    def test_unknown_session_scope_type_fails_before_state_write(self) -> None:
+        with patch.object(runtime, "project_root", return_value=self.root), \
+             patch("embraion.worktree.prepare_task") as prepare:
+            with self.assertRaises(ValueError):
+                runtime.start_session("s", "t", access="workspace-write", independent="false")
+            prepare.assert_not_called()
+            self.assertFalse((self.root / ".embraion/state/session.json").exists())
 
     def test_completion_updates_same_task_and_failure_is_visible(self) -> None:
         with patch.object(runtime, "project_root", return_value=self.root):
@@ -112,17 +137,32 @@ class HousekeepingContractTests(unittest.TestCase):
             args = parser.parse_args(["worktree", "create", "task/new"])
             self.assertEqual(0, args.func(args))
             create.assert_called_once_with("task/new", destination=None, base="origin/main",
-                                           task_id=None, host="codex")
+                                           task_id=None, host="codex", independent=False)
         with contextlib.redirect_stdout(io.StringIO()), \
              patch.object(cli, "create_branch", return_value="task/new") as branch:
             args = parser.parse_args(["worktree", "create", "task/new", "--branch-only"])
             self.assertEqual(0, args.func(args))
             branch.assert_called_once()
+            self.assertFalse(branch.call_args.kwargs["independent"])
+        for flag, expected in (("--subtask", False), ("--independent-task", True)):
+            with contextlib.redirect_stdout(io.StringIO()), \
+                 patch.object(cli, "create_worktree", return_value=self.root / "new") as create:
+                args = parser.parse_args(["worktree", "create", "task/new", flag])
+                self.assertEqual(0, args.func(args))
+                self.assertEqual(expected, create.call_args.kwargs["independent"])
         for flags in (("--detach",), ("task/new", "--detach", "--path", str(self.root)),
                       ("task/new", "--branch-only", "--path", str(self.root))):
             with self.subTest(flags=flags), self.assertRaises(ValueError):
                 parser.parse_args(["worktree", "create", *flags]).func(
                     parser.parse_args(["worktree", "create", *flags]))
+
+    def test_publish_is_an_explicit_operation(self) -> None:
+        args = cli.build_parser().parse_args(
+            ["worktree", "publish", "--task-id", "t", "--branch", "task/new"])
+        with contextlib.redirect_stdout(io.StringIO()), \
+             patch.object(cli, "publish_branch", return_value={"publish-id": "fixture"}) as publish:
+            self.assertEqual(0, args.func(args))
+            publish.assert_called_once_with("t", "task/new")
 
     def test_behavioral_grader_rejects_each_unsafe_claim(self) -> None:
         case = read_yaml(framework_root() / "evals/cases/worktree-housekeeping.yaml")
