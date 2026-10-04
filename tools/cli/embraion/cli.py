@@ -1155,7 +1155,15 @@ def _eval_experiment(args: argparse.Namespace) -> int:
         report = capture_snapshot(Path(args.source), Path(args.output), Path(args.manifest), host=args.host,
                                   regenerate=args.regenerate)
     elif args.experiment_command == "assess":
-        report = promotion_eligibility(_load(Path(args.report)), _load(Path(args.experiment)))
+        from jsonschema import Draft202012Validator, ValidationError
+        evidence = _load(Path(args.report))
+        experiment = _load(Path(args.experiment))
+        try:
+            Draft202012Validator(_load(framework_root() / "schemas/experiment-report.schema.json")).validate(evidence)
+            Draft202012Validator(_load(framework_root() / "schemas/experiment.schema.json")).validate(experiment)
+        except ValidationError:
+            raise ValueError("invalid experiment assessment evidence") from None
+        report = promotion_eligibility(evidence, experiment)
     elif args.experiment_command == "prepare":
         report = prepare_baseline(Path(args.source), Path(args.output), host=args.host, regenerate=args.regenerate)
     else:

@@ -54,6 +54,37 @@ def _comparison_status(baseline: str, candidate: str) -> str:
     return "tied-pass" if baseline == "pass" else "tied-fail"
 
 
+def _expected_checks(contract: dict[str, Any]) -> dict[tuple[str | None, str], dict[str, Any]]:
+    """Resolve the declared obligations from the trusted registry, not results."""
+    from .eval_oracles import oracle_metadata
+    oracles = contract.get("oracles")
+    if not isinstance(oracles, list) or not oracles:
+        raise ValueError("missing oracles")
+    seen, checks = set(), {}
+    for oracle in oracles:
+        if not isinstance(oracle, dict) or not isinstance(oracle.get("id"), str) or type(oracle.get("mandatory")) is not bool:
+            raise ValueError("invalid oracle contract")
+        key = oracle["id"]
+        if key in seen:
+            raise ValueError("duplicate oracle contract")
+        seen.add(key)
+        metadata = oracle_metadata(key)
+        elevated = oracle.get("required-checks")
+        if (not isinstance(elevated, list) or any(not isinstance(c, str) for c in elevated)
+                or len(set(elevated)) != len(elevated) or not set(elevated).issubset(metadata["check-ids"])):
+            raise ValueError("invalid required checks")
+        for check in metadata["check-contracts"]:
+            checks[(key, check["id"])] = {**check, "mandatory": oracle["mandatory"] and
+                                         (check["mandatory"] or check["id"] in elevated)}
+    if not any(c["mandatory"] for c in checks.values()):
+        raise ValueError("missing mandatory oracle")
+    if type(contract.get("owned-paths-required")) is not bool:
+        raise ValueError("missing ownership contract")
+    if contract["owned-paths-required"]:
+        checks[(None, "owned-paths")] = {"category": "authority-scope", "mandatory": True}
+    return checks
+
+
 def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) -> dict[str, Any]:
     """Assess complete matched evidence against budgets fixed in an experiment.
 
@@ -147,13 +178,23 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
     if not set(targets).issubset(required) or not set(required).issubset(case_map):
         reasons.append("unbudgeted-case-selection")
     contracts = report.get("case-contracts")
+    expected_checks: dict[str, dict[tuple[str | None, str], dict[str, Any]]] = {}
     if not isinstance(contracts, list) or any(not isinstance(c, dict) or not isinstance(c.get("case"), str) for c in contracts):
         reasons.append("missing-case-contracts")
         contracts = []
     else:
         for contract in contracts:
+            if contract["case"] in expected_checks:
+                reasons.append("duplicate-case-contract:" + contract["case"])
+            try:
+                expected_checks[contract["case"]] = _expected_checks(contract)
+            except (ValueError, KeyError, TypeError):
+                reasons.append("invalid-check-contract:" + contract["case"])
+                expected_checks[contract["case"]] = {}
             if contract["case"] in required and contract.get("risk") != case_map.get(contract["case"], {}).get("risk"):
                 reasons.append("case-risk-mismatch:" + contract["case"])
+        if not set(required).issubset(expected_checks):
+            reasons.append("missing-required-case-contract")
     try:
         from .common import framework_root, read_json
         from .experiment_evals import _files, identity
@@ -256,6 +297,14 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
         for item in calibrations:
             if not isinstance(item, dict) or item.get("status") != "pass" or not _boundary(item.get("coverage")) or not _boundary(item.get("correctness")):
                 reasons.append("failed-calibration")
+                continue
+            try:
+                from .eval_oracles import oracle_metadata
+                metadata = oracle_metadata(item.get("id"))
+                if item["coverage"] != metadata["coverage"] or item["correctness"] != metadata["correctness"]:
+                    reasons.append("calibration-boundary-mismatch")
+            except (ValueError, TypeError):
+                reasons.append("unknown-calibrated-oracle")
     calibrated_ids = {c.get("id") for c in calibrations if isinstance(c, dict) and isinstance(c.get("id"), str)} if isinstance(calibrations, list) else set()
     for contract in contracts:
         if contract["case"] in required:
@@ -290,11 +339,31 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
                 reasons.append("missing-paired-run:" + case)
                 continue
             for run in (baseline, candidate):
+                if not isinstance(run.get("host"), dict) or run["host"].get("status") != "completed":
+                    reasons.append("incomplete-host-execution:" + case)
                 if run.get("status") not in _STATUSES or run.get("status") == "inconclusive":
                     reasons.append("inconclusive-run:" + case)
                 if not isinstance(run.get("contamination"), list) or run["contamination"]:
                     reasons.append("contaminated-run:" + case)
                 checks = run.get("checks")
+                if isinstance(checks, list):
+                    observed_checks = {}
+                    for check in checks:
+                        if not isinstance(check, dict) or not isinstance(check.get("id"), str) or check.get("oracle") is not None and not isinstance(check["oracle"], str):
+                            reasons.append("invalid-check-identity:" + case)
+                            continue
+                        check_key = (check.get("oracle"), check["id"])
+                        if check_key in observed_checks:
+                            reasons.append("duplicate-check:" + case)
+                        observed_checks[check_key] = check
+                        expected_check = expected_checks.get(case, {}).get(check_key)
+                        if expected_check is None:
+                            reasons.append("undeclared-check:" + case)
+                        elif check.get("mandatory") is not expected_check["mandatory"] or check.get("category") != expected_check["category"]:
+                            reasons.append("check-contract-mismatch:" + case)
+                    for check_key, expected_check in expected_checks.get(case, {}).items():
+                        if expected_check["mandatory"] and check_key not in observed_checks:
+                            reasons.append("missing-required-check:" + case + ":" + check_key[1])
                 if not isinstance(checks, list) or not checks:
                     reasons.append("missing-checks:" + case)
                 elif any(not isinstance(check, dict) or check.get("status") not in ("pass", "fail", "inconclusive", "unverified") or check.get("mandatory") is True and check.get("status") in ("unverified", "inconclusive") for check in checks):
@@ -304,6 +373,8 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
                 elif run is candidate and any(check.get("mandatory") is True and check.get("status") == "fail" and check.get("observed-violation", True) for check in checks):
                     rejection.append("candidate-required-check-failure:" + case)
                 elif run.get("status") == "pass" and any(check.get("mandatory") is True and check.get("status") != "pass" for check in checks):
+                    reasons.append("run-status-check-mismatch:" + case)
+                elif run.get("status") == "fail" and not any(check.get("mandatory") is True and check.get("status") == "fail" for check in checks):
                     reasons.append("run-status-check-mismatch:" + case)
             comparison = comparison_map.get((case, attempt))
             expected = _comparison_status(str(baseline.get("status")), str(candidate.get("status")))

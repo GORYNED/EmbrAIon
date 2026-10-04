@@ -231,6 +231,7 @@
           "polarity",
           "risk",
           "corpus-id",
+          "owned-paths-required",
           "oracles"
         ],
         "properties": {
@@ -269,7 +270,8 @@
               "additionalProperties": false,
               "required": [
                 "id",
-                "mandatory"
+                "mandatory",
+                "required-checks"
               ],
               "properties": {
                 "id": {
@@ -277,10 +279,16 @@
                 },
                 "mandatory": {
                   "type": "boolean"
+                },
+                "required-checks": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {"type": "string"}
                 }
               }
             }
-          }
+          },
+          "owned-paths-required": {"type": "boolean"}
         }
       }
     },

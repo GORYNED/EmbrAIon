@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import secrets
@@ -9,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +41,7 @@ def describe_context(host: str) -> dict[str, Any]:
         home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
         names = ("AGENTS.md", "config.toml")
         policy = {"sandbox": "workspace-write", "user-config": "ignored", "session": "ephemeral"}
-        policy["project-trust"] = "explicit-session-only-fixture"
+        policy["project-trust"] = "explicit-stable-fixture-in-private-eval-profile"
         if os.name == "nt":
             policy["windows-sandbox-explicit-argument"] = _windows_sandbox() or "unverified"
     elif host == "claude-code":
@@ -122,7 +124,7 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
 
 
 def preflight_host(host: str, binary: str, snapshot: Path, model: str | None,
-                   effort: str | None, timeout: int) -> dict[str, Any]:
+                   effort: str | None, timeout: int, *, workspace: Path | None = None) -> dict[str, Any]:
     """Prove tool read/write on harmless data before scoring Core behavior.
 
     Successful model completion alone never proves operational tools. This is
@@ -134,9 +136,28 @@ def preflight_host(host: str, binary: str, snapshot: Path, model: str | None,
         return result
     try:
         from ..experiment_evals import _scratch_root
-        with tempfile.TemporaryDirectory(prefix="embraion-preflight-", dir=_scratch_root()) as temporary:
+        home_text = os.environ.get("CODEX_HOME")
+        home = Path(home_text) if home_text else None
+        if (home is None or home.is_symlink() or home.resolve() == (Path.home() / ".codex").resolve()
+                or not (home / "embraion-eval-profile.json").is_file()
+                or (home / "embraion-eval-profile.json").is_symlink()
+                or (home / "embraion-eval-profile.json").stat().st_size > 1024
+                or (home / "config.toml").is_symlink() or not (home / "config.toml").is_file()
+                or (home / "config.toml").stat().st_size > 256_000):
+            result["reason"] = "private-eval-profile-required"
+            return result
+        marker = json.loads((home / "embraion-eval-profile.json").read_text(encoding="utf-8"))
+        if marker != {"schema-version": 1, "purpose": "embraion-native-eval"}:
+            result["reason"] = "private-eval-profile-required"
+            return result
+        before = tomllib.loads((home / "config.toml").read_text(encoding="utf-8"))
+        context = (nullcontext(workspace.parent) if workspace is not None else
+                   tempfile.TemporaryDirectory(prefix="embraion-preflight-", dir=_scratch_root()))
+        with context as temporary:
             scratch = Path(temporary)
-            project = scratch / "project"
+            project = workspace if workspace is not None else scratch / "project"
+            if home.resolve().is_relative_to(project.resolve()) or project.is_symlink() or project.exists():
+                raise ValueError("unsafe preflight workspace")
             profile = project / ".codex/agents/worker.toml"
             profile.parent.mkdir(parents=True)
             shutil.copyfile(snapshot / ".codex/agents/worker.toml", profile)
@@ -151,6 +172,17 @@ def preflight_host(host: str, binary: str, snapshot: Path, model: str | None,
                      and output.stat().st_size <= 100 and output.read_text(encoding="utf-8").strip() == nonce)
             result.update({"status": "pass" if valid else "inconclusive", "observation": observation,
                            "read-write-verified": valid})
-    except (OSError, ValueError, RuntimeError):
+            expected = json.loads(json.dumps(before))
+            expected.setdefault("projects", {}).setdefault(str(project.resolve()), {})["trust_level"] = "trusted"
+            if (home / "config.toml").is_symlink() or not (home / "config.toml").is_file() or (home / "config.toml").stat().st_size > 256_000:
+                raise ValueError("unsafe profile configuration after preflight")
+            after = tomllib.loads((home / "config.toml").read_text(encoding="utf-8"))
+            prepared = not (home / "config.toml").is_symlink() and after in (before, expected)
+            result["configuration-preparation"] = {"status": "pass" if prepared else "inconclusive",
+                "coverage": "only the exact stable fixture trust entry may be registered before environment freeze"}
+            if not prepared:
+                result["status"] = "inconclusive"
+                result["reason"] = "unexpected-eval-profile-configuration-change"
+    except (OSError, ValueError, RuntimeError, TypeError):
         result["reason"] = "native-preflight-unavailable"
     return result

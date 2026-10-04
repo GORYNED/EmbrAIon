@@ -33,7 +33,8 @@ def evidence() -> tuple[dict, dict]:
                            {"id": "candidate", "manifest-digest": "b" * 64,
                             "changes": [{"path": "core/skills/debugging/SKILL.md", "before": "a" * 64, "after": "b" * 64}]}],
               "case-contracts": [{"case": "scope", "risk": "ordinary", "language": "en", "polarity": "positive", "corpus-id": None,
-                                  "oracles": [{"id": "wiring-v1", "mandatory": True}]}],
+                                  "owned-paths-required": False,
+                                  "oracles": [{"id": "wiring-v1", "mandatory": True, "required-checks": []}]}],
               "inputs": {"corpus": identity(_files(ROOT / "evals/corpus"))},
               "planned-runs": [{"case": "scope", "variant": variant, "attempt": 1}
                                for variant in ("base", "candidate")],
@@ -60,6 +61,10 @@ def evidence() -> tuple[dict, dict]:
         comparison = copy.deepcopy(report["comparisons"][0])
         comparison["attempt"] = attempt
         report["comparisons"].append(comparison)
+    for run in report["runs"]:
+        run["host"] = {"status": "completed"}
+        run["checks"] = [{**check, "oracle": "wiring-v1", "status": "fail" if run["variant"] == "base" and check["id"] == "registration" else "pass"}
+                         for check in oracle_metadata("wiring-v1")["check-contracts"] if check["mandatory"]]
     return report, experiment
 
 
@@ -153,12 +158,41 @@ class ExperimentGateTests(unittest.TestCase):
 
     def test_optional_inconclusive_is_diagnostic_but_mandatory_is_not(self) -> None:
         report, experiment = evidence()
-        diagnostic = {"id": "runtime", "status": "inconclusive", "mandatory": False,
-                      "category": "quality-correctness"}
+        diagnostic = {"id": "runtime-observation", "oracle": "wiring-v1", "status": "inconclusive", "mandatory": False,
+                      "category": "runtime"}
         report["runs"][1]["checks"].append(diagnostic)
         self.assertEqual("eligible", promotion_eligibility(report, experiment)["status"])
         diagnostic["mandatory"] = True
         self.assertEqual("inconclusive", promotion_eligibility(report, experiment)["status"])
+
+    def test_host_and_registered_obligations_cannot_be_replaced_by_a_passing_label(self) -> None:
+        mutations = (
+            lambda report: report["runs"][1].update(host={"status": "host-failed"}),
+            lambda report: report["runs"][1].update(checks=[{"id": "unrelated", "mandatory": True,
+                                                           "category": "quality-correctness", "status": "pass"}]),
+            lambda report: report["runs"][1]["checks"].pop(),
+            lambda report: report["runs"][1]["checks"][0].update(oracle="upgrade-scope-v1"),
+            lambda report: report["runs"][1]["checks"][0].update(mandatory=False),
+            lambda report: report["runs"][1]["checks"][0].update(category="authority-scope"),
+            lambda report: report["runs"][1]["checks"].append(copy.deepcopy(report["runs"][1]["checks"][0])),
+            lambda report: report["case-contracts"][0].update(oracles=[]),
+            lambda report: report["case-contracts"].clear(),
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                report, experiment = evidence()
+                mutation(report)
+                self.assertEqual("inconclusive", promotion_eligibility(report, experiment)["status"])
+
+    def test_elevated_runtime_and_owned_paths_are_required_even_when_omitted(self) -> None:
+        report, experiment = evidence()
+        report["case-contracts"][0]["oracles"][0]["required-checks"] = ["runtime-observation"]
+        result = promotion_eligibility(report, experiment)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("missing-required-check:scope:runtime-observation", result["reasons"])
+        report, experiment = evidence()
+        report["case-contracts"][0]["owned-paths-required"] = True
+        self.assertIn("missing-required-check:scope:owned-paths", promotion_eligibility(report, experiment)["reasons"])
 
     def test_token_savings_never_compensate_correctness_or_safety(self) -> None:
         report, experiment = evidence()

@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +43,19 @@ def _scratch_root() -> Path:
         raise ValueError("experiment scratch overlaps trusted controller")
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+@contextmanager
+def _trial_workspace(scratch: Path):
+    """Reuse one trusted path, while every attempt starts with fresh data."""
+    project = scratch / "project"
+    if project.is_symlink() or (hasattr(project, "is_junction") and project.is_junction()) or project.resolve().parent != scratch.resolve():
+        raise ValueError("unsafe experiment workspace")
+    if project.exists():
+        # Validate the exact child before recursive deletion; rmtree never
+        # follows descendant links. An ambiguous root is preserved above.
+        shutil.rmtree(project)
+    yield project
 
 
 def identity(value: Any) -> str:
@@ -332,6 +346,16 @@ def run_experiment(suite: Path, *, host: str, model: str | None, effort: str | N
                    phase: str = "exploratory", timeout_seconds: int = 180,
                    binary: str = "codex", experiment: Path | None = None,
                    progress: Any = None) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="experiment-", dir=_scratch_root()) as temporary:
+        return _run_experiment(suite, host=host, model=model, effort=effort, output=output,
+                               route=route, attempts=attempts, phase=phase, timeout_seconds=timeout_seconds,
+                               binary=binary, experiment=experiment, progress=progress, scratch=Path(temporary))
+
+
+def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | None,
+                    output: Path, route: dict[str, Any], attempts: int | None,
+                    phase: str, timeout_seconds: int, binary: str, experiment: Path | None,
+                    progress: Any, scratch: Path) -> dict[str, Any]:
     from .adapters.eval_hosts import binding_available, invoke_host, preflight_host
     from .experiment_gates import promotion_eligibility
     suite = suite.absolute()
@@ -425,7 +449,7 @@ def run_experiment(suite: Path, *, host: str, model: str | None, effort: str | N
     if experiment:
         sources.append(experiment)
     _check_output_destination(output, suite, sources)
-    frozen_environment = _environment(binary, route)
+    preparation_environment = _environment(binary, route)
     evaluator_files = _files(RUNTIME_ROOT, runtime=True)
     calibration_fixture = framework_root() / "evals/foundation/fixtures"
     calibration_digest = identity(_files(calibration_fixture))
@@ -441,8 +465,16 @@ def run_experiment(suite: Path, *, host: str, model: str | None, effort: str | N
                      "corpus": corpus_digest, "schemas": schema_digest,
                      "experiment": identity(experiment_value) if experiment_value else None}
     frozen_manifests = {key: identity(value) for key, value in manifests.items()}
-    preflight = (preflight_host(host, binary, roots[baseline], model, effort, timeout_seconds)
+    preflight = (preflight_host(host, binary, roots[baseline], model, effort, timeout_seconds, workspace=scratch / "project")
                  if not contamination and not limitations else {"status": "inconclusive", "reason": "unverified-execution-context"})
+    frozen_environment = _environment(binary, route)
+    # The adapter declares one exact trust registration during infrastructure
+    # preparation, before measurement. No other environment change is allowed.
+    prepared = json.loads(json.dumps(preparation_environment))
+    if preflight.get("configuration-preparation", {}).get("status") == "pass":
+        prepared["native-context"]["files"]["config.toml"] = frozen_environment["native-context"]["files"]["config.toml"]
+    if prepared != frozen_environment:
+        contamination.append({"reason": "infrastructure-preparation-environment-drift"})
     if preflight["status"] != "pass":
         limitations.append({"reason": "native-tools-preflight-unavailable"})
 
@@ -529,9 +561,7 @@ def run_experiment(suite: Path, *, host: str, model: str | None, effort: str | N
                 pre = contamination + drift()
                 host_result = {"status": "not-run", "duration-seconds": None}
                 checks = []
-                with tempfile.TemporaryDirectory(prefix="experiment-", dir=_scratch_root()) as temporary:
-                    scratch = Path(temporary)
-                    project = scratch / "project"
+                with _trial_workspace(scratch) as project:
                     copy_ok = True
                     try:
                         _copy(roots[key], project, manifests[key]["files"])
@@ -632,7 +662,9 @@ def run_experiment(suite: Path, *, host: str, model: str | None, effort: str | N
               "native-preflight": preflight,
               "case-contracts": [{"case": case["id"], "language": case["language"], "polarity": case["polarity"], "risk": case["risk"],
                                   "corpus-id": case.get("corpus-id"),
-                                  "oracles": [{"id": o["id"], "mandatory": o["mandatory"]} for o in case["oracles"]]} for case, _, _ in cases],
+                                  "owned-paths-required": "allowed-paths" in case,
+                                  "oracles": [{"id": o["id"], "mandatory": o["mandatory"],
+                                               "required-checks": o.get("required-checks", [])} for o in case["oracles"]]} for case, _, _ in cases],
               "runs": records, "comparisons": comparisons, "contamination": contamination,
               "limitations": limitations,
               "status": "pass" if records and not contamination and all(r["status"] == "pass" for r in records) else "inconclusive" if contamination or any(r["status"] == "inconclusive" for r in records) else "fail"}

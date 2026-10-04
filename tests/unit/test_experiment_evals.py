@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
 import tempfile
 import unittest
@@ -96,13 +97,59 @@ class FullCoreExperiments(unittest.TestCase):
         profile = self.source / ".codex/agents/worker.toml"
         profile.parent.mkdir(parents=True)
         profile.write_text('name="worker"\nsandbox_mode="workspace-write"\ndeveloper_instructions="worker instruction"\n')
-        with patch("embraion.adapters.eval_hosts.invoke_host", return_value={"status": "completed"}):
+        home = self.root / "eval-home"
+        home.mkdir()
+        (home / "config.toml").write_text("# private profile\n")
+        (home / "embraion-eval-profile.json").write_text(json.dumps({"schema-version": 1, "purpose": "embraion-native-eval"}))
+        with patch.dict(os.environ, {"CODEX_HOME": str(home)}), patch("embraion.adapters.eval_hosts.invoke_host", return_value={"status": "completed"}):
             self.assertEqual("inconclusive", preflight_host("codex", "test", self.source, "test", "medium", 1)["status"])
         def copy(host, binary, project, *args):
             shutil.copyfile(project / "marker.txt", project / "result.txt")
             return {"status": "completed"}
-        with patch("embraion.adapters.eval_hosts.invoke_host", side_effect=copy):
+        with patch.dict(os.environ, {"CODEX_HOME": str(home)}), patch("embraion.adapters.eval_hosts.invoke_host", side_effect=copy):
             self.assertEqual("pass", preflight_host("codex", "test", self.source, "test", "medium", 1)["status"])
+
+    def test_native_preparation_cannot_mutate_global_config_or_other_settings(self):
+        from embraion.adapters.eval_hosts import preflight_host
+        with patch.dict(os.environ, {"CODEX_HOME": str(self.root / "unowned-profile")}), patch("embraion.adapters.eval_hosts.invoke_host") as native:
+            result = preflight_host("codex", "test", self.source, "test", "medium", 1)
+            self.assertEqual("private-eval-profile-required", result["reason"])
+            native.assert_not_called()
+        home = self.root / "eval-home"
+        home.mkdir()
+        (home / "config.toml").write_text("# private profile\n")
+        (home / "embraion-eval-profile.json").write_text(json.dumps({"schema-version": 1, "purpose": "embraion-native-eval"}))
+        profile = self.source / ".codex/agents/worker.toml"
+        profile.parent.mkdir(parents=True)
+        profile.write_text('name="worker"\nsandbox_mode="workspace-write"\ndeveloper_instructions="worker"\n')
+        def mutate(host, binary, project, *args):
+            shutil.copyfile(project / "marker.txt", project / "result.txt")
+            (home / "config.toml").write_text('model="undeclared-model"\n')
+            return {"status": "completed"}
+        with patch.dict(os.environ, {"CODEX_HOME": str(home)}), patch("embraion.adapters.eval_hosts.invoke_host", side_effect=mutate):
+            result = preflight_host("codex", "test", self.source, "test", "medium", 1)
+            self.assertEqual("inconclusive", result["status"])
+            self.assertEqual("unexpected-eval-profile-configuration-change", result["reason"])
+
+    def test_preflight_and_trials_reuse_one_path_with_fresh_contents(self):
+        seen = []
+        def preflight(*args, workspace):
+            seen.append(workspace)
+            workspace.mkdir()
+            (workspace / "marker.txt").write_text("preflight marker")
+            return {"status": "pass"}
+        def invoke(host, binary, project, *args):
+            self.assertEqual(seen[0], project)
+            self.assertFalse((project / "marker.txt").exists())
+            self.assertFalse((project / "previous-run.txt").exists())
+            (project / "previous-run.txt").write_text("candidate output")
+            return {"status": "completed"}
+        with patch("embraion.adapters.eval_hosts.preflight_host", side_effect=preflight), patch("embraion.experiment_evals.verify_projection", return_value={"status": "pass"}), patch("embraion.experiment_evals._environment", return_value={}):
+            with patch("embraion.adapters.eval_hosts.invoke_host", side_effect=invoke) as native:
+                report = run_experiment(self.suite, host="codex", model="test", effort="medium", route=self.route,
+                                        attempts=2, output=self.root / "report.json")
+        self.assertEqual(4, native.call_count)
+        self.assertEqual("pass", report["status"])
 
     def test_candidate_scratch_cannot_be_inside_the_trusted_checkout(self):
         from embraion.experiment_evals import _scratch_root
@@ -218,6 +265,17 @@ class FullCoreExperiments(unittest.TestCase):
         self.write_suite()
         with self.assertRaises(ValueError):
             self.run_trial()
+
+    def test_assessment_rejects_a_report_that_omits_schema_obligations(self):
+        import argparse
+        from embraion.cli import _eval_experiment
+        report = self.root / "minimal-report.json"
+        experiment = self.root / "minimal-experiment.json"
+        report.write_text('{"schema-version":2}')
+        experiment.write_text('{"schema-version":1}')
+        args = argparse.Namespace(experiment_command="assess", report=str(report), experiment=str(experiment))
+        with self.assertRaisesRegex(ValueError, "invalid experiment assessment"):
+            _eval_experiment(args)
 
     def test_source_manifest_and_output_are_not_overwritable(self):
         with self.assertRaises(ValueError):
