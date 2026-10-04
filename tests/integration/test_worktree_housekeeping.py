@@ -39,7 +39,7 @@ class WorktreeHousekeepingCliTests(unittest.TestCase):
         git(self.repo, "add", ".")
         git(self.repo, "commit", "-m", "base")
         shutil.copytree(self.sandbox / "git-data" / "objects", self.remote / "objects",
-                        dirs_exist_ok=True)
+                        dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.lock"))
         git(self.remote, "update-ref", "refs/heads/main", git(self.repo, "rev-parse", "HEAD"))
         git(self.repo, "remote", "add", "origin", str(self.remote))
         git(self.repo, "update-ref", "refs/remotes/origin/main", "HEAD")

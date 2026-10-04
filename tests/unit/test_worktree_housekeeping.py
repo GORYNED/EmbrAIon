@@ -8,7 +8,9 @@ import shutil
 import json
 import subprocess
 import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 
@@ -31,7 +33,7 @@ def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProce
 
 def copy_missing_objects(source: Path, destination: Path) -> None:
     for object_file in source.rglob("*"):
-        if not object_file.is_file():
+        if not object_file.is_file() or object_file.name.endswith(".lock"):
             continue
         target = destination / object_file.relative_to(source)
         if not target.exists():
@@ -246,6 +248,90 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
 
         gc.assert_called_once_with(base="origin/main", apply=True, repo=self.repo,
                                    include_legacy=False)
+
+    def test_parallel_starts_claim_housekeeping_only_once(self) -> None:
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  on-task-start: true\n", encoding="utf-8")
+        entered, release = threading.Event(), threading.Event()
+
+        def cleanup(**_kwargs):
+            entered.set()
+            if not release.wait(10):
+                raise AssertionError("second task start did not finish")
+            return {"schema-version": 1, "dry-run": False, "cleanup-id": None, "resources": []}
+
+        with patch.object(worktree, "gc_report", side_effect=cleanup) as gc, \
+                ThreadPoolExecutor(max_workers=2) as pool:
+            first = pool.submit(worktree.prepare_task, "same-task", repo=self.repo)
+            try:
+                self.assertTrue(entered.wait(10))
+                second = pool.submit(worktree.prepare_task, "same-task", repo=self.repo)
+                self.assertTrue(second.result(timeout=10)["dry-run"])
+            finally:
+                release.set()
+            first.result(timeout=10)
+            gc.assert_called_once()
+
+    def test_unknown_ignored_files_and_pending_git_operation_are_preserved(self) -> None:
+        exclude = self.sandbox / "git-data" / "info" / "exclude"
+        exclude.write_text("*.cache\n", encoding="utf-8")
+        target = self.managed_worktree()
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        ignored = target / "important.cache"
+        ignored.write_text("recoverable local work", encoding="utf-8")
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], patches[3]:
+            report = worktree.gc_report(apply=True, repo=self.repo)
+            row = next(row for row in report["resources"] if row["path"] == str(target))
+            self.assertEqual("unmanaged-ignored-files", row["reason"])
+            self.assertEqual("recoverable local work", ignored.read_text(encoding="utf-8"))
+            ignored.unlink()
+            pending = worktree.registry.gitdir(target) / "CHERRY_PICK_HEAD"
+            pending.write_text(self.head(), encoding="utf-8")
+            report = worktree.gc_report(apply=True, repo=self.repo)
+            row = next(row for row in report["resources"] if row["path"] == str(target))
+            self.assertEqual("git-operation-in-progress", row["reason"])
+            self.assertTrue(target.is_dir())
+
+    def test_reused_checkout_links_all_tasks_and_noncompleted_states_preserve(self) -> None:
+        target = self.managed_worktree()
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        worktree.update_task_state("second-task", "active", repo=target)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual(["managed-task", "second-task"], resource["task-ids"])
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], patches[3]:
+            for state in ("active", "queued", "incomplete", "cancelled", "failed"):
+                worktree.update_task_state("second-task", state, repo=target)
+                report = worktree.gc_report(apply=True, repo=self.repo)
+                row = next(row for row in report["resources"] if row["path"] == str(target))
+                self.assertEqual("task-not-completed", row["reason"], state)
+                self.assertTrue(target.is_dir())
+
+    def test_remote_only_unregistered_branch_is_reported_and_preserved(self) -> None:
+        branch = "codex/user-remote-only"
+        git(self.remote, "update-ref", f"refs/heads/{branch}", self.head())
+        report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row["branch"] == branch)
+        self.assertEqual("unowned-remote-branch", row["reason"])
+        self.assertEqual(self.head(), git(self.remote, "rev-parse", f"refs/heads/{branch}").stdout.strip())
+
+    def test_hardlinked_local_state_is_preserved_without_touching_external_file(self) -> None:
+        target = self.managed_worktree()
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        outside = self.sandbox / "outside-state.json"
+        outside.write_text('{"state":"completed"}\n', encoding="utf-8")
+        state = target / ".embraion" / "state" / "runs" / "run.json"
+        state.parent.mkdir(parents=True)
+        state.hardlink_to(outside)
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], patches[3]:
+            report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row["path"] == str(target))
+        self.assertEqual("preserved", row["status"])
+        self.assertTrue(target.is_dir())
+        self.assertEqual('{"state":"completed"}\n', outside.read_text(encoding="utf-8"))
 
     def test_managed_worktree_requires_completed_task_and_preserves_dirty_and_locked(self) -> None:
         target = self.managed_worktree()
