@@ -454,9 +454,16 @@ def update_task_state(task_id: str, state: str, repo: Path | None = None) -> dic
         task["state"] = state
         task["updated-utc"] = registry.timestamp()
         if state == "active":
+            current = run(["git", "--no-optional-locks", "-C", str(root),
+                           "symbolic-ref", "--quiet", "--short", "HEAD"], check=False)
+            current_branch = current.stdout.strip() if current.returncode == 0 else None
             for resource in data["resources"].values():
-                if (resource.get("state") == "active" and resource.get("path")
-                        and Path(resource["path"]).absolute() == root.absolute()
+                same_worktree = (resource.get("path") is not None
+                                 and Path(resource["path"]).absolute() == root.absolute())
+                same_branch = (resource.get("kind") == "branch" and current_branch is not None
+                               and resource.get("branch") == current_branch
+                               and registry.verify_resource(root, resource))
+                if (resource.get("state") == "active" and (same_worktree or same_branch)
                         and task_id not in resource["task-ids"]):
                     # Reusing a managed checkout links the new task, without
                     # importing ownership of any unmanaged resource.

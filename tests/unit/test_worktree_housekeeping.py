@@ -979,6 +979,23 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         self.assertEqual("restored", restored["resources"][0]["status"])
         self.assertIn(f"refs/heads/{branch}", self.branches())
 
+    def test_reused_registered_branch_links_new_active_task_after_checkout_is_released(self) -> None:
+        branch = "task/branch-reuse"
+        worktree.create_branch(branch, task_id="original", host="codex", repo=self.repo)
+        worktree.update_task_state("original", "completed", repo=self.repo)
+        git(self.repo, "switch", branch)
+        worktree.update_task_state("new-task", "active", repo=self.repo)
+        git(self.repo, "switch", "main")
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual(["original", "new-task"], resource["task-ids"])
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], patches[3]:
+            report = worktree.gc_report(repo=self.repo)
+        row = next(row for row in report["resources"] if row.get("branch") == branch)
+        self.assertEqual("preserved", row["status"])
+        self.assertEqual("task-not-completed", row["reason"])
+        self.assertIn(f"refs/heads/{branch}", self.branches())
+
     def test_embraion_detached_removal_and_restore(self) -> None:
         target = self.sandbox / "managed-detached"
         worktree.create_detached_worktree(target, task_id="detached-task", host="codex", repo=self.repo)
