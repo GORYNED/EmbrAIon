@@ -51,7 +51,8 @@
         {"required": ["digest"], "not": {"required": ["version"]}}
       ],
       "allOf": [
-        {"if": {"properties": {"kind": {"const": "managed-bundle"}}},
+        {"$comment": "Legacy Unity bundle inventory is retained for read-only diagnostics; projection and update reject it because the bundle was removed.",
+         "if": {"properties": {"kind": {"const": "managed-bundle"}}},
          "then": {"properties": {"id": {"const": "unity"}, "source": {"const": "builtin:unity"}, "selected-skills": {"minItems": 1}}, "required": ["version", "selected-skills"]}},
         {"if": {"properties": {"kind": {"const": "host-managed"}}},
          "then": {"properties": {"selected-skills": {"maxItems": 0}}}}

@@ -39,19 +39,8 @@ class OptionalCapabilityValidationTests(unittest.TestCase):
 
     def _relevant(self) -> list[dict[str, str]]:
         return [issue for issue in collect_issues(self.root) if issue["code"] in {
-            "project-schema", "skill-eval-schema", "unity-manifest", "unity-skill-entry",
-            "unity-skill-frontmatter", "unity-skill-collision",
+            "project-schema", "skill-eval-schema",
         }]
-
-    def _unity(self) -> Path:
-        self._yaml("extensions/unity/manifest.yaml", {
-            "schema-version": 1, "id": "unity", "version": "0.20.0", "license": "MIT",
-            "skills": {"unity-asset-audit": "skills/unity-asset-audit"},
-        })
-        entry = self.root / "extensions/unity/skills/unity-asset-audit/SKILL.md"
-        entry.parent.mkdir(parents=True)
-        entry.write_text("---\nname: unity-asset-audit\ndescription: Audit assets.\n---\n\n# Audit\n", encoding="utf-8")
-        return entry
 
     def test_optional_project_files_are_validated_when_present(self) -> None:
         base = "templates/project-overlay/.embraion/"
@@ -89,39 +78,6 @@ class OptionalCapabilityValidationTests(unittest.TestCase):
         issues = [issue for issue in self._relevant() if issue["path"] == base + "external-capabilities.yaml"]
         self.assertTrue(issues)
         self.assertNotIn("sensitive-value", json.dumps(issues))
-
-    def test_unity_manifest_checks_identity_source_and_frontmatter(self) -> None:
-        entry = self._unity()
-        self.assertFalse(any(issue["code"].startswith("unity-") for issue in self._relevant()))
-        manifest = self.root / "extensions/unity/manifest.yaml"
-        data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        data["version"] = "0.19.2"
-        data["license"] = "Proprietary"
-        self._yaml("extensions/unity/manifest.yaml", data)
-        self.assertIn("unity-manifest", {issue["code"] for issue in self._relevant()})
-        data["version"] = "0.20.0"
-        data["license"] = "MIT"
-        data["skills"]["unity-asset-audit"] = "../../outside"
-        self._yaml("extensions/unity/manifest.yaml", data)
-        self.assertIn("unity-manifest", {issue["code"] for issue in self._relevant()})
-        data["skills"]["unity-asset-audit"] = "skills/unity-asset-audit"
-        self._yaml("extensions/unity/manifest.yaml", data)
-        entry.write_text("# No frontmatter\n", encoding="utf-8")
-        self.assertIn("unity-skill-frontmatter", {issue["code"] for issue in self._relevant()})
-        entry.unlink()
-        self.assertTrue(any(issue["code"] == "unity-skill-entry" and issue["path"].endswith("SKILL.md")
-                            for issue in self._relevant()))
-
-    def test_unity_missing_manifest_symlinks_and_core_collision(self) -> None:
-        entry = self._unity()
-        (self.root / "core/skills/unity-asset-audit").mkdir(parents=True)
-        self.assertIn("unity-skill-collision", {issue["code"] for issue in self._relevant()})
-        (entry.parent / "unsafe").symlink_to(self.root / "core/catalog.yaml")
-        self.assertTrue(any(issue["code"] == "unity-skill-entry" and "symbolic" in issue["message"]
-                            for issue in self._relevant()))
-        (self.root / "extensions/unity/manifest.yaml").unlink()
-        self.assertTrue(any(issue["code"] == "unity-manifest" and "Missing" in issue["message"]
-                            for issue in self._relevant()))
 
     def test_only_direct_skill_eval_json_is_treated_as_suite(self) -> None:
         self._json("evals/skills/invalid.json", {"schema-version": 1, "skills": []})

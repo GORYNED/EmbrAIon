@@ -17,12 +17,6 @@ CORE_IDS = (
     "performance-investigation",
     "dependency-upgrade",
 )
-UNITY_IDS = (
-    "unity-serialization-migration",
-    "unity-lifecycle-review",
-    "unity-player-validation",
-    "unity-asset-audit",
-)
 
 
 def _frontmatter(path: Path) -> dict[str, str]:
@@ -62,35 +56,16 @@ class EngineeringSkillTests(unittest.TestCase):
                     )
                     self.assertNotIn(b"\r\n", projected_bytes)
 
-            for skill_id in UNITY_IDS:
-                self.assertFalse((generated / "codex/.agents/skills" / skill_id).exists())
-
-    def test_unity_manifest_has_one_valid_entry_per_optional_skill(self) -> None:
-        extension = ROOT / "extensions/unity"
-        manifest = yaml.safe_load((extension / "manifest.yaml").read_text(encoding="utf-8"))
-        self.assertEqual(1, manifest["schema-version"])
-        self.assertEqual("unity", manifest["id"])
-        self.assertEqual("MIT", manifest["license"])
-        self.assertEqual(
-            yaml.safe_load((ROOT / "framework.yaml").read_text(encoding="utf-8"))["version"],
-            manifest["version"],
-        )
-        self.assertEqual(set(UNITY_IDS), set(manifest["skills"]))
-        for skill_id, relative in manifest["skills"].items():
-            with self.subTest(skill=skill_id):
-                self.assertEqual(f"skills/{skill_id}", relative)
-                source = extension / relative / "SKILL.md"
-                self.assertEqual(skill_id, _frontmatter(source)["name"])
-                self.assertTrue(source.is_file())
+            expected = {item["id"] for item in entries if item["type"] == "skill"}
+            actual = {path.parent.name for path in (generated / "codex/.agents/skills").glob("*/SKILL.md")}
+            self.assertEqual(expected, actual)
 
     def test_guides_have_both_languages_and_link_to_procedures(self) -> None:
-        for name in ("engineering-skills", "unity-capabilities"):
-            for suffix in (".md", ".ru.md"):
-                with self.subTest(guide=name, language=suffix):
-                    guide = ROOT / "docs/guides" / f"{name}{suffix}"
-                    content = guide.read_text(encoding="utf-8")
-                    ids = CORE_IDS if name == "engineering-skills" else UNITY_IDS
-                    self.assertTrue(all(f"`{skill_id}`" in content for skill_id in ids))
+        for suffix in (".md", ".ru.md"):
+            with self.subTest(language=suffix):
+                guide = ROOT / "docs/guides" / f"engineering-skills{suffix}"
+                content = guide.read_text(encoding="utf-8")
+                self.assertTrue(all(f"`{skill_id}`" in content for skill_id in CORE_IDS))
 
 
 if __name__ == "__main__":

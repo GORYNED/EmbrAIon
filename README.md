@@ -96,7 +96,7 @@ For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-mode
 - [Engineering skills](docs/guides/engineering-skills.md) and [live skill evaluations](docs/guides/skill-evals.md) cover repeatable procedures and fresh host-run comparisons. A recorded eval remains distinct from a live run.
 - [Code organization](docs/configuration/organization.md) checks changed files incrementally; existing debt does not waive new violations.
 - [Task checkpoints](docs/guides/task-continuity.md) and [knowledge maintenance](docs/guides/knowledge-maintenance.md) track local freshness with hashes and explicit baselines. They do not approve review or rewrite project documents.
-- [External capabilities](docs/configuration/capabilities.md), including the optional [Unity skill pack](docs/guides/unity-capabilities.md), are declared by the project. A declaration does not install a plugin or prove host loading or execution.
+- [External capabilities](docs/configuration/capabilities.md) record independently installed host capabilities. A declaration does not install a plugin or prove host loading or execution.
 
 ## Examples
 
@@ -114,4 +114,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-03 22:50 UTC</sub>
+<sub>Last updated: 2026-10-04 14:24 UTC</sub>

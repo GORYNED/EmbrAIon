@@ -95,7 +95,6 @@ plugins:
             Live skill evaluations: Живые проверки навыков
             Task continuity: Продолжение задачи
             Knowledge maintenance: Поддержка знаний
-            Unity capabilities: Возможности Unity
             Troubleshooting: Решение проблем
             Examples: Примеры
             Reference: Справочник
@@ -190,7 +189,6 @@ nav:
       - Live skill evaluations: guides/skill-evals.md
       - Task continuity: guides/task-continuity.md
       - Knowledge maintenance: guides/knowledge-maintenance.md
-      - Unity capabilities: guides/unity-capabilities.md
       - Enforcement: guides/enforcement.md
       - Troubleshooting: guides/troubleshooting.md
       - Examples:

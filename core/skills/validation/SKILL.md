@@ -8,7 +8,7 @@ description: Plan and execute proportional validation while distinguishing fresh
 ## Procedure
 
 1. Classify the change impact.
-2. Select the smallest checks that can falsify the intended behavior. Use test-design when risk requires a separate test strategy; use an installed Unity domain skill for a relevant Unity Editor, asset, or Player risk.
+2. Select the smallest checks that can falsify the intended behavior. Use test-design when risk requires a separate test strategy; use an independently installed domain skill when its trigger matches the affected platform, resource, or runtime risk.
 3. Prefer a configured project profile from `.embraion/validation.yaml` when it matches the needed evidence.
 4. Run it through `embraion validation run <profile>`; use `--run-id` when execution evidence should receive the result automatically.
 5. Expand validation only when impact justifies it.

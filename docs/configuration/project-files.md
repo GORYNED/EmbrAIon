@@ -370,9 +370,9 @@ See [Pricing & cost](pricing.md) for refresh, snapshot, staleness, usage-semanti
 
 ## Optional `.embraion/external-capabilities.yaml`
 
-This strict, versioned inventory declares optional managed bundles or host-managed integrations. The file is absent by default. Include only version/digest, source, license, host requirements, access, data class, and environment-variable **names**. A declaration is not an installation, authorization, or proof of host loading. `embraion capabilities --path . --host codex --json` reports what local evidence can establish; later host stages remain unverified without trusted live observation. See [External capabilities](capabilities.md).
+This strict, versioned inventory declares independently installed host-managed capabilities. The file is absent by default. Include only version/digest, source, license, host requirements, access, data class, and environment-variable **names**. A declaration is not an installation, authorization, or proof of host loading. `embraion capabilities --path . --host codex --json` reports what local evidence can establish; later host stages remain unverified without trusted live observation. See [External capabilities](capabilities.md).
 
-The optional Unity bundle lives outside vendor-neutral Core. A project selects listed skills explicitly; the bundle does not install Unity or third-party plugins. See [Unity capabilities](../guides/unity-capabilities.md).
+Schema v1 can read legacy `builtin:unity` declarations for diagnostics, but the bundle is no longer shipped. Remove such an entry explicitly before installing for its selected host or updating; install the desired replacement independently through the host first. See [External capabilities](capabilities.md).
 
 ## Optional `.embraion/knowledge-maintenance.yaml`
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import shutil
 import tempfile
 import unittest
@@ -72,34 +73,25 @@ class CapabilityProjectionTests(unittest.TestCase):
                     core = relative.parent.parent / "code-organization/SKILL.md"
                     self.assertTrue((output / core).is_file())
 
-    def test_selected_skill_projects_to_all_hosts_with_lf_entry(self) -> None:
+    def test_legacy_bundle_stops_all_host_projections_before_output_writes(self) -> None:
         self._inventory(self.bundle)
         with patch("embraion.project.framework_root", return_value=self.framework):
             for host, relative in DESTINATIONS.items():
                 with self.subTest(host=host):
                     output = self.project.parent / f"generated-{host}"
                     components = ["bundle"] if host == "portable" else ["skills"]
-                    generate_host(self.framework, host, output, components, project=self.project)
-                    self.assertEqual(b"# Asset audit\nUse Unity.\n", (output / relative).read_bytes())
+                    with self.assertRaisesRegex(RuntimeError, "Unity bundle has been removed"):
+                        generate_host(self.framework, host, output, components, project=self.project)
+                    self.assertFalse(output.exists())
 
-    def test_invalid_pin_and_manifest_stop_projection(self) -> None:
+    def test_legacy_bundle_stops_install_and_plan_before_destination_writes(self) -> None:
         self._inventory(self.bundle)
-        project_manifest = self.project / ".embraion/project.yaml"
-        data = yaml.safe_load(project_manifest.read_text(encoding="utf-8"))
-        data["framework"]["version"] = "0.0.1"
-        self._yaml(project_manifest, data)
         with patch("embraion.project.framework_root", return_value=self.framework):
-            with self.assertRaisesRegex(RuntimeError, "pin"):
-                generate_host(self.framework, "codex", self.project.parent / "invalid-pin", ["skills"], project=self.project)
-        data["framework"]["version"] = __version__
-        self._yaml(project_manifest, data)
-        manifest = self.extension / "manifest.yaml"
-        details = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-        details["skills"]["unity-asset-audit"] = "../../escape"
-        self._yaml(manifest, details)
-        with patch("embraion.project.framework_root", return_value=self.framework):
-            with self.assertRaisesRegex(RuntimeError, "manifest"):
-                generate_host(self.framework, "codex", self.project.parent / "invalid-manifest", ["skills"], project=self.project)
+            with self.assertRaisesRegex(RuntimeError, "removed"):
+                projection_plan("codex", self.project, components=["skills"])
+            with self.assertRaisesRegex(RuntimeError, "removed"):
+                install("codex", self.project, components=["skills"])
+        self.assertFalse((self.project / DESTINATIONS["codex"]).exists())
 
     def test_host_managed_capability_is_diagnostic_only(self) -> None:
         self._inventory({
@@ -115,47 +107,36 @@ class CapabilityProjectionTests(unittest.TestCase):
                 self.assertFalse((output / DESTINATIONS[host]).exists())
                 self.assertFalse((output / DESTINATIONS[host].parent.parent / "spec-kit").exists())
 
-    def test_selected_skill_cannot_replace_core_skill(self) -> None:
-        skill = self.extension / "skills/code-organization"
-        skill.mkdir(parents=True)
-        (skill / "SKILL.md").write_text("# Different skill\n", encoding="utf-8")
-        details = yaml.safe_load((self.extension / "manifest.yaml").read_text(encoding="utf-8"))
-        details["skills"]["code-organization"] = "skills/code-organization"
-        self._yaml(self.extension / "manifest.yaml", details)
-        self._inventory({**self.bundle, "selected-skills": ["code-organization"]})
-        with patch("embraion.project.framework_root", return_value=self.framework):
-            with self.assertRaisesRegex(RuntimeError, "collides"):
-                generate_host(self.framework, "codex", self.project.parent / "collision", ["skills"], project=self.project)
-
     def test_prune_removes_only_unchanged_owned_skill(self) -> None:
-        self._inventory(self.bundle)
+        self._inventory()
         relative = DESTINATIONS["codex"]
         target = self.project / relative
+        target.parent.mkdir(parents=True)
+        content = b"# Previously installed Unity skill\n"
+        target.write_bytes(content)
+        state = self.project / ".embraion/state/projections/codex/root.json"
+        state.parent.mkdir(parents=True, exist_ok=True)
+        state.write_text(json.dumps({"schema-version": 1, "host": "codex",
+                                     "destination": str(self.project.resolve()),
+                                     "managed-components": ["skills"],
+                                     "files": {relative.as_posix(): hashlib.sha256(content).hexdigest()}}), encoding="utf-8")
         with patch("embraion.project.framework_root", return_value=self.framework):
-            install("codex", self.project, components=["skills"])
-            self.assertTrue(target.is_file())
-            state = self.project / ".embraion/state/projections/codex/root.json"
-            self.assertIn(relative.as_posix(), json.loads(state.read_text(encoding="utf-8"))["files"])
-            self._inventory()
             self.assertIn(relative.as_posix(), projection_plan("codex", self.project, components=["skills"])["obsolete-owned"])
             target.write_text("local edit\n", encoding="utf-8")
             plan = install("codex", self.project, components=["skills"], prune=True)
             self.assertIn(relative.as_posix(), plan["obsolete-modified"])
             self.assertEqual("local edit\n", target.read_text(encoding="utf-8"))
-            target.write_bytes(b"# Asset audit\nUse Unity.\n")
+            target.write_bytes(content)
             install("codex", self.project, components=["skills"], prune=True)
             self.assertFalse(target.exists())
 
-    def test_unowned_skill_collision_is_not_overwritten(self) -> None:
-        self._inventory(self.bundle)
+    def test_unowned_legacy_skill_is_preserved(self) -> None:
+        self._inventory()
         target = self.project / DESTINATIONS["codex"]
         target.parent.mkdir(parents=True)
         target.write_text("foreign skill\n", encoding="utf-8")
         with patch("embraion.project.framework_root", return_value=self.framework):
-            plan = projection_plan("codex", self.project, components=["skills"])
-            self.assertIn(DESTINATIONS["codex"].as_posix(), plan["conflict"])
-            with self.assertRaisesRegex(RuntimeError, "conflicts"):
-                install("codex", self.project, components=["skills"])
+            install("codex", self.project, components=["skills"], prune=True)
         self.assertEqual("foreign skill\n", target.read_text(encoding="utf-8"))
 
 
