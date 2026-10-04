@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,7 +12,7 @@ from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
 
-from embraion import cli, runtime
+from embraion import cli, runtime, worktree
 from embraion.common import framework_root, read_json, read_yaml
 from embraion.evals import evaluate_case
 from embraion.project import init_project
@@ -163,6 +164,34 @@ class HousekeepingContractTests(unittest.TestCase):
              patch.object(cli, "publish_branch", return_value={"publish-id": "fixture"}) as publish:
             self.assertEqual(0, args.func(args))
             publish.assert_called_once_with("t", "task/new")
+
+    def test_remote_endpoint_rejects_embedded_credentials_without_echo(self) -> None:
+        credential = "fixture-credential"
+        urls = ["https://fixture-user:" + credential + "@github.com/example/project.git",
+                "https://" + credential + "@github.com/example/project.git",
+                "https://github.com/example/project.git?token=" + credential,
+                "ssh://git:" + credential + "@github.com/example/project.git"]
+        with patch.object(worktree, "run", return_value=subprocess.CompletedProcess([], 1, "", "")):
+            for endpoint in urls:
+                with self.subTest(endpoint_kind=endpoint.split(":", 1)[0]), \
+                     patch.object(worktree.registry, "git_value", return_value=endpoint):
+                    with self.assertRaises(ValueError) as failure:
+                        worktree._push_endpoint(self.root)
+                    self.assertNotIn(credential, str(failure.exception))
+                    self.assertNotIn(endpoint, str(failure.exception))
+
+    def test_empty_subprocess_failure_never_prints_command_credentials(self) -> None:
+        credential = "fixture-credential"
+        endpoint = "https://fixture-user:" + credential + "@github.com/example/project.git"
+        failure = subprocess.CalledProcessError(1, ["git", "push", endpoint], output="", stderr="")
+        output = io.StringIO()
+        with patch.object(cli, "resolve_project_runtime", return_value=None), \
+             patch.object(cli, "publish_branch", side_effect=failure), \
+             contextlib.redirect_stderr(output):
+            self.assertEqual(1, cli.main(["worktree", "publish", "--task-id", "t", "--branch", "task/new"]))
+        self.assertIn("exit code 1", output.getvalue())
+        self.assertNotIn(credential, output.getvalue())
+        self.assertNotIn(endpoint, output.getvalue())
 
     def test_behavioral_grader_rejects_each_unsafe_claim(self) -> None:
         case = read_yaml(framework_root() / "evals/cases/worktree-housekeeping.yaml")

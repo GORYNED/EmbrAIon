@@ -86,7 +86,9 @@ def _subprocess_error_message(error: subprocess.CalledProcessError) -> str:
     for value in (error.stderr, error.stdout):
         if value and value.strip():
             return value.strip()
-    return str(error)
+    # Exception stringification includes the full command, which can contain
+    # credentials. Empty-output failures need only the exit code.
+    return f"External command failed with exit code {error.returncode}."
 
 
 def _print_main_help(file: object | None = None) -> None:
@@ -2126,7 +2128,7 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_register.add_argument("--path")
     worktree_register.set_defaults(func=_cmd_worktree_register)
 
-    worktree_publish = worktree_sub.add_parser("publish", help="Create an absent remote branch with verified agent provenance")
+    worktree_publish = worktree_sub.add_parser("publish", help="Create or update a remote branch with verified agent provenance")
     worktree_publish.add_argument("--task-id", required=True)
     worktree_publish.add_argument("--branch", required=True)
     worktree_publish.set_defaults(func=_cmd_worktree_publish)

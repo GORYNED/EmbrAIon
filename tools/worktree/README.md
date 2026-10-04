@@ -11,6 +11,8 @@ embraion worktree gc --apply
 embraion worktree prepare --task-id my-task --json
 embraion worktree create ai/my-task --task-id my-task --independent-task
 embraion worktree publish --task-id my-task --branch ai/my-task
+# After further task commits, publish again through the same verified workflow.
+embraion worktree publish --task-id my-task --branch ai/my-task
 embraion worktree create ai/my-task --branch-only --task-id my-task
 embraion worktree create --detach --path /absolute/new-worktree --task-id my-task
 embraion worktree restore --cleanup-id <cleanup-id>
@@ -70,9 +72,13 @@ the marker alone grants no authority to delete local or remote branches.
 Remote authority requires a verified create-only `worktree publish` operation bound to
 the registered local branch and original remote. An existing remote, including one created
 by an external push after local creation, cannot be adopted. Remote-only resources without
-retained local provenance remain preserved. The receipt binds the published tip; later
-external pushes preserve the resource. URL rewrites, multiple URLs, and different
-fetch/push endpoints preserve it. Git SHA leases detect changed tips, but cannot
+retained local provenance remain preserved. Subsequent task commits use the same `publish`
+command: it requires the previous recorded remote SHA, permits only a fast-forward update,
+and appends a verified receipt while retaining the initial creation evidence. An unchanged
+tip, an externally advanced remote or a race never creates update evidence. The receipt
+chain binds the last published tip; external pushes preserve the resource. Embedded URL
+credentials, URL parameters, rewrites, multiple URLs, and different fetch/push endpoints
+are refused for remote mutation. Git SHA leases detect changed tips, but cannot
 distinguish deletion and recreation of the same name at the identical SHA; ambiguous PR
 reuse is preserved, and recovery snapshots retain the exact commits.
 
@@ -85,4 +91,4 @@ Applied operations preserve exact commits and required local state before deleti
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 04:27 UTC</sub>
+<sub>Last updated: 2026-10-04 04:51 UTC</sub>

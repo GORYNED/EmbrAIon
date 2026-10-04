@@ -11,6 +11,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from .common import project_root, read_json, read_yaml, run, state_root, write_json
 from .environment import child_environment
@@ -239,6 +240,11 @@ def _push_endpoint(repo: Path) -> str:
     push = registry.git_value(repo, "remote", "get-url", "--push", "--all", "origin").splitlines()
     if len(fetch) != 1 or len(push) != 1 or not fetch[0] or fetch[0] != push[0]:
         raise ValueError("origin has ambiguous or different fetch/push endpoints")
+    endpoint = urlsplit(fetch[0])
+    if (endpoint.password is not None
+            or (endpoint.scheme in {"http", "https"} and endpoint.username is not None)
+            or endpoint.query or endpoint.fragment):
+        raise ValueError("origin contains embedded credentials or unsupported URL parameters")
     return fetch[0]
 
 
@@ -369,18 +375,46 @@ def register_worktree(task_id: str, host: str, path: Path | None = None,
         return resource.copy()
 
 
+def _published_head(resource: dict[str, Any], branch: str, origin_id: str) -> str | None:
+    """Return the last positively published SHA from a contiguous receipt chain."""
+    receipt = resource.get("remote-publish")
+    if (resource.get("remote-owned") is not True or not isinstance(receipt, dict)
+            or receipt.get("method") != "expected-empty-lease"
+            or receipt.get("resource-id") != resource.get("resource-id")
+            or receipt.get("branch") != branch or receipt.get("origin-id") != origin_id
+            or not isinstance(receipt.get("publish-id"), str)
+            or not re.fullmatch(r"[0-9a-f]{32}", receipt["publish-id"])
+            or not isinstance(receipt.get("head-sha"), str)
+            or not re.fullmatch(r"[0-9a-f]{40,64}", receipt["head-sha"])
+            or not isinstance(receipt.get("published-utc"), str)
+            or not receipt["published-utc"]):
+        return None
+    head = receipt["head-sha"]
+    updates = receipt.get("updates", [])
+    if not isinstance(updates, list):
+        return None
+    ids = {receipt["publish-id"]}
+    for update in updates:
+        if (not isinstance(update, dict) or update.get("method") != "expected-sha-lease"
+                or update.get("previous-sha") != head
+                or not isinstance(update.get("publish-id"), str)
+                or not re.fullmatch(r"[0-9a-f]{32}", update["publish-id"])
+                or update["publish-id"] in ids
+                or not isinstance(update.get("head-sha"), str)
+                or not re.fullmatch(r"[0-9a-f]{40,64}", update["head-sha"])
+                or update["head-sha"] == head
+                or not isinstance(update.get("published-utc"), str)
+                or not update["published-utc"]):
+            return None
+        ids.add(update["publish-id"])
+        head = update["head-sha"]
+    return head
+
+
 def _published_remote(resource: dict[str, Any], branch: str, head: str,
                       origin_id: str) -> bool:
     """A prior absence observation or legacy remote-owned flag grants nothing."""
-    receipt = resource.get("remote-publish")
-    return (resource.get("remote-owned") is True and isinstance(receipt, dict)
-            and receipt.get("method") == "expected-empty-lease"
-            and receipt.get("resource-id") == resource.get("resource-id")
-            and receipt.get("branch") == branch
-            and receipt.get("head-sha") == head
-            and receipt.get("origin-id") == origin_id
-            and isinstance(receipt.get("publish-id"), str)
-            and bool(re.fullmatch(r"[0-9a-f]{32}", receipt["publish-id"])))
+    return _published_head(resource, branch, origin_id) == head
 
 
 def _confirmed_new_branch(output: str, ref: str) -> bool:
@@ -395,8 +429,16 @@ def _confirmed_new_branch(output: str, ref: str) -> bool:
             and "[new branch]" in updates[0][2])
 
 
+def _confirmed_fast_forward(output: str, head: str, ref: str) -> bool:
+    """Only a single normal porcelain fast-forward proves this update."""
+    updates = [line.split("\t") for line in output.splitlines() if "\t" in line]
+    return (len(updates) == 1 and len(updates[0]) == 3
+            and updates[0][0] == " " and updates[0][1] == f"{head}:{ref}"
+            and bool(re.fullmatch(r"[0-9a-fA-F]+\.\.[0-9a-fA-F]+", updates[0][2])))
+
+
 def publish_branch(task_id: str, branch: str, repo: Path | None = None) -> dict[str, Any]:
-    """Create a remote branch once, recording only a verified agent push."""
+    """Create or advance an owned remote branch using an exact Git SHA lease."""
     root = (repo or project_root()).resolve()
     if not task_id or not _valid_branch(branch):
         raise ValueError("valid task id and branch are required")
@@ -408,8 +450,7 @@ def publish_branch(task_id: str, branch: str, repo: Path | None = None) -> dict[
             raise ValueError("registered task branch is missing or ambiguous")
         resource = matches[0]
         if (resource.get("state") != "active" or resource.get("creation-source") != "embraion-create"
-                or resource.get("legacy-compatible") or resource.get("remote-publish") is not None
-                or resource.get("remote-owned") is True or not registry.verify_resource(root, resource)):
+                or resource.get("legacy-compatible") or not registry.verify_resource(root, resource)):
             raise ValueError("branch lacks source-created publication provenance")
         origin_id = _origin_identity(root)
         if resource.get("origin-id") != origin_id:
@@ -418,25 +459,55 @@ def publish_branch(task_id: str, branch: str, repo: Path | None = None) -> dict[
         head = registry.branch_sha(root, branch)
         if head is None:
             raise ValueError("registered local branch is missing")
-        if github.remote_head(root, branch) is not None:
-            raise ValueError("remote branch already exists; adoption is forbidden")
         ref = f"refs/heads/{branch}"
-        # An equal ref created concurrently may produce an up-to-date success;
-        # the porcelain creation flag below prevents adopting that ref.
-        pushed = run(["git", "-C", str(root), "push", "--porcelain",
-                      f"--force-with-lease={ref}:", endpoint, f"{head}:{ref}"])
-        if not _confirmed_new_branch(pushed.stdout, ref):
-            raise ValueError("remote did not confirm new branch creation")
+        receipt = resource.get("remote-publish")
+        if receipt is None:
+            if resource.get("remote-owned") is True:
+                raise ValueError("remote branch lacks publication receipt")
+            if github.remote_head(root, branch) is not None:
+                raise ValueError("remote branch already exists; adoption is forbidden")
+            # An equal ref created concurrently may report up-to-date success;
+            # the porcelain creation flag prevents adopting that ref.
+            pushed = run(["git", "-C", str(root), "push", "--porcelain",
+                          f"--force-with-lease={ref}:", endpoint, f"{head}:{ref}"])
+            if not _confirmed_new_branch(pushed.stdout, ref):
+                raise ValueError("remote did not confirm new branch creation")
+            previous = None
+        else:
+            previous = _published_head(resource, branch, origin_id)
+            if previous is None:
+                raise ValueError("remote publication receipt is invalid")
+            if previous == head:
+                raise ValueError("branch head was already published")
+            if github.remote_head(root, branch) != previous:
+                raise ValueError("remote branch differs from last managed publication")
+            ancestor = run(["git", "--no-optional-locks", "-c", "core.fsmonitor=false",
+                            "-C", str(root), "merge-base", "--is-ancestor", previous, head],
+                           check=False)
+            if ancestor.returncode != 0:
+                raise ValueError("branch does not fast-forward from last publication")
+            pushed = run(["git", "-C", str(root), "push", "--porcelain",
+                          f"--force-with-lease={ref}:{previous}", endpoint, f"{head}:{ref}"])
+            if not _confirmed_fast_forward(pushed.stdout, head, ref):
+                raise ValueError("remote did not confirm fast-forward publication")
         if (registry.branch_sha(root, branch) != head or not registry.verify_resource(root, resource)
                 or _origin_identity(root) != origin_id or _push_endpoint(root) != endpoint
                 or github.remote_head(root, branch) != head.lower()):
             raise ValueError("published branch changed before verification")
-        publication = {"method": "expected-empty-lease", "publish-id": registry.new_id(),
-                       "resource-id": resource["resource-id"], "branch": branch,
-                       "head-sha": head, "origin-id": origin_id,
-                       "published-utc": registry.timestamp()}
-        resource["remote-publish"] = publication
-        resource["remote-owned"] = True
+        if registry.load_registry(root)["resources"].get(resource["resource-id"]) != resource:
+            raise ValueError("publication registry changed during push")
+        if previous is None:
+            publication = {"method": "expected-empty-lease", "publish-id": registry.new_id(),
+                           "resource-id": resource["resource-id"], "branch": branch,
+                           "head-sha": head, "origin-id": origin_id,
+                           "published-utc": registry.timestamp()}
+            resource["remote-publish"] = publication
+            resource["remote-owned"] = True
+        else:
+            publication = {"method": "expected-sha-lease", "publish-id": registry.new_id(),
+                           "previous-sha": previous, "head-sha": head,
+                           "published-utc": registry.timestamp()}
+            receipt.setdefault("updates", []).append(publication)
         registry.save_registry(root, data)
         recorded = registry.load_registry(root)["resources"].get(resource["resource-id"])
         if recorded != resource or not _published_remote(recorded, branch, head, origin_id):

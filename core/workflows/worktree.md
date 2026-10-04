@@ -24,6 +24,9 @@ Remote ownership requires positive creation evidence from a supported adapter. T
 portable `worktree publish --task-id <id> --branch <branch>` explicitly creates an absent
 remote ref with a create-only lease and records its verified creation. A local receipt or
 an external push never grants remote deletion authority; existing remote refs are preserved.
+After further task commits, the same command updates the previously published ref only
+when its recorded SHA still matches. Retain the original creation receipt and the verified
+update chain; an external push cannot substitute for a supported publication update.
 
 Keep the stable task identity in normalized session state: start the independent writable
 Lead session with `session start --session-id <session-id> --task <task-id> --role lead

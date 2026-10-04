@@ -123,6 +123,33 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
                 patch.object(worktree, "run", side_effect=receive_create):
             return worktree.publish_branch(task_id, branch, repo=self.repo)
 
+    def advance_managed_worktree(self, target: Path, filename: str = "iteration.txt") -> str:
+        (target / filename).write_text(filename + "\n", encoding="utf-8")
+        git(target, "add", filename)
+        git(target, "commit", "-m", f"advance {filename}")
+        return git(target, "rev-parse", "HEAD").stdout.strip()
+
+    def publish_managed_update(self, head: str, task_id: str = "managed-task") -> dict[str, object]:
+        branch = f"task/{task_id}"
+        previous = self.bare_head(self.repo, branch)
+        self.assertIsNotNone(previous)
+        ref = f"refs/heads/{branch}"
+        real_run = worktree.run
+
+        def receive_update(command, *args, **kwargs):
+            if "push" not in command:
+                return real_run(command, *args, **kwargs)
+            self.assertIn(f"--force-with-lease={ref}:{previous}", command)
+            self.assertIn(f"{head}:{ref}", command)
+            copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+            git(self.remote, "update-ref", ref, head, previous)
+            return subprocess.CompletedProcess(command, 0,
+                                               f" \t{head}:{ref}\t{previous[:7]}..{head[:7]}\n", "")
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=receive_update):
+            return worktree.publish_branch(task_id, branch, repo=self.repo)
+
     def github_evidence(self):
         return (
             patch.object(worktree.github, "github_evidence", return_value={"default-branch": "main"}),
@@ -834,6 +861,152 @@ class HousekeepingSafetyTests(TemporaryGitRepository):
         row = next(row for row in report["resources"] if row.get("path") == str(target))
         self.assertEqual("candidate", row["status"])
         self.assertEqual(self.head(branch), row["remote-head"])
+
+    def test_managed_publication_update_preserves_creation_and_cleans_final_tip(self) -> None:
+        target = self.managed_worktree()
+        initial = self.publish_managed_branch()
+        branch = "task/managed-task"
+        final_head = self.advance_managed_worktree(target)
+        update = self.publish_managed_update(final_head)
+        self.assertEqual("expected-sha-lease", update["method"])
+        self.assertEqual(initial["head-sha"], update["previous-sha"])
+        self.assertEqual(final_head, update["head-sha"])
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual(initial, {key: value for key, value in resource["remote-publish"].items()
+                                   if key != "updates"})
+        self.assertEqual([update], resource["remote-publish"]["updates"])
+        self.assertTrue(worktree._published_remote(resource, branch, final_head,
+                                                  resource["origin-id"]))
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "already published"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        real_run = worktree.run
+
+        def delete_bare_ref(command, *args, **kwargs):
+            if "push" in command:
+                self.assertIn(f"--force-with-lease=refs/heads/{branch}:{final_head}", command)
+                git(self.remote, "update-ref", "-d", f"refs/heads/{branch}", final_head)
+                return subprocess.CompletedProcess(command, 0, "", "")
+            return real_run(command, *args, **kwargs)
+
+        def exact_final_pr(_repo, _branch, head, _base, _evidence):
+            self.assertEqual(final_head, head)
+            return True, "merged-pr"
+
+        patches = self.github_evidence()
+        with patches[0], patches[1], \
+                patch.object(worktree.github, "integration_proof", side_effect=exact_final_pr), \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=delete_bare_ref):
+            report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("removed", row["status"])
+        self.assertTrue(row["removed-local-branch"])
+        self.assertTrue(row["removed-remote-branch"])
+        self.assertFalse(target.exists())
+        self.assertNotIn(f"refs/heads/{branch}", self.branches())
+        self.assertIsNone(self.bare_head(self.repo, branch))
+
+    def test_discontinuous_publication_receipt_never_authorizes_cleanup(self) -> None:
+        target = self.managed_worktree()
+        self.publish_managed_branch()
+        branch = "task/managed-task"
+        final_head = self.advance_managed_worktree(target)
+        self.publish_managed_update(final_head)
+        data = worktree.registry.load_registry(self.repo)
+        resource = next(iter(data["resources"].values()))
+        origin_id = resource["origin-id"]
+        resource["remote-publish"]["updates"][0]["method"] = "unproven"
+        self.assertFalse(worktree._published_remote(resource, branch, final_head, origin_id))
+        resource["remote-publish"]["updates"][0]["method"] = "expected-sha-lease"
+        resource["remote-publish"]["updates"][0]["previous-sha"] = "0" * 40
+        worktree.registry.save_registry(self.repo, data)
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "receipt is invalid"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        worktree.update_task_state("managed-task", "completed", repo=self.repo)
+        project = self.repo / ".embraion" / "project.yaml"
+        project.parent.mkdir()
+        project.write_text("housekeeping:\n  remote-branches: true\n", encoding="utf-8")
+        patches = self.github_evidence()
+        with patches[0], patches[1], patches[2], \
+                patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            report = worktree.gc_report(apply=True, repo=self.repo)
+        row = next(row for row in report["resources"] if row.get("path") == str(target))
+        self.assertEqual("preserved", row["status"])
+        self.assertEqual("remote-ownership-unproven", row["reason"])
+        self.assertTrue(target.exists())
+        self.assertEqual(final_head, self.bare_head(self.repo, branch))
+
+    def test_external_advance_after_managed_publish_never_adds_update_receipt(self) -> None:
+        target = self.managed_worktree()
+        initial = self.publish_managed_branch()
+        branch = "task/managed-task"
+        new_head = self.advance_managed_worktree(target)
+        copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+        git(self.remote, "update-ref", f"refs/heads/{branch}", new_head, initial["head-sha"])
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "differs from last managed"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual(initial, resource["remote-publish"])
+        self.assertFalse(worktree._published_remote(resource, branch, new_head,
+                                                   resource["origin-id"]))
+
+    def test_publication_update_rejects_non_fast_forward_and_up_to_date(self) -> None:
+        target = self.managed_worktree()
+        initial = self.publish_managed_branch()
+        first_update_head = self.advance_managed_worktree(target, "first.txt")
+        first_update = self.publish_managed_update(first_update_head)
+        git(target, "reset", "--hard", initial["head-sha"])
+        divergent_head = self.advance_managed_worktree(target, "divergent.txt")
+        branch = "task/managed-task"
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head):
+            with self.assertRaisesRegex(ValueError, "does not fast-forward"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual([first_update], resource["remote-publish"]["updates"])
+
+        # A concurrent actor can make the requested SHA current before Git's
+        # push negotiation. Successful but up-to-date porcelain grants nothing.
+        git(target, "reset", "--hard", first_update_head)
+        next_head = self.advance_managed_worktree(target, "next.txt")
+        real_run = worktree.run
+
+        def reject_lease(command, *args, **kwargs):
+            if "push" in command:
+                self.assertIn(f"--force-with-lease=refs/heads/{branch}:{first_update_head}", command)
+                raise subprocess.CalledProcessError(1, command, stderr="lease mismatch")
+            return real_run(command, *args, **kwargs)
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=reject_lease):
+            with self.assertRaises(subprocess.CalledProcessError):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual([first_update], resource["remote-publish"]["updates"])
+
+        def concurrent_matching_push(command, *args, **kwargs):
+            if "push" in command:
+                copy_missing_objects(self.sandbox / "git-data" / "objects", self.remote / "objects")
+                git(self.remote, "update-ref", f"refs/heads/{branch}", next_head, first_update_head)
+                return subprocess.CompletedProcess(
+                    command, 0, f"=\t{next_head}:refs/heads/{branch}\t[up to date]\n", "")
+            return real_run(command, *args, **kwargs)
+
+        with patch.object(worktree.github, "remote_head", side_effect=self.bare_head), \
+                patch.object(worktree, "run", side_effect=concurrent_matching_push):
+            with self.assertRaisesRegex(ValueError, "did not confirm fast-forward"):
+                worktree.publish_branch("managed-task", branch, repo=self.repo)
+        resource = next(iter(worktree.registry.load_registry(self.repo)["resources"].values()))
+        self.assertEqual([first_update], resource["remote-publish"]["updates"])
+        self.assertFalse(worktree._published_remote(resource, branch, next_head,
+                                                   resource["origin-id"]))
 
     def test_publish_create_race_never_records_or_adopts_remote(self) -> None:
         target = self.managed_worktree()

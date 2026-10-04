@@ -134,6 +134,24 @@ class WorktreeHousekeepingCliTests(unittest.TestCase):
         self.assertNotEqual(0, self.cli("publish", "--task-id", "independent",
                                        "--branch", "task/independent", check=False).returncode)
         self.assertEqual(before, registry_path.read_bytes())
+        git(self.repo, "switch", "task/independent")
+        previous = publication["head-sha"]
+        for revision in ("first revision", "second revision"):
+            (self.repo / "revision.txt").write_text(revision + "\n", encoding="utf-8")
+            git(self.repo, "add", "revision.txt")
+            git(self.repo, "commit", "-m", revision)
+            update = json.loads(self.cli("publish", "--task-id", "independent",
+                                         "--branch", "task/independent").stdout)
+            self.assertEqual("expected-sha-lease", update["method"])
+            self.assertEqual(previous, update["previous-sha"])
+            self.assertEqual(git(self.repo, "rev-parse", "HEAD"), update["head-sha"])
+            self.assertEqual(update["head-sha"], git(self.remote, "rev-parse", "task/independent"))
+            previous = update["head-sha"]
+        resource = next(value for value in json.loads(registry_path.read_text())["resources"].values()
+                        if value["branch"] == "task/independent")
+        receipt = resource["remote-publish"]
+        self.assertEqual(publication, {key: value for key, value in receipt.items() if key != "updates"})
+        self.assertEqual(2, len(receipt["updates"]))
 
 
 if __name__ == "__main__":
