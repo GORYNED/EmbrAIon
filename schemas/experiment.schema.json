@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://embraion.dev/schemas/experiment.schema.json",
+  "title": "Foundation experiment manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema-version", "id", "baseline", "candidate", "suite-digest", "change-ids", "traceability", "required-cases", "target-cases", "cases"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "baseline": {"type": "string", "minLength": 1},
+    "candidate": {"type": "string", "minLength": 1},
+    "suite-digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "change-ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "traceability": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["change-id", "source-kind", "observed-problem", "proposed-rule", "capability-paths", "scenarios", "expected-result"],
+      "properties": {
+        "change-id": {"type": "string", "minLength": 1},
+        "source-kind": {"enum": ["observed-problem", "new-contract"]},
+        "observed-problem": {"type": "string", "minLength": 1}, "proposed-rule": {"type": "string", "minLength": 1},
+        "capability-paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^core/"}},
+        "scenarios": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "expected-result": {"type": "string", "minLength": 1}
+      }
+    }},
+    "required-cases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "target-cases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "target-improvements": {
+      "type": "array", "items": {"type": "object", "additionalProperties": false,
+        "required": ["case", "metric", "min-decrease"],
+        "properties": {"case": {"type": "string", "minLength": 1},
+          "metric": {"enum": ["quality-correctness", "authority-scope", "security-privacy", "false-positive-rate", "unnecessary-clarification", "unnecessary-capability-activation", "tokens", "latency"]},
+          "min-decrease": {"type": "number", "exclusiveMinimum": 0},
+          "minimum-improved-pairs": {"type": "integer", "minimum": 1, "maximum": 20}}}
+    },
+    "cases": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "additionalProperties": false,
+        "required": ["case", "risk", "attempts", "limits", "baseline-manifest-digest", "justification-id"],
+        "properties": {
+          "case": {"type": "string", "minLength": 1},
+          "risk": {"enum": ["ordinary", "high"]},
+          "attempts": {"type": "integer", "minimum": 5, "maximum": 20},
+          "baseline-manifest-digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "justification-id": {"type": "string", "minLength": 1},
+          "limits": {"type": "object", "additionalProperties": false,
+            "required": ["quality-correctness", "authority-scope", "security-privacy", "false-positive-rate", "unnecessary-clarification", "unnecessary-capability-activation", "tokens", "latency"],
+            "properties": {
+              "quality-correctness": {"type": "number", "minimum": 0},
+              "authority-scope": {"type": "number", "minimum": 0},
+              "security-privacy": {"type": "number", "minimum": 0},
+              "false-positive-rate": {"type": "number", "minimum": 0},
+              "unnecessary-clarification": {"type": "number", "minimum": 0},
+              "unnecessary-capability-activation": {"type": "number", "minimum": 0},
+              "tokens": {"type": "number", "minimum": 0},
+              "latency": {"type": "number", "minimum": 0}
+            }}
+        }}
+    }
+  }
+}

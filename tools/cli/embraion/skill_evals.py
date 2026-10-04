@@ -176,12 +176,22 @@ def _terminate_host(process: subprocess.Popen[bytes], *, windows: bool) -> None:
             pass
 
 
-def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path) -> dict[str, Any]:
+def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path,
+                  *, developer_instructions: str | None = None, windows_sandbox: str | None = None,
+                  trusted_workspace: bool = False) -> dict[str, Any]:
     argv = [binary, "exec", "--ignore-user-config", "--ephemeral", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check", "--cd", str(root), "--output-last-message", str(scratch / "last-message.txt")]
     if model:
         argv += ["--model", model]
     if effort:
         argv += ["--config", f'model_reasoning_effort="{effort}"']
+    if developer_instructions is not None:
+        argv += ["--config", "developer_instructions=" + json.dumps(developer_instructions)]
+    if windows_sandbox is not None:
+        if windows_sandbox not in {"elevated", "unelevated"}:
+            raise ValueError("unsupported Windows sandbox setting")
+        argv += ["--config", "windows.sandbox=" + json.dumps(windows_sandbox)]
+    if trusted_workspace:
+        argv += ["--config", "projects." + json.dumps(str(root.resolve())) + '.trust_level="trusted"']
     argv.append("-")
     start = time.monotonic()
     stdout = scratch / "events.jsonl"

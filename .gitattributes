@@ -2,3 +2,4 @@
 .embraion/** text eol=lf
 .agents/** text eol=lf
 .codex/** text eol=lf
+evals/foundation/fixtures/** text eol=lf

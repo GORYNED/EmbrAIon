@@ -1141,6 +1141,37 @@ def _cmd_eval_skills_run(args: argparse.Namespace) -> int:
     return 0 if all(row["behavior-passed"] for row in report["runs"] if row["variant"] == "candidate") else 1
 
 
+def _cmd_eval_experiment(args: argparse.Namespace) -> int:
+    try:
+        return _eval_experiment(args)
+    except (ValueError, OSError, KeyError) as error:
+        raise RuntimeError("Cannot evaluate experiment: invalid input or unavailable environment (" + type(error).__name__ + ").") from None
+
+
+def _eval_experiment(args: argparse.Namespace) -> int:
+    from .experiment_evals import capture_snapshot, prepare_baseline, run_experiment, _load
+    from .experiment_gates import promotion_eligibility
+    if args.experiment_command == "snapshot":
+        report = capture_snapshot(Path(args.source), Path(args.output), Path(args.manifest), host=args.host,
+                                  regenerate=args.regenerate)
+    elif args.experiment_command == "assess":
+        report = promotion_eligibility(_load(Path(args.report)), _load(Path(args.experiment)))
+    elif args.experiment_command == "prepare":
+        report = prepare_baseline(Path(args.source), Path(args.output), host=args.host, regenerate=args.regenerate)
+    else:
+        project = project_root(Path(args.path))
+        selected = route(args.host, args.route_class, args.data, role="worker", access="workspace-write", project=project)
+        # Access remains independent of role/model and is applied by the native
+        # adapter. The resolver may omit the validated access from its result.
+        selected = {**selected, "access": "workspace-write"}
+        report = run_experiment(Path(args.suite), host=args.host, model=selected.get("model"),
+            effort=selected.get("effort"), route=selected, output=Path(args.output), attempts=args.attempts,
+            phase=args.phase, timeout_seconds=args.timeout, binary=args.binary or args.host,
+            experiment=Path(args.experiment) if args.experiment else None)
+    _print_json(report)
+    return 0 if report.get("status") in {None, "pass", "eligible", "prepared"} else 1
+
+
 def _cmd_eval_run(args: argparse.Namespace) -> int:
     report = run_case(
         args.case,
@@ -2234,6 +2265,39 @@ def build_parser() -> argparse.ArgumentParser:
     eval_skills_run.add_argument("--route-class", default="ordinary", choices=["bounded-write", "ordinary", "substantial", "complex"])
     eval_skills_run.add_argument("--data", default="PRIVATE", choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"])
     eval_skills_run.set_defaults(func=_cmd_eval_skills_run)
+
+    eval_experiment = eval_sub.add_parser("experiment", help="Capture and compare immutable full-Core variants")
+    experiment_sub = eval_experiment.add_subparsers(dest="experiment_command", required=True)
+    prepare = experiment_sub.add_parser("prepare")
+    prepare.add_argument("--source", default=".")
+    prepare.add_argument("--output", required=True)
+    prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    prepare.set_defaults(func=_cmd_eval_experiment)
+    prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
+    capture = experiment_sub.add_parser("snapshot")
+    capture.add_argument("--source", default=".")
+    capture.add_argument("--output", required=True)
+    capture.add_argument("--manifest", required=True)
+    capture.add_argument("--regenerate", action="store_true", help="Explicitly prepare projections from unchanged Core")
+    capture.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    capture.set_defaults(func=_cmd_eval_experiment)
+    native_run = experiment_sub.add_parser("run")
+    native_run.add_argument("--suite", required=True)
+    native_run.add_argument("--output", required=True)
+    native_run.add_argument("--experiment")
+    native_run.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    native_run.add_argument("--binary")
+    native_run.add_argument("--path", default=".")
+    native_run.add_argument("--route-class", default="substantial", choices=["bounded-write", "ordinary", "substantial", "complex"])
+    native_run.add_argument("--data", default="PRIVATE", choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"])
+    native_run.add_argument("--phase", default="exploratory", choices=["baseline", "exploratory", "confirmatory"])
+    native_run.add_argument("--attempts", type=int)
+    native_run.add_argument("--timeout", type=int, default=180)
+    native_run.set_defaults(func=_cmd_eval_experiment)
+    assess = experiment_sub.add_parser("assess")
+    assess.add_argument("--report", required=True)
+    assess.add_argument("--experiment", required=True)
+    assess.set_defaults(func=_cmd_eval_experiment)
 
     eval_run = eval_sub.add_parser("run", help="Run one eval case", description="Evaluate an execution record against a behavioral eval case.")
     eval_run.add_argument("--case", required=True)

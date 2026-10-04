@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Full-Core experiment suite v2",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema-version", "id", "baseline", "seed", "variants", "cases"],
+  "properties": {
+    "schema-version": {"const": 2}, "id": {"$ref": "#/$defs/id"},
+    "baseline": {"$ref": "#/$defs/id"}, "seed": {"type": "integer", "minimum": 0},
+    "variants": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "snapshot", "manifest", "manifest-digest", "changes"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "snapshot": {"$ref": "#/$defs/path"},
+        "manifest": {"$ref": "#/$defs/path"}, "manifest-digest": {"$ref": "#/$defs/hash"},
+        "changes": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["path", "before", "after"],
+          "properties": {"path": {"$ref": "#/$defs/path"}, "before": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}, "after": {"anyOf": [{"$ref": "#/$defs/hash"}, {"type": "null"}]}}
+        }}
+      }
+    }},
+    "cases": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "fixture", "prompt", "polarity", "language", "risk", "oracles"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"}, "fixture": {"$ref": "#/$defs/path"},
+        "prompt": {"type": "string", "minLength": 1, "maxLength": 20000},
+        "polarity": {"enum": ["positive", "negative"]}, "language": {"enum": ["en", "ru"]},
+        "risk": {"enum": ["ordinary", "high"]},
+        "corpus-id": {"$ref": "#/$defs/id"},
+        "allowed-paths": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+        "oracles": {"type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["id", "params", "mandatory"],
+          "properties": {"id": {"$ref": "#/$defs/id"}, "params": {"type": "object"}, "mandatory": {"type": "boolean"},
+            "required-checks": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}}
+        }}
+      }
+    }}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"},
+    "path": {"type": "string", "minLength": 1, "maxLength": 250},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

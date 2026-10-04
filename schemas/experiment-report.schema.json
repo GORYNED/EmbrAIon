@@ -1,0 +1,569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://embraion.dev/schemas/experiment-report.schema.json",
+  "title": "Full Core experiment evidence v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema-version",
+    "evidence-kind",
+    "suite-id",
+    "baseline-id",
+    "phase",
+    "host",
+    "environment",
+    "suite-digest",
+    "inputs",
+    "experiment-digest",
+    "seed",
+    "variants",
+    "projection-checks",
+    "calibration",
+    "case-contracts",
+    "planned-runs",
+    "runs",
+    "comparisons",
+    "contamination",
+    "limitations",
+    "status",
+    "native-preflight"
+  ],
+  "properties": {
+    "schema-version": {
+      "const": 2
+    },
+    "evidence-kind": {
+      "const": "live-native-full-core"
+    },
+    "suite-id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline-id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase": {
+      "enum": [
+        "baseline",
+        "exploratory",
+        "confirmatory"
+      ]
+    },
+    "host": {
+      "enum": [
+        "codex",
+        "claude-code",
+        "copilot",
+        "portable"
+      ]
+    },
+    "environment": {
+      "type": "object"
+    },
+    "suite-digest": {
+      "$ref": "#/$defs/hash"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suite",
+        "evaluators",
+        "calibration-fixtures",
+        "corpus",
+        "schemas",
+        "experiment"
+      ],
+      "properties": {
+        "suite": {
+          "$ref": "#/$defs/hash"
+        },
+        "evaluators": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/hash"
+          }
+        },
+        "calibration-fixtures": {
+          "$ref": "#/$defs/hash"
+        },
+        "corpus": {
+          "$ref": "#/$defs/hash"
+        },
+        "schemas": {
+          "$ref": "#/$defs/hash"
+        },
+        "experiment": {
+          "$ref": "#/$defs/nullable-hash"
+        }
+      }
+    },
+    "experiment-digest": {
+      "$ref": "#/$defs/nullable-hash"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "manifest-digest",
+          "core-digest",
+          "projection-digest",
+          "changes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manifest-digest": {
+            "$ref": "#/$defs/hash"
+          },
+          "core-digest": {
+            "$ref": "#/$defs/hash"
+          },
+          "projection-digest": {
+            "$ref": "#/$defs/hash"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "before",
+                "after"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^core/"
+                },
+                "before": {
+                  "$ref": "#/$defs/nullable-hash"
+                },
+                "after": {
+                  "$ref": "#/$defs/nullable-hash"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "native-preflight": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "projection-checks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/$defs/status"
+          }
+        }
+      }
+    },
+    "calibration": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "correctness",
+          "coverage"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/$defs/status"
+          },
+          "correctness": {
+            "$ref": "#/$defs/boundary"
+          },
+          "coverage": {
+            "$ref": "#/$defs/boundary"
+          }
+        }
+      }
+    },
+    "planned-runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/plan"
+      }
+    },
+    "case-contracts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case",
+          "language",
+          "polarity",
+          "risk",
+          "corpus-id",
+          "oracles"
+        ],
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "en",
+              "ru"
+            ]
+          },
+          "polarity": {
+            "enum": [
+              "positive",
+              "negative"
+            ]
+          },
+          "risk": {
+            "enum": [
+              "ordinary",
+              "high"
+            ]
+          },
+          "corpus-id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "oracles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "mandatory"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "mandatory": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case",
+          "variant",
+          "attempt",
+          "status",
+          "host",
+          "checks",
+          "metrics",
+          "contamination",
+          "activation"
+        ],
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "variant": {
+            "type": "string"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "$ref": "#/$defs/status"
+          },
+          "host": {
+            "type": "object"
+          },
+          "activation": {
+            "const": "unverified"
+          },
+          "contamination": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "status",
+                "category",
+                "mandatory"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "inconclusive",
+                    "unverified"
+                  ]
+                },
+                "category": {
+                  "type": "string"
+                },
+                "mandatory": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quality-correctness",
+              "authority-scope",
+              "security-privacy",
+              "false-positive-rate",
+              "unnecessary-clarification",
+              "unnecessary-capability-activation",
+              "tokens",
+              "latency"
+            ],
+            "properties": {
+              "quality-correctness": {
+                "$ref": "#/$defs/measurement"
+              },
+              "authority-scope": {
+                "$ref": "#/$defs/measurement"
+              },
+              "security-privacy": {
+                "$ref": "#/$defs/measurement"
+              },
+              "false-positive-rate": {
+                "$ref": "#/$defs/measurement"
+              },
+              "unnecessary-clarification": {
+                "$ref": "#/$defs/measurement"
+              },
+              "unnecessary-capability-activation": {
+                "$ref": "#/$defs/measurement"
+              },
+              "tokens": {
+                "$ref": "#/$defs/measurement"
+              },
+              "latency": {
+                "$ref": "#/$defs/measurement"
+              }
+            }
+          }
+        }
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case",
+          "attempt",
+          "baseline",
+          "candidate",
+          "status"
+        ],
+        "properties": {
+          "case": {
+            "type": "string"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "baseline": {
+            "type": "string"
+          },
+          "candidate": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "improved",
+              "regressed",
+              "tied-pass",
+              "tied-fail",
+              "inconclusive"
+            ]
+          }
+        }
+      }
+    },
+    "contamination": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "eligibility": {
+      "type": "object",
+      "required": [
+        "status",
+        "reasons",
+        "authorizes_core_promotion",
+        "review_required"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "eligible",
+            "rejected",
+            "inconclusive"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authorizes_core_promotion": {
+          "const": false
+        },
+        "review_required": {
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullable-hash": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/hash"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ]
+    },
+    "measurement": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "boundary": {
+      "type": "object",
+      "required": [
+        "mandatory",
+        "proves",
+        "does_not_prove",
+        "prerequisites"
+      ],
+      "properties": {
+        "mandatory": {
+          "const": true
+        },
+        "proves": {
+          "type": "string",
+          "minLength": 1
+        },
+        "does_not_prove": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prerequisites": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case",
+        "variant",
+        "attempt"
+      ],
+      "properties": {
+        "case": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://embraion.dev/schemas/failure-corpus.schema.json",
+  "title": "Sanitized failure corpus",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema-version", "entries"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "entries": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "status", "summary", "source", "failure-mode", "scenario-id", "oracle-id", "applies-to", "expected-behavior", "evidence-refs", "data-class", "required-coverage", "replacement-ids", "lifecycle-reason", "review-ref"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["active", "superseded", "retired"]},
+        "summary": {"type": "string", "minLength": 1},
+        "source": {"type": "object", "additionalProperties": false,
+          "required": ["kind", "reference"], "properties": {
+            "kind": {"enum": ["failure", "near-miss", "synthetic-mutation", "new-contract"]},
+            "reference": {"type": "string", "minLength": 1},
+            "confirmation": {"enum": ["confirmed", "diagnostic"]}}},
+        "failure-mode": {"type": "string", "minLength": 1},
+        "scenario-id": {"type": "string", "minLength": 1},
+        "oracle-id": {"type": "string", "minLength": 1},
+        "applies-to": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^core(?:/|$)"}},
+        "expected-behavior": {"type": "string", "minLength": 1},
+        "evidence-refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "data-class": {"const": "PUBLIC"},
+        "required-coverage": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "replacement-ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "obsolete-contract-proof": {"type": "string", "minLength": 1},
+        "lifecycle-reason": {"type": "string", "minLength": 1},
+        "review-ref": {"type": "string", "minLength": 1}
+      }
+    }}
+  }
+}
