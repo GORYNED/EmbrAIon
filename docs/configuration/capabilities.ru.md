@@ -10,7 +10,7 @@ capabilities:
   - id: unity
     kind: managed-bundle
     source: builtin:unity
-    version: 0.20.0
+    version: 0.21.0
     license: MIT
     hosts: [codex]
     host-requirements: {codex: [skills]}

@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.21.0 - 2026-10-04
+
+### Added
+
+- Opt-in housekeeping before independent writable tasks, with one cleanup attempt per task ID and preservation of user, unknown, active and protected resources in the current repository.
+- A shared Git-common-dir registry records verified creation identity, host provenance and linked task lifecycle without inferring ownership from branch prefixes, commit authors or PR authors.
+- Extend `worktree gc` with JSON reports and add `prepare`, `register`, `publish` and local `restore`. Retain verified commit bundles and necessary local state before deletion, repeat eligibility checks, serialize operations and report partial failures with recovery identifiers.
+- Verify exact-head merged PR evidence for ordinary and squash merges. Managed remote creation and subsequent fast-forward publications retain a receipt chain and use exact Git SHA leases; cleanup also removes only the matching cached origin ref.
+
+### Safety and compatibility
+
+- Automatic and remote cleanup default to off. Legacy markers retain worktree-only cleanup rights; unsupported native activity/archive operations and unproven remote-only resources remain preserved.
+- Reject symbolic or aliased refs and credential-bearing remote URLs. Local compare-and-delete never dereferences refs, and empty subprocess errors omit command arguments.
+- Codex and Claude guidance invokes the common preflight without assuming native startup interception or changing observer hooks. Consumer upgrades and first cleanup of existing resources remain explicit follow-up work.
+
 ## 0.20.0 - 2026-10-03
 
 ### Added
