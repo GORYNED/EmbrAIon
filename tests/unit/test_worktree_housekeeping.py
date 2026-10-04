@@ -819,11 +819,16 @@ class GitHubProofTests(TemporaryGitRepository):
         })
         duplicate = self.evidence(branch, head, head)
         duplicate["pulls"].append(dict(duplicate["pulls"][0]))
+        unknown_state = self.evidence(branch, head, head)
+        unknown_state["pulls"][0]["state"] = None
+        closed_reuse = self.evidence(branch, head, head)
+        closed_reuse["pulls"].append(closed_reuse["pulls"][0] | {"merged_at": None})
 
         for name, evidence in (
             ("wrong-source", wrong_source), ("wrong-base", wrong_base),
             ("reused", reused), ("open-dependent", open_dependent),
-            ("duplicate", duplicate),
+            ("duplicate", duplicate), ("unknown-state", unknown_state),
+            ("closed-name-reuse", closed_reuse),
         ):
             with self.subTest(name=name):
                 proved, _ = worktree_github.integration_proof(

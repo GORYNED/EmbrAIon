@@ -61,6 +61,7 @@ def integration_proof(repo: Path, branch: str, head: str, base: str,
     """Require one merged exact-head PR and no open PR mentioning the branch."""
     pulls = evidence["pulls"]
     if (not isinstance(pulls, list) or any(not isinstance(pr, dict)
+            or pr.get("state") not in {"open", "closed"}
             or not isinstance(pr.get("head"), dict) or not isinstance(pr.get("base"), dict)
             or not isinstance(pr["head"].get("repo"), dict)
             or not isinstance(pr["base"].get("repo"), dict)
@@ -77,7 +78,7 @@ def integration_proof(repo: Path, branch: str, head: str, base: str,
         return False, "open-pr-base"
     expected_base = base.removeprefix("origin/")
     merged = [pr for pr in matches if pr.get("merged_at")]
-    if len(merged) != 1 or merged[0]["head"].get("sha") != head:
+    if len(matches) != 1 or len(merged) != 1 or merged[0]["head"].get("sha") != head:
         return False, "merged-pr-proof-missing-or-ambiguous"
     if (merged[0]["base"].get("ref") != expected_base
             or merged[0]["base"]["repo"].get("full_name", "").lower() != evidence["name"].lower()):
