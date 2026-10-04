@@ -508,7 +508,7 @@ embraion worktree restore --cleanup-id <cleanup-id>
 embraion worktree salvage /path/to/worktree
 ```
 
-See the [worktree tool guide](../../tools/worktree/README.md) and [canonical workflow](../../core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; external pushes do not register remote ownership. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
+See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md) and [canonical workflow](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; external pushes do not register remote ownership. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
 
 ### `embraion learning`
 
