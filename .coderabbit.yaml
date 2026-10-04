@@ -1,0 +1,4 @@
+# Preserve existing organization settings and suppress skipped-review comments.
+inheritance: true
+reviews:
+  review_status: false
