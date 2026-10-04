@@ -75,31 +75,18 @@ class ExternalCapabilitiesTests(unittest.TestCase):
         self.assertEqual([], diagnose_external_capabilities(self.root, self.project, "codex", now=NOW)["capabilities"])
         self.assertEqual({}, projected_skills(self.root, self.project, "codex"))
 
-    def test_builtin_projection_requires_manifest_and_exact_pin(self) -> None:
-        skill = self._manifest()
+    def test_legacy_bundle_is_readable_but_projection_is_removed(self) -> None:
+        self._manifest()
         self._inventory(self.unity)
-        self.assertEqual({"unity-asset-audit": skill}, projected_skills(self.root, self.project, "codex"))
+        self.assertEqual(self.unity, read_external_capabilities(self.root, self.project)["capabilities"][0])
+        with self.assertRaisesRegex(RuntimeError, "Unity bundle has been removed"):
+            projected_skills(self.root, self.project, "codex")
         self.assertEqual({}, projected_skills(self.root, self.project, "claude-code"))
-        self._yaml(self.project / ".embraion/project.yaml", {"framework": {
-            "repository": "GORYNED/EmbrAIon", "version": "0.19.2"}})
-        with self.assertRaisesRegex(RuntimeError, "pin"):
-            projected_skills(self.root, self.project, "codex")
 
-    def test_builtin_selection_and_path_boundaries_fail_closed(self) -> None:
-        skill = self._manifest()
+    def test_legacy_bundle_cannot_use_existing_source_files(self) -> None:
+        self._manifest()
         self._inventory({**self.unity, "selected-skills": ["unity-not-listed"]})
-        with self.assertRaises(RuntimeError):
-            projected_skills(self.root, self.project, "codex")
-        self._inventory(self.unity)
-        (skill / "escape").symlink_to(self.project)
-        with self.assertRaisesRegex(RuntimeError, "unsafe"):
-            projected_skills(self.root, self.project, "codex")
-        (skill / "escape").unlink()
-        self._yaml(self.root / "extensions/unity/manifest.yaml", {
-            "schema-version": 1, "id": "unity", "version": "0.20.0", "license": "MIT",
-            "skills": {"unity-asset-audit": "../../elsewhere"},
-        })
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, "removed"):
             projected_skills(self.root, self.project, "codex")
 
     def test_stage_separation_and_environment_name_only(self) -> None:
@@ -108,8 +95,9 @@ class ExternalCapabilitiesTests(unittest.TestCase):
         report = diagnose_external_capabilities(self.root, self.project, "codex",
                                                 environ={"SPEC_KIT_TOKEN": "sensitive-value"}, now=NOW)
         rows = {row["id"]: row for row in report["capabilities"]}
-        self.assertEqual("verified", rows["unity"]["stages"]["installed-config"]["status"])
+        self.assertEqual("unverified", rows["unity"]["stages"]["installed-config"]["status"])
         self.assertEqual("unverified", rows["unity"]["stages"]["host-discovered"]["status"])
+        self.assertIn("removed", rows["unity"]["issue"])
         self.assertEqual("unverified", rows["spec-kit"]["stages"]["installed-config"]["status"])
         self.assertEqual("unverified", rows["spec-kit"]["stages"]["executed"]["status"])
         self.assertEqual([{"name": "SPEC_KIT_TOKEN", "present": True}], rows["spec-kit"]["required-env"])
@@ -136,6 +124,19 @@ class ExternalCapabilitiesTests(unittest.TestCase):
         observed["capabilities"][0]["source"] = "host:forged"
         forged = diagnose_external_capabilities(self.root, self.project, "codex", observation=observed, now=NOW)
         self.assertEqual("identity-mismatch", forged["observation-status"])
+
+    def test_legacy_observation_cannot_verify_removed_bundle(self) -> None:
+        self._manifest()
+        self._inventory(self.unity)
+        observed = {"schema-version": 1, "scope": observation_scope(self.root, self.project, "codex"),
+                    "host": "codex", "observed-at": NOW.isoformat(), "capabilities": [{
+                        "id": "unity", "source": "builtin:unity", "version-or-digest": "0.20.0",
+                        "stages": ["installed-config", "executed"]}]}
+        report = diagnose_external_capabilities(self.root, self.project, "codex", observation=observed, now=NOW)
+        row = report["capabilities"][0]
+        self.assertIn("removed", row["issue"])
+        self.assertTrue(all(stage["status"] == "unverified" for stage in row["stages"].values()
+                            if stage is not row["stages"]["declared"]))
 
     def test_invalid_metadata_and_embedded_secrets_rejected_without_echo(self) -> None:
         for entry in (

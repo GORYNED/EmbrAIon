@@ -392,7 +392,7 @@ embraion capabilities --path . --host codex --json
 embraion capabilities --path . --host codex --observation host-observation.json --json
 ```
 
-An inventory entry does not install or load a host capability. Local checks can verify a managed bundle's files; supplied host observations remain self-reported and do not prove live execution. See [External capabilities](../configuration/capabilities.md).
+An inventory entry does not install or load a host capability. Local checks cannot verify host-managed installation or execution; supplied host observations remain self-reported. Legacy `builtin:unity` entries are reported unavailable. See [External capabilities](../configuration/capabilities.md).
 
 ### `embraion organization`
 

@@ -28,7 +28,7 @@ from .common import (
     write_yaml,
 )
 from .codex_config import merge_codex_config, orchestration_block
-from .capabilities import _builtin_skills, projected_skills, read_external_capabilities
+from .capabilities import _REMOVED_BUNDLE, projected_skills, read_external_capabilities
 from .policy import read_agents_config
 from .versioning import ensure_cached_runtime
 
@@ -395,13 +395,8 @@ def normalize_project_config(
         read_external_capabilities(framework_root(), destination)
         if has_external_inventory else None
     )
-    original_manifest = read_yaml(manifest)
-    original_framework = original_manifest.get("framework") if isinstance(original_manifest, dict) else None
-    old_pin = original_framework.get("version") if isinstance(original_framework, dict) else None
     if validated_external and any(item["kind"] == "managed-bundle" for item in validated_external["capabilities"]):
-        if (not isinstance(old_pin, str) or not old_pin
-                or original_framework.get("repository") != "GORYNED/EmbrAIon"):
-            raise RuntimeError("Cannot update managed built-in capability without a valid existing framework pin.")
+        raise RuntimeError(_REMOVED_BUNDLE)
 
     for config_path, (defaults, schema_path) in definitions.items():
         loaded = (validated_external if config_path == external_inventory
@@ -423,17 +418,6 @@ def normalize_project_config(
             if artifact is not None:
                 framework["artifact"] = dict(artifact)
             candidate["framework"] = framework
-
-        if config_path == external_inventory:
-            for item in candidate["capabilities"]:
-                if item["kind"] != "managed-bundle":
-                    continue
-                if item["version"] not in {old_pin, version}:
-                    raise RuntimeError("Managed built-in capability version does not match the old or target framework pin.")
-                item["version"] = version
-                # The target framework owns the bundle. Check its manifest and
-                # selected sources before writing any project configuration.
-                _builtin_skills(framework_root(), item, version)
 
         if config_path == external_inventory:
             try:
@@ -778,18 +762,6 @@ def _generate_markdown_agents(
         )
 
 
-def _copy_selected_builtin_skills(root: Path, project: Path | None, host: str, target: Path) -> None:
-    if project is None:
-        return
-    for name, source in projected_skills(root, project, host).items():
-        destination = target / name
-        if destination.exists() or destination.is_symlink():
-            raise RuntimeError(f"Selected built-in skill collides with an existing skill: {name}")
-        shutil.copytree(source, destination)
-        entry = destination / "SKILL.md"
-        entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
-
-
 def _generate_host_skills(root: Path, output: Path, host: str, project: Path | None = None) -> None:
     relative = HOST_SKILL_DIRECTORIES.get(host)
     if relative is None:
@@ -811,7 +783,6 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
     guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
     entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
-    _copy_selected_builtin_skills(root, project, host, target)
     if host == "claude-code":
         # A skill description is conditional discovery, not a startup contract.
         # Keep this small entry point owned alongside the skill it activates.
@@ -891,7 +862,6 @@ def _generate_portable(root: Path, output: Path, project: Path | None = None) ->
     shutil.copy2(root / "core/catalog.yaml", target / "catalog.yaml")
     shutil.copytree(root / "core/skills", target / "skills", dirs_exist_ok=True)
     _append_lead_skill(root, target / "skills")
-    _copy_selected_builtin_skills(root, project, "portable", target / "skills")
     for directory in ("agents", "workflows", "rules", "knowledge"):
         shutil.copytree(root / "core" / directory, target / directory, dirs_exist_ok=True)
     shutil.copytree(root / "core/routing", target / "routing", dirs_exist_ok=True)
@@ -906,6 +876,8 @@ def generate_host(
     project: Path | None = None,
 ) -> None:
     selected = _normalize_components(host, components)
+    if project is not None:
+        projected_skills(root, project, host)
 
     if host == "codex":
         _generate_codex(root, output, selected, project)

@@ -151,78 +151,6 @@ def _schema_errors(instance: Any, schema_path: Path) -> list[str]:
     return errors
 
 
-def _unity_extension_issues(root: Path, version: str) -> list[tuple[str, str, str]]:
-    """Check the optional framework-owned Unity bundle without following links."""
-    extension = root / "extensions/unity"
-    manifest_path = extension / "manifest.yaml"
-    skills_root = extension / "skills"
-    if not extension.exists() and not extension.is_symlink():
-        return []
-
-    issues: list[tuple[str, str, str]] = []
-
-    def report(code: str, path: Path, message: str) -> None:
-        issues.append((code, path.relative_to(root).as_posix(), message))
-
-    if extension.is_symlink() or skills_root.is_symlink() or manifest_path.is_symlink():
-        report("unity-manifest", manifest_path, "Unity extension paths must not be symbolic links")
-        return issues
-    if not manifest_path.is_file():
-        report("unity-manifest", manifest_path, "Missing Unity extension manifest")
-        return issues
-    try:
-        manifest = read_yaml(manifest_path)
-    except Exception:
-        report("unity-manifest", manifest_path, "Invalid Unity extension manifest YAML")
-        return issues
-    if not isinstance(manifest, dict) or set(manifest) != {"schema-version", "id", "version", "license", "skills"}:
-        report("unity-manifest", manifest_path, "Unity manifest must contain only schema-version, id, version, license, and skills")
-        return issues
-    if type(manifest["schema-version"]) is not int or manifest["schema-version"] != 1 or manifest["id"] != "unity" or manifest["license"] != "MIT":
-        report("unity-manifest", manifest_path, "Unity manifest identity, schema version, or license is invalid")
-    if manifest["version"] != version:
-        report("unity-manifest", manifest_path, f"Unity manifest version must match framework version {version}")
-    skills = manifest["skills"]
-    if not isinstance(skills, dict) or not skills:
-        report("unity-manifest", manifest_path, "Unity manifest skills must be a nonempty mapping")
-        return issues
-    if not skills_root.is_dir():
-        report("unity-manifest", skills_root, "Missing Unity skills directory")
-        return issues
-
-    core_names = {path.name for path in (root / "core/skills").glob("*") if path.is_dir()}
-    skill_name = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
-    for identifier, relative in skills.items():
-        if not isinstance(identifier, str) or not skill_name.fullmatch(identifier):
-            report("unity-manifest", manifest_path, "Unity skill ID is invalid")
-            continue
-        if identifier in core_names:
-            report("unity-skill-collision", manifest_path, f"Unity skill '{identifier}' collides with Core")
-        if relative != f"skills/{identifier}":
-            report("unity-manifest", manifest_path, f"Unity skill '{identifier}' must map to skills/{identifier}")
-            continue
-        directory = skills_root / identifier
-        entry = directory / "SKILL.md"
-        if directory.is_symlink() or entry.is_symlink() or not entry.is_file():
-            report("unity-skill-entry", entry, f"Unity skill '{identifier}' has no safe SKILL.md")
-            continue
-        if any(member.is_symlink() for member in directory.rglob("*")):
-            report("unity-skill-entry", directory, f"Unity skill '{identifier}' contains a symbolic link")
-        try:
-            text = entry.read_text(encoding="utf-8")
-            match = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
-            metadata = yaml.safe_load(match.group(1)) if match else None
-        except (UnicodeError, yaml.YAMLError):
-            metadata = None
-        if not isinstance(metadata, dict) or metadata.get("name") != identifier or not isinstance(metadata.get("description"), str) or not metadata["description"].strip():
-            report("unity-skill-frontmatter", entry, f"Unity skill '{identifier}' needs matching name and description in YAML frontmatter")
-
-    for directory in skills_root.iterdir():
-        if directory.is_symlink() or (directory.is_dir() and directory.name not in skills):
-            report("unity-skill-entry", directory, "Unity skill directory is unlisted or symbolic")
-    return issues
-
-
 def collect_issues(root: Path) -> list[dict[str, str]]:
     issues: list[dict[str, str]] = []
 
@@ -543,9 +471,6 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                 add("skill-eval-schema", relative, message)
         except Exception:
             add("skill-eval-schema", relative, "Invalid skill evaluation JSON")
-
-    for code, path, message in _unity_extension_issues(root, current_framework_version):
-        add(code, path, message)
 
     catalog = read_yaml(root / "core/catalog.yaml") or {}
     seen: set[str] = set()

@@ -101,7 +101,7 @@ Local [task checkpoints](guides/task-continuity.md) retain bounded IDs, project-
 
 External server/tool configuration is inventoried separately from Core policy. Inventory records metadata and drift, never secret values.
 
-The optional [external capability inventory](configuration/capabilities.md) separates declaration, installed configuration, host discovery, instruction loading, tool readiness, and execution. Local inventory and self-reported observations cannot establish later host stages as verified. The opt-in [Unity bundle](guides/unity-capabilities.md) is an extension, not a Core dependency or bundled third-party plugin.
+The optional [external capability inventory](configuration/capabilities.md) separates declaration, installed configuration, host discovery, instruction loading, tool readiness, and execution. Local inventory and self-reported observations cannot establish later host stages as verified. Projects install and manage domain-specific capabilities through their host.
 
 Core [engineering skills](guides/engineering-skills.md) remain procedures. [Live skill evaluations](guides/skill-evals.md) launch fresh host sessions to compare behavior, whereas `eval run --record` assesses a supplied record. Incremental [code organization](configuration/organization.md) checks use the change baseline to identify new violations without waiving existing rules.
 

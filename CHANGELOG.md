@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.22.0 - 2026-10-04
+
+### Removed
+
+- Remove the shipped optional Unity skill bundle and its navigation. Unity reference projects and project-configured organization checks remain available.
+
+### Compatibility and migration
+
+- Schema v1 retains `builtin:unity` only to read legacy inventories and report the entry unavailable. Install rejects it for a selected host, and update rejects it, before writes; no automatic conversion or version bump occurs.
+- Install a desired replacement independently through the host, explicitly remove the legacy inventory entry, and then run an owned-file prune for old projections. Modified or unowned files are preserved.
+
 ## 0.21.0 - 2026-10-04
 
 ### Added

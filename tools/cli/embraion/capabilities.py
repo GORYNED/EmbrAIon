@@ -19,7 +19,7 @@ from jsonschema import Draft202012Validator
 
 _CONFIG = Path(".embraion/external-capabilities.yaml")
 _SCHEMA = Path("schemas/external-capabilities.schema.json")
-_UNITY_MANIFEST = Path("extensions/unity/manifest.yaml")
+_REMOVED_BUNDLE = "Built-in Unity bundle has been removed; remove its legacy inventory entry before projection or update."
 _STAGES = ("declared", "installed-config", "host-discovered", "instructions-read", "tools-ready", "executed")
 _OBSERVED_STAGES = frozenset(_STAGES[1:])
 _MAX_FILE_BYTES = 65536
@@ -118,57 +118,12 @@ def _framework_version(framework_root: Path) -> str:
     return manifest["version"]
 
 
-def _project_pin(project: Path) -> str:
-    manifest = _read_yaml(project, Path(".embraion/project.yaml"))
-    if not isinstance(manifest, dict) or not isinstance(manifest.get("framework"), dict):
-        raise RuntimeError("Invalid project framework pin.")
-    framework = manifest["framework"]
-    if framework.get("repository") != "GORYNED/EmbrAIon" or not isinstance(framework.get("version"), str):
-        raise RuntimeError("Invalid project framework pin.")
-    return framework["version"]
-
-
-def _builtin_skills(framework_root: Path, entry: dict[str, Any], version: str) -> dict[str, Path]:
-    if entry["source"] != "builtin:unity" or entry.get("version") != version:
-        raise RuntimeError("Built-in capability must match the running framework version.")
-    manifest = _read_yaml(framework_root, _UNITY_MANIFEST)
-    if not isinstance(manifest, dict) or manifest.get("schema-version") != 1 or manifest.get("id") != "unity" or manifest.get("version") != version:
-        raise RuntimeError("Invalid built-in Unity manifest identity or version.")
-    if manifest.get("license") != entry["license"] or not isinstance(manifest.get("skills"), dict):
-        raise RuntimeError("Built-in Unity manifest license or skills mismatch.")
-    skill_map = manifest["skills"]
-    selected: dict[str, Path] = {}
-    for skill_id in entry["selected-skills"]:
-        expected = f"skills/{skill_id}"
-        if skill_map.get(skill_id) != expected:
-            raise RuntimeError("Selected built-in skill is absent from the manifest.")
-        directory = _safe_file(framework_root, Path("extensions/unity") / expected)
-        entry_point = _safe_file(framework_root, Path("extensions/unity") / expected / "SKILL.md")
-        if not directory.is_dir() or not entry_point.is_file():
-            raise RuntimeError("Selected built-in skill entry point is missing.")
-        for member in directory.rglob("*"):
-            if member.is_symlink() or not (member.is_file() or member.is_dir()):
-                raise RuntimeError("Selected built-in skill contains an unsafe file.")
-        selected[skill_id] = directory
-    return selected
-
-
 def projected_skills(framework_root: Path, project: Path, host: str) -> dict[str, Path]:
-    """Return validated built-in skill sources selected for one supported host."""
+    """Reject a removed legacy bundle before projecting a selected host."""
     inventory = read_external_capabilities(framework_root, project)
-    chosen = [item for item in inventory["capabilities"] if item["kind"] == "managed-bundle" and host in item["hosts"]]
-    if not chosen:
-        return {}
-    version = _framework_version(Path(framework_root))
-    if _project_pin(Path(project)) != version:
-        raise RuntimeError("Project framework pin does not match the running framework.")
-    sources: dict[str, Path] = {}
-    for entry in chosen:
-        for skill_id, source in _builtin_skills(Path(framework_root), entry, version).items():
-            if skill_id in sources:
-                raise RuntimeError("Duplicate selected built-in skill.")
-            sources[skill_id] = source
-    return sources
+    if any(item["kind"] == "managed-bundle" and host in item["hosts"] for item in inventory["capabilities"]):
+        raise RuntimeError(_REMOVED_BUNDLE)
+    return {}
 
 
 def observation_scope(framework_root: Path, project: Path, host: str) -> str:
@@ -231,23 +186,12 @@ def diagnose_external_capabilities(framework_root: Path, project: Path, host: st
     for entry in inventory["capabilities"]:
         if host not in entry["hosts"]:
             continue
-        installed = False
-        issue = None
-        if entry["kind"] == "managed-bundle":
-            try:
-                if _project_pin(Path(project)) != _framework_version(Path(framework_root)):
-                    raise RuntimeError("Project framework pin mismatch.")
-                _builtin_skills(Path(framework_root), entry, _framework_version(Path(framework_root)))
-                installed = True
-            except RuntimeError:
-                issue = "built-in source or framework pin unverified"
+        removed = entry["kind"] == "managed-bundle"
         required_env = [{"name": name, "present": bool(environment.get(name))} for name in entry["env-vars"]]
         stages: dict[str, dict[str, Any]] = {}
         stages["declared"] = {"status": "verified", "provenance": _CONFIG.as_posix(), "observed-at": at.isoformat()}
         for stage in _STAGES[1:]:
-            if stage == "installed-config" and installed:
-                stages[stage] = {"status": "verified", "provenance": _UNITY_MANIFEST.as_posix(), "observed-at": at.isoformat()}
-            elif stage in claims.get(entry["id"], set()):
+            if not removed and stage in claims.get(entry["id"], set()):
                 stages[stage] = {"status": "self-reported", "provenance": "supplied observation", "observed-at": observation["observed-at"]}
             else:
                 stages[stage] = {"status": "unverified", "provenance": None, "observed-at": None}
@@ -256,6 +200,6 @@ def diagnose_external_capabilities(framework_root: Path, project: Path, host: st
                      "license": entry["license"], "access": entry["access"], "data-class": entry["data-class"],
                      "host-requirements": entry.get("host-requirements", {}).get(host, []),
                      "required-env": required_env, "stages": stages, "ready": False,
-                     "issue": issue or ("required environment missing" if any(not row["present"] for row in required_env) else None)})
+                     "issue": _REMOVED_BUNDLE if removed else ("required environment missing" if any(not row["present"] for row in required_env) else None)})
     return {"schema-version": 1, "host": host, "scope": scope, "diagnosed-at": at.isoformat(),
             "observation-status": observation_status, "capabilities": rows}

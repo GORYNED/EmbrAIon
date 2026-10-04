@@ -58,28 +58,27 @@ class ManagedCapabilityUpgradeTests(unittest.TestCase):
                 "asset": f"embraion-{__version__}-py3-none-any.whl",
                 "digest": "sha256:" + "b" * 64}
 
-    def test_update_aligns_builtin_and_preserves_host_managed_metadata(self) -> None:
+    def test_update_rejects_removed_bundle_before_any_config_writes(self) -> None:
         self._inventory(self.bundle, self.host_managed, self.digest_managed)
+        before = (self.manifest.read_bytes(), self.inventory.read_bytes())
         with patch("embraion.project.resolve_release_artifact", return_value=self._artifact()):
-            previous, target = update_project(self.project)
-        self.assertEqual((OLD_PIN, __version__), (previous, target))
-        upgraded = yaml.safe_load(self.inventory.read_text(encoding="utf-8"))
-        self.assertEqual(__version__, upgraded["capabilities"][0]["version"])
-        self.assertEqual(self.host_managed, upgraded["capabilities"][1])
-        self.assertEqual(self.digest_managed, upgraded["capabilities"][2])
-        self.assertEqual(__version__, yaml.safe_load(self.manifest.read_text(encoding="utf-8"))["framework"]["version"])
+            with self.assertRaisesRegex(RuntimeError, "Unity bundle has been removed"):
+                update_project(self.project)
+        self.assertEqual(before, (self.manifest.read_bytes(), self.inventory.read_bytes()))
+        self.assertFalse((self.config / "routing.yaml").exists())
 
-    def test_target_version_already_prepared_is_accepted(self) -> None:
+    def test_target_version_already_prepared_is_rejected(self) -> None:
         self._inventory({**self.bundle, "version": __version__})
-        changed = normalize_project_config(self.project, version=__version__)
-        self.assertNotIn(self.inventory, changed)
-        self.assertEqual(__version__, yaml.safe_load(self.manifest.read_text(encoding="utf-8"))["framework"]["version"])
+        before = (self.manifest.read_bytes(), self.inventory.read_bytes())
+        with self.assertRaisesRegex(RuntimeError, "removed"):
+            normalize_project_config(self.project, version=__version__)
+        self.assertEqual(before, (self.manifest.read_bytes(), self.inventory.read_bytes()))
 
     def test_unsupported_selected_skill_rejects_entire_update_before_writes(self) -> None:
         self._inventory({**self.bundle, "selected-skills": ["unity-unknown-skill"]})
         before = (self.manifest.read_bytes(), self.inventory.read_bytes())
         with patch("embraion.project.resolve_release_artifact", return_value=self._artifact()):
-            with self.assertRaisesRegex(RuntimeError, "absent from the manifest"):
+            with self.assertRaisesRegex(RuntimeError, "removed"):
                 update_project(self.project)
         self.assertEqual(before, (self.manifest.read_bytes(), self.inventory.read_bytes()))
         self.assertFalse((self.config / "routing.yaml").exists())
@@ -101,6 +100,12 @@ class ManagedCapabilityUpgradeTests(unittest.TestCase):
             normalize_project_config(self.project, version=__version__)
         self.assertNotIn("sensitive-value", str(failure.exception))
         self.assertEqual(OLD_PIN, yaml.safe_load(self.manifest.read_text(encoding="utf-8"))["framework"]["version"])
+
+    def test_host_managed_metadata_survives_update_without_bundle(self) -> None:
+        self._inventory(self.host_managed, self.digest_managed)
+        normalize_project_config(self.project, version=__version__)
+        upgraded = yaml.safe_load(self.inventory.read_text(encoding="utf-8"))
+        self.assertEqual([self.host_managed, self.digest_managed], upgraded["capabilities"])
 
     def test_absent_inventory_is_not_created(self) -> None:
         normalize_project_config(self.project, version=__version__)
