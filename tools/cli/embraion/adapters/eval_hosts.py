@@ -112,9 +112,13 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
             return {"status": "native-config-unverified", "duration-seconds": None}
         if profile.get("name") != "worker" or profile.get("sandbox_mode") != "workspace-write":
             return {"status": "native-config-unverified", "duration-seconds": None}
-        result = _invoke_codex(binary, project, prompt, model, effort, timeout, skills, scratch,
-                               developer_instructions=instructions, windows_sandbox=windows_sandbox,
-                               trusted_workspace=True)
+        # Stable project trust must not imply retained answers or events from a
+        # previous attempt. Raw observations have their own short lifetime.
+        from ..experiment_evals import _scratch_root
+        with tempfile.TemporaryDirectory(prefix="native-observation-", dir=_scratch_root()) as observation:
+            result = _invoke_codex(binary, project, prompt, model, effort, timeout, skills, Path(observation),
+                                   developer_instructions=instructions, windows_sandbox=windows_sandbox,
+                                   trusted_workspace=True)
         result["configuration-evidence"] = "explicit-native-developer-instructions-argument"
         result["role-evidence"] = "worker-profile-explicit-argument"
         return result

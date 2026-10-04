@@ -174,6 +174,26 @@ class FullCoreExperiments(unittest.TestCase):
         self.assertEqual("native-config-unverified", result["status"])
         native.assert_not_called()
 
+    def test_raw_native_observations_do_not_survive_between_attempts(self):
+        from embraion.adapters.eval_hosts import invoke_host
+        profile = self.source / ".codex/agents/worker.toml"
+        profile.parent.mkdir(parents=True)
+        profile.write_text('name="worker"\nsandbox_mode="workspace-write"\ndeveloper_instructions="worker"\n')
+        observations = []
+        def bridge(*args, **kwargs):
+            observation = args[-1]
+            self.assertNotEqual(self.root, observation)
+            self.assertTrue(all(not earlier.exists() for earlier in observations))
+            for name in ("last-message.txt", "prompt.txt", "events.jsonl", "stderr.txt"):
+                (observation / name).write_text("transient private canary")
+            observations.append(observation)
+            return {"status": "completed"}
+        with patch("embraion.adapters.eval_hosts._invoke_codex", side_effect=bridge):
+            for _ in range(2):
+                invoke_host("codex", "test", self.source, "test", "test", "medium", 1, [], self.root)
+                self.assertFalse(observations[-1].exists())
+        self.assertNotEqual(observations[0], observations[1])
+
     def test_undeclared_core_or_adapter_difference_is_inconclusive_before_launch(self):
         path = self.root / "candidate" / "adapters/host.txt"
         path.write_text("hidden additional rule\n", encoding="utf-8")
