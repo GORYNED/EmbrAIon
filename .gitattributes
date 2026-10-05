@@ -3,3 +3,6 @@
 .agents/** text eol=lf
 .codex/** text eol=lf
 evals/foundation/fixtures/** text eol=lf
+# Canonical instruction and proposal digests must survive Windows checkouts.
+core/** text eol=lf
+evals/evolution/candidates/core-skills-*.patch text eol=lf
