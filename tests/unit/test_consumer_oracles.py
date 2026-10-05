@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,7 +20,7 @@ class ConsumerOracleTests(unittest.TestCase):
     def setUp(self):
         self.cases = {case["id"]: case for case in json.loads(REGISTRY.read_bytes())["cases"]}
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve(strict=True)
         self.addCleanup(self.temporary.cleanup)
 
     def write_case(self, case_id="consumer-evidence-01"):
@@ -121,6 +122,29 @@ class ConsumerOracleTests(unittest.TestCase):
         (self.root / "test_contract.py").write_text(GOOD)
         with patch.object(Path, "is_symlink", lambda path: path == self.root.parent or original(path)):
             self.assertEqual("inconclusive", self.judge()["status"])
+
+    def test_system_temp_alias_is_canonicalized_only_for_trusted_creation(self):
+        canonical = self.root / "system-temp"
+        canonical.mkdir()
+        alias = self.root / "temp-alias"
+        try:
+            alias.symlink_to(canonical, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("directory symlink unavailable")
+        created = canonical / "created-fixture"
+        created.mkdir()
+        with patch("embraion.consumer_oracles.tempfile.TemporaryDirectory",
+                   return_value=nullcontext(str(alias / created.name))):
+            self.assertEqual("pass", calibration(ORACLE_ID, ROOT)["status"])
+        for name, content in self.cases["consumer-evidence-01"]["files"].items():
+            (created / name).write_bytes(content.encode("utf-8"))
+        (created / "test_contract.py").write_bytes(GOOD.encode("utf-8"))
+        # An untrusted input under the same alias is still rejected, even
+        # though trusted calibration wrote valid fixture bytes there.
+        self.assertEqual("inconclusive", grade(ORACLE_ID, alias / created.name, {},
+                                             {"case": "consumer-evidence-01"})["status"])
+        self.assertEqual("pass", grade(ORACLE_ID, created, {},
+                                      {"case": "consumer-evidence-01"})["status"])
 
 
 if __name__ == "__main__":

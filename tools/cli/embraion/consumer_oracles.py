@@ -285,7 +285,10 @@ def calibration(oracle_id: str, framework: Path) -> dict[str, Any]:
     cases = _registry()[0]
     outcomes = []
     with tempfile.TemporaryDirectory(prefix="embraion-consumer-") as temporary:
-        root = Path(temporary)
+        # Canonicalize the trusted directory we just created: macOS exposes
+        # system temp through /var -> /private/var. Candidate-supplied paths
+        # still go through _read's unchanged ancestor-link rejection.
+        root = Path(temporary).resolve(strict=True)
         def observe(name: str, case_id: str, changes: dict[str, str], expected: str, detected: str | None = None):
             for filename, text in {**cases[case_id]["files"], **changes}.items():
                 (root / filename).write_text(text, encoding="utf-8", newline="\n")

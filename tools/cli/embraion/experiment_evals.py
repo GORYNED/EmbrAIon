@@ -40,7 +40,9 @@ RUNTIME_ROOT = Path(__file__).resolve().parent
 def _scratch_root() -> Path:
     # Native hosts discover enclosing repositories. Keep candidates outside the
     # controller checkout so workspace-write cannot include the trusted grader.
-    root = Path(tempfile.gettempdir()) / "embraion-experiments"
+    # Resolve the operating system's temp alias before creating our owned child.
+    # Links at that child or in candidate data remain forbidden below.
+    root = Path(tempfile.gettempdir()).resolve(strict=True) / "embraion-experiments"
     if root.is_symlink() or (hasattr(root, "is_junction") and root.is_junction()):
         raise ValueError("experiment scratch contains a link")
     if root.resolve().is_relative_to(framework_root().resolve()) or root.resolve().is_relative_to(RUNTIME_ROOT.resolve()):

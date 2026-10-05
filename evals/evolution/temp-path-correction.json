@@ -1,0 +1,25 @@
+{
+  "schema-version": 1,
+  "kind": "evaluation-infrastructure-correction",
+  "source-kind": "confirmed-ci-failure",
+  "source-head": "7aa218af59d57c3ae2957fc13c0d106cfe9ef27b",
+  "evidence-ref": "https://github.com/GORYNED/EmbrAIon/actions/runs/37310269791/job/111763687278",
+  "observed-problem": "On macOS/Python 3.14, consumer calibration and five related assertions reject the system temporary path because /var is a platform alias for /private/var. The checker reports linked input ancestor, failing correct controls before candidate behavior is assessed.",
+  "proposed-rule": "Canonicalize a trusted platform temporary parent before creating the experiment-owned scratch child, and canonicalize the newly created trusted calibration directory. Reject links in the owned child and all candidate-supplied input ancestors as before.",
+  "changed-paths": [
+    "tools/cli/embraion/consumer_oracles.py",
+    "tools/cli/embraion/experiment_evals.py",
+    "tests/unit/test_consumer_oracles.py",
+    "tests/unit/test_experiment_evals.py"
+  ],
+  "regression-scenarios": [
+    "system-temp-alias-is-canonicalized-only-for-trusted-creation",
+    "scratch-uses-canonical-system-temp-but-rejects-linked-owned-child"
+  ],
+  "expected-result": "Correct controls are graded from canonical trusted temporary paths; equivalent candidate-supplied linked paths and a substituted scratch child remain rejected.",
+  "coverage-boundary": "Path portability and unchanged link rejection for these fixtures; no general filesystem race containment, device behavior or Core benefit is established.",
+  "historical-evidence": "R31 observations and their digests remain unchanged. New runner/checker source requires a newly frozen baseline for any subsequent candidate comparison; historical outcomes are not regraded.",
+  "corpus-lifecycle": "Advisory regression record, not an active corpus promotion or a review approval.",
+  "canonical-core-mutated": false,
+  "promotion-authorized": false
+}

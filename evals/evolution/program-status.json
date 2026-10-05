@@ -1,7 +1,7 @@
 {
   "schema-version": 1,
   "kind": "advisory-program-status",
-  "updated-at": "2026-10-05T09:13:26.751874+00:00",
+  "updated-at": "2026-10-05T12:44:17.339732+00:00",
   "scope": "EmbrAIon only; no consumer updates, merge or release",
   "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
   "canonical-core-mutated": false,
@@ -71,22 +71,23 @@
   ],
   "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
   "latest-pushed-ci": {
-    "commit": "07132a1a04551fa5dd95193fc0853e2ed18092da",
-    "validate-run": 37277620694,
-    "docs-run": 37277620682,
-    "status": "passed",
-    "boundary": "Exact committed source only; the new consumer checker is a later local change and requires fresh validation and CI."
+    "commit": "7aa218af59d57c3ae2957fc13c0d106cfe9ef27b",
+    "validate-run": 37310269791,
+    "docs-run": 37310269796,
+    "status": "macos-python311-and314-failed-correction-local-validated",
+    "boundary": "Consumer controls rejected a system temp alias on macOS. Local correction requires new CI; prior pass is not substituted.",
+    "correction-ref": "evals/evolution/temp-path-correction.json"
   },
   "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
   "overall": "incomplete; authorized implementation and live experiments continue",
   "latest-local-validation": {
-    "source-archive": "42ca3f4ebc41515bdab8642547a916cf2dc8c5fd9f27ed1eb94154daa4d85689",
-    "unit-tests": 708,
+    "source-archive": "0e37b202181e4786562c9ee40022de081a53e91de15f6dde1d74db5c98918127",
+    "unit-tests": 710,
     "unit-status": "passed",
     "source-validation": "passed",
     "strict-docs": "passed",
     "integration-tests": 43,
     "integration-status": "passed-with-one-expected-skip",
-    "boundary": "R31 frozen source, before these advisory status and preserved evidence updates. Canonical Core remains original."
+    "boundary": "R33 frozen source after system-temp alias correction, before this advisory validation update. No native experiment is regraded; canonical Core remains original."
   }
 }

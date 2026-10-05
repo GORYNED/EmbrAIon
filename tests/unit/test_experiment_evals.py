@@ -14,13 +14,34 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 
 from embraion.common import framework_root
-from embraion.experiment_evals import _artifact_changes, capture_snapshot, identity, load_baseline_reports, run_experiment
+from embraion.experiment_evals import _artifact_changes, _scratch_root, capture_snapshot, identity, load_baseline_reports, run_experiment
 
 
 ROOT = framework_root()
 
 
 class ArtifactChangeEvidence(unittest.TestCase):
+    def test_scratch_uses_canonical_system_temp_but_rejects_linked_owned_child(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve(strict=True)
+            platform_temp = parent / "canonical-temp"
+            platform_temp.mkdir()
+            alias = parent / "system-temp-alias"
+            try:
+                alias.symlink_to(platform_temp, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlink unavailable")
+            with patch("embraion.experiment_evals.tempfile.gettempdir", return_value=str(alias)):
+                scratch = _scratch_root()
+                self.assertEqual(platform_temp / "embraion-experiments", scratch)
+                self.assertEqual(scratch, scratch.resolve(strict=True))
+                scratch.rmdir()  # Exact empty test-owned directory.
+                injected = parent / "injected-child"
+                injected.mkdir()
+                scratch.symlink_to(injected, target_is_directory=True)
+                with self.assertRaisesRegex(ValueError, "contains a link"):
+                    _scratch_root()
+
     def test_created_names_are_opaque_and_owned_count_is_preserved(self):
         secret_name = "EVAL_PRIVATE_ABCDEFGHIJKLMNOP.pyc"
         rows = _artifact_changes({"pin.json": "a" * 64},
