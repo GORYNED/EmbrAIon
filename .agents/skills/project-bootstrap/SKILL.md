@@ -34,7 +34,8 @@ empty routing can still orchestrate and delegate through host-default.
    Preserve unrelated work. Inspect every existing `.embraion/**` contract and
    installed projection manifest before planning changes. Invalid or ambiguous
    configuration is a blocker for that mutation, not permission to reset it.
-2. Read authoritative README/contributor documents, architecture, decisions/ADRs,
+2. Read authoritative README/contributor documents, project coding standards,
+   architecture, decisions/ADRs,
    source-authority instructions, specifications, compatibility/migration and
    persistence/storage/serialization contracts where applicable. Inspect real
    source and public/stable APIs: absence of a named document does not establish
@@ -66,6 +67,10 @@ after confirming it governs that concern. A README can govern several concerns
 when its actual contents justify the bindings; its name alone is insufficient.
 Add custom entries only when roles/triggers materially improve context selection.
 Leave an optional slot null/unbound when no authoritative source exists.
+If an authoritative coding standard governs file placement, namespaces, or
+assembly boundaries, bind it as a custom entry with relevant implementation and
+review roles/triggers. Reuse an existing authoritative source and do not create
+a new canonical slot or invent a document merely to fill this entry.
 
 Create a missing canonical document only when all four conditions hold:
 

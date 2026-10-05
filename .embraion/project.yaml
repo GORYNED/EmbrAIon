@@ -1,12 +1,18 @@
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.17.0
+  version: 0.23.0
   artifact:
     schema: 1
     source: github-release
-    release: v0.17.0
-    asset: embraion-0.17.0-py3-none-any.whl
-    digest: sha256:dd6541f40c62dc77d9490ed2de90d79331e3927506ebbfff2e6b026590aee5af
+    release: v0.23.0
+    asset: embraion-0.23.0-py3-none-any.whl
+    digest: sha256:4200ecc77a342f82bd1cb78e3313dc78ebcc9dc26d2ce57d50545346d06df581
 project:
   name: EmbrAIon
 capabilities: {}
+housekeeping:
+  on-task-start: false
+  local-branches: true
+  remote-branches: false
+  worktrees: true
+  preserve-branches: []
