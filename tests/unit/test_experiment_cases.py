@@ -30,14 +30,14 @@ class RolePilotCases(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
             output = Path(temporary) / "pilot"
             prepare_role_baseline(root, output, role="lead")
-            suite = json.loads((output / "suite.json").read_text())
+            suite = json.loads((output / "suite.json").read_text(encoding="utf-8"))
             self.assertEqual({"role": "lead", "access": "read-only"}, suite["execution"])
             self.assertEqual(4, len(suite["cases"]))
             self.assertEqual({("en", "positive"), ("ru", "positive"), ("en", "negative"), ("ru", "negative")},
                              {(case["language"], case["polarity"]) for case in suite["cases"]})
             for case in suite["cases"]:
                 fixture = output / case["fixture"]
-                self.assertNotIn("expected-result", (fixture / "scenario.json").read_text())
+                self.assertNotIn("expected-result", (fixture / "scenario.json").read_text(encoding="utf-8"))
                 self.assertEqual("pass", grade("wiring-v1", fixture, {}, {})["status"])
             with self.assertRaises(ValueError):
                 prepare_role_baseline(root, output, role="lead")

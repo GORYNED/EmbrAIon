@@ -18,7 +18,7 @@ class TargetCases(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
             output = Path(temporary) / "scope"
             prepare_target_baseline(root, output, target="scope-action")
-            suite = json.loads((output / "suite.json").read_text())
+            suite = json.loads((output / "suite.json").read_text(encoding="utf-8"))
             self.assertEqual({"role": "lead", "access": "workspace-write"}, suite["execution"])
             self.assertEqual(6, len(suite["cases"]))
             self.assertEqual(2, sum("held-out" in case["id"] for case in suite["cases"]))
@@ -27,7 +27,7 @@ class TargetCases(unittest.TestCase):
                 before = grade("upgrade-scope-v1", fixture, {}, {})
                 target_check = next(check for check in before["checks"] if check["id"] == "framework-target")
                 self.assertEqual("fail" if case["polarity"] == "positive" else "pass", target_check["status"])
-                self.assertNotIn("expected-result", (fixture / "checkpoint.json").read_text())
+                self.assertNotIn("expected-result", (fixture / "checkpoint.json").read_text(encoding="utf-8"))
                 (fixture / "framework-pin.json").write_text('{"version":"0.22.0","external_action":"unverified"}')
                 self.assertEqual("pass", grade("upgrade-scope-v1", fixture, {}, {})["status"])
                 gold = case["observer"]["params"]
