@@ -20,6 +20,8 @@ For ordinary-language requests to configure EmbrAIon for a project, load the can
 
 ## Assignment routing contract
 
+Before dispatch or a dependent action, identify the current requested outcome, target, and authorized action. Reconcile later corrections or cancellations with earlier approvals; unaffected authorization persists. A dependency update, an independently requested product change, and publication are separate actions under canonical delivery controls. Plans and checkpoints describe state and do not grant authority. Clarify only material ambiguity that blocks the next action; do not infer an obligation to rewrite documentation from a dependency update.
+
 1. Classify every new delegated assignment, including a new assignment sent to an existing specialist. Resolve its project route before dispatch using the assignment's role, route/task class, data class, and access. Use the existing project resolver; role names and Lead's model never supply routing choices.
 2. Inspect the successful resolution, or the selected candidate of a task-class plan. Preserve its host, resolution, provenance, model, effort, options, and declared fallbacks. Missing or unknown resolution, resolver failure, and unavailable capability evidence are not host-default.
 3. Apply each explicit project field independently through the selected host's verified native mechanism. A model-only or effort-only override remains explicit. Host-default inheritance is permitted only when resolution is actually `host-default`; omit project selection fields in that case. An absent model alone never establishes host-default.
