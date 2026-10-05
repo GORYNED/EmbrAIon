@@ -1,0 +1,28 @@
+{
+  "schema-version": 1,
+  "target": "debug-decision",
+  "phase": "baseline",
+  "status": "inconclusive-interrupted-protocol-defect",
+  "source-archive": "7e2fad80dbdb0345916b60f25ea01ca72bc423fb8051e44cfb6939d897ac6a3c",
+  "planned-native-trials": 20,
+  "completed-graded-observations": 4,
+  "uncompleted-planned-observations": 16,
+  "counts": {
+    "pass": 0,
+    "fail": 1,
+    "inconclusive": 3
+  },
+  "decision": "Stop this invalid task protocol. No complete report or authoritative baseline exists; no candidate invocation, budgets, confirmation, composition or promotion.",
+  "interruption-reason": "The prompt prohibits issuing commands even though the native CLI needs read-only shell inspection to see source files. This task-protocol defect confounds causal procedure assessment. Preserve all partial observations and uncompleted plan; do not infer that it caused any particular expired native failure.",
+  "next-protocol": "Permit necessary read-only file inspection while prohibiting candidate execution, mutation, install, network and publication; declare new registry identity and fresh baseline.",
+  "coverage": "Partial synthetic source judgments only; no Core benefit, real debugging quality, runtime or internal activation proof.",
+  "files": {
+    "candidate-manifest.json": "84fbddc1cbb4759471ad1ff0b6d048f9bcd2a88da936ea15c0964da22f188315",
+    "matched-suite.json": "b66f031578246dbd8f23f9b7933c1cbbd76e57d59d3066735814930562f4bf60",
+    "qualified-baseline-report.json.runs.jsonl": "e3825fc316d385128888e35c961ab198c24dcce31a750cfd0c62b5ed39c2a0b5",
+    "snapshot.json": "e9837dca388d4fbdc57bfc676b29dfa35c27de92cf49a2cc84a5b889c44838e2",
+    "suite.json": "2985c9d7ad5084112c777990852a6205a54dc8dbc4172747cbc9c6285f6b6e9b"
+  },
+  "promotion-authorized": false,
+  "canonical-core-mutated": false
+}

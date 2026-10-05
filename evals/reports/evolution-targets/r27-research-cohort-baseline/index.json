@@ -1,0 +1,54 @@
+{
+  "schema-version": 1,
+  "target": "research-decision",
+  "phase": "baseline",
+  "source-archive": "e1432cee96102bbdb5ebd001faa9728574a0f5d4d9b72184e7acaf51efed7bac",
+  "native-trials": 20,
+  "attempts-per-case": 5,
+  "cohorts": [
+    {
+      "cohort": "targeted",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 8,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "c5e3b1a8015cb92d219958dba3934b9b2ffa5328191fe437eb3674ba95868efd",
+        "matched-suite.json": "aba1a3a61dd967389c3a7a6af4e5faf9525fd6e8f76ccfa21d5b05e03fbab4b2",
+        "qualified-baseline-report.json": "c89dc775daba42688fd5d98ed85b7ea544f4b714bc3cf1b77b69d9e62c4add38",
+        "snapshot.json": "c640aea649e530457c6c9ae04cf6d505475f168d3cb8634c15880d2203446c6d",
+        "suite.json": "a46e22fe1efb059ff04a8671916a45a226875e7fd43174615c7672ae945c485f"
+      }
+    },
+    {
+      "cohort": "controls",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 10,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "c5e3b1a8015cb92d219958dba3934b9b2ffa5328191fe437eb3674ba95868efd",
+        "matched-suite.json": "5e7d3f4f1ff81e39417450dc6f488fa526aeef6fe3a355fa71560f1ff328fe51",
+        "qualified-baseline-report.json": "b05d709f0595291e741b88d284cf48fd37cb32f4bbe9e1af0eae8c7123983e13",
+        "snapshot.json": "c640aea649e530457c6c9ae04cf6d505475f168d3cb8634c15880d2203446c6d",
+        "suite.json": "f6958c0d1ae713a23a946aab0748cf5bf9873c7b8e352bfecfc9dbef1b850972"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 18,
+    "fail": 2,
+    "inconclusive": 0
+  },
+  "qualification": "Twenty complete per-case baseline observations under the outcome-neutral protocol. Targeted/control reports have equal captured host/environment, stable inputs, rubric, calibration and baseline manifest. CODEX_HOME directory names alone do not establish contamination. A future combined comparison must bind every case and reproduce exact captured context.",
+  "decision": "No candidate native trial or budgets were issued for these cohorts. Preserve the complete baseline bundles; do not treat a control-only report as sufficient targeted improvement or merge reports by discarding required evidence.",
+  "coverage": "Bounded static research decisions, facts and source anchors; no general runtime reuse or actual internal capability activation.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in local R27 controller.",
+  "correction": "Initial advisory index incorrectly inferred native-context mismatch from distinct profile directories. Independent inspection found the captured objects equal. The original report bytes and observations are unchanged."
+}

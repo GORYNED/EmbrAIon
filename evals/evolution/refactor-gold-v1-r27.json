@@ -1,0 +1,19 @@
+{
+  "kind": "independent-static-gold-delta-review",
+  "target": "refactor-characterization",
+  "contract-version": 1,
+  "prior-review": "evals/evolution/refactor-gold-v1.json",
+  "reviewed-registry-sha256": "3f25ef1512ec74d647caf81aa98d403e299e7c82e7672ea2c5a9c912dbbc1d54",
+  "reviewed-oracle-sha256": "1d182fdd80513913a70625c02321056a381e2c8ade851a1f1be0d33db97dd3fb",
+  "reviewed-fixture-readme-sha256": "d0ed09971325f7c689890ee92011e7563862cecb5aaea4a7793ed6f8673ae458",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "effective-backend-settings": "unverified",
+  "finding": "Six registered README payloads match the canonical fixture and timestamp regex. Requests, source and ownership contracts unchanged; documentation preservation uses the newly registered exact bytes.",
+  "validation-history": "R26 full675 tests had one timestamp-validation failure; no R26 native measurement was launched. Preserve that infrastructure evidence rather than marking it passed.",
+  "promotion-authorized": false,
+  "full-pr-review": false,
+  "evidence-source": "foundation_review_r5 bounded formatting rereview in this task"
+}

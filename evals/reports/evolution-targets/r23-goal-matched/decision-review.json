@@ -1,0 +1,21 @@
+{
+  "kind": "independent-bounded-decision-review",
+  "target": "goal-proof",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "effective-backend-settings": "unverified",
+  "report-sha256": {
+    "positive": "658546161886930e9685a4b20eec251690c7ae247705cdc8576d60363f517a32",
+    "negative": "ce78b617196f612956c41643376ce64afadc3db567f14872142b5edd937a3392",
+    "held-out": "fe9abe37d1cb2d414b8b6235853ab7386e5a7b1eecedf505aba9936b43a3ab53"
+  },
+  "finding": "All indexed hashes match preserved files; 36 pass and 18 tied-pass pairs support deferral without promotion.",
+  "limits": [
+    "Historical before-byte identity is checker-owned, not independent model provenance proof",
+    "Expired raw answers do not support causal attribution",
+    "No full PR approval or promotion"
+  ],
+  "evidence-source": "foundation_review_r5 bounded goal decision review in this task"
+}

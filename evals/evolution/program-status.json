@@ -1,7 +1,7 @@
 {
   "schema-version": 1,
   "kind": "advisory-program-status",
-  "updated-at": "2026-10-05T04:36:05.212258+00:00",
+  "updated-at": "2026-10-05T06:53:40.338030+00:00",
   "scope": "EmbrAIon only; no consumer updates, merge or release",
   "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
   "canonical-core-mutated": false,
@@ -23,22 +23,23 @@
       "decisions": {
         "review-axes": "deferred-no-observed-standalone-benefit-on-R17-cases",
         "scope-action": "inconclusive-no-candidate-native-run",
-        "goal-proof": "R23 eighteen passing exploration observations; ten-repeat baseline running"
+        "goal-proof": "R23 baseline59pass1fail; matched36pass18tied pairs, deferred-no-independent-benefit"
       },
       "remaining": [
-        "Goal matched comparison",
+        "Outcome-neutral comparisons where justified",
         "Separate planning, validation and dependency-upgrade experiments"
       ]
     },
     {
       "stage": 2,
-      "status": "trusted-oracles-being-integrated",
-      "research": "Six reviewed synthetic adopt/extend/build cases; full validation in progress, native not run",
-      "debugging": "Bounded causal-judgment oracle assigned",
+      "status": "trusted-oracles-validated-new-protocol-preparing",
+      "research": "R27 cohort baseline18pass2fail complete with equal captured native context. An unnecessary additional complete-suite baseline15pass4fail1inconclusive is preserved and blocks its planned candidate comparison. No unknown observation is waived; no candidate trial yet.",
+      "debugging": "R28 stopped after4graded observations (0pass1fail3inconclusive): prompt conflicts with necessary CLI reads. Journal preserved; contractv3 permits read-only file inspection and requires fresh baseline. No candidate trial or Core promotion. R29 contractv3 baseline25planned trials running; syntactic/source evidence remain separate and unknown mandatory evidence is not waived.",
       "remaining": [
         "Research/debugging baselines and isolated comparisons",
         "Consumer oracle, handoff and knowledge-state experiments"
-      ]
+      ],
+      "handoff": "Six checkpoint cases integrated; bounded-prefix and native partial-output authority retention gap fixed. R29 baseline40planned trials running. No candidate trial or Core promotion."
     },
     {
       "stage": 3,
@@ -50,22 +51,35 @@
     },
     {
       "stage": 4,
-      "status": "candidate-draft-unpromoted",
-      "remaining": "Characterization oracle, existing-skills comparison, removal ablation if applicable and decision"
+      "status": "blocked-mandatory-baseline-evidence-inconclusive",
+      "remaining": "Unsupported source/observer evidence and a host failure block comparison; held-out preflight inconclusive. Different checker or execution conditions need a newly declared baseline, preserving R27 results.",
+      "evidence": [
+        "evals/reports/evolution-targets/r27-refactor-baseline/index.json"
+      ]
     },
     {
       "stage": 5,
-      "status": "foundation-implemented-evolution-ongoing",
-      "remaining": "Reviewed protection scenarios from confirmed failures, near-misses, oracle gaps and new contracts; corpus lifecycle review"
+      "status": "foundation-implemented-corpus-seed-reviewed-evolution-ongoing",
+      "remaining": "Protection scenarios evolve from confirmed failures, near-misses, oracle gaps and new contracts; lifecycle decisions remain reviewed"
     }
   ],
   "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
   "latest-pushed-ci": {
-    "commit": "160f37d00501e34b5d200cfbba9aa9dd90fabec4",
-    "validate-run": 37261617036,
-    "docs-run": 37261617004,
+    "commit": "82261434973a02f2b62ecfc0bf1da9af5452c161",
+    "validate-run": 37264494270,
+    "docs-run": 37264494244,
     "status": "passed"
   },
   "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
-  "overall": "incomplete; authorized implementation and live experiments continue"
+  "overall": "incomplete; authorized implementation and live experiments continue",
+  "latest-local-validation": {
+    "source-archive": "36bb03d86bcebeba7a6b3760fdb74154dc80a46cc8dc9dc8b073341bcd787fcc",
+    "unit-tests": 699,
+    "unit-status": "passed",
+    "source-validation": "passed",
+    "strict-docs": "passed",
+    "integration-tests": 43,
+    "integration-status": "passed-with-one-expected-skip",
+    "boundary": "R29 frozen code, before this advisory status update and subsequent native evidence. Canonical Core remains original."
+  }
 }

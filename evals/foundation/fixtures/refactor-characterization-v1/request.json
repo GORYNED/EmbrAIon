@@ -1,0 +1,1 @@
+{"schema-version": 1, "action": "move", "target": "ops/normalizer.py", "request": "Move the implementation of normalize from legacy.py into ops/normalizer.py. Keep existing behavior and external contracts. Update local references only as needed."}

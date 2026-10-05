@@ -1,0 +1,81 @@
+{
+  "schema-version": 1,
+  "id": "goal-proof-r21-held-out",
+  "baseline": "baseline",
+  "candidate": "goal-proof",
+  "suite-digest": "3ad1204379e5fcfd95bc7300dafe5aeda9bc76bd71c6723967459e06fec8ef22",
+  "change-ids": [
+    "goal-proof"
+  ],
+  "traceability": [
+    {
+      "change-id": "goal-proof",
+      "source-kind": "new-contract",
+      "observed-problem": "Passing isolated checks can conceal absent wiring, unused implementation, removed obligations, or an unsupported completion claim.",
+      "proposed-rule": "Connect each completion claim to the requested result and relevant consumer evidence.",
+      "capability-paths": [
+        "core/skills/verification/SKILL.md"
+      ],
+      "expected-result": "Detect substantive completion failures and preserve truthful limits without blocking unrelated simple tasks.",
+      "scenarios": [
+        "goal-claims-heldout-en",
+        "goal-clean-heldout-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "goal-claims-heldout-en",
+    "goal-clean-heldout-ru"
+  ],
+  "target-cases": [
+    "goal-claims-heldout-en",
+    "goal-clean-heldout-ru"
+  ],
+  "cases": [
+    {
+      "case": "goal-claims-heldout-en",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 14927.800000000001,
+        "latency": 23.2356
+      },
+      "baseline-manifest-digest": "4e68722f2783919242d3f6b0b10960642458d16b099c44bea2223f52abf641af",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "goal-claims-heldout-en-r23-budget"
+    },
+    {
+      "case": "goal-clean-heldout-ru",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 15269.800000000001,
+        "latency": 32.297900000000006
+      },
+      "baseline-manifest-digest": "4e68722f2783919242d3f6b0b10960642458d16b099c44bea2223f52abf641af",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "goal-clean-heldout-ru-r23-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "qualified-baseline-report.json",
+      "digest": "5a92da15df2b3fec140a4e73eb3e18289f0818106702e68be4545af2b55ddd6e",
+      "suite-path": "suite.json",
+      "suite-digest": "d2fda028130b7dcd9c8b6c47441634d9583865fe344feccde36fd53d3c890366"
+    }
+  ]
+}

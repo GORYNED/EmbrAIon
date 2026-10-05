@@ -1,0 +1,47 @@
+{
+  "schema-version": 1,
+  "target": "research-decision",
+  "phase": "baseline",
+  "source-archive": "e1432cee96102bbdb5ebd001faa9728574a0f5d4d9b72184e7acaf51efed7bac",
+  "planned-native-trials": 20,
+  "attempts-per-case": 5,
+  "counts": {
+    "pass": 15,
+    "fail": 4,
+    "inconclusive": 1
+  },
+  "incomplete-evidence": [
+    {
+      "case": "research-decision-04",
+      "attempt": 5,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ]
+    }
+  ],
+  "qualification": "Complete predeclared invocation plan, but one mandatory observation is inconclusive; authoritative baseline qualification fails.",
+  "decision": "Candidate invocation, budgets, confirmation, composition and promotion are blocked. Four determinate finding/fact failures remain evidence; fifteen passes cannot compensate for one unknown observation.",
+  "infrastructure-boundary": "Native host exited1 after2.261seconds and reported unclassified errors. Root cause is unknown; no timeout, quota, network or authentication cause is inferred from expired raw output. No selective retry is performed.",
+  "files": {
+    "candidate-manifest.json": "a7825320ae7e63247972f14fcb9358c794ff50730a67b32d77932eb9380927e6",
+    "matched-suite.json": "61af8feb3e41579287a0c57f334ae1c3757c7f98c0f36b9882f8befbc2fd5891",
+    "qualified-baseline-report.json": "ed19c7cd0d87e3045e63d520e72851125dd124842b7d02d3a6445f93c4e62a6c",
+    "snapshot.json": "2ba65c54bd3dec32fd7a511f2cc59038f0a9110603870506d70b2cfcfc21e8c2",
+    "suite.json": "2e945de95f66a38924bddc1b89a4fc16c68639684a7fe0a6cb6a2dd7774b3372"
+  },
+  "coverage": "Bounded source-derived research decisions/facts/evidence; no runtime reuse, general research quality or internal activation proof.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in local R27 controller.",
+  "previous-diagnostic": "evals/reports/evolution-targets/r27-research-cohort-baseline/index.json",
+  "protocol-rationale-correction": "The additional full baseline was started because the author incorrectly inferred that split profiles necessarily differed. Earlier captured contexts were in fact equal. This unnecessary new measurement remains preserved; its mandatory unknown observation is not silently discarded or counted as pass."
+}

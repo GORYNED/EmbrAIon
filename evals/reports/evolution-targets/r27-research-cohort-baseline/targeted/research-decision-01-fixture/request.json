@@ -1,0 +1,1 @@
+{"schema-version":1,"required":{"operation":"slugify","input":"str","output":"lowercase-then-ascii-space-to-hyphen","consumer-call":"one-positional-arg"}}

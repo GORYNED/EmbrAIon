@@ -1,0 +1,93 @@
+{
+  "schema-version": 1,
+  "target": "refactor-characterization",
+  "phase": "baseline",
+  "source-archive": "e1432cee96102bbdb5ebd001faa9728574a0f5d4d9b72184e7acaf51efed7bac",
+  "planned-native-trials": 30,
+  "completed-native-invocations": 20,
+  "unattempted-planned-runs": 10,
+  "attempts-per-case": 5,
+  "cohorts": [
+    {
+      "cohort": "structural",
+      "preflight": {
+        "exploratory": "pass",
+        "baseline": "pass",
+        "matched": "pass"
+      },
+      "measurement-status": "inconclusive",
+      "counts": {
+        "pass": 0,
+        "fail": 9,
+        "inconclusive": 1
+      },
+      "mandatory-inconclusive-checks": [
+        "checker-availability",
+        "observer-availability",
+        "structural-goal"
+      ],
+      "files": {
+        "candidate-manifest.json": "e7213e7a1e7f65ff1d3e14d005873fbc0ec953c3c8b88716472dfc98a3df3217",
+        "matched-suite.json": "3ee7e75a4e4aa610782a708d0bb519a780b91a8bedcba59184b2301f5ec81624",
+        "qualified-baseline-report.json": "36be5179f62f0d6b5ac8c5b32205ca9801de63f52c452d1939b1fedd8577f4d4",
+        "snapshot.json": "d5d06b7b1828d46aa210baa0cac109893323638d74a684664616d562e0ea0752",
+        "suite.json": "bd4c51537a92d513077b47471954de69ceebba9a95ddb3e02e150a3aca06a0fa"
+      }
+    },
+    {
+      "cohort": "controls",
+      "preflight": {
+        "exploratory": "pass",
+        "baseline": "pass",
+        "matched": "pass"
+      },
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 10,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "mandatory-inconclusive-checks": [],
+      "files": {
+        "candidate-manifest.json": "e7213e7a1e7f65ff1d3e14d005873fbc0ec953c3c8b88716472dfc98a3df3217",
+        "matched-suite.json": "c616a38045daac7e5fc00aaafe4268f0ce9b9269eee1d52da7e19a9dd3741881",
+        "qualified-baseline-report.json": "ff153f96b0b8d3b20e54fc465571c10413b316c471f231728495785f76f69439",
+        "snapshot.json": "d5d06b7b1828d46aa210baa0cac109893323638d74a684664616d562e0ea0752",
+        "suite.json": "5ebeda868648c39d283cd1b2d4a8d92f26efca9b4d21a8e7a0572113a568c333"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "preflight": {
+        "exploratory": "inconclusive",
+        "baseline": "pass",
+        "matched": "pass"
+      },
+      "measurement-status": "preparation-inconclusive",
+      "counts": {
+        "pass": 0,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "unattempted-planned-runs": 10,
+      "files": {
+        "candidate-manifest.json": "e7213e7a1e7f65ff1d3e14d005873fbc0ec953c3c8b88716472dfc98a3df3217",
+        "matched-suite.json": "0d25149640285943159672394235a39b4c9f063ad389bbb22eae96b5cd103a73",
+        "snapshot.json": "d5d06b7b1828d46aa210baa0cac109893323638d74a684664616d562e0ea0752",
+        "suite.json": "fd328733bfc1de19cad51a69d1c782613910a83620000fb652a5fa3678b95243"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 10,
+    "fail": 9,
+    "inconclusive": 1
+  },
+  "qualification": "Inconclusive mandatory baseline evidence blocks candidate comparison. Known finite-answer failures remain failures; unknown source checks are not counted as passed.",
+  "decision": "No candidate native invocation, confirmation, composition or promotion. Preserve failed preflight, host failure and unsupported-source/observer checks. A different oracle or execution configuration requires a new declared baseline.",
+  "postmortem": "Last structural workspace contained a legacy function with a local import plus return. The v1 source grammar only supports a direct public re-export or one return statement. That bounded coverage observation does not establish runtime correctness or explain expired earlier answers.",
+  "coverage": "Trusted pre-change characterization plus bounded static post-change integer code; no general runtime, historical model reasoning order or internal activation proof.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in local R27 controller."
+}

@@ -1,0 +1,119 @@
+{
+  "schema-version": 2,
+  "id": "research-decision-target-baseline-qualified-controls-matched",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "researcher",
+    "access": "read-only"
+  },
+  "metric-rubric": "decision-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "533e96ea3a7927d95dbf3530550221c70747d502fe766fd1e445a25dab8d9b48",
+      "changes": []
+    },
+    {
+      "id": "repository-first",
+      "snapshot": "candidate-snapshot",
+      "manifest": "candidate-manifest.json",
+      "manifest-digest": "ab6281f462a66fa04885d59a68ffe9b4392d2acc487286cffaea63a81a03bf03",
+      "changes": [
+        {
+          "path": "core/skills/research/SKILL.md",
+          "before": "95c68607f5983ea48a9906e6623da3d106e19b33dd753bee44bc87f00305b281",
+          "after": "927bfd5cd0c24d2297ec59a156d911b03a65ca76d854da8d1faeda0453dbeae9"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "research-decision-03",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "research-decision-03-fixture",
+      "prompt": "Choose a bounded implementation approach using the local capability and its actual consumer.\nUse only request.json, inventory.json, ownership.json, existing.py, and consumer.py for this synthetic repository decision. Do not execute source, use external research, or change files. The allowed decisions are adopt (reuse an existing capability unchanged), extend (improve an existing compatible capability), and build (create a new owned module or adapter). These names define actions, not source predicates. Return one final JSON object with exactly decision, findings, facts, evidence, questions, procedures. decision is adopt|extend|build. findings is a unique array of string IDs selected from partial-capability, incompatible-api, missing-capability; use [] when none apply. facts contains exactly capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editable (true|false). evidence is a unique array of six source anchors, in any order: existing.py:<function-definition-line>, existing.py:<return-line>, consumer.py:<return-line>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. Line numbers start at one. questions is []; procedures is {}. Do not add prose or other keys. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. Stop when these local facts support a bounded choice; do not claim general reuse quality, runtime behavior, or internal activation.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "research-choice-v1",
+          "params": {
+            "case": "research-adopt-calibration-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "9f06b235bfb2898b4888a9d29f114dead1c33b0b23891b9cf89857dbce8b97cb"
+        }
+      ],
+      "observer": {
+        "id": "decision-stream-v1",
+        "params": {
+          "expected-decision": "adopt",
+          "expected-findings": [],
+          "expected-facts": {
+            "capability": "complete",
+            "signature": "one-arg",
+            "consumer": "one-arg-call",
+            "editable": true
+          },
+          "expected-evidence": [
+            "existing.py:1",
+            "existing.py:2",
+            "consumer.py:5",
+            "request.json:required",
+            "inventory.json:declared-signature",
+            "ownership.json:existing-editable"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "research-decision-04",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "research-decision-04-fixture",
+      "prompt": "\u041a\u0430\u043a\u043e\u0439 \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u044b\u0439 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0439 \u0448\u0430\u0433 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u044e\u0442 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0430\u044f capability, consumer \u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442?\n\u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u0441\u0438\u043d\u0442\u0435\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0433\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0442\u043e\u043b\u044c\u043a\u043e request.json, inventory.json, ownership.json, existing.py \u0438 consumer.py. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043a\u043e\u0434, \u043d\u0435 \u043f\u0440\u043e\u0432\u043e\u0434\u0438 \u0432\u043d\u0435\u0448\u043d\u0435\u0435 \u0438\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u043d\u0438\u0435 \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0444\u0430\u0439\u043b\u044b. \u0414\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b\u0435 \u0440\u0435\u0448\u0435\u043d\u0438\u044f: adopt (\u043f\u043e\u0432\u0442\u043e\u0440\u043d\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0443\u044e capability \u0431\u0435\u0437 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439), extend (\u0443\u043b\u0443\u0447\u0448\u0438\u0442\u044c \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0443\u044e \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u0438\u043c\u0443\u044e capability), build (\u0441\u043e\u0437\u0434\u0430\u0442\u044c \u043d\u043e\u0432\u044b\u0439 \u043f\u0440\u0438\u043d\u0430\u0434\u043b\u0435\u0436\u0430\u0449\u0438\u0439 \u043f\u0440\u043e\u0435\u043a\u0442\u0443 \u043c\u043e\u0434\u0443\u043b\u044c \u0438\u043b\u0438 \u0430\u0434\u0430\u043f\u0442\u0435\u0440). \u042d\u0442\u0438 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043e\u043f\u0438\u0441\u044b\u0432\u0430\u044e\u0442 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f, \u0430 \u043d\u0435 \u0443\u0441\u043b\u043e\u0432\u0438\u044f \u0432 \u0438\u0441\u0445\u043e\u0434\u043d\u043e\u043c \u043a\u043e\u0434\u0435. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0440\u043e\u0432\u043d\u043e \u0441 decision, findings, facts, evidence, questions, procedures. decision \u2014 adopt|extend|build. findings \u2014 \u0443\u043d\u0438\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u043c\u0430\u0441\u0441\u0438\u0432 \u0441\u0442\u0440\u043e\u043a\u043e\u0432\u044b\u0445 ID \u0438\u0437 partial-capability, incompatible-api, missing-capability; [] \u0435\u0441\u043b\u0438 \u043e\u043d\u0438 \u043d\u0435 \u043f\u0440\u0438\u043c\u0435\u043d\u0438\u043c\u044b. facts \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u0442 \u0440\u043e\u0432\u043d\u043e capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editable (true|false). evidence \u2014 \u0443\u043d\u0438\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u043c\u0430\u0441\u0441\u0438\u0432 \u0438\u0437 \u0448\u0435\u0441\u0442\u0438 anchors \u0432 \u043b\u044e\u0431\u043e\u043c \u043f\u043e\u0440\u044f\u0434\u043a\u0435: existing.py:<\u0441\u0442\u0440\u043e\u043a\u0430 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u0438\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u0438>, existing.py:<\u0441\u0442\u0440\u043e\u043a\u0430 return>, consumer.py:<\u0441\u0442\u0440\u043e\u043a\u0430 return>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. \u041d\u043e\u043c\u0435\u0440\u0430 \u0441\u0442\u0440\u043e\u043a \u043d\u0430\u0447\u0438\u043d\u0430\u044e\u0442\u0441\u044f \u0441 1. questions \u2014 []; procedures \u2014 {}. \u041d\u0435 \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0439 \u043f\u0440\u043e\u0437\u0443 \u0438\u043b\u0438 \u0434\u0440\u0443\u0433\u0438\u0435 \u043f\u043e\u043b\u044f. \u041d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0438\u0435 progress \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u2014 \u0442\u043e\u043b\u044c\u043a\u043e \u0442\u043e\u0447\u043d\u044b\u0439 JSON \u0441 progress reading, checking \u0438\u043b\u0438 comparing. \u041e\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0441\u044c, \u043a\u043e\u0433\u0434\u0430 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0445 \u0444\u0430\u043a\u0442\u043e\u0432 \u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0434\u043b\u044f \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u043e\u0433\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u044f; \u043d\u0435 \u0443\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0439 \u043e\u0431\u0449\u0443\u044e \u043f\u0440\u0438\u0433\u043e\u0434\u043d\u043e\u0441\u0442\u044c \u043f\u043e\u0432\u0442\u043e\u0440\u043d\u043e\u0433\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f, runtime \u0438\u043b\u0438 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u044e\u044e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044e.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "research-choice-v1",
+          "params": {
+            "case": "research-adopt-heldout-ru"
+          },
+          "mandatory": true,
+          "metadata-digest": "9f06b235bfb2898b4888a9d29f114dead1c33b0b23891b9cf89857dbce8b97cb"
+        }
+      ],
+      "observer": {
+        "id": "decision-stream-v1",
+        "params": {
+          "expected-decision": "adopt",
+          "expected-findings": [],
+          "expected-facts": {
+            "capability": "complete",
+            "signature": "one-arg",
+            "consumer": "one-arg-call",
+            "editable": true
+          },
+          "expected-evidence": [
+            "existing.py:1",
+            "existing.py:2",
+            "consumer.py:5",
+            "request.json:required",
+            "inventory.json:declared-signature",
+            "ownership.json:existing-editable"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

@@ -9,7 +9,12 @@
   "capability-paths": [
     "core/skills/research/SKILL.md"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "research-decision-01",
+    "research-decision-02",
+    "research-decision-03",
+    "research-decision-04"
+  ],
   "scenario-proposals": [
     "compatible-existing-consumer",
     "similar-incompatible-api",
@@ -25,11 +30,15 @@
     }
   ],
   "patch-digest": "17ca4e1311323373cd8a4b24311dea37830e1a31eb68ed84725ef49c618862cb",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r27-research-cohort-baseline/index.json",
+    "evals/reports/evolution-targets/r27-research-complete-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R27 cohort baseline18pass2fail has equal captured context despite different profile directories. The unnecessary later complete-suite baseline15pass4fail1inconclusive is also preserved and blocks its planned comparison. No candidate native trial, no unknown evidence waived, no original report rewritten."
 }

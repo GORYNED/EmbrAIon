@@ -1,0 +1,102 @@
+{
+  "schema-version": 1,
+  "contract-version": 3,
+  "target": "debug-decision",
+  "execution": {
+    "role": "analyst",
+    "access": "read-only"
+  },
+  "risk": "ordinary",
+  "coverage": "Outcome-neutral finite causal judgment over supplied synthetic observations and bounded source; no actual runtime or historical provenance.",
+  "protocol": {
+    "en": "Use only source.py, contract.json, observations.json, narrative.json, and attempts.json. Treat recorded observations and attempts as supplied synthetic evidence; Necessary read-only file inspection, including local shell reads, is permitted. Do not execute candidate source or tests, mutate files, install dependencies, use the network, or publish. Return one final JSON object with exactly cause, findings, facts, evidence, questions, procedures. cause is compute|cache|typo. findings is a unique array of IDs selected from unsupported-leading-hypothesis and repeated-failed-fix; use [] if neither is supported. facts has exactly mode (simple|complex), compute-step (1|2), cache-step (1|2|null), cause (compute|cache|typo), leading (compute|cache|none), attempt-count (0|2). evidence is a unique array of source anchors in any order. For a simple source, give the return line source.py:<line>, contract.json:expected, observations.json:direct. For a two-path source, give the compute return, cached return, and run branch lines as source.py:<line>, plus contract.json:expected, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Line numbers start at one. questions is []; procedures is {}. Do not add prose or other keys. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. Stop at the bounded source and supplied observations; do not claim actual runtime execution, historical provenance, or general debugging quality.",
+    "ru": "Используй только source.py, contract.json, observations.json, narrative.json и attempts.json. Считай записанные наблюдения и попытки предоставленными синтетическими свидетельствами; Разрешено необходимое чтение файлов, в том числе локальными shell-командами. Не исполняй проверяемый код или тесты, не меняй файлы, не устанавливай зависимости, не используй сеть и не публикуй. Верни один финальный JSON ровно с cause, findings, facts, evidence, questions, procedures. cause — compute|cache|typo. findings — уникальный массив ID из unsupported-leading-hypothesis и repeated-failed-fix; [] если ни один не подтвержден. facts содержит ровно mode (simple|complex), compute-step (1|2), cache-step (1|2|null), cause (compute|cache|typo), leading (compute|cache|none), attempt-count (0|2). evidence — уникальный массив source anchors в любом порядке. Для простого source укажи строку return как source.py:<строка>, contract.json:expected, observations.json:direct. Для двух ветвей укажи строки return compute, return cached и ветви run как source.py:<строка>, а также contract.json:expected, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Нумерация строк начинается с единицы. questions — []; procedures — {}. Не добавляй прозу или другие поля. Необязательные предыдущие progress сообщения — только точный JSON с progress reading, checking или comparing. Ограничься исходным кодом и предоставленными наблюдениями; не утверждай, что был реальный запуск, подтверждена история попыток или доказано общее качество отладки."
+  },
+  "cases": [
+    {
+      "id": "debug-decision-01",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the recorded observations and the earlier narrative for the bounded source path.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 1\n\n\ndef cached(value):\n    return value + 2\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"input\":41,\"cache-off\":42,\"cache-on\":43}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "source-case": "debug-contradictory-cache-ru"
+    },
+    {
+      "id": "debug-decision-02",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the recorded observations and prior attempted changes before choosing a cause.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 1\n\n\ndef cached(value):\n    return value + 2\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"input\":41,\"cache-off\":42,\"cache-on\":43}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[{\"edit-target\":\"compute\",\"source\":\"def compute(value):\\n    return value + 2\\n\\n\\ndef cached(value):\\n    return value + 2\\n\\n\\ndef run(value, use_cache):\\n    if use_cache:\\n        return cached(value)\\n    return compute(value)\\n\",\"revision\":\"fcfe862c202ddd8ebff144070cfae5e1dfde16b1c900793604ea418d38c71f67\",\"observed-cache-on\":43},{\"edit-target\":\"compute\",\"source\":\"def compute(value):\\n    return value + 1\\n\\n\\ndef cached(value):\\n    return value + 2\\n\\n\\ndef run(value, use_cache):\\n    if use_cache:\\n        return cached(value)\\n    return compute(value)\\n\",\"revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"observed-cache-on\":43}]}\n"
+      },
+      "source-case": "debug-repeated-cache-en"
+    },
+    {
+      "id": "debug-decision-03",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the direct one-line mismatch using the recorded observation.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"compute\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"e71dac9e776fd46cb68622231859f97c84923ebafd71884609fc98cde0fc1f22\",\"input\":41,\"direct\":43}\n",
+        "narrative.json": "{\"leading\":\"none\",\"competing\":\"none\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "source-case": "debug-typo-control-en"
+    },
+    {
+      "id": "debug-decision-04",
+      "language": "en",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the two paths and recorded observations for a bounded causal judgment.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n\n\ndef cached(value):\n    return value + 1\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n# A comment is not a branch observation.\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"99b9bce208bac211f4d7731a65e83d3d623b99f2c5eb7733734c7c2739106003\",\"input\":41,\"cache-off\":43,\"cache-on\":42}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "source-case": "debug-competing-compute-en"
+    },
+    {
+      "id": "debug-decision-05",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени прямое преобразование и записанное наблюдение. Выбери соразмерный вывод без лишней процедуры расследования.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n# A nearby note is not a second hypothesis.\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"compute\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"80a4a65c03ca21e039701fcb7e90a481a0b257894c4c8b30f01e326ce3531bfa\",\"input\":41,\"direct\":43}\n",
+        "narrative.json": "{\"leading\":\"none\",\"competing\":\"none\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "source-case": "debug-typo-heldout-ru"
+    }
+  ]
+}

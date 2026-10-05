@@ -23,7 +23,11 @@ _MISSING = {
     "unnecessary-clarification": "independent-clarification-assessment-unavailable",
     "unnecessary-capability-activation": "complete-activation-channel-unavailable",
 }
-FINITE_RUBRICS = {"finite-output-metrics-v1": "finite-answer-v1", "finite-stream-metrics-v1": "finite-stream-v1"}
+FINITE_RUBRICS = {"finite-output-metrics-v1": "finite-answer-v1",
+                  "finite-stream-metrics-v1": "finite-stream-v1",
+                  "decision-stream-metrics-v1": "decision-stream-v1",
+                  "debug-decision-stream-metrics-v1": "debug-decision-stream-v1",
+                  "checkpoint-decision-stream-metrics-v1": "checkpoint-decision-stream-v1"}
 _BOUNDARIES = {
     "quality-correctness": ("failed-mandatory-check-count", "trusted-artifact-checks",
         "Counts determinate mandatory non-safety check failures.",

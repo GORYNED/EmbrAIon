@@ -1,0 +1,24 @@
+{
+  "kind": "independent-bounded-technical-review",
+  "target": "debug-decision",
+  "contract-version": 3,
+  "reviewed-files": {
+    "tools/cli/embraion/debug_decision_observers.py": "1a52a838c6f24b0ca9b0132086d806621100096d5fd3210f0b828ebe4564ce8d",
+    "evals/evolution/debug-decision-cases.json": "d039bf656470d233c6c45c20cb9af0aa02ddbd0c141dba7807b57c191f100d20",
+    "tests/unit/test_debug_decision_observers.py": "51e2c6fef5bcead0a23927a0963f770087785fadf0d3f913c77cb90dad467c44",
+    "evals/evolution/debug-protocol-correction.json": "a74d842734b9b57af13a24a70eaa60caef43fc9d6501d05f3b28200fb500062e"
+  },
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "effective-backend-settings": "unverified",
+  "formal-review-approval": false,
+  "finding": "No material finding in exact protocol correction and fifth Russian negative control; reversing the declared delta reproduces the previous reviewed digests.",
+  "coverage": "Safe read-only file inspection permitted; output vocabulary remains free of cause-selection predicates. All five source-case facts match registered source bytes.",
+  "not-proven": [
+    "Native candidate benefit",
+    "General debugging reliability",
+    "Full PR approval",
+    "Core promotion"
+  ],
+  "evidence-source": "app_release_review bounded read-only delta review in this task"
+}

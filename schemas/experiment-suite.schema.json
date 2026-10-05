@@ -9,7 +9,7 @@
     "execution": {"type": "object", "additionalProperties": false, "required": ["role", "access"],
       "properties": {"role": {"enum": ["lead", "worker", "reviewer", "architect", "analyst", "validator", "researcher", "steward"]},
         "access": {"enum": ["read-only", "workspace-write"]}}},
-    "metric-rubric": {"enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1"]},
+    "metric-rubric": {"enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1", "decision-stream-metrics-v1", "debug-decision-stream-metrics-v1", "checkpoint-decision-stream-metrics-v1"]},
     "variants": {"type": "array", "minItems": 1, "items": {
       "type": "object", "additionalProperties": false,
       "required": ["id", "snapshot", "manifest", "manifest-digest", "changes"],
@@ -33,7 +33,7 @@
         "corpus-id": {"$ref": "#/$defs/id"},
         "allowed-paths": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
         "observer": {"type": "object", "additionalProperties": false, "required": ["id", "params", "mandatory"],
-          "properties": {"id": {"enum": ["finite-answer-v1", "finite-stream-v1"]}, "params": {"type": "object"}, "mandatory": {"type": "boolean"}}},
+          "properties": {"id": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]}, "params": {"type": "object"}, "mandatory": {"type": "boolean"}}},
         "oracles": {"type": "array", "minItems": 1, "items": {
           "type": "object", "additionalProperties": false, "required": ["id", "params", "mandatory"],
           "properties": {"id": {"$ref": "#/$defs/id"}, "params": {"type": "object"}, "mandatory": {"type": "boolean"},

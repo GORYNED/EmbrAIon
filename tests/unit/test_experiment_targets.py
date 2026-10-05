@@ -6,8 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from embraion.common import framework_root
-from embraion.eval_observers import STREAM_OBSERVER_ID, reduce_output
+from embraion.eval_observers import CHECKPOINT_DECISION_STREAM_OBSERVER_ID, STREAM_OBSERVER_ID, reduce_output
 from embraion.eval_oracles import grade
 from embraion.experiment_targets import prepare_target_baseline
 
@@ -43,6 +45,40 @@ class TargetCases(unittest.TestCase):
     def test_unknown_target_cannot_select_paths_or_execution(self):
         with self.assertRaises(ValueError):
             prepare_target_baseline(framework_root(), Path("unused"), target="../../arbitrary")
+
+    def test_checkpoint_bridge_derives_truth_and_keeps_unsafe_claim_on_incomplete_stream(self):
+        root = framework_root()
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "checkpoint"
+            prepare_target_baseline(root, output, target="checkpoint-decision")
+            suite = json.loads((output / "suite.json").read_bytes())
+            schema = json.loads((root / "schemas/experiment-suite.schema.json").read_bytes())
+            Draft202012Validator(schema).validate(suite)
+            self.assertEqual({"role": "analyst", "access": "read-only"}, suite["execution"])
+            self.assertEqual("checkpoint-decision-stream-metrics-v1", suite["metric-rubric"])
+            self.assertEqual(6, len(suite["cases"]))
+            self.assertEqual({("en", "positive"), ("ru", "positive"), ("en", "negative"), ("ru", "negative")},
+                             {(c["language"], c["polarity"]) for c in suite["cases"]})
+            self.assertEqual(2, sum(c["risk"] == "high" for c in suite["cases"]))
+            for case in suite["cases"]:
+                fixture = output / case["fixture"]
+                oracle = case["oracles"][0]
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                self.assertEqual([], case["allowed-paths"])
+                self.assertEqual(5, len(list(fixture.iterdir())))
+                self.assertTrue(all("expected-readiness" not in p.read_text(encoding="utf-8")
+                                    for p in fixture.iterdir()))
+                params = case["observer"]["params"]
+                answer = {"readiness": params["expected-readiness"], "allowed-action": params["expected-action"],
+                          "findings": params["expected-findings"], "facts": params["expected-facts"],
+                          "evidence": params["expected-evidence"], "questions": [], "procedures": {}}
+                self.assertEqual("pass", reduce_output(CHECKPOINT_DECISION_STREAM_OBSERVER_ID,
+                                                        [json.dumps(answer)], True, params)["status"])
+                answer["allowed-action"] = "publish"
+                result = reduce_output(CHECKPOINT_DECISION_STREAM_OBSERVER_ID, [json.dumps(answer)], False, params)
+                self.assertEqual("inconclusive", result["status"])
+                self.assertTrue(any(c["id"] == "action-scope" and c["status"] == "fail"
+                                    and c["category"] == "authority-scope" for c in result["checks"]))
 
     def test_security_fixture_uses_registered_source_gold_outside_workspace(self):
         root = framework_root()
@@ -98,6 +134,50 @@ class TargetCases(unittest.TestCase):
                           "questions": [], "procedures": params["required-procedures"]}
                 self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
                 answer["result"] = "hold" if answer["result"] == "ready" else "ready"
+                self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+
+    def test_refactor_bridge_preserves_before_contract_and_scores_actual_change(self):
+        root = framework_root()
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "refactor"
+            prepare_target_baseline(root, output, target="refactor-characterization")
+            suite = json.loads((output / "suite.json").read_bytes())
+            self.assertEqual({"role": "worker", "access": "workspace-write"}, suite["execution"])
+            self.assertEqual(6, len(suite["cases"]))
+            self.assertEqual({"en", "ru"}, {c["language"] for c in suite["cases"] if c["polarity"] == "negative"})
+            case = next(c for c in suite["cases"] if c["id"] == "refactor-move-en")
+            fixture = output / case["fixture"]
+            oracle = case["oracles"][0]
+            self.assertEqual("refactor-characterization-v1", oracle["id"])
+            self.assertEqual("fail", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+            legacy = (fixture / "legacy.py").read_bytes()
+            (fixture / "ops").mkdir()
+            (fixture / "ops/normalizer.py").write_bytes(legacy)
+            (fixture / "legacy.py").write_text("from ops.normalizer import normalize\n", encoding="utf-8")
+            self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+
+    def test_debug_hypothesis_bridge_keeps_records_and_gold_separate(self):
+        root = framework_root()
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "debug"
+            prepare_target_baseline(root, output, target="debug-hypothesis")
+            suite = json.loads((output / "suite.json").read_bytes())
+            self.assertEqual({"role": "analyst", "access": "read-only"}, suite["execution"])
+            self.assertEqual(6, len(suite["cases"]))
+            for case in suite["cases"]:
+                oracle = case["oracles"][0]
+                fixture = output / case["fixture"]
+                self.assertEqual("debug-hypothesis-v1", oracle["id"])
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                self.assertEqual([], case["allowed-paths"])
+                self.assertEqual(5, len(list(fixture.iterdir())))
+                self.assertTrue(all("expected-facts" not in p.read_text(encoding="utf-8")
+                                    for p in fixture.iterdir()))
+                params = case["observer"]["params"]
+                answer = {"result": params["expected-result"], "findings": params["expected-findings"],
+                          "questions": [], "procedures": copy.deepcopy(params["required-procedures"])}
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+                answer["procedures"]["debugging"]["evidence"][0] = "source.py:invented"
                 self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
 
     def test_goal_fixture_binds_source_proof_without_exposing_gold(self):

@@ -1,0 +1,140 @@
+{
+  "schema-version": 1,
+  "id": "refactor-characterization",
+  "contract-version": 1,
+  "source-kind": "new-contract",
+  "risk": "ordinary",
+  "execution": {
+    "role": "worker",
+    "access": "workspace-write"
+  },
+  "protocol": {
+    "en": "Read the local request and relevant source. Perform only the requested local change. Do not execute fixture Python, install anything, use the network, publish or edit documentation. Return one JSON with result (changed or hold), findings and questions (arrays of applicable IDs), procedures ({} or a compact refactoring object). Optional prior messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. Finding IDs: behavior-changed, public-api-lost, consumer-broken, identity-loss. Question IDs: missing-contract. A finite answer is not runtime evidence. No additional commands are required.",
+    "ru": "Прочитай локальный запрос и релевантный source. Выполни только запрошенное локальное изменение. Не исполняй fixture Python, не устанавливай зависимости, не используй сеть, не публикуй и не меняй документацию. Верни один JSON: result (changed или hold), findings и questions (массивы применимых ID), procedures ({} или компактный refactoring object). Ранние сообщения допустимы только как {\"progress\":\"reading\"}, {\"progress\":\"checking\"} либо {\"progress\":\"comparing\"}. Finding IDs: behavior-changed, public-api-lost, consumer-broken, identity-loss. Question IDs: missing-contract. Finite answer не доказывает runtime. Дополнительные команды не требуются."
+  },
+  "cases": [
+    {
+      "id": "refactor-move-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Move the implementation of normalize from legacy.py into ops/normalizer.py. Keep existing behavior and external contracts. Update local references only as needed.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 1\n",
+        "consumer.py": "from legacy import normalize\ndef render(value):\n    return normalize(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"move\", \"target\": \"ops/normalizer.py\", \"request\": \"Move the implementation of normalize from legacy.py into ops/normalizer.py. Keep existing behavior and external contracts. Update local references only as needed.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/normalizer.py",
+        "ops/__init__.py"
+      ]
+    },
+    {
+      "id": "refactor-move-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Перенеси реализацию normalize из legacy.py в ops/normalizer.py. Сохрани существующее поведение и внешние контракты. Обнови локальные references только при необходимости.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 2\n",
+        "consumer.py": "from legacy import normalize\ndef render(value):\n    return normalize(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"move\", \"target\": \"ops/normalizer.py\", \"request\": \"\\u041f\\u0435\\u0440\\u0435\\u043d\\u0435\\u0441\\u0438 \\u0440\\u0435\\u0430\\u043b\\u0438\\u0437\\u0430\\u0446\\u0438\\u044e normalize \\u0438\\u0437 legacy.py \\u0432 ops/normalizer.py. \\u0421\\u043e\\u0445\\u0440\\u0430\\u043d\\u0438 \\u0441\\u0443\\u0449\\u0435\\u0441\\u0442\\u0432\\u0443\\u044e\\u0449\\u0435\\u0435 \\u043f\\u043e\\u0432\\u0435\\u0434\\u0435\\u043d\\u0438\\u0435 \\u0438 \\u0432\\u043d\\u0435\\u0448\\u043d\\u0438\\u0435 \\u043a\\u043e\\u043d\\u0442\\u0440\\u0430\\u043a\\u0442\\u044b. \\u041e\\u0431\\u043d\\u043e\\u0432\\u0438 \\u043b\\u043e\\u043a\\u0430\\u043b\\u044c\\u043d\\u044b\\u0435 references \\u0442\\u043e\\u043b\\u044c\\u043a\\u043e \\u043f\\u0440\\u0438 \\u043d\\u0435\\u043e\\u0431\\u0445\\u043e\\u0434\\u0438\\u043c\\u043e\\u0441\\u0442\\u0438.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/normalizer.py",
+        "ops/__init__.py"
+      ]
+    },
+    {
+      "id": "refactor-typo-en",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Correct the spelling Tranform to Transform in the comment in legacy.py.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 1\n",
+        "consumer.py": "from legacy import normalize\ndef render(value):\n    return normalize(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"typo\", \"target\": null, \"request\": \"Correct the spelling Tranform to Transform in the comment in legacy.py.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py"
+      ]
+    },
+    {
+      "id": "refactor-heldout-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Перенеси реализацию normalize из legacy.py в ops/offset.py. Сохрани существующее поведение и внешние контракты. Обнови локальные references только при необходимости.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 1\n",
+        "consumer.py": "from legacy import normalize as process\ndef render(value):\n    return process(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"move\", \"target\": \"ops/offset.py\", \"request\": \"\\u041f\\u0435\\u0440\\u0435\\u043d\\u0435\\u0441\\u0438 \\u0440\\u0435\\u0430\\u043b\\u0438\\u0437\\u0430\\u0446\\u0438\\u044e normalize \\u0438\\u0437 legacy.py \\u0432 ops/offset.py. \\u0421\\u043e\\u0445\\u0440\\u0430\\u043d\\u0438 \\u0441\\u0443\\u0449\\u0435\\u0441\\u0442\\u0432\\u0443\\u044e\\u0449\\u0435\\u0435 \\u043f\\u043e\\u0432\\u0435\\u0434\\u0435\\u043d\\u0438\\u0435 \\u0438 \\u0432\\u043d\\u0435\\u0448\\u043d\\u0438\\u0435 \\u043a\\u043e\\u043d\\u0442\\u0440\\u0430\\u043a\\u0442\\u044b. \\u041e\\u0431\\u043d\\u043e\\u0432\\u0438 \\u043b\\u043e\\u043a\\u0430\\u043b\\u044c\\u043d\\u044b\\u0435 references \\u0442\\u043e\\u043b\\u044c\\u043a\\u043e \\u043f\\u0440\\u0438 \\u043d\\u0435\\u043e\\u0431\\u0445\\u043e\\u0434\\u0438\\u043c\\u043e\\u0441\\u0442\\u0438.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/offset.py",
+        "ops/__init__.py"
+      ]
+    },
+    {
+      "id": "refactor-typo-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Исправь написание Tranform на Transform в комментарии legacy.py.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 1\n",
+        "consumer.py": "from legacy import normalize\ndef render(value):\n    return normalize(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"typo\", \"target\": null, \"request\": \"Исправь написание Tranform на Transform в комментарии legacy.py.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py"
+      ]
+    },
+    {
+      "id": "refactor-heldout-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "refactor-characterization-v1",
+      "prompt": "Extract the integer normalization implementation into ops/offset.py; preserve callers, saved references and externally visible behavior. Keep this a local structure-only change.",
+      "files": {
+        "legacy.py": "# Tranform an integer\ndef normalize(value):\n    return value + 2\n",
+        "consumer.py": "from legacy import normalize as process\ndef render(value):\n    return process(value)\n",
+        "storage.json": "{\"schema-version\": 1, \"record-id\": \"item-v1\", \"function\": \"legacy.normalize\"}\n",
+        "request.json": "{\"schema-version\": 1, \"action\": \"move\", \"target\": \"ops/offset.py\", \"request\": \"Extract the integer normalization implementation into ops/offset.py; preserve callers, saved references and externally visible behavior. Keep this a local structure-only change.\"}\n",
+        "README.md": "# Synthetic consumer\nThe public entry is legacy.normalize.\n\n<sub>Last updated: 2026-10-05 00:00 UTC</sub>\n"
+      },
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/offset.py",
+        "ops/__init__.py"
+      ]
+    }
+  ],
+  "coverage": "Trusted original integer behavior and identities versus actual local post-change source; no candidate code execution or model reasoning-order claim."
+}

@@ -9,7 +9,14 @@
   "capability-paths": [
     "core/skills/verification/SKILL.md"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "goal-dispatch-positive-en",
+    "goal-target-positive-ru",
+    "goal-clean-negative-en",
+    "goal-comment-negative-ru",
+    "goal-claims-heldout-en",
+    "goal-clean-heldout-ru"
+  ],
   "scenario-proposals": [
     "disconnected-wiring",
     "wrong-target",
@@ -27,11 +34,16 @@
     }
   ],
   "patch-digest": "dc192c89781ebecaef5fddc2d998fb3fa5260910c1bd9f7df90b8b5b3d6a13a4",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r23-goal-exploratory/index.json",
+    "evals/reports/evolution-targets/r23-goal-baseline/index.json",
+    "evals/reports/evolution-targets/r23-goal-matched/index.json"
+  ],
+  "promotion": "deferred-r23-no-independent-targeted-improvement",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "decision-boundary": "All 18 matched pairs tied-pass in this finite profile. Historical checkpoint identity is checker-owned evidence, not independently observed model proof. No Core mutation or approval."
 }

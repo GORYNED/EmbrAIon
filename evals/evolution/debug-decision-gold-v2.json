@@ -1,0 +1,36 @@
+{
+  "kind": "independent-bounded-technical-review",
+  "target": "debug-decision",
+  "contract-version": 2,
+  "reviewed-files": {
+    "tools/cli/embraion/debug_decision_observers.py": "ee0b0c25958a35dce2d4df21dc81fd29ab6de5c24329b21d65688f483110020b",
+    "evals/evolution/debug-decision-cases.json": "bc27fa2e5271f3ea16e65262e7c5fe6a4b02daf27eeedbda4e1e8ba5a24576ea",
+    "tests/unit/test_debug_decision_observers.py": "4464f4045ba13506f29e6d6668004c5e59857867074ec3eda9209b6f0c61be71"
+  },
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "effective-backend-settings": "unverified",
+  "routing-limitation": "Reused independent agent was not reconfigured; this technical review is not routed final reviewer confirmation.",
+  "finding": "No material implementation finding in outcome-neutral causal judgment protocol and integration.",
+  "coverage": "Four bounded EN/RU source judgments; syntax, cause, facts, evidence and disclosure checked separately. No selected answer predicate in the prompt.",
+  "validation": {
+    "debug-decision-tests": 7,
+    "debug-source-tests": 8,
+    "target-tests": 9,
+    "legacy-observer-tests": 14,
+    "metric-tests": 12,
+    "experiment-tests": "37 passed, 3 CLI imports errored in reviewer default Python because declared tomlkit dependency was absent; no full-green reviewer claim"
+  },
+  "not-proven": [
+    "Native candidate benefit",
+    "Historical attempt execution",
+    "General debugging quality",
+    "Internal activation",
+    "Full PR approval",
+    "Core promotion"
+  ],
+  "evidence-source": "app_release_review bounded read-only review in this task"
+}

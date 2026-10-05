@@ -10,7 +10,14 @@
     "core/skills/refactoring/SKILL.md",
     "core/catalog.yaml"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "refactor-move-en",
+    "refactor-move-ru",
+    "refactor-typo-en",
+    "refactor-typo-ru",
+    "refactor-heldout-en",
+    "refactor-heldout-ru"
+  ],
   "scenario-proposals": [
     "package-reorganization",
     "namespace-consumer-move",
@@ -32,11 +39,14 @@
     }
   ],
   "patch-digest": "26caf43a8a3d6b3ed575bbe0c50365f4e268f03f6a83246cb8177b7a4536ca51",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r27-refactor-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R27 baseline:10pass9fail1inconclusive;10held-out measurements not started because preflight was inconclusive. Source/observer coverage incomplete. No candidate native trial."
 }

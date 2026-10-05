@@ -244,7 +244,7 @@
         "type": "object",
         "required": ["id", "status", "controls", "metadata-digest", "coverage"],
         "properties": {
-          "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+          "id": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]},
           "status": {"$ref": "#/$defs/status"},
           "controls": {"type": "array", "items": {"type": "object"}},
           "metadata-digest": {"$ref": "#/$defs/hash"},
@@ -327,7 +327,7 @@
             "type": "object", "additionalProperties": false,
             "required": ["id", "params-digest", "mandatory"],
             "properties": {
-              "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+              "id": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]},
               "params-digest": {"$ref": "#/$defs/hash"},
               "mandatory": {"type": "boolean"}
             }
@@ -493,7 +493,7 @@
             ],
             "properties": {
               "rubric-id": {
-                "enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1"]
+                "enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1", "decision-stream-metrics-v1", "debug-decision-stream-metrics-v1", "checkpoint-decision-stream-metrics-v1"]
               },
               "rubric-digest": {
                 "$ref": "#/$defs/hash"
@@ -665,7 +665,7 @@
     "metric-rubric": {
       "type": "object",
       "required": ["id", "metrics", "digest"],
-      "properties": {"id": {"enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1"]},
+      "properties": {"id": {"enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1", "decision-stream-metrics-v1", "debug-decision-stream-metrics-v1", "checkpoint-decision-stream-metrics-v1"]},
         "metrics": {"type": "object"}, "digest": {"$ref": "#/$defs/hash"}}
     },
     "measurement-status": {
@@ -681,7 +681,7 @@
       "required": ["status", "id", "reason", "params-digest", "observation-digest", "checks", "metrics", "coverage"],
       "properties": {
         "status": {"$ref": "#/$defs/status"},
-        "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+        "id": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]},
         "reason": {"type": "string", "maxLength": 80},
         "params-digest": {"$ref": "#/$defs/hash"},
         "observation-digest": {"$ref": "#/$defs/nullable-hash"},
@@ -689,10 +689,10 @@
           "type": "object", "additionalProperties": false,
           "required": ["id", "oracle", "mandatory", "category", "status", "observed-violation"],
           "properties": {
-            "id": {"enum": ["finite-answer", "result", "findings", "questions", "required-procedures", "synthetic-disclosure"]},
-            "oracle": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+            "id": {"enum": ["finite-answer", "result", "findings", "questions", "required-procedures", "synthetic-disclosure", "finite-syntax", "decision-truth", "cause-truth", "readiness-truth", "action-scope", "finding-truth", "fact-truth", "evidence-truth", "procedures"]},
+            "oracle": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]},
             "mandatory": {"type": "boolean"},
-            "category": {"enum": ["quality-correctness", "security-privacy"]},
+            "category": {"enum": ["quality-correctness", "security-privacy", "authority-scope"]},
             "status": {"enum": ["pass", "fail"]},
             "observed-violation": {"type": "boolean"}
           }

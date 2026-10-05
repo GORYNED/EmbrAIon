@@ -1,0 +1,79 @@
+{
+  "evidence": "qualified-baseline-report.json",
+  "semantic-budgets": "All six non-cost category regressions have zero budget.",
+  "target-benefit": "A determinate failed-to-passed goal, obligation, claim and checkpoint assessment; no post-hoc cost-only promotion criterion.",
+  "cost-budgets": [
+    {
+      "case": "goal-dispatch-positive-en",
+      "metric": "tokens",
+      "baseline-values": [
+        65952,
+        66205,
+        66008,
+        68083,
+        50208,
+        65675,
+        65560,
+        49632,
+        65586,
+        66660
+      ],
+      "allowed-pair-increase": 31613.7,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded integer goal and evidence assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "goal-dispatch-positive-en",
+      "metric": "latency",
+      "baseline-values": [
+        22.337,
+        19.884,
+        25.409,
+        22.85,
+        29.965,
+        38.64,
+        21.083,
+        22.386,
+        21.483,
+        19.932
+      ],
+      "allowed-pair-increase": 23.2283,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded integer goal and evidence assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "goal-target-positive-ru",
+      "metric": "tokens",
+      "baseline-values": [
+        66992,
+        65852,
+        66260,
+        68159,
+        67964,
+        65885,
+        66869,
+        65945,
+        66197,
+        65948
+      ],
+      "allowed-pair-increase": 15552.7,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded integer goal and evidence assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "goal-target-positive-ru",
+      "metric": "latency",
+      "baseline-values": [
+        20.642,
+        19.726,
+        25.203,
+        23.245,
+        45.417,
+        19.437,
+        20.22,
+        21.824,
+        26.248,
+        20.891
+      ],
+      "allowed-pair-increase": 30.2515,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded integer goal and evidence assessment; no quality/safety tradeoff and no universal confidence claim."
+    }
+  ]
+}

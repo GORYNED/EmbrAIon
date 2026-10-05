@@ -13,6 +13,9 @@ from typing import Any
 
 OBSERVER_ID = "finite-answer-v1"
 STREAM_OBSERVER_ID = "finite-stream-v1"
+DECISION_STREAM_OBSERVER_ID = "decision-stream-v1"
+DEBUG_DECISION_STREAM_OBSERVER_ID = "debug-decision-stream-v1"
+CHECKPOINT_DECISION_STREAM_OBSERVER_ID = "checkpoint-decision-stream-v1"
 PROGRESS_IDS = frozenset({"reading", "checking", "comparing"})
 MAX_BYTES = 2_000_000
 PROCEDURES = {"planning", "review", "research", "security-assessment", "refactoring", "validation", "debugging", "handoff"}
@@ -47,6 +50,18 @@ def _finite(value: Any, depth: int = 0) -> bool:
 
 
 def validate_params(observer_id: str, params: dict[str, Any]) -> None:
+    if observer_id == CHECKPOINT_DECISION_STREAM_OBSERVER_ID:
+        from .checkpoint_observers import validate_params as validate_checkpoint_params
+        validate_checkpoint_params(params)
+        return
+    if observer_id == DEBUG_DECISION_STREAM_OBSERVER_ID:
+        from .debug_decision_observers import validate_params as validate_debug_decision_params
+        validate_debug_decision_params(params)
+        return
+    if observer_id == DECISION_STREAM_OBSERVER_ID:
+        from .decision_observers import validate_params as validate_decision_params
+        validate_decision_params(params)
+        return
     if observer_id not in {OBSERVER_ID, STREAM_OBSERVER_ID} or not isinstance(params, dict) or set(params) != PARAMS:
         raise ValueError("unknown observer or parameter contract")
     required = params["required-procedures"]
@@ -61,6 +76,15 @@ def validate_params(observer_id: str, params: dict[str, Any]) -> None:
 
 
 def metadata(observer_id: str = OBSERVER_ID) -> dict[str, Any]:
+    if observer_id == CHECKPOINT_DECISION_STREAM_OBSERVER_ID:
+        from .checkpoint_observers import metadata as checkpoint_metadata
+        return checkpoint_metadata()
+    if observer_id == DEBUG_DECISION_STREAM_OBSERVER_ID:
+        from .debug_decision_observers import metadata as debug_decision_metadata
+        return debug_decision_metadata()
+    if observer_id == DECISION_STREAM_OBSERVER_ID:
+        from .decision_observers import metadata as decision_metadata
+        return decision_metadata()
     if observer_id == STREAM_OBSERVER_ID:
         value = metadata(OBSERVER_ID)
         value.pop("digest")
@@ -158,6 +182,15 @@ def reduce_messages(messages: list[str], complete: bool, params: dict[str, Any])
 def reduce_output(observer_id: str, messages: list[str], complete: bool, params: dict[str, Any]) -> dict[str, Any]:
     """Versioned protocol; v1 keeps its strict single-message semantics."""
     validate_params(observer_id, params)
+    if observer_id == CHECKPOINT_DECISION_STREAM_OBSERVER_ID:
+        from .checkpoint_observers import reduce_output as reduce_checkpoint_output
+        return reduce_checkpoint_output(messages, complete, params)
+    if observer_id == DEBUG_DECISION_STREAM_OBSERVER_ID:
+        from .debug_decision_observers import reduce_output as reduce_debug_decision_output
+        return reduce_debug_decision_output(messages, complete, params)
+    if observer_id == DECISION_STREAM_OBSERVER_ID:
+        from .decision_observers import reduce_output as reduce_decision_output
+        return reduce_decision_output(messages, complete, params)
     if observer_id == OBSERVER_ID:
         return reduce_messages(messages, complete, params)
     well_formed = isinstance(messages, list) and all(isinstance(message, str) for message in messages)
@@ -203,6 +236,15 @@ def observe(observer_id: str, directory: Path, host: dict[str, Any], params: dic
 
 def calibration(observer_id: str = OBSERVER_ID) -> dict[str, Any]:
     metadata(observer_id)
+    if observer_id == CHECKPOINT_DECISION_STREAM_OBSERVER_ID:
+        from .checkpoint_observers import calibration as checkpoint_calibration
+        return checkpoint_calibration()
+    if observer_id == DEBUG_DECISION_STREAM_OBSERVER_ID:
+        from .debug_decision_observers import calibration as debug_decision_calibration
+        return debug_decision_calibration()
+    if observer_id == DECISION_STREAM_OBSERVER_ID:
+        from .decision_observers import calibration as decision_calibration
+        return decision_calibration()
     if observer_id == STREAM_OBSERVER_ID:
         params = {"expected-result": "unchanged", "expected-findings": [], "expected-questions": [],
                   "required-procedures": {}, "permitted-procedures": [], "security-findings": [],

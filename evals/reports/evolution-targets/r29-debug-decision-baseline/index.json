@@ -1,0 +1,226 @@
+{
+  "schema-version": 1,
+  "target": "debug-decision",
+  "phase": "baseline",
+  "source-archive": "36bb03d86bcebeba7a6b3760fdb74154dc80a46cc8dc9dc8b073341bcd787fcc",
+  "planned-native-trials": 25,
+  "attempts-per-case": {
+    "debug-decision-01": 5,
+    "debug-decision-02": 5,
+    "debug-decision-03": 5,
+    "debug-decision-04": 5,
+    "debug-decision-05": 5
+  },
+  "counts": {
+    "pass": 4,
+    "fail": 20,
+    "inconclusive": 1
+  },
+  "incomplete-evidence": [
+    {
+      "case": "debug-decision-01",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-01",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-01",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-01",
+      "attempt": 4,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-01",
+      "attempt": 5,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-02",
+      "attempt": 1,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "native-output-unavailable"
+    },
+    {
+      "case": "debug-decision-02",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-02",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-02",
+      "attempt": 4,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-02",
+      "attempt": 5,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-04",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-04",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-04",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-04",
+      "attempt": 4,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "debug-decision-04",
+      "attempt": 5,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    }
+  ],
+  "qualification": "All planned invocations completed; mandatory evidence remains inconclusive. This is not an authoritative baseline for candidate promotion.",
+  "decision": "No candidate native invocation, budgets, confirmation, composition or promotion. Known failed checks remain evidence and cannot be compensated by passes or cost savings.",
+  "coverage": "Bounded synthetic source-grounded cause/fact/evidence judgments; output grammar is checked separately. No general debugging quality, historical execution or runtime causality proof.",
+  "infrastructure-boundary": "Reported structured native errors remain transport hints, not inferred causes. No selective retry or regrading occurs.",
+  "files": {
+    "candidate-manifest.json": "63ba6847b602e2696335a044255692b49d98b349b963d85df9a5aa1e46ed8c77",
+    "matched-suite.json": "5cfb3d3464baae3672672adbcbf57489f790f7869715945025da1e61b5ca6a99",
+    "qualified-baseline-report.json": "cadc22087f25f941abbb294bf8c0a1fe29d1045c097fae6a0b1deb9f45f4949f",
+    "snapshot.json": "42f07747cad6ad77c87966309b658208c1fb3f3863338f376d3853e1dd2a647f",
+    "suite.json": "f5b975ecf70154d42d95040a1be60761f414bc1b04ba342f083b0238f59bd896"
+  },
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained. Immutable source snapshots remain in the R29 local controller.",
+  "read-only-live-diagnostic": {
+    "observation-digest": "cf39f2d4569ab733e0c361e7a3d404d1c76ef5bb5240b51d12e47178da276b6f",
+    "matched-runs": [
+      {
+        "case": "debug-decision-04",
+        "attempt": 1
+      },
+      {
+        "case": "debug-decision-04",
+        "attempt": 2
+      },
+      {
+        "case": "debug-decision-04",
+        "attempt": 3
+      },
+      {
+        "case": "debug-decision-04",
+        "attempt": 4
+      },
+      {
+        "case": "debug-decision-04",
+        "attempt": 5
+      }
+    ],
+    "exact-keys": true,
+    "cause-enum": true,
+    "findings-shape": true,
+    "facts-shape": true,
+    "evidence-shape": false,
+    "evidence-count": 10,
+    "questions-shape": true,
+    "procedures-object": true,
+    "boundary": "One observed syntax diagnostic, not an explanation of other expired answers, no regrading or Core-quality inference."
+  }
+}

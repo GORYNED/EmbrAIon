@@ -1,0 +1,73 @@
+{
+  "schema-version": 1,
+  "target": "research-choice",
+  "contract-version": 1,
+  "phase": "exploratory",
+  "source-archive": "d8d1c58f3a4dfad7bc08ceb5a5543c59ff0822f63dc54f134d88faed1007c5b9",
+  "native-trials": 18,
+  "attempts-per-case": 3,
+  "cohorts": [
+    {
+      "cohort": "reuse",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "13c60dbd8b5858f2499dc808d7687af579d20462b04105b5d3b90628786950e6",
+        "exploratory-report.json": "cee5f98b584ed2057de2ddd7119182b523562bf1b211e69008af49f4c7ff4260",
+        "matched-suite.json": "104c180890ce628e0cd7fade68ec976cc0cbc0cbb4b779d3d36883bc6e68f005",
+        "snapshot.json": "d7f2f34fcbcb86d98ab9bbea9701ffb815bfbc8cdd9728573d2dcec6768fa67b",
+        "suite.json": "50a81de1411f6f358d36e5efe9161c6ac79edea42f31a25cb9c0371a8835c52f"
+      }
+    },
+    {
+      "cohort": "build",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "13c60dbd8b5858f2499dc808d7687af579d20462b04105b5d3b90628786950e6",
+        "exploratory-report.json": "3507a93f5c3115400e3ad8745cee267716bc17f7990e333b586d2a7be9142495",
+        "matched-suite.json": "6f12480c0f1ad53522981b5ea1b24db0158ed356ffb72bb43ed9d05e6430022e",
+        "snapshot.json": "d7f2f34fcbcb86d98ab9bbea9701ffb815bfbc8cdd9728573d2dcec6768fa67b",
+        "suite.json": "d1a28244e51b6488a77d93c1900239679e9e4c7cd9ec8ec164a5259fda41ad58"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "13c60dbd8b5858f2499dc808d7687af579d20462b04105b5d3b90628786950e6",
+        "exploratory-report.json": "212879f37c7da4503098817fb5899a241ce58daf1f17e13e1465c7eecf7957a0",
+        "matched-suite.json": "7a1a1d49f8401f0718941d366feae61946261ab4c4e962eba1791449b516e337",
+        "snapshot.json": "d7f2f34fcbcb86d98ab9bbea9701ffb815bfbc8cdd9728573d2dcec6768fa67b",
+        "suite.json": "cbbe67371c7086a3357538aebbfa07af718a6c315b9a408d3ccc7dbd31a7ee92"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 18,
+    "fail": 0,
+    "inconclusive": 0
+  },
+  "qualification": "Exploratory pilot only; no five-repeat qualified baseline, budgets or candidate measurement.",
+  "decision": "Do not advance this solution-teaching protocol into further candidate trials. A separately calibrated outcome-neutral protocol requires a new frozen baseline.",
+  "coverage": "Bounded synthetic source choice and exact finite response only. Supplied decision rules limit evidence of independent research procedure benefit.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in the local R24 controller."
+}

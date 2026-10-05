@@ -1,0 +1,29 @@
+{
+  "kind": "independent-bounded-methodology-review",
+  "reviewer-role": "architect",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "registry-sha256": {
+    "goal": "861c494f75768fa4d75c176377dea88cd8b82c137fea73c383725a4adbdd2baa",
+    "research": "22b2734b6cd069b179feac5586f5fcfd70ab5b7b811b6e120cac938978bb25fe",
+    "debug": "e4c83ba7d96f80e3529d091f38378f1d8993473fe4f57ff5bb7b9a2a6bfdf279",
+    "security": "6c64b68472b0307ee1152b71c38ed15f22f6ec931d903a01b70c3d596353bf80"
+  },
+  "finding": "Detailed decision rules in the old finite protocols measure rubric following and can mask independent candidate benefit.",
+  "historical-decision-boundary": "R23 and R17 ties do not justify promotion; R21 regression retains rejection. Do not regrade historical scores or infer causes from expired raw answers.",
+  "required-next-protocol": [
+    "Outcome-neutral syntax without decision mappings or skill-loading hints",
+    "Separate calibrated semantic truth and syntax checks before a fresh baseline",
+    "Small predeclared source/record contrasts and near-negative or held-out controls",
+    "Defer ceiling baseline; reject no semantic improvement, negative regression, hard violation or incomplete evidence"
+  ],
+  "checkpoint-boundary": "Model sees current bytes and recorded before hashes. Original-byte provenance is checker-owned unless original bytes are supplied to the model.",
+  "corpus-boundary": "Only scope expansion is a confirmed incident; the reviewed new capabilities primarily protect proposed architectural contracts.",
+  "core-promotion-authorized": false,
+  "full-pr-review": false,
+  "evidence-source": "evolution_contract_architecture bounded methodology audit in this task"
+}
