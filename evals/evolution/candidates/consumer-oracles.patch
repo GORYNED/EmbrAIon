@@ -1,0 +1,7 @@
+--- a/core/skills/test-design/SKILL.md
++++ b/core/skills/test-design/SKILL.md
+@@ -15,0 +16,4 @@
++
++## Independent consumer evidence
++
++For an integration or material behavior claim, choose an expected result from the accepted contract, historical behavior, an independent reference, or a justified invariant before deriving assertions from the new code. Include the relevant consumer or entry-point path when an isolated unit test cannot demonstrate the requested result. Where practical, verify that a controlled wrong result or disabled wiring makes the chosen check fail; do not execute untrusted mutation commands without the required isolation. State which runtime or platform property the check cannot prove. Reuse a sufficient existing check and stop when the material failure modes are covered.

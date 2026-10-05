@@ -1,0 +1,35 @@
+{
+  "change-id": "consumer-oracles",
+  "stage": 2,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "Tests derived from the implementation can pass despite a disconnected consumer or wrong output contract.",
+  "proposed-rule": "Choose independent expected behavior and verify the relevant consumer path.",
+  "capability-paths": [
+    "core/skills/test-design/SKILL.md"
+  ],
+  "scenarios": [],
+  "scenario-proposals": [
+    "mirrored-wrong-formula",
+    "green-helper-disconnected-consumer",
+    "independent-reference",
+    "sufficient-existing-test-control-en-ru"
+  ],
+  "expected-result": "Checks reject wrong behavior and disconnected implementation without redundant tests.",
+  "core-delta": [
+    {
+      "path": "core/skills/test-design/SKILL.md",
+      "before": "11970c3fe8f4d37670bbda4960edca88b269bdd710fed043ce1dc57f3c210ea5",
+      "after": "2b5ed1653fae5df12946aa02db17ec001e85a43853a974888e9a678fe16128d3"
+    }
+  ],
+  "patch-digest": "6cdbdb608c98d6e4c8e9895d9f1aabf8f8edf0f3b92dd17a5be310b48f316aa6",
+  "actual-evidence": [],
+  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

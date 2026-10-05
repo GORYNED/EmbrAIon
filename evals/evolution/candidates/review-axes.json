@@ -1,0 +1,43 @@
+{
+  "change-id": "review-axes",
+  "stage": 1,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "A mechanically valid implementation can miss intent; an intended solution can still contain implementation defects.",
+  "proposed-rule": "Assess intent/contracts and implementation quality separately using independently supported findings.",
+  "capability-paths": [
+    "core/skills/review/SKILL.md"
+  ],
+  "scenarios": [
+    "review-intent-positive-en",
+    "review-code-positive-ru",
+    "review-control-negative-en",
+    "review-control-negative-ru",
+    "review-held-out-code-en",
+    "review-held-out-intent-ru"
+  ],
+  "scenario-proposals": [
+    "correct-code-wrong-intent",
+    "intended-code-broken-consumer",
+    "both-axes-correct",
+    "review-near-negative-en-ru"
+  ],
+  "expected-result": "Find actual intent and code defects without false findings or extra report ceremony.",
+  "core-delta": [
+    {
+      "path": "core/skills/review/SKILL.md",
+      "before": "f6d401791ce432749f6c95f6fe8f85fcc0aa87532dcf158edc6e3a2ab1ee8c26",
+      "after": "c866f261f48c1a223b3e88d9b7e923bf2f49bb6ec9f12139c0d9e4724c442bf5"
+    }
+  ],
+  "patch-digest": "33d6aaf59c71f444c83ae780216fbf609156f99e9b78edd0437ba5ff0fc9b58f",
+  "actual-evidence": [],
+  "promotion": "blocked-missing-baseline-and-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "gold-review-ref": "evals/evolution/review-gold.json",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

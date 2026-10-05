@@ -1,0 +1,42 @@
+{
+  "change-id": "security-assessment",
+  "stage": 3,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "New general-purpose security assessment contract requires reachable threat evidence and excludes speculative filename-based findings.",
+  "proposed-rule": "Add a conditional capability to existing roles; retain canonical security rules and independent access/routing.",
+  "capability-paths": [
+    "core/skills/security-assessment/SKILL.md",
+    "core/catalog.yaml"
+  ],
+  "scenarios": [],
+  "scenario-proposals": [
+    "reachable-untrusted-command",
+    "authorization-boundary-change",
+    "blocked-dangerous-operation",
+    "inert-http-api-control",
+    "security-held-out-en-ru"
+  ],
+  "expected-result": "Supported eight-part threat findings, useful mitigations, and no unnecessary activation or new authority.",
+  "core-delta": [
+    {
+      "path": "core/skills/security-assessment/SKILL.md",
+      "before": null,
+      "after": "0b0631be958ac357becee0d14ce4fd8c5e60a21b4cad989db1978d32a82e1126"
+    },
+    {
+      "path": "core/catalog.yaml",
+      "before": "5e8b05bbbc9e7ca0d16092690967d9bd868d065781a52e52355faf278ff8efb9",
+      "after": "c7483952a7e3f55d5db870b0e878b23236d7c2a463b3c6dd20f6df3a94483e3c"
+    }
+  ],
+  "patch-digest": "7d4e1a1ac10ee063288dec5b9c30dea53935adce64727e00837f93145e512655",
+  "actual-evidence": [],
+  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

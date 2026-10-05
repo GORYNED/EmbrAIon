@@ -1,0 +1,7 @@
+--- a/core/skills/dependency-upgrade/SKILL.md
++++ b/core/skills/dependency-upgrade/SKILL.md
+@@ -15,0 +16,4 @@
++
++## Upgrade action boundary
++
++Before changing a dependency, distinguish the requested dependency target from any separately requested product change or publication. Preserve the consuming project's version strategy; a framework upgrade alone supplies no product major-version decision or release authority. Refresh affected dependency instructions or generated projections when the upgrade requires it. Change project README or agent prose only for a concrete newly inaccurate statement or an explicit request, with that reason visible in the diff. An old release plan or checkpoint does not expand the current request. Validate the actual affected consumer and report unavailable consumer evidence without publishing to obtain it.

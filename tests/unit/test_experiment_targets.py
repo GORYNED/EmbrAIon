@@ -43,6 +43,50 @@ class TargetCases(unittest.TestCase):
         with self.assertRaises(ValueError):
             prepare_target_baseline(framework_root(), Path("unused"), target="../../arbitrary")
 
+    def test_review_fixture_preserves_actual_source_diff_and_excludes_gold(self):
+        root = framework_root()
+        (root / "build").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "review"
+            prepare_target_baseline(root, output, target="review-axes")
+            suite = json.loads((output / "suite.json").read_text(encoding="utf-8"))
+            self.assertEqual({"role": "reviewer", "access": "read-only"}, suite["execution"])
+            self.assertEqual({("en", "positive"), ("ru", "positive"), ("en", "negative"), ("ru", "negative")},
+                             {(case["language"], case["polarity"]) for case in suite["cases"]})
+            for case in suite["cases"]:
+                fixture = output / case["fixture"]
+                self.assertEqual([], case["allowed-paths"])
+                self.assertNotIn("corpus-id", case)
+                self.assertNotEqual((fixture / "original.py").read_bytes(), (fixture / "proposal.py").read_bytes())
+                self.assertEqual("pass", grade("wiring-v1", fixture, {}, {})["status"])
+                for path in fixture.iterdir():
+                    text = path.read_text(encoding="utf-8")
+                    self.assertNotIn("expected-result", text)
+                    self.assertNotIn("gold-rationale", text)
+                params = case["observer"]["params"]
+                answer = {"result": params["expected-result"], "findings": params["expected-findings"],
+                          "questions": [], "procedures": params["required-procedures"]}
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+                answer["result"] = "hold" if answer["result"] == "ready" else "ready"
+                self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+
+    def test_review_gold_detects_axes_conflation_and_inert_comment_false_finding(self):
+        root = framework_root()
+        registry = json.loads((root / "evals/evolution/review-cases.json").read_text(encoding="utf-8"))
+        by_id = {case["id"]: case for case in registry["cases"]}
+        params = by_id["review-code-positive-ru"]["gold"]
+        review = dict(params["required-procedures"]["review"], intent="pass")
+        answer = {"result": "hold", "findings": ["implementation-defect"], "questions": [], "procedures": {"review": review}}
+        result = reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any(check["id"] == "required-procedures" and check["status"] == "fail" for check in result["checks"]))
+        params = by_id["review-control-negative-ru"]["gold"]
+        answer = {"result": "ready", "findings": ["implementation-defect"], "questions": [],
+                  "procedures": params["required-procedures"]}
+        result = reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(1, result["metrics"]["false-positive-rate"])
+
 
 if __name__ == "__main__":
     unittest.main()

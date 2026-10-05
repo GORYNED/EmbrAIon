@@ -1,0 +1,29 @@
+--- /dev/null
++++ b/core/skills/security-assessment/SKILL.md
+@@ -0,0 +1,18 @@
++---
++name: security-assessment
++description: Assess reachable threats across relevant trust boundaries with evidence, scoped mitigations, and explicit residual risk.
++---
++
++# Security Assessment
++
++## Activation contract
++
++Load when the requested change or assessment involves a relevant trust boundary, untrusted input reaching a dangerous operation, a privileged operation, or a control-access change. A filename or HTTP API in a diff alone is insufficient. Skip unrelated formatting, inert data, and ordinary local logic without a relevant threat flow. Existing security and integration hard rules apply independently of this skill. Stop when in-scope reachable flows have a supported finding or a bounded no-finding conclusion, with missing evidence and residual risk stated. Expected output is a compact set of supported findings or a no-material-findings result and its coverage boundary.
++
++## Procedure
++
++1. Identify the in-scope asset, permitted source scope, actor capability, and relevant entry point. Inventory an external integration only when one is actually involved; never collect secret values.
++2. Trace the entry point across its trust boundary to a reachable dangerous or privileged operation. Verify authorization, validation, containment, and other existing controls at that path. A theoretical sink without reachability does not establish an exploitable finding.
++3. For each material finding record: asset, entry point, trust boundary, reachable dangerous operation, existing control, evidence, mitigation, and residual risk. Explain realistic attacker actions and preconditions. Rank priority by supported impact and exploitation conditions rather than assigning a universal CVSS score.
++4. Propose the smallest mitigation that preserves the accepted contract. Choose a reproducible permitted check that can falsify the mitigation; distinguish source proof, isolated tests, and runtime proof. Do not execute candidate code without required isolation, use real credentials, or perform destructive/external exploitation to manufacture evidence.
++5. Report missed prerequisites, unverified runtime conditions, and remaining risk explicitly. Do not weaken hard policy, expand access, infer authority from the role, or turn absence of evidence into a safety claim.
+--- a/core/catalog.yaml
++++ b/core/catalog.yaml
+@@ -2 +2 @@
+-catalog-version: 7
++catalog-version: 8
+@@ -30,0 +31,2 @@
++  - { id: security-assessment, type: skill, path: skills/security-assessment, load: conditional, triggers: [security-assessment, trust-boundary, untrusted-input, privileged-operation, access-control] }
++

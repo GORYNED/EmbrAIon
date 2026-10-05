@@ -1,0 +1,29 @@
+--- /dev/null
++++ b/core/skills/refactoring/SKILL.md
+@@ -0,0 +1,18 @@
++---
++name: refactoring
++description: Preserve observable behavior and protected identities through a scoped structural reorganization using before-and-after characterization evidence.
++---
++
++# Refactoring
++
++## Activation contract
++
++Candidate capability: load only for an explicitly requested structural reorganization whose behavior-preservation risks warrant a dedicated procedure. Skip small local edits, feature changes, and simple renames already covered by code-organization and compatibility-migration. Do not create a new role. Stop when the scoped structural change is complete and characterization evidence has been compared with the baseline, or when a protected contract cannot be preserved. Expected output is a compact before/after contract map, changes, comparison evidence, and residual limits.
++
++## Procedure
++
++1. Before any structural mutation, establish the behavioral baseline from accepted observable behavior, public contracts, relevant consumers, stable identities, persistence/serialization, and references. Use existing tests, historical fixtures, or justified characterization checks and record unavailable runtime evidence.
++2. Resolve code-organization and applicable compatibility-migration rules. Freeze the intended ownership and dependency direction, protected identities, and allowed structural delta. Exclude opportunistic feature, dependency, and documentation changes.
++3. Move or split in small coherent steps, updating applicable consumers and references without recreating protected identity or data. Preserve rollback paths for each independent change.
++4. Compare fresh characterization evidence against the pre-change baseline. Green tests added after the move alone do not establish preserved behavior. Explain each intentional contract change separately; stop on unexplained differences or missing mandatory evidence.
++5. Report the preserved contracts, actual structural improvement, evidence boundary, and residual risk. This candidate enters Core only if isolated and removal-ablation comparisons demonstrate benefit beyond existing skills without material overhead on simple controls.
+--- a/core/catalog.yaml
++++ b/core/catalog.yaml
+@@ -2 +2 @@
+-catalog-version: 7
++catalog-version: 8
+@@ -30,0 +31,2 @@
++  - { id: refactoring, type: skill, path: skills/refactoring, load: conditional, triggers: [behavior-preserving-reorganization, structural-refactoring] }
++

@@ -1,0 +1,7 @@
+--- a/core/skills/research/SKILL.md
++++ b/core/skills/research/SKILL.md
+@@ -22,0 +23,4 @@
++
++## Bounded reuse research
++
++When deciding how to implement an engineering requirement, first inspect the relevant repository, project contracts, existing consumers, tests, and installed dependencies within the allowed source scope. Compare compatible reuse, a bounded extension, and a new implementation against the required behavior and ownership constraints. Reuse requires evidence of fit, not a matching name. Use external primary sources when the repository cannot answer a material question or current external facts require verification. Refine context around unresolved evidence instead of repeatedly loading the whole repository. Stop when the decision has sufficient evidence and remaining uncertainty cannot change the next authorized step. Return a concise adopt/extend/build recommendation with evidence, limits, and the reason to stop.

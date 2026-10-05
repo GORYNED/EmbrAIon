@@ -1,0 +1,7 @@
+--- a/core/skills/implementation/SKILL.md
++++ b/core/skills/implementation/SKILL.md
+@@ -24,0 +25,4 @@
++
++## Documentation state
++
++When documentation is within scope, distinguish the verified current state, an unaccepted proposal, and historical evidence. Link a material current-state statement to its applicable source or fresh evidence. Preserve project-owned instructions and accurate text unless the request or an actual changed contract requires an update. A dependency change alone creates no automatic README rewrite. Do not present a planned release, unpromoted learning candidate, or unrun check as current behavior. Keep documentation work proportional and stop once the affected statement is accurate.

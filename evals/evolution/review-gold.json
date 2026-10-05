@@ -1,0 +1,24 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "review-axes",
+  "contract-version": 2,
+  "reviewed-dataset-sha256": "fbdcce286ad3712d3e1e28d0e441054298f90ad6596eede484f15a9954b2db25",
+  "normative-dataset-sha256": "ca9de4b98e34c0ea55f198effe4587c1ad555b40a6adfca6577e7abad70aeba0",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "no-material-ground-truth-findings",
+  "coverage": "Static source mathematical examples, source differences, overlapping intent/contracts and implementation axes, exact anchor definitions, fixture-only judgment, and copy-only gold separation.",
+  "not-proven": [
+    "No native trials",
+    "No actual PR readiness",
+    "No Core promotion",
+    "No CI confirmation"
+  ],
+  "evidence-source": "Read-only foundation_review_r5 assessment in this task; not a CLI self-review attestation."
+}

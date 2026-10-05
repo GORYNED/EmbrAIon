@@ -1,0 +1,7 @@
+--- a/core/skills/planning/SKILL.md
++++ b/core/skills/planning/SKILL.md
+@@ -22,0 +23,4 @@
++
++## Resume evidence
++
++For a long-running task that needs a checkpoint, record the current requested outcome, candidate identity, owned work, completed and unfinished steps, evidence references with their candidate/environment identities, and unresolved decisions. On resumption, reconcile later user corrections or cancellations and recheck freshness before reusing evidence. A checkpoint describes state and approval provenance; it never grants new permissions or revives canceled approval. Refresh only evidence affected by changed conditions, and avoid creating a checkpoint ceremony for a short uninterrupted task.

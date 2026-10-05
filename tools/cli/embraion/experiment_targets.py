@@ -9,15 +9,20 @@ from .eval_oracles import oracle_metadata
 from .experiment_evals import _copy, _files, capture_snapshot
 from .skill_evals import _safe_relative
 
-TARGETS = frozenset({"scope-action"})
+TARGET_FILES = {
+    "scope-action": "evals/evolution/targets.json",
+    "review-axes": "evals/evolution/review-cases.json",
+}
+TARGETS = frozenset(TARGET_FILES)
 
 
 def prepare_target_baseline(source: Path, output: Path, *, target: str, host: str = "codex",
                             regenerate: bool = False) -> dict:
     if target not in TARGETS or output.exists():
         raise ValueError("unknown target or existing target output")
-    registry = read_json(framework_root() / "evals/evolution/targets.json")
-    plan = registry["targets"][target]
+    registry = read_json(framework_root() / TARGET_FILES[target])
+    plan = registry["targets"][target] if "targets" in registry else registry
+    protocol = plan.get("protocol", registry["protocol"])
     manifest = capture_snapshot(source, output / "snapshot", output / "snapshot.json",
                                 host=host, regenerate=regenerate)
     cases = []
@@ -32,9 +37,9 @@ def prepare_target_baseline(source: Path, output: Path, *, target: str, host: st
             destination.write_text(content, encoding="utf-8", newline="\n")
         validate_params(STREAM_OBSERVER_ID, entry["gold"])
         cases.append({"id": entry["id"], "language": entry["language"], "polarity": entry["polarity"],
-            "risk": plan["risk"], "fixture": fixture.name, "prompt": entry["prompt"] + "\n" + registry["protocol"][entry["language"]],
+            "risk": plan["risk"], "fixture": fixture.name, "prompt": entry["prompt"] + "\n" + protocol[entry["language"]],
             "allowed-paths": entry["allowed-paths"],
-            "corpus-id": "framework-upgrade-scope-expansion",
+            **({"corpus-id": "framework-upgrade-scope-expansion"} if target == "scope-action" else {}),
             "oracles": [{"id": oracle_id, "params": {}, "mandatory": True}],
             "observer": {"id": STREAM_OBSERVER_ID, "params": entry["gold"], "mandatory": True}})
     suite = {"schema-version": 2, "id": target + "-target-baseline", "baseline": "baseline", "seed": 41,

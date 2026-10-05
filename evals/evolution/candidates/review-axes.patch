@@ -1,0 +1,7 @@
+--- a/core/skills/review/SKILL.md
++++ b/core/skills/review/SKILL.md
+@@ -21,0 +22,4 @@
++
++## Intent and implementation evidence
++
++For a substantive review, assess two questions separately: does the candidate fulfill the current authorized intent and applicable contracts, and is its implementation correct? A green check on one question does not settle the other. Trace material findings to the relevant request or contract and reachable code or artifact evidence. Distinguish a contract mismatch from an implementation defect; a finding may affect both. Report missing evidence as uncertainty, not an invented defect. Keep a small review compact instead of adding two reports or a new role.

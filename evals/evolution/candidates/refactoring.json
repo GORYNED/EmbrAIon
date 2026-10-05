@@ -1,0 +1,42 @@
+{
+  "change-id": "refactoring",
+  "stage": 4,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "A dedicated refactoring capability must prove benefit beyond existing organization and compatibility skills using pre-change behavior evidence.",
+  "proposed-rule": "Experiment with characterization before mutation and independent before/after contract comparison.",
+  "capability-paths": [
+    "core/skills/refactoring/SKILL.md",
+    "core/catalog.yaml"
+  ],
+  "scenarios": [],
+  "scenario-proposals": [
+    "package-reorganization",
+    "namespace-consumer-move",
+    "stable-identity-persistence",
+    "simple-rename-control",
+    "refactoring-held-out-en-ru"
+  ],
+  "expected-result": "Behavior-preserving reorganizations with independently useful procedure; reject the separate skill if tied or costly.",
+  "core-delta": [
+    {
+      "path": "core/skills/refactoring/SKILL.md",
+      "before": null,
+      "after": "fdee75e5a231d4df4b4212aaea4a41604351e2ae6a0e5570df8ed9b5dd983fc9"
+    },
+    {
+      "path": "core/catalog.yaml",
+      "before": "5e8b05bbbc9e7ca0d16092690967d9bd868d065781a52e52355faf278ff8efb9",
+      "after": "b7789cc4980001cc1c7f1df4f97e25034ba8a6ce2c0098b6b7c3a8d711441db1"
+    }
+  ],
+  "patch-digest": "26caf43a8a3d6b3ed575bbe0c50365f4e268f03f6a83246cb8177b7a4536ca51",
+  "actual-evidence": [],
+  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

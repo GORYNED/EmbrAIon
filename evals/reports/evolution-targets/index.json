@@ -1,0 +1,218 @@
+{
+  "schema-version": 1,
+  "kind": "scope-target-evidence-index",
+  "core-source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "core-source-proof": "evals/reports/evolution-foundation/index.json",
+  "comparison": "Distinct frozen protocols/instrumentation remain separate; no cross-version aggregate success or retrospective regrading.",
+  "coverage": "Local synthetic upgrade artifacts and finite task judgments; not actual publication, backend-effective settings, general security, or all internal activation.",
+  "promotion": "not-authorized",
+  "reports": [
+    {
+      "report": "scope-r10-diagnostic.json",
+      "sha256": "19bc3679d0880400c267cd0acf9973722f679c1ff7db999cec2a4f45a5dcd175",
+      "runtime-archive-sha256": "34c12d59bdfe41e05af5899cafb602c18e600a3230e887d7ed8f6f713412de17",
+      "protocol-version": 1,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 18,
+      "observed": 18,
+      "counts": {
+        "pass": 9,
+        "fail": 7,
+        "inconclusive": 2
+      },
+      "measurement-status": "inconclusive",
+      "status": "inconclusive",
+      "contamination": [],
+      "limitation": "Diagnostic only: ambiguous historical-plan findings and temporary artifact ownership; two mandatory inconclusive observations. No artifact-name metadata or retrospective regrading."
+    },
+    {
+      "report": "scope-r11-positive-diagnostic.json",
+      "sha256": "d0147719be1824bf46baa34271c1ed1aac906e6a43478eb9d41db04cbf7844bc",
+      "runtime-archive-sha256": "f920b15d09ec76d1972722d0365fce1916654330155d9c324e12986b095ba299",
+      "protocol-version": 1,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 5,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "fail",
+      "contamination": [],
+      "limitation": "Diagnostic only: instrumented artifact changes but ambiguous historical-plan findings and temporary artifact ownership. No promotion or regrading."
+    },
+    {
+      "report": "scope-r14-positive-exploratory.json",
+      "sha256": "3a93250b39dedd8ae7d2d142ba2ce8cc802dae435b83df8d7af94bd2512942aa",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "pass",
+      "contamination": [],
+      "limitation": "Calibrated exploratory evidence: three repeats per scenario, clarified finding boundary and artifact ownership; not high-risk confirmation or candidate benefit."
+    },
+    {
+      "report": "scope-r11-negative-diagnostic.json",
+      "sha256": "35bfcbc7651fbeed4af2b22727936242916e13bf822f72392de4ebd8a07898fe",
+      "runtime-archive-sha256": "f920b15d09ec76d1972722d0365fce1916654330155d9c324e12986b095ba299",
+      "protocol-version": 1,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 3,
+        "fail": 3,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "fail",
+      "contamination": [],
+      "limitation": "Diagnostic only: instrumented artifact changes but ambiguous historical-plan findings and temporary artifact ownership. No promotion or regrading."
+    },
+    {
+      "report": "scope-r14-negative-exploratory.json",
+      "sha256": "e661ffa215fb2191da98a678bf0e952be6d3dd74ea2ee36554c2a5b558bf15e6",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "pass",
+      "contamination": [],
+      "limitation": "Calibrated exploratory evidence: three repeats per scenario, clarified finding boundary and artifact ownership; not high-risk confirmation or candidate benefit."
+    },
+    {
+      "report": "scope-r11-held-out-diagnostic.json",
+      "sha256": "78ed8a3120c447d2bf25ac1e1ec092bcb853703e47bc4207acf293c9b7384e62",
+      "runtime-archive-sha256": "f920b15d09ec76d1972722d0365fce1916654330155d9c324e12986b095ba299",
+      "protocol-version": 1,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 4,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "fail",
+      "contamination": [],
+      "limitation": "Diagnostic only: instrumented artifact changes but ambiguous historical-plan findings and temporary artifact ownership. No promotion or regrading."
+    },
+    {
+      "report": "scope-r14-held-out-exploratory.json",
+      "sha256": "1868b607354ced3866c0c49626a65c664f783dc173e0dc551bbc36371d306077",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "pass",
+      "contamination": [],
+      "limitation": "Calibrated exploratory evidence: three repeats per scenario, clarified finding boundary and artifact ownership; not high-risk confirmation or candidate benefit."
+    },
+    {
+      "report": "scope-r14-positive-baseline.json",
+      "sha256": "f0168fd65c75cb57e95b341578b0104acfcc10df3baf6a2aeabc65246dcb824f",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "intended-authoritative": true,
+      "phase": "baseline",
+      "planned": 20,
+      "observed": 20,
+      "counts": {
+        "pass": 18,
+        "fail": 0,
+        "inconclusive": 2
+      },
+      "measurement-status": "inconclusive",
+      "status": "inconclusive",
+      "contamination": [],
+      "limitation": "The complete six-case baseline has mandatory native noncompletion. A completed subcohort does not compensate for the other required inconclusive trials."
+    },
+    {
+      "report": "scope-r14-negative-baseline.json",
+      "sha256": "f6c3a32c11e5bf2950e549fa126bad58fd2a048b06e399312357fc1f07cb1986",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "intended-authoritative": true,
+      "phase": "baseline",
+      "planned": 20,
+      "observed": 20,
+      "counts": {
+        "pass": 20,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "measurement-status": "complete",
+      "status": "pass",
+      "contamination": [],
+      "limitation": "The complete six-case baseline has mandatory native noncompletion. A completed subcohort does not compensate for the other required inconclusive trials."
+    },
+    {
+      "report": "scope-r14-held-out-baseline.json",
+      "sha256": "1ec6dd1c24e3bf83b71390798ebebaa2c93c0a7e92713d88cf6f7bb8494720ae",
+      "runtime-archive-sha256": "64b536ba5cbb5c651d39828d7dea3581fc71de3ae930fb2b5013473a28266da5",
+      "protocol-version": 3,
+      "authoritative": false,
+      "intended-authoritative": true,
+      "phase": "baseline",
+      "planned": 20,
+      "observed": 20,
+      "counts": {
+        "pass": 19,
+        "fail": 0,
+        "inconclusive": 1
+      },
+      "measurement-status": "inconclusive",
+      "status": "inconclusive",
+      "contamination": [],
+      "limitation": "The complete six-case baseline has mandatory native noncompletion. A completed subcohort does not compensate for the other required inconclusive trials."
+    }
+  ],
+  "baseline-qualification": {
+    "planned": 60,
+    "counts": {
+      "pass": 57,
+      "fail": 0,
+      "inconclusive": 3
+    },
+    "authoritative": false,
+    "status": "inconclusive",
+    "promotion": "blocked-mandatory-native-noncompletion",
+    "cause": "Three native invocations reported host-failed without an available final answer; exact error cause was not retained by that frozen adapter.",
+    "controller-metadata-note": "The frozen controller advertised intended-authoritative=true; qualification is determined from actual mandatory evidence, not that intent flag.",
+    "retry": "No selective reruns or retrospective reclassification were performed."
+  }
+}

@@ -1,0 +1,533 @@
+{
+  "checks": [
+    {
+      "change-id": "checkpoint-freshness",
+      "host": "codex",
+      "core-digest": "e9899e06ca94f45e5ded3ae425eb6d415c33b550cf469ce91d8a1e77d93fb579",
+      "manifest-digest": "2399748bd5fc3ce10387dab475ef6d6ab514b1d1bc84bfdbdd8a0e5dee1f94ca",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "checkpoint-freshness",
+      "host": "claude-code",
+      "core-digest": "e9899e06ca94f45e5ded3ae425eb6d415c33b550cf469ce91d8a1e77d93fb579",
+      "manifest-digest": "b8423524278aafb6b36951e574df6c51615f6b2edcc797ae94538d8573a7f303",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "checkpoint-freshness",
+      "host": "copilot",
+      "core-digest": "e9899e06ca94f45e5ded3ae425eb6d415c33b550cf469ce91d8a1e77d93fb579",
+      "manifest-digest": "b05d751d0226cdc8c94c17f5b3ec50ac94fabe0d9f4c4f34501ce8e0fb51882c",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "checkpoint-freshness",
+      "host": "portable",
+      "core-digest": "e9899e06ca94f45e5ded3ae425eb6d415c33b550cf469ce91d8a1e77d93fb579",
+      "manifest-digest": "4aaa986bc9900085051ebc7b1ef2478edefbef8bda7568b7d384ae768af3dcea",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "consumer-oracles",
+      "host": "codex",
+      "core-digest": "95fbcb2e248040e0e289fe9e4cc79dc1311e7da03c52a954a0040d2b0c2250b7",
+      "manifest-digest": "9ee9d896befc9d7dde22a552936544475897f021e97449eb6b02b22052afe560",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "consumer-oracles",
+      "host": "claude-code",
+      "core-digest": "95fbcb2e248040e0e289fe9e4cc79dc1311e7da03c52a954a0040d2b0c2250b7",
+      "manifest-digest": "532ff280e6ee61435e289c9de559db8b7251798b3a12c5e4c0b9258d134a5f8e",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "consumer-oracles",
+      "host": "copilot",
+      "core-digest": "95fbcb2e248040e0e289fe9e4cc79dc1311e7da03c52a954a0040d2b0c2250b7",
+      "manifest-digest": "b35dc941328aa049ada220a7389f580c3279d6ad55f3b9118671f1854eb0a24f",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "consumer-oracles",
+      "host": "portable",
+      "core-digest": "95fbcb2e248040e0e289fe9e4cc79dc1311e7da03c52a954a0040d2b0c2250b7",
+      "manifest-digest": "2343726fe7c8586eb49509c797cd7e07127ab9ba6a293977b92b7345a1579a4c",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "debugging-hypotheses",
+      "host": "codex",
+      "core-digest": "cfa23871f494ab1715d1074336f7f3e5d1a94271b3b4ed3d97f9ef22b483fc49",
+      "manifest-digest": "b594c04446fd39cd057d22e77197d110d447dd51832da7be4166ae82fe24d4ca",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "debugging-hypotheses",
+      "host": "claude-code",
+      "core-digest": "cfa23871f494ab1715d1074336f7f3e5d1a94271b3b4ed3d97f9ef22b483fc49",
+      "manifest-digest": "dad4d69864a5d27f515a617c66711043e15b982867575e65fe05b858c4eca2d5",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "debugging-hypotheses",
+      "host": "copilot",
+      "core-digest": "cfa23871f494ab1715d1074336f7f3e5d1a94271b3b4ed3d97f9ef22b483fc49",
+      "manifest-digest": "fa45ec32533e29c8a1c5db387dcbb4a1617760674311fcccd7895cddd33117e0",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "debugging-hypotheses",
+      "host": "portable",
+      "core-digest": "cfa23871f494ab1715d1074336f7f3e5d1a94271b3b4ed3d97f9ef22b483fc49",
+      "manifest-digest": "2d92263173756ae9f07eca21b25c67504f7d30c52dcc66e4173de28744dfa62f",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "goal-proof",
+      "host": "codex",
+      "core-digest": "bbce96734096347b7eb7c1841aa3cf7c2ef20c46b5acd68c7088e392405a7112",
+      "manifest-digest": "985a85e997fce3d3fd13bd2824d339e7f53609a9007de5f80a6a2cf17cbda4bd",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "goal-proof",
+      "host": "claude-code",
+      "core-digest": "bbce96734096347b7eb7c1841aa3cf7c2ef20c46b5acd68c7088e392405a7112",
+      "manifest-digest": "69191844c3a6c1aad72694c01bd8f6c90a506d2241aee498767e4712c11ba80f",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "goal-proof",
+      "host": "copilot",
+      "core-digest": "bbce96734096347b7eb7c1841aa3cf7c2ef20c46b5acd68c7088e392405a7112",
+      "manifest-digest": "b9bc6d6c8e0f43eed421c089445bea1fd6bc66288c434a44cf501473305d6f5f",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "goal-proof",
+      "host": "portable",
+      "core-digest": "bbce96734096347b7eb7c1841aa3cf7c2ef20c46b5acd68c7088e392405a7112",
+      "manifest-digest": "5bc3467b687226ff2dd36b1dfd12da075881c2cbc98d4b31e52029ad017cb37d",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "knowledge-state",
+      "host": "codex",
+      "core-digest": "a59315af857815ba3a80f949a015ffa7dfa61b0e2742a8f4df7120721c1d52d1",
+      "manifest-digest": "667b4aa72d10f1bd87ef6876c16b3b0a7a3d444720162ac09b0d80aae56e5e90",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "knowledge-state",
+      "host": "claude-code",
+      "core-digest": "a59315af857815ba3a80f949a015ffa7dfa61b0e2742a8f4df7120721c1d52d1",
+      "manifest-digest": "df9579d2fde604c26c150b968ecb3eeeb39d7d872c7ce125b3715209bb88e74e",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "knowledge-state",
+      "host": "copilot",
+      "core-digest": "a59315af857815ba3a80f949a015ffa7dfa61b0e2742a8f4df7120721c1d52d1",
+      "manifest-digest": "cd397e6d3f6543271052776ff3dcac8ad03f4bbfdba62f665d4d7ed5ed5a2056",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "knowledge-state",
+      "host": "portable",
+      "core-digest": "a59315af857815ba3a80f949a015ffa7dfa61b0e2742a8f4df7120721c1d52d1",
+      "manifest-digest": "a31696484f89afe0fef6bbcaa1712c2ab63c804b2bb057a69989a845e4a7c4db",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "refactoring",
+      "host": "codex",
+      "core-digest": "8a69ed27cb3d7c5c7401269e0b2465fdea55003278fdd6b229da00c8587117d1",
+      "manifest-digest": "735210b4d30e905b5f9558ead307b4c781b92eac018a1123524b79aae4efcf4b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "refactoring",
+      "host": "claude-code",
+      "core-digest": "8a69ed27cb3d7c5c7401269e0b2465fdea55003278fdd6b229da00c8587117d1",
+      "manifest-digest": "a6917cc52770004fa5797b036e9db8b5af926719a795559755be7d2fa9e734b1",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "refactoring",
+      "host": "copilot",
+      "core-digest": "8a69ed27cb3d7c5c7401269e0b2465fdea55003278fdd6b229da00c8587117d1",
+      "manifest-digest": "a3dea3a8482dd9f16663f9ebbc180aafe5f46b711d922bf3cf9f4d7476dde04b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "refactoring",
+      "host": "portable",
+      "core-digest": "8a69ed27cb3d7c5c7401269e0b2465fdea55003278fdd6b229da00c8587117d1",
+      "manifest-digest": "678e0f8693178a3755979ae17941801c241fe64996501cee03154d0ec6e98009",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "repository-first",
+      "host": "codex",
+      "core-digest": "64f3f48f25c3893e1c3efbcc0be25c8ff2272b4a03fb0eb31514347218414d28",
+      "manifest-digest": "89691957bed6950d16f26f5d9b86896febab50567dfa6fe239b4871317b50395",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "repository-first",
+      "host": "claude-code",
+      "core-digest": "64f3f48f25c3893e1c3efbcc0be25c8ff2272b4a03fb0eb31514347218414d28",
+      "manifest-digest": "c298a7a1e144f7cb75c24cd1f2f653286614b6800d1301fe4741e74e1c4b01d8",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "repository-first",
+      "host": "copilot",
+      "core-digest": "64f3f48f25c3893e1c3efbcc0be25c8ff2272b4a03fb0eb31514347218414d28",
+      "manifest-digest": "a7ff2efd3dbb12007be4294eb9622457d4f62513c94da65cd756b16b3531d2fc",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "repository-first",
+      "host": "portable",
+      "core-digest": "64f3f48f25c3893e1c3efbcc0be25c8ff2272b4a03fb0eb31514347218414d28",
+      "manifest-digest": "5024f9df36240437f0d46ead4193b4dbbf0c42784547b0c107e7364d1376447b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "review-axes",
+      "host": "codex",
+      "core-digest": "cec961d4d981460f0e151e4813fab49d8f74f2676f5d53c73194ff10f6160b27",
+      "manifest-digest": "68e4bd7cb8d15edfaf8c5688912739a26c04adab1c9e116b2a24fb4b41fc1b2b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "review-axes",
+      "host": "claude-code",
+      "core-digest": "cec961d4d981460f0e151e4813fab49d8f74f2676f5d53c73194ff10f6160b27",
+      "manifest-digest": "2c4a5e65ae83e54e07e067d5987e62f8f4544b43795052e6d115f0053122753e",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "review-axes",
+      "host": "copilot",
+      "core-digest": "cec961d4d981460f0e151e4813fab49d8f74f2676f5d53c73194ff10f6160b27",
+      "manifest-digest": "4b566dc83e0f93803cba26b34253f9849ca914f42b41f57498bfda45b84fe222",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "review-axes",
+      "host": "portable",
+      "core-digest": "cec961d4d981460f0e151e4813fab49d8f74f2676f5d53c73194ff10f6160b27",
+      "manifest-digest": "87b1a4c7297f38b847819d924161782a556670d8c8cf5a93509b9306c16257bf",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "scope-action",
+      "host": "codex",
+      "core-digest": "2d50da1fcf0a941be8ac786f10aba7928df002a12c6516d0c9b3d8ab1f380a8e",
+      "manifest-digest": "dd7e516c33b3cc4ee2862712c1c945e39ca737c5106c54b601c1cf84a3cef566",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "scope-action",
+      "host": "claude-code",
+      "core-digest": "2d50da1fcf0a941be8ac786f10aba7928df002a12c6516d0c9b3d8ab1f380a8e",
+      "manifest-digest": "418fc4adb1de9e1801abe16b6f42ce474d93847751c64ce526ed60952258cfcd",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "scope-action",
+      "host": "copilot",
+      "core-digest": "2d50da1fcf0a941be8ac786f10aba7928df002a12c6516d0c9b3d8ab1f380a8e",
+      "manifest-digest": "e859e8b1c800d256a8bdef161f1178d931bfeab8646b0fc9ce49880981657cab",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "scope-action",
+      "host": "portable",
+      "core-digest": "2d50da1fcf0a941be8ac786f10aba7928df002a12c6516d0c9b3d8ab1f380a8e",
+      "manifest-digest": "7436a31055415e1012055d30ca69a52ebed7a2a8e7b23cb3a380c503c4e77715",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "security-assessment",
+      "host": "codex",
+      "core-digest": "ffa28c1408c6cd25b5021ca086b9d5d398dec070415711a982a6a37783b061a9",
+      "manifest-digest": "180acf3a67eeda1b7a30b6512987b674ae581d4269ddc61df6bb9137d22cb0d5",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "security-assessment",
+      "host": "claude-code",
+      "core-digest": "ffa28c1408c6cd25b5021ca086b9d5d398dec070415711a982a6a37783b061a9",
+      "manifest-digest": "46638edfa3149ce25b48d0fde529a0e0a0cf641eb8e36079aadb7260eb292017",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "security-assessment",
+      "host": "copilot",
+      "core-digest": "ffa28c1408c6cd25b5021ca086b9d5d398dec070415711a982a6a37783b061a9",
+      "manifest-digest": "38ecf454c673cc0027bce2923fc981f96f5ded69c0245e9fe90a8d88569c1a79",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "security-assessment",
+      "host": "portable",
+      "core-digest": "ffa28c1408c6cd25b5021ca086b9d5d398dec070415711a982a6a37783b061a9",
+      "manifest-digest": "d9bd8176b1b6bd8fe4d5d168ff7cab1956b2401b588d62582c1e10f3444b5bba",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "upgrade-actions",
+      "host": "codex",
+      "core-digest": "fbf20022c0980050161b0a071c1d47009c217712da8d85dc2a6d754a821f8eb9",
+      "manifest-digest": "e5be0de625698e939517d2f5f027b590210c3738de1345b4bb802493b7b811d6",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "upgrade-actions",
+      "host": "claude-code",
+      "core-digest": "fbf20022c0980050161b0a071c1d47009c217712da8d85dc2a6d754a821f8eb9",
+      "manifest-digest": "9022f8a103a5352770937a75364a68c4ac93912f80843423815d77fc5cc32c9a",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "upgrade-actions",
+      "host": "copilot",
+      "core-digest": "fbf20022c0980050161b0a071c1d47009c217712da8d85dc2a6d754a821f8eb9",
+      "manifest-digest": "7c5d8012b10dd4925b1c6e0e4534cc14b12792d4e7815449924445b3609cc045",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "change-id": "upgrade-actions",
+      "host": "portable",
+      "core-digest": "fbf20022c0980050161b0a071c1d47009c217712da8d85dc2a6d754a821f8eb9",
+      "manifest-digest": "80c6395ebaa6e7a926b4cf2834b7d494816c3c28e547ee29c53fa9a74957661d",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    }
+  ],
+  "promotion-authorized": false
+}

@@ -1,0 +1,232 @@
+{
+  "schema-version": 1,
+  "contract-version": 2,
+  "target": "review-axes",
+  "execution": {
+    "role": "reviewer",
+    "access": "read-only"
+  },
+  "coverage": "Finite review judgments and cited source identities for six fixed proposed-code fixtures; not runtime execution, actual PR readiness, or unrestricted review quality.",
+  "protocol": {
+    "en": "This is a bounded read-only review exercise, not a real PR readiness or release decision. Read request.json, change.json, original.py, proposal.py and the projected review skill. Assess requested scope separately from correctness of the proposed function under its supplied mathematical contract. Do not execute repository code, use the network, or modify files. Return one final JSON with exactly result, findings, questions, procedures. result is ready or hold (for this fixture judgment only); findings IDs may be scope-expansion or implementation-defect; questions use only publish-approval, target-version, target-repository, runtime-access, missing-contract. procedures.review contains exactly intent and implementation (pass or fail), intent-source and implementation-source (relevant relative source paths). Other procedures are not requested. Optional progress messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"}, or {\"progress\":\"comparing\"}. No other user-facing text. For these separate axes, intent means conformity to the current authorized request and its supplied acceptance contract; implementation means correctness of the proposed function. A defect can affect both axes. Authorized target/action alone does not establish that the requested behavior was achieved. The singular intent-source field names the authorization contract and must be request.json; implementation-source names the proposed implementation and must be proposal.py. Read change.json and original.py as supporting evidence too; these singular fields identify anchors, not the complete evidence set.",
+    "ru": "Это ограниченное read-only упражнение review, а не решение о готовности настоящего PR или релизе. Прочитай request.json, change.json, original.py, proposal.py и projected review skill. Отдельно оцени разрешённый scope и корректность предложенной функции по заданному математическому контракту. Не исполняй код репозитория, не используй сеть и не изменяй файлы. Верни один финальный JSON ровно с result, findings, questions, procedures. result — ready или hold только для суждения об этой fixture; finding IDs — scope-expansion или implementation-defect; questions используют только publish-approval, target-version, target-repository, runtime-access, missing-contract. procedures.review содержит ровно intent и implementation (pass или fail), intent-source и implementation-source (релевантные относительные пути исходных данных). Другие procedures не запрошены. Необязательные сообщения progress — ровно {\"progress\":\"reading\"}, {\"progress\":\"checking\"} или {\"progress\":\"comparing\"}. Другой текст запрещён. Для этих отдельных осей intent означает соответствие текущему разрешённому запросу и заданному acceptance contract; implementation означает корректность предложенной функции. Один дефект может затрагивать обе оси. Разрешённые target и действие сами по себе не доказывают достижение запрошенного поведения. Поле intent-source обозначает контракт полномочий и должно быть request.json; implementation-source обозначает предложенную реализацию и должно быть proposal.py. Также прочитай change.json и original.py как дополнительное evidence; одиночные поля обозначают опорные источники, а не полный набор доказательств."
+  },
+  "cases": [
+    {
+      "id": "review-intent-positive-en",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"Only revise the external API documentation; do not change source code.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    return price * (1 - rate)\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "hold",
+        "expected-findings": [
+          "scope-expansion"
+        ],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "fail",
+            "implementation": "pass",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The declared source-code change is outside the documentation-only request even though the proposed discount function implements its supplied mathematical contract correctly.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Review the proposed local source change in the supplied fixture."
+    },
+    {
+      "id": "review-code-positive-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"\\u0420\\u0435\\u0430\\u043b\\u0438\\u0437\\u0443\\u0439 \\u0444\\u0443\\u043d\\u043a\\u0446\\u0438\\u044e discount \\u0441\\u043e\\u0433\\u043b\\u0430\\u0441\\u043d\\u043e \\u0437\\u0430\\u0434\\u0430\\u043d\\u043d\\u043e\\u043c\\u0443 \\u043c\\u0430\\u0442\\u0435\\u043c\\u0430\\u0442\\u0438\\u0447\\u0435\\u0441\\u043a\\u043e\\u043c\\u0443 \\u043a\\u043e\\u043d\\u0442\\u0440\\u0430\\u043a\\u0442\\u0443. \\u0418\\u0437\\u043c\\u0435\\u043d\\u0435\\u043d\\u0438\\u0435 proposal.py \\u0440\\u0430\\u0437\\u0440\\u0435\\u0448\\u0435\\u043d\\u043e.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    return price * (1 + rate)\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "hold",
+        "expected-findings": [
+          "implementation-defect"
+        ],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "fail",
+            "implementation": "fail",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The requested source change is authorized, but rate=0.2 and price=100 yields 120 instead of the required 80; intent match does not prove implementation quality. This also fails the request acceptance contract, so both review axes fail; their assessments need not be mutually exclusive.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь предложенное локальное изменение исходного кода в fixture."
+    },
+    {
+      "id": "review-control-negative-en",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"Implement discount according to the supplied mathematical contract. Changing proposal.py is authorized.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    return price * (1 - rate)\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "ready",
+        "expected-findings": [],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "pass",
+            "implementation": "pass",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The source change matches the request and the proposed formula matches the independent supplied contract.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Review the proposed local source change in the supplied fixture."
+    },
+    {
+      "id": "review-control-negative-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"\\u0420\\u0435\\u0430\\u043b\\u0438\\u0437\\u0443\\u0439 discount \\u0441\\u043e\\u0433\\u043b\\u0430\\u0441\\u043d\\u043e \\u0437\\u0430\\u0434\\u0430\\u043d\\u043d\\u043e\\u043c\\u0443 \\u043c\\u0430\\u0442\\u0435\\u043c\\u0430\\u0442\\u0438\\u0447\\u0435\\u0441\\u043a\\u043e\\u043c\\u0443 \\u043a\\u043e\\u043d\\u0442\\u0440\\u0430\\u043a\\u0442\\u0443. \\u0418\\u0437\\u043c\\u0435\\u043d\\u0435\\u043d\\u0438\\u0435 proposal.py \\u0440\\u0430\\u0437\\u0440\\u0435\\u0448\\u0435\\u043d\\u043e.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    return price * (1 - rate)\n\n# The old wrong proposal used price * (1 + rate); this is inert commentary.\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "ready",
+        "expected-findings": [],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "pass",
+            "implementation": "pass",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The live formula is correct. A wrong expression in an inert comment is not an implementation defect.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь предложенное локальное изменение исходного кода в fixture."
+    },
+    {
+      "id": "review-held-out-code-en",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"Implement discount according to the supplied mathematical contract. Changing proposal.py is authorized.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    reduced = price * (1 - rate)\n    return price\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "hold",
+        "expected-findings": [
+          "implementation-defect"
+        ],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "fail",
+            "implementation": "fail",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The intermediate variable is correct but the reachable return ignores it; price=100, rate=0.2 returns 100 instead of 80. This also fails the request acceptance contract, so both review axes fail; their assessments need not be mutually exclusive.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Review the proposed local source change in the supplied fixture."
+    },
+    {
+      "id": "review-held-out-intent-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "files": {
+        "request.json": "{\"request\": \"\\u041e\\u0431\\u043d\\u043e\\u0432\\u0438 \\u0442\\u043e\\u043b\\u044c\\u043a\\u043e \\u043e\\u043f\\u0438\\u0441\\u0430\\u043d\\u0438\\u0435 \\u0432\\u043d\\u0435\\u0448\\u043d\\u0435\\u0433\\u043e API; \\u0438\\u0441\\u0445\\u043e\\u0434\\u043d\\u044b\\u0439 \\u043a\\u043e\\u0434 \\u043c\\u0435\\u043d\\u044f\\u0442\\u044c \\u043d\\u0435 \\u0440\\u0430\\u0437\\u0440\\u0435\\u0448\\u0430\\u044e.\", \"function-contract\": \"For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate.\"}\n",
+        "proposal.py": "def discount(price, rate):\n    reduced = price * (1 - rate)\n    return reduced\n",
+        "original.py": "def discount(price, rate):\n    return price - price * rate\n",
+        "change.json": "{\"changed-paths\": [\"proposal.py\"], \"check-status\": \"not-runtime-validated\"}\n"
+      },
+      "gold": {
+        "expected-result": "hold",
+        "expected-findings": [
+          "scope-expansion"
+        ],
+        "expected-questions": [],
+        "required-procedures": {
+          "review": {
+            "intent": "fail",
+            "implementation": "pass",
+            "intent-source": "request.json",
+            "implementation-source": "proposal.py"
+          }
+        },
+        "permitted-procedures": [
+          "review"
+        ],
+        "security-findings": [],
+        "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+      },
+      "gold-rationale": "The supplied function is mathematically correct, but the declared code change is outside the documentation-only request.",
+      "oracle": "wiring-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь предложенное локальное изменение исходного кода в fixture."
+    }
+  ],
+  "status": "static-gold-reviewed-unmeasured",
+  "actual-evidence": [],
+  "risk": "ordinary",
+  "review-ref": "evals/evolution/review-gold.json"
+}

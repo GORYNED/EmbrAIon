@@ -25,6 +25,10 @@
     }
   ],
   "patch-digest": "f2c23e232c5c26268e02458fa56726b5a6320ad303f242d269ac56cccadd1930",
-  "actual-evidence": [],
-  "promotion": "pending-baseline-and-matched-comparison"
+  "actual-evidence": [
+    "evals/reports/evolution-targets/index.json"
+  ],
+  "promotion": "blocked-mandatory-baseline-inconclusive-and-missing-matched-comparison",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
 }

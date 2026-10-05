@@ -2310,7 +2310,7 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
     prepare.add_argument("--pilot", default="foundation", choices=["foundation", "finite-role", "evolution-target"])
     prepare.add_argument("--role", choices=["lead", "worker", "reviewer", "validator", "researcher", "steward"])
-    prepare.add_argument("--target", choices=["scope-action"])
+    prepare.add_argument("--target", choices=["scope-action", "review-axes"])
     prepare.set_defaults(func=_cmd_eval_experiment)
     prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
     capture = experiment_sub.add_parser("snapshot")
