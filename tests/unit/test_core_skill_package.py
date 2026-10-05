@@ -41,6 +41,22 @@ class CoreSkillPackageTests(unittest.TestCase):
         for name in ("core", "adapters", "schemas", "templates"):
             shutil.copytree(ROOT / name, cls.candidate / name)
         shutil.copyfile(ROOT / "framework.yaml", cls.candidate / "framework.yaml")
+        for package in cls.package["packages"]:
+            if digest(ROOT / package["patch"]) != package["sha256"]:
+                raise AssertionError("proposal patch digest changed: " + package["id"])
+        present = {item["path"]: digest(cls.candidate / item["path"])
+                   if (cls.candidate / item["path"]).is_file() else None
+                   for item in cls.package["files"]}
+        if all(present[item["path"]] == item["after-sha256"] for item in cls.package["files"]):
+            # The same roundtrip must remain reproducible after explicit Core
+            # application. Reconstruct the declared baseline in the temp copy.
+            for package in reversed(cls.package["packages"]):
+                for suffix in (["--check"], []):
+                    subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", "core.autocrlf=false",
+                                    "apply", "--reverse", *suffix, str(ROOT / package["patch"])],
+                                   cwd=cls.candidate, check=True, capture_output=True)
+        elif not all(present[item["path"]] == item["before-sha256"] for item in cls.package["files"]):
+            raise AssertionError("Core must match the complete declared baseline or final candidate")
         cls.original = {path.relative_to(cls.candidate).as_posix(): digest(path)
                         for path in cls.candidate.rglob("*")
                         if path.is_file() and ".git" not in path.relative_to(cls.candidate).parts}
@@ -71,8 +87,10 @@ class CoreSkillPackageTests(unittest.TestCase):
                 self.assertEqual(item["before-sha256"], self.original.get(item["path"]))
                 self.assertEqual(item["after-sha256"], current[item["path"]])
                 self.assertTrue(item["path"].startswith("core/"))
-        self.assertFalse(self.package["approval"]["received"])
-        self.assertFalse(self.package["canonical-core-mutated"])
+        self.assertEqual(self.package["canonical-core-mutated"],
+                         self.package["approval"]["applied-to-canonical-core"])
+        self.assertFalse(self.package["approval"]["applied-to-canonical-core"]
+                         and not self.package["approval"]["received"])
 
     def test_catalog_and_all_host_projections_preserve_canonical_content(self) -> None:
         catalog = yaml.safe_load((self.candidate / "core/catalog.yaml").read_text())
