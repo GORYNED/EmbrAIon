@@ -1,6 +1,6 @@
 # Evidence for Core evolution
 
-EmbrAIon's AI-First Engineering System changes Core only after an authoritative live baseline, a trusted oracle, matched evidence, and the normal [review workflow](../../core/workflows/review.md). An experiment result is advisory: `eligible` means evidence is ready for review, not that a Core edit, merge, release, publication, or external action is authorized. Promotion follows the existing [learning workflow](../../core/workflows/learning.md); confidence and observation counts alone cannot establish experiment eligibility.
+EmbrAIon's AI-First Engineering System changes Core only after an authoritative live baseline, a trusted oracle, matched evidence, and the normal [review workflow](runs-review.md). An experiment result is advisory: `eligible` means evidence is ready for review, not that a Core edit, merge, release, publication, or external action is authorized. Promotion follows the existing [learning workflow](../learning.md); confidence and observation counts alone cannot establish experiment eligibility.
 
 ## Stage 0: Build the foundation
 

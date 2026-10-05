@@ -1,6 +1,6 @@
 # Доказательства для развития Core
 
-AI-First Engineering System EmbrAIon меняет Core только после фиксации достоверного live baseline, калибровки доверенного oracle, сопоставимых результатов и обычного [review workflow](../../core/workflows/review.md). Результат эксперимента рекомендательный: `eligible` означает готовность evidence к review, но не разрешает изменение Core, merge, релиз, публикацию или внешнее действие. Promotion использует существующий [learning workflow](../../core/workflows/learning.md); confidence и число наблюдений сами по себе недостаточны.
+AI-First Engineering System EmbrAIon меняет Core только после фиксации достоверного live baseline, калибровки доверенного oracle, сопоставимых результатов и обычного [review workflow](runs-review.md). Результат эксперимента рекомендательный: `eligible` означает готовность evidence к review, но не разрешает изменение Core, merge, релиз, публикацию или внешнее действие. Promotion использует существующий [learning workflow](../learning.md); confidence и число наблюдений сами по себе недостаточны.
 
 ## Этап 0: Создать основу
 

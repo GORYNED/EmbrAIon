@@ -13,10 +13,37 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 
 from embraion.common import framework_root
-from embraion.experiment_evals import capture_snapshot, identity, run_experiment
+from embraion.experiment_evals import _artifact_changes, capture_snapshot, identity, run_experiment
 
 
 ROOT = framework_root()
+
+
+class ArtifactChangeEvidence(unittest.TestCase):
+    def test_created_names_are_opaque_and_owned_count_is_preserved(self):
+        secret_name = "EVAL_PRIVATE_ABCDEFGHIJKLMNOP.pyc"
+        rows = _artifact_changes({"pin.json": "a" * 64},
+            {"pin.json": "b" * 64, secret_name: "c" * 64}, ["pin.json"])
+        self.assertNotIn(secret_name, json.dumps(rows))
+        created = next(row for row in rows if row["operation"] == "created")
+        self.assertEqual("compiled-python", created["kind"])
+        self.assertFalse(created["owned"])
+        self.assertNotIn("known-path", created)
+        self.assertEqual(64, len(created["path-digest"]))
+        changed = next(row for row in rows if row["operation"] == "modified")
+        self.assertEqual("pin.json", changed["known-path"])
+        self.assertTrue(changed["owned"])
+
+    def test_deletion_and_prefix_ownership_do_not_hide_unrelated_paths(self):
+        rows = _artifact_changes({"owned/old.json": "a" * 64, "owned-sibling.json": "b" * 64}, {}, ["owned"])
+        self.assertEqual({"deleted"}, {row["operation"] for row in rows})
+        self.assertEqual(1, sum(row["owned"] is False for row in rows))
+        self.assertEqual(1, sum(row["owned"] is True for row in rows))
+        self.assertTrue(all(row["after"] is None for row in rows))
+
+    def test_missing_ownership_is_unknown_and_unchanged_files_are_omitted(self):
+        self.assertEqual([], _artifact_changes({"same": "a" * 64}, {"same": "a" * 64}, None))
+        self.assertIsNone(_artifact_changes({}, {"new": "b" * 64}, None)[0]["owned"])
 
 
 class ExperimentRoutingContract(unittest.TestCase):

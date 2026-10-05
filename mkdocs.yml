@@ -114,6 +114,7 @@ plugins:
             Maintainer reference: Для мейнтейнеров
             Security reporting: Сообщение об уязвимостях
             Release process: Процесс релиза
+            Core evolution experiments: Эксперименты эволюции Core
             Localization: Локализация
 
 markdown_extensions:
@@ -216,4 +217,5 @@ nav:
           - Security reporting: oss/security-reporting.md
           - Release process: release-process.md
           - Learning: learning.md
+          - Core evolution experiments: guides/core-evolution.md
           - Localization: oss/localization.md

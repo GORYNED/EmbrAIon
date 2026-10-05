@@ -352,6 +352,24 @@ def _difference(before: dict[str, str], after: dict[str, str]) -> list[dict[str,
             for p in sorted(before.keys() | after.keys()) if before.get(p) != after.get(p)]
 
 
+def _artifact_changes(before: dict[str, str], after: dict[str, str],
+                      allowed: list[str] | None) -> list[dict[str, Any]]:
+    """Retain mutation evidence without exporting candidate-created filenames."""
+    records = []
+    for change in _difference(before, after):
+        name = change["path"]
+        records.append({
+            "path-digest": hashlib.sha256(name.encode("utf-8", errors="surrogatepass")).hexdigest(),
+            **({"known-path": name} if name in before else {}),
+            "before": change["before"], "after": change["after"],
+            "operation": "created" if change["before"] is None else
+                         "deleted" if change["after"] is None else "modified",
+            "kind": "compiled-python" if name.endswith((".pyc", ".pyo")) else "other",
+            "owned": None if allowed is None else any(name == path or name.startswith(path + "/") for path in allowed),
+        })
+    return records
+
+
 def _check_status(checks: list[dict[str, Any]]) -> str:
     mandatory = [c for c in checks if c.get("mandatory")]
     if any(c.get("status") == "fail" for c in mandatory):
@@ -604,6 +622,7 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 host_result = {"status": "not-run", "duration-seconds": None}
                 checks = []
                 observer_proof = None
+                artifact_changes = None
                 with _trial_workspace(scratch) as project:
                     copy_ok = True
                     try:
@@ -671,6 +690,7 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                                            "category": "quality-correctness", "status": "inconclusive"})
                     try:
                         after_project = _files(project)
+                        artifact_changes = _artifact_changes(before_project, after_project, case.get("allowed-paths"))
                         unauthorized = None
                         if "allowed-paths" in case:
                             changes = _difference(before_project, after_project)
@@ -695,6 +715,7 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                     status = "inconclusive"
                 records.append({"case": case["id"], "variant": key, "attempt": attempt, "status": status,
                                 "host": host_result, "checks": checks,
+                                 **({"artifact-changes": artifact_changes} if artifact_changes is not None else {}),
                                 **measure(host_result, checks, unauthorized, observer=observer_proof, rubric_id=rubric_id),
                                 **({"observer-evidence": observer_proof} if observer_proof else {}),
                                 "contamination": contaminated, "activation": "unverified"})

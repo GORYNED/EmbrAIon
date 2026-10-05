@@ -365,6 +365,19 @@
             "type": "object"
           },
           "observer-evidence": {"$ref": "#/$defs/observer-evidence"},
+          "artifact-changes": {"type": "array", "maxItems": 3000, "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["path-digest", "before", "after", "operation", "kind", "owned"],
+            "properties": {
+              "path-digest": {"$ref": "#/$defs/hash"},
+              "known-path": {"type": "string", "minLength": 1},
+              "before": {"$ref": "#/$defs/nullable-hash"},
+              "after": {"$ref": "#/$defs/nullable-hash"},
+              "operation": {"enum": ["created", "deleted", "modified"]},
+              "kind": {"enum": ["compiled-python", "other"]},
+              "owned": {"type": ["boolean", "null"]}
+            }
+          }},
           "activation": {
             "const": "unverified"
           },
