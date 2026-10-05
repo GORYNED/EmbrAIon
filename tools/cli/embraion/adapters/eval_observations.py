@@ -6,6 +6,46 @@ from typing import Any
 
 from ..eval_observers import MAX_BYTES, _parse_json, _unknown as legacy_unknown, digest, metadata, reduce_output, validate_params
 
+_ERROR_CODES = {
+    "rate_limit_exceeded": "rate-limit", "usage_limit_exceeded": "usage-limit",
+    "insufficient_quota": "quota", "invalid_api_key": "authentication",
+    "authentication_error": "authentication", "context_length_exceeded": "context-limit",
+    "server_error": "server", "connection_error": "transport",
+}
+
+
+def codex_failure_metadata(directory: Path) -> dict[str, Any]:
+    """Retain fixed error categories only, never provider messages or raw codes.
+
+    These are reported transport hints, not proof of a root cause or permission
+    to retry. Unknown codes remain unclassified; no message inference is made.
+    """
+    unavailable = {"source": "codex-error-events-v1", "status": "unavailable",
+                   "reported-events": 0, "categories": []}
+    path = directory / "events.jsonl"
+    try:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_BYTES:
+            return unavailable
+        payload = path.read_bytes()
+        if len(payload) > MAX_BYTES:
+            return unavailable
+        categories, count = set(), 0
+        for line in payload.decode("utf-8").splitlines():
+            event = _parse_json(line)
+            if not isinstance(event, dict):
+                return unavailable
+            if event.get("type") not in {"turn.failed", "error"}:
+                continue
+            count += 1
+            error = event.get("error")
+            code = error.get("code") if isinstance(error, dict) else event.get("code")
+            categories.add(_ERROR_CODES.get(code, "unclassified") if isinstance(code, str) else "unclassified")
+        return {"source": "codex-error-events-v1", "status": "reported" if count else "unclassified",
+                "reported-events": count, "categories": sorted(categories)}
+    except (OSError, ValueError, UnicodeError, RecursionError):
+        return unavailable
+
+
 def observe_codex(observer_id: str, directory: Path, host: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     validate_params(observer_id, params)
     def _unknown(params, reason, observation_digest=None, disclosed=False):

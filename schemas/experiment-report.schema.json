@@ -362,7 +362,18 @@
             "$ref": "#/$defs/status"
           },
           "host": {
-            "type": "object"
+            "type": "object",
+            "properties": {"native-failure": {
+              "type": "object", "additionalProperties": false,
+              "required": ["source", "status", "reported-events", "categories"],
+              "properties": {
+                "source": {"const": "codex-error-events-v1"},
+                "status": {"enum": ["reported", "unclassified", "unavailable"]},
+                "reported-events": {"type": "integer", "minimum": 0},
+                "categories": {"type": "array", "uniqueItems": true, "maxItems": 8,
+                  "items": {"enum": ["rate-limit", "usage-limit", "quota", "authentication", "context-limit", "server", "transport", "unclassified"]}}
+              }
+            }}
           },
           "observer-evidence": {"$ref": "#/$defs/observer-evidence"},
           "artifact-changes": {"type": "array", "maxItems": 3000, "items": {

@@ -171,6 +171,9 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
             result = _invoke_codex(binary, project, prompt, model, effort, timeout, skills, Path(observation),
                                    developer_instructions=instructions, windows_sandbox=windows_sandbox,
                                    trusted_workspace=True, sandbox=access)
+            if result.get("status") != "completed":
+                from .eval_observations import codex_failure_metadata
+                result["native-failure"] = codex_failure_metadata(Path(observation))
             if observer is not None:
                 result["observer"] = _observer_outcome(observer, Path(observation), result)
         result["configuration-evidence"] = "explicit-native-developer-instructions-argument"
