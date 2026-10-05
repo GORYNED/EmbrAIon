@@ -13,6 +13,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from . import security_oracles
+
 
 _WIRING_ID = "wiring-v1"
 _UPGRADE_ID = "upgrade-scope-v1"
@@ -39,12 +41,14 @@ _UPGRADE_CHECKS = (
 
 
 def _require_oracle(oracle_id: str) -> None:
-    if oracle_id not in (_WIRING_ID, _UPGRADE_ID):
+    if oracle_id not in (_WIRING_ID, _UPGRADE_ID, security_oracles.ORACLE_ID):
         raise ValueError("unknown oracle")
 
 
 def oracle_metadata(oracle_id: str) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == security_oracles.ORACLE_ID:
+        return security_oracles.oracle_metadata(oracle_id)
     checks = _UPGRADE_CHECKS if oracle_id == _UPGRADE_ID else _WIRING_CHECKS
     check_contracts = [{"id": name, "category": category, "mandatory": True}
                        for name, category in checks]
@@ -98,6 +102,8 @@ def oracle_metadata(oracle_id: str) -> dict[str, Any]:
 
 def validate_params(oracle_id: str, params: dict[str, Any]) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == security_oracles.ORACLE_ID:
+        return security_oracles.validate_params(oracle_id, params)
     if not isinstance(params, dict) or params:
         raise ValueError("registered oracles accept only empty params")
     return {}
@@ -190,6 +196,8 @@ def _check(check_id: str, category: str, passed: bool) -> dict[str, Any]:
 
 def grade(oracle_id: str, project: Path, before: dict[str, str], params: dict[str, Any]) -> dict[str, Any]:
     validate_params(oracle_id, params)
+    if oracle_id == security_oracles.ORACLE_ID:
+        return security_oracles.grade(oracle_id, project, before, params)
     allowed_files = _UPGRADE_FILES if oracle_id == _UPGRADE_ID else _WIRING_FILES
     if not isinstance(before, dict) or any(
         not isinstance(path, str) or path not in allowed_files or not isinstance(digest, str)
@@ -283,6 +291,8 @@ _WIRING_SABOTAGES = {
 
 def calibration(oracle_id: str, framework: Path) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == security_oracles.ORACLE_ID:
+        return security_oracles.calibration(oracle_id, framework)
     if oracle_id == _UPGRADE_ID:
         return _calibrate_upgrade(Path(framework))
     fixture = Path(framework) / "evals" / "foundation" / "fixtures" / _WIRING_ID

@@ -1,0 +1,81 @@
+{
+  "schema-version": 1,
+  "id": "review-axes-r17-positive",
+  "baseline": "baseline",
+  "candidate": "review-axes",
+  "suite-digest": "b83041368d66c072925f11c1d032860e58bce14e5048903a68bd6da813784179",
+  "change-ids": [
+    "review-axes"
+  ],
+  "traceability": [
+    {
+      "change-id": "review-axes",
+      "source-kind": "new-contract",
+      "observed-problem": "A mechanically valid implementation can miss intent; an intended solution can still contain implementation defects.",
+      "proposed-rule": "Assess intent/contracts and implementation quality separately using independently supported findings.",
+      "capability-paths": [
+        "core/skills/review/SKILL.md"
+      ],
+      "expected-result": "Find actual intent and code defects without false findings or extra report ceremony.",
+      "scenarios": [
+        "review-intent-positive-en",
+        "review-code-positive-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "review-intent-positive-en",
+    "review-code-positive-ru"
+  ],
+  "target-cases": [
+    "review-intent-positive-en",
+    "review-code-positive-ru"
+  ],
+  "cases": [
+    {
+      "case": "review-intent-positive-en",
+      "risk": "ordinary",
+      "attempts": 5,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 46308.8,
+        "latency": 17.200000000000003
+      },
+      "baseline-manifest-digest": "c23d7c6d33ae04545281942b47a8caf49a4fe4b0bf785ad7f3aa72e6951c7704",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "review-intent-positive-en-r17-budget"
+    },
+    {
+      "case": "review-code-positive-ru",
+      "risk": "ordinary",
+      "attempts": 5,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 11997.400000000001,
+        "latency": 9.9424
+      },
+      "baseline-manifest-digest": "c23d7c6d33ae04545281942b47a8caf49a4fe4b0bf785ad7f3aa72e6951c7704",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "review-code-positive-ru-r17-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "baseline-report.json",
+      "digest": "79fea13ebfbf24404103578fce344153ba7824f4b929dafa8361007746434304",
+      "suite-path": "suite.json",
+      "suite-digest": "fe7eedb17f216c74ae14da2c89cc6644253564f1baa880f22ff5cd07ee76ef90"
+    }
+  ]
+}

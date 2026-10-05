@@ -37,6 +37,7 @@
         "oracles": {"type": "array", "minItems": 1, "items": {
           "type": "object", "additionalProperties": false, "required": ["id", "params", "mandatory"],
           "properties": {"id": {"$ref": "#/$defs/id"}, "params": {"type": "object"}, "mandatory": {"type": "boolean"},
+             "metadata-digest": {"$ref": "#/$defs/hash"},
             "required-checks": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}}
         }}
       }

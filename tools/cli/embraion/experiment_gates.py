@@ -94,7 +94,227 @@ def _expected_checks(contract: dict[str, Any]) -> dict[tuple[str | None, str], d
     return checks
 
 
-def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) -> dict[str, Any]:
+def _baseline_binding(report: dict[str, Any], experiment: dict[str, Any],
+                      baseline_reports: dict[str, dict[str, Any]] | None,
+                      candidate_suite: dict[str, Any] | None) -> list[str]:
+    """Bind each budget to a complete, preserved baseline-only measurement."""
+    from .eval_metrics import validate_evidence
+
+    reasons: list[str] = []
+    references = experiment.get("baseline-reports")
+    if not isinstance(references, list) or not references:
+        return ["missing-baseline-report-references"]
+    if not isinstance(baseline_reports, dict) or not isinstance(candidate_suite, dict):
+        return ["unavailable-baseline-evidence"]
+    suite = candidate_suite.get("suite")
+    fixtures = candidate_suite.get("fixture-digests")
+    if not isinstance(suite, dict) or not isinstance(fixtures, dict):
+        return ["unavailable-candidate-suite-evidence"]
+    if report.get("suite-digest") != experiment.get("suite-digest"):
+        reasons.append("candidate-suite-digest-mismatch")
+    from .experiment_evals import identity
+    suite_digest = identity(suite)
+    if (suite_digest != report.get("suite-digest")
+            or report.get("inputs", {}).get("suite") != suite_digest
+            or suite.get("baseline") != experiment.get("baseline")):
+        reasons.append("candidate-suite-identity-mismatch")
+    required = experiment.get("required-cases")
+    budgets = experiment.get("cases")
+    if not isinstance(required, list) or not isinstance(budgets, list):
+        return reasons + ["invalid-baseline-case-selection"]
+    suite_cases = suite.get("cases")
+    candidate_cases = {c["id"]: c for c in suite_cases if isinstance(c, dict) and isinstance(c.get("id"), str)} if isinstance(suite_cases, list) else {}
+    if not isinstance(suite_cases, list) or len(candidate_cases) != len(suite_cases) or set(candidate_cases) != set(required):
+        reasons.append("unbudgeted-candidate-suite-case")
+    current_fixtures = report.get("inputs", {}).get("fixtures") if isinstance(report.get("inputs"), dict) else None
+    if not isinstance(current_fixtures, dict) or set(current_fixtures) != set(candidate_cases):
+        reasons.append("candidate-fixture-provenance-incomplete")
+    contracts = report.get("case-contracts")
+    contract_cases = {c.get("case") for c in contracts if isinstance(c, dict)} if isinstance(contracts, list) else set()
+    if contract_cases != set(required) or len(contracts) != len(contract_cases):
+        reasons.append("unbudgeted-candidate-report-case")
+    selected_plans = report.get("planned-runs")
+    if not isinstance(selected_plans, list) or any(not isinstance(p, dict) or p.get("case") not in required for p in selected_plans):
+        reasons.append("unbudgeted-candidate-plan-case")
+    selected_runs = report.get("runs")
+    if not isinstance(selected_runs, list) or any(not isinstance(r, dict) or r.get("case") not in required for r in selected_runs):
+        reasons.append("unbudgeted-candidate-run-case")
+    ref_ids = {r.get("id") for r in references if isinstance(r, dict)}
+    if len(ref_ids) != len(references) or set(baseline_reports) != ref_ids:
+        reasons.append("baseline-reference-set-mismatch")
+    for budget in budgets:
+        if not isinstance(budget, dict) or not isinstance(budget.get("case"), str):
+            continue
+        case = budget["case"]
+        reference_id = budget.get("baseline-report-id")
+        if not isinstance(reference_id, str) or reference_id not in ref_ids:
+            reasons.append("unbound-baseline-budget:" + case)
+            continue
+        bundle = baseline_reports.get(reference_id)
+        if not isinstance(bundle, dict):
+            reasons.append("unavailable-baseline-report:" + case)
+            continue
+        preserved, old_suite, old_fixtures = bundle.get("report"), bundle.get("suite"), bundle.get("fixture-digests")
+        if not isinstance(preserved, dict) or not isinstance(old_suite, dict) or not isinstance(old_fixtures, dict):
+            reasons.append("invalid-baseline-bundle:" + case)
+            continue
+        baseline_id = experiment.get("baseline")
+        if (preserved.get("schema-version") != 2 or preserved.get("evidence-kind") != "live-native-full-core"
+                or preserved.get("phase") != "baseline" or preserved.get("baseline-id") != baseline_id
+                or preserved.get("suite-digest") != identity(old_suite)
+                or preserved.get("inputs", {}).get("suite") != identity(old_suite)
+                or old_suite.get("baseline") != baseline_id):
+            reasons.append("invalid-baseline-report-provenance:" + case)
+        if preserved.get("host") != report.get("host") or preserved.get("environment") != report.get("environment"):
+            reasons.append("baseline-native-context-mismatch:" + case)
+        old_inputs, new_inputs = preserved.get("inputs"), report.get("inputs")
+        stable_inputs = ("evaluators", "calibration-fixtures", "corpus", "schemas", "metric-rubric", "observer-metadata", "oracle-metadata")
+        if not isinstance(old_inputs, dict) or not isinstance(new_inputs, dict) or any(
+                old_inputs.get(key) != new_inputs.get(key) for key in stable_inputs):
+            reasons.append("baseline-dependency-mismatch:" + case)
+        if preserved.get("metric-rubric") != report.get("metric-rubric"):
+            reasons.append("baseline-rubric-mismatch:" + case)
+        if preserved.get("native-preflight", {}).get("status") != "pass":
+            reasons.append("baseline-preflight-incomplete:" + case)
+        if preserved.get("measurement-status") != "complete" or preserved.get("contamination") != [] or preserved.get("limitations") != []:
+            reasons.append("baseline-report-incomplete:" + case)
+        projections = preserved.get("projection-checks")
+        if not isinstance(projections, dict) or projections.get(baseline_id, {}).get("status") != "pass":
+            reasons.append("baseline-projection-incomplete:" + case)
+        old_variants = preserved.get("variants")
+        selected = [v for v in old_variants if isinstance(v, dict) and v.get("id") == baseline_id] if isinstance(old_variants, list) else []
+        old_suite_variants = old_suite.get("variants")
+        pinned = [v for v in old_suite_variants if isinstance(v, dict) and v.get("id") == baseline_id] if isinstance(old_suite_variants, list) else []
+        if (len(selected) != 1 or len(pinned) != 1
+                or selected[0].get("manifest-digest") != budget.get("baseline-manifest-digest")
+                or pinned[0].get("manifest-digest") != budget.get("baseline-manifest-digest")):
+            reasons.append("baseline-snapshot-mismatch:" + case)
+        old_cases = old_suite.get("cases")
+        old_case = [c for c in old_cases if isinstance(c, dict) and c.get("id") == case] if isinstance(old_cases, list) else []
+        new_case = candidate_cases.get(case)
+        if len(old_case) != 1 or not isinstance(new_case, dict):
+            reasons.append("baseline-case-unavailable:" + case)
+        else:
+            # Baseline-only and matched suites can use different fixture paths;
+            # the case contract and preserved fixture content must agree.
+            if {k: v for k, v in old_case[0].items() if k != "fixture"} != {k: v for k, v in new_case.items() if k != "fixture"}:
+                reasons.append("baseline-case-contract-mismatch:" + case)
+            recorded = old_inputs.get("fixtures") if isinstance(old_inputs, dict) else None
+            prior_digest = recorded.get(case) if isinstance(recorded, dict) else None
+            current_digest = current_fixtures.get(case) if isinstance(current_fixtures, dict) else None
+            if not isinstance(prior_digest, str) or not isinstance(current_digest, str):
+                reasons.append("baseline-fixture-provenance-unavailable:" + case)
+            elif old_fixtures.get(case) != fixtures.get(case) or prior_digest != old_fixtures.get(case) or current_digest != fixtures.get(case):
+                reasons.append("baseline-fixture-mismatch:" + case)
+        old_contracts = preserved.get("case-contracts")
+        matching = [c for c in old_contracts if isinstance(c, dict) and c.get("case") == case] if isinstance(old_contracts, list) else []
+        new_contracts = [c for c in contracts if isinstance(c, dict) and c.get("case") == case] if isinstance(contracts, list) else []
+        if len(matching) != 1 or len(new_contracts) != 1 or matching[0] != new_contracts[0]:
+            reasons.append("baseline-check-contract-mismatch:" + case)
+            continue
+        try:
+            expected = _expected_checks(matching[0])
+        except (ValueError, TypeError, KeyError):
+            reasons.append("baseline-check-contract-invalid:" + case)
+            continue
+        calibrated = preserved.get("calibration")
+        if not isinstance(calibrated, list) or any(not isinstance(row, dict) or row.get("status") != "pass"
+                or not _boundary(row.get("coverage")) or not _boundary(row.get("correctness")) for row in calibrated):
+            reasons.append("baseline-calibration-incomplete:" + case)
+        mandatory_oracles = {o.get("id") for o in matching[0].get("oracles", []) if isinstance(o, dict) and o.get("mandatory") is True}
+        from .eval_oracles import oracle_metadata
+        expected_metadata = {key: identity(oracle_metadata(key)) for key in mandatory_oracles}
+        recorded_metadata = old_inputs.get("oracle-metadata") if isinstance(old_inputs, dict) else None
+        current_metadata = new_inputs.get("oracle-metadata") if isinstance(new_inputs, dict) else None
+        if (not isinstance(recorded_metadata, dict) or not isinstance(current_metadata, dict)
+                or any(recorded_metadata.get(key) != digest or current_metadata.get(key) != digest
+                       for key, digest in expected_metadata.items())):
+            reasons.append("baseline-oracle-metadata-incomplete:" + case)
+        if not mandatory_oracles.issubset({row.get("id") for row in calibrated if isinstance(row, dict)} if isinstance(calibrated, list) else set()):
+            reasons.append("baseline-oracle-uncalibrated:" + case)
+        current_cal = report.get("calibration")
+        if not isinstance(current_cal, list) or any(
+                next((row for row in calibrated if isinstance(row, dict) and row.get("id") == oracle), None)
+                != next((row for row in current_cal if isinstance(row, dict) and row.get("id") == oracle), None)
+                for oracle in mandatory_oracles):
+            reasons.append("baseline-calibration-mismatch:" + case)
+        observer = matching[0].get("observer")
+        if isinstance(observer, dict) and observer.get("mandatory") is True:
+            old_cal = preserved.get("observer-calibration")
+            if not isinstance(old_cal, list) or not any(isinstance(row, dict) and row.get("id") == observer.get("id") and row.get("status") == "pass" for row in old_cal):
+                reasons.append("baseline-observer-uncalibrated:" + case)
+            new_cal = report.get("observer-calibration")
+            if not isinstance(new_cal, list) or not isinstance(old_cal, list) or next(
+                    (row for row in old_cal if isinstance(row, dict) and row.get("id") == observer.get("id")), None) != next(
+                    (row for row in new_cal if isinstance(row, dict) and row.get("id") == observer.get("id")), None):
+                reasons.append("baseline-observer-calibration-mismatch:" + case)
+        plans, runs = preserved.get("planned-runs"), preserved.get("runs")
+        planned = {(p.get("case"), p.get("variant"), p.get("attempt")) for p in plans if isinstance(p, dict)} if isinstance(plans, list) else set()
+        rows = {(r.get("case"), r.get("variant"), r.get("attempt")): r for r in runs if isinstance(r, dict)} if isinstance(runs, list) else {}
+        attempts = budget.get("attempts")
+        expected_plan = {(case, baseline_id, n) for n in range(1, attempts + 1)} if type(attempts) is int and 1 <= attempts <= 20 else set()
+        selected_plan = {key for key in planned if key[0] == case}
+        selected_rows = {key for key in rows if key[0] == case}
+        if (not expected_plan or selected_plan != expected_plan or selected_rows != expected_plan
+                or not isinstance(plans, list) or len(planned) != len(plans)
+                or not isinstance(runs, list) or len(rows) != len(runs)
+                or set(rows) != planned or any(p[1] != baseline_id for p in planned)):
+            reasons.append("baseline-plan-incomplete:" + case)
+        if not isinstance(runs, list) or not runs or any(
+                not isinstance(row, dict) or row.get("status") not in {"pass", "fail"}
+                or row.get("measurement-status") != "complete" for row in runs):
+            reasons.append("baseline-report-incomplete:" + case)
+        else:
+            expected_status = "pass" if all(row["status"] == "pass" for row in runs) else "fail"
+            if preserved.get("status") != expected_status:
+                reasons.append("baseline-report-status-mismatch:" + case)
+        for key in expected_plan:
+            run = rows.get(key)
+            if not isinstance(run, dict):
+                reasons.append("baseline-run-missing:" + case)
+                continue
+            if run.get("status") not in {"pass", "fail"} or run.get("host", {}).get("status") != "completed" or run.get("measurement-status") != "complete" or run.get("contamination") != []:
+                reasons.append("baseline-run-incomplete:" + case)
+            if isinstance(observer, dict):
+                proof = run.get("observer-evidence")
+                if (not isinstance(proof, dict) or proof.get("id") != observer.get("id")
+                        or proof.get("params-digest") != observer.get("params-digest")
+                        or observer.get("mandatory") is True and proof.get("status") not in {"pass", "fail"}):
+                    reasons.append("baseline-observer-incomplete:" + case)
+            if validate_evidence(run) or run.get("metric-evidence", {}).get("rubric-id") != report.get("metric-rubric", {}).get("id"):
+                reasons.append("baseline-metric-incomplete:" + case)
+            metrics = run.get("metrics")
+            if not isinstance(metrics, dict) or any(not _finite_nonnegative(metrics.get(metric)) for metric in _METRICS):
+                reasons.append("baseline-metric-incomplete:" + case)
+            checks = run.get("checks")
+            observed = {}
+            if not isinstance(checks, list):
+                reasons.append("baseline-checks-incomplete:" + case)
+                continue
+            for check in checks:
+                if not isinstance(check, dict) or not isinstance(check.get("id"), str):
+                    reasons.append("baseline-checks-incomplete:" + case)
+                    continue
+                key_check = (check.get("oracle"), check["id"])
+                if key_check in observed:
+                    reasons.append("baseline-checks-duplicate:" + case)
+                observed[key_check] = check
+                contract = expected.get(key_check)
+                if contract is None or check.get("mandatory") is not contract["mandatory"] or check.get("category") != contract["category"]:
+                    reasons.append("baseline-check-contract-mismatch:" + case)
+                if check.get("mandatory") is True and check.get("status") not in {"pass", "fail"}:
+                    reasons.append("baseline-mandatory-check-incomplete:" + case)
+            if any(check_key not in observed for check_key, contract in expected.items() if contract["mandatory"]):
+                reasons.append("baseline-required-check-missing:" + case)
+            required_status = [check.get("status") for check in checks if isinstance(check, dict) and check.get("mandatory") is True]
+            if not required_status or (run.get("status") == "pass" and any(s != "pass" for s in required_status)) or (run.get("status") == "fail" and "fail" not in required_status):
+                reasons.append("baseline-run-status-mismatch:" + case)
+    return reasons
+
+
+def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any], *,
+                          baseline_reports: dict[str, dict[str, Any]] | None = None,
+                          candidate_suite: dict[str, Any] | None = None) -> dict[str, Any]:
     """Assess complete matched evidence against budgets fixed in an experiment.
 
     A known candidate authority/security violation is a rejection even if some
@@ -105,6 +325,10 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
         return _result("inconclusive", ["invalid-input"])
     reasons: list[str] = []
     rejection: list[str] = []
+    try:
+        reasons.extend(_baseline_binding(report, experiment, baseline_reports, candidate_suite))
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
+        reasons.append("invalid-baseline-evidence")
     from .eval_metrics import FINITE_RUBRICS, rubric_metadata, validate_evidence
     try:
         registered_rubric = rubric_metadata(report.get("metric-rubric", {}).get("id"))
@@ -201,6 +425,8 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
         reasons.append("duplicate-case-selection")
     if not set(targets).issubset(required) or not set(required).issubset(case_map):
         reasons.append("unbudgeted-case-selection")
+    if set(case_map) != set(required):
+        reasons.append("unselected-case-budget")
     contracts = report.get("case-contracts")
     expected_checks: dict[str, dict[tuple[str | None, str], dict[str, Any]]] = {}
     if not isinstance(contracts, list) or any(not isinstance(c, dict) or not isinstance(c.get("case"), str) for c in contracts):

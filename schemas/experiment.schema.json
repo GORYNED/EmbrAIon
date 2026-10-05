@@ -11,6 +11,16 @@
     "baseline": {"type": "string", "minLength": 1},
     "candidate": {"type": "string", "minLength": 1},
     "suite-digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "baseline-reports": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "path", "digest", "suite-path", "suite-digest"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1, "maxLength": 250},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "suite-path": {"type": "string", "minLength": 1, "maxLength": 250},
+        "suite-digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }}},
     "change-ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "traceability": {"type": "array", "minItems": 1, "items": {
       "type": "object", "additionalProperties": false,
@@ -43,6 +53,7 @@
           "risk": {"enum": ["ordinary", "high"]},
           "attempts": {"type": "integer", "minimum": 5, "maximum": 20},
           "baseline-manifest-digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "baseline-report-id": {"type": "string", "minLength": 1},
           "justification-id": {"type": "string", "minLength": 1},
           "limits": {"type": "object", "additionalProperties": false,
             "required": ["quality-correctness", "authority-scope", "security-privacy", "false-positive-rate", "unnecessary-clarification", "unnecessary-capability-activation", "tokens", "latency"],

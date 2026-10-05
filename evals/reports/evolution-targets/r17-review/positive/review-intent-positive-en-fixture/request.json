@@ -1,0 +1,1 @@
+{"request": "Only revise the external API documentation; do not change source code.", "function-contract": "For nonnegative price and rate in [0,1], discount returns price multiplied by one minus rate."}

@@ -1,0 +1,84 @@
+{
+  "schema-version": 1,
+  "kind": "review-target-diagnostic-index",
+  "core-source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "reports": [
+    {
+      "report": "review-r16-positive-diagnostic.json",
+      "sha256": "34fd7a82aac60c48f4fe4534405f0b0767252bb0eacad6a8b264f0a6a8e50606",
+      "runtime-archive-sha256": "16a0c7344311bac36156a862ad6daa1378040229234e932dfa4060306b635ac5",
+      "protocol-version": 2,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 0,
+        "fail": 6,
+        "inconclusive": 0
+      },
+      "status": "fail",
+      "measurement-status": "inconclusive",
+      "contamination": [],
+      "limitation": "Diagnostic only: positive and held-out judgments violated the finite finding string-ID format, leaving required semantic metrics unavailable. These records do not establish mistaken review judgments or candidate benefit."
+    },
+    {
+      "report": "review-r16-negative-diagnostic.json",
+      "sha256": "0b48bd5fb286f7d72c0ecd20e79b43fb9f1ab73978ba47800f9ea8126a1a9c24",
+      "runtime-archive-sha256": "16a0c7344311bac36156a862ad6daa1378040229234e932dfa4060306b635ac5",
+      "protocol-version": 2,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "status": "pass",
+      "measurement-status": "complete",
+      "contamination": [],
+      "limitation": "Diagnostic only: positive and held-out judgments violated the finite finding string-ID format, leaving required semantic metrics unavailable. These records do not establish mistaken review judgments or candidate benefit."
+    },
+    {
+      "report": "review-r16-held-out-diagnostic.json",
+      "sha256": "614721da1d0e3e76daa3dec5ae13be8462a74461bdddb3657fa5bb6abed0ef46",
+      "runtime-archive-sha256": "16a0c7344311bac36156a862ad6daa1378040229234e932dfa4060306b635ac5",
+      "protocol-version": 2,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 0,
+        "fail": 6,
+        "inconclusive": 0
+      },
+      "status": "fail",
+      "measurement-status": "inconclusive",
+      "contamination": [],
+      "limitation": "Diagnostic only: positive and held-out judgments violated the finite finding string-ID format, leaving required semantic metrics unavailable. These records do not establish mistaken review judgments or candidate benefit."
+    }
+  ],
+  "format-probes": [
+    {
+      "report": "review-r16-format-probe-v2.json",
+      "sha256": "c9640ee21b4782625249a5fcb3149213487de02f08af8e7d03f2b85fa09361c5",
+      "planned": 1,
+      "purpose": "Separate bounded format diagnosis; no baseline replacement or retrospective regrading."
+    },
+    {
+      "report": "review-r16-format-probe-v3.json",
+      "sha256": "d13a748cf5ff7f72dedc7beeb5f46bf7c11f8e82b7b389e9827bed53f36a407c",
+      "planned": 1,
+      "purpose": "Separate bounded format diagnosis; no baseline replacement or retrospective regrading."
+    }
+  ],
+  "authoritative": false,
+  "promotion": "blocked-missing-qualified-baseline-and-matched-comparison",
+  "diagnostic-preparation-failure": "The first format probe stopped after preflight with controller KeyError before target execution; retained locally, then corrected under a new diagnostic plan/output/profile.",
+  "coverage": "Strict finite fixture judgments and response structure; no runtime PR readiness, unrestricted review correctness, backend-effective settings, Core benefit or promotion.",
+  "qualification": "6 pass + 12 format failures; mandatory semantic measurements missing, so no authoritative baseline.",
+  "next-protocol": "Version 3 explicitly requires string finding IDs. Sources and gold remain unchanged. New measurements are distinct from version 2."
+}

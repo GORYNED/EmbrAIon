@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from embraion.experiment_gates import experiment_digest, promotion_eligibility, validate_failure_corpus
+from embraion.experiment_gates import experiment_digest, promotion_eligibility as _promotion_eligibility, validate_failure_corpus
 from embraion.eval_oracles import oracle_metadata
 from embraion.eval_metrics import measure, rubric_metadata
 from embraion.experiment_evals import identity, _files
@@ -20,13 +20,16 @@ METRICS = ("quality-correctness", "authority-scope", "security-privacy", "false-
 def evidence() -> tuple[dict, dict]:
     limits = {metric: 0 for metric in METRICS}
     experiment = {"schema-version": 1, "id": "scope-trial", "baseline": "base", "candidate": "candidate", "suite-digest": "c" * 64,
+                  "baseline-reports": [{"id": "prior", "path": "prior.json", "digest": "a" * 64,
+                                        "suite-path": "prior-suite.json", "suite-digest": "b" * 64}],
                   "change-ids": ["scope-rule"], "required-cases": ["scope"], "target-cases": ["scope"],
                   "traceability": [{"change-id": "scope-rule", "source-kind": "observed-problem",
                                     "observed-problem": "Framework upgrade expanded scope", "proposed-rule": "Keep requested action bounded",
                                     "capability-paths": ["core/skills/debugging/SKILL.md"], "scenarios": ["scope"],
                                     "expected-result": "Upgrade pin only"}],
                   "cases": [{"case": "scope", "limits": limits, "risk": "ordinary", "attempts": 5,
-                             "baseline-manifest-digest": "a" * 64, "justification-id": "scope-budget"}]}
+                             "baseline-manifest-digest": "a" * 64, "baseline-report-id": "prior",
+                             "justification-id": "scope-budget"}]}
     base_metrics = {metric: 0 for metric in METRICS}
     base_metrics["quality-correctness"] = 1
     candidate_metrics = {metric: 0 for metric in METRICS}
@@ -37,7 +40,9 @@ def evidence() -> tuple[dict, dict]:
               "case-contracts": [{"case": "scope", "risk": "ordinary", "language": "en", "polarity": "positive", "corpus-id": None,
                                   "owned-paths-required": False,
                                   "oracles": [{"id": "wiring-v1", "mandatory": True, "required-checks": []}]}],
-              "inputs": {"corpus": identity(_files(ROOT / "evals/corpus"))},
+              "inputs": {"corpus": identity(_files(ROOT / "evals/corpus")),
+                         "oracle-metadata": {"wiring-v1": identity(oracle_metadata("wiring-v1"))},
+                         "fixtures": {"scope": "f" * 64}},
               "planned-runs": [{"case": "scope", "variant": variant, "attempt": 1}
                                for variant in ("base", "candidate")],
               "runs": [{"case": "scope", "variant": "base", "attempt": 1, "status": "fail",
@@ -73,7 +78,44 @@ def evidence() -> tuple[dict, dict]:
         run["measurement-status"] = "complete"
         run["metric-evidence"] = {"rubric-id": "foundation-metrics-v1"}
     report["measurement-status"] = "complete"
+    report.update({"host": "codex", "environment": {}, "evidence-kind": "live-native-full-core", "limitations": []})
+    suite = _synthetic_suite(report)
+    report["suite-digest"] = identity(suite)
+    report["inputs"]["suite"] = report["suite-digest"]
+    experiment["suite-digest"] = report["suite-digest"]
+    report["experiment-digest"] = experiment_digest(experiment)
+    report["status"] = "fail"
     return report, experiment
+
+
+def _synthetic_suite(report):
+    return {"schema-version": 2, "baseline": "base", "variants": [
+        {"id": "base", "manifest-digest": "a" * 64}], "cases": [
+        {"id": contract["case"], "fixture": "fixture", "prompt": "scope prompt", "risk": contract["risk"],
+         "oracles": contract["oracles"], "language": contract["language"], "polarity": contract["polarity"]}
+        for contract in report.get("case-contracts", []) if isinstance(contract, dict)]}
+
+
+def _binding_args(report):
+    """Synthetic prior evidence is separate from the candidate under test."""
+    suite = _synthetic_suite(report)
+    prior = copy.deepcopy(report)
+    prior["phase"] = "baseline"
+    prior["variants"] = [v for v in prior.get("variants", []) if v.get("id") == "base"]
+    prior["planned-runs"] = [p for p in prior.get("planned-runs", []) if p.get("variant") == "base"]
+    prior["runs"] = [r for r in prior.get("runs", []) if r.get("variant") == "base"]
+    prior["comparisons"] = []
+    prior["projection-checks"] = {"base": prior.get("projection-checks", {}).get("base", {})}
+    prior["inputs"]["suite"] = identity(suite)
+    prior["suite-digest"] = identity(suite)
+    prior["status"] = "pass" if prior["runs"] and all(r.get("status") == "pass" for r in prior["runs"]) else "fail"
+    return {"baseline_reports": {"prior": {
+        "report": prior, "suite": copy.deepcopy(suite), "fixture-digests": {"scope": "f" * 64}}},
+        "candidate_suite": {"suite": suite, "fixture-digests": {"scope": "f" * 64}}}
+
+
+def promotion_eligibility(report, experiment):
+    return _promotion_eligibility(report, experiment, **_binding_args(report))
 
 
 class ExperimentGateTests(unittest.TestCase):
@@ -91,6 +133,121 @@ class ExperimentGateTests(unittest.TestCase):
         self.assertEqual("eligible", result["status"], result)
         self.assertFalse(result["authorizes_core_promotion"])
         self.assertTrue(result["review_required"])
+
+    def test_legacy_or_unbound_budget_cannot_be_promoted(self) -> None:
+        report, experiment = evidence()
+        del experiment["baseline-reports"]
+        self.assertIn("missing-baseline-report-references", _promotion_eligibility(report, experiment)["reasons"])
+        report, experiment = evidence()
+        del experiment["cases"][0]["baseline-report-id"]
+        report["experiment-digest"] = experiment_digest(experiment)
+        result = _promotion_eligibility(report, experiment, **_binding_args(report))
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("unbound-baseline-budget:scope", result["reasons"])
+
+    def test_historical_baseline_without_measurement_fixture_digest_is_inconclusive(self) -> None:
+        report, experiment = evidence()
+        args = _binding_args(report)
+        del args["baseline_reports"]["prior"]["report"]["inputs"]["fixtures"]
+        result = _promotion_eligibility(report, experiment, **args)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("baseline-fixture-provenance-unavailable:scope", result["reasons"])
+        report, experiment = evidence()
+        args = _binding_args(report)
+        args["baseline_reports"]["prior"]["report"]["inputs"]["fixtures"]["scope"] = "0" * 64
+        self.assertIn("baseline-fixture-mismatch:scope",
+                      _promotion_eligibility(report, experiment, **args)["reasons"])
+
+    def test_baseline_oracle_metadata_cannot_be_missing_or_rebound(self) -> None:
+        for replacement in (None, {"wiring-v1": "0" * 64}):
+            report, experiment = evidence()
+            args = _binding_args(report)
+            args["baseline_reports"]["prior"]["report"]["inputs"]["oracle-metadata"] = replacement
+            result = _promotion_eligibility(report, experiment, **args)
+            self.assertEqual("inconclusive", result["status"])
+            self.assertIn("baseline-oracle-metadata-incomplete:scope", result["reasons"])
+
+    def test_missing_oracle_metadata_cannot_erase_independent_candidate_safety_failure(self) -> None:
+        report, experiment = evidence()
+        args = _binding_args(report)
+        candidate = next(r for r in report["runs"] if r["variant"] == "candidate")
+        candidate["checks"].append({"id": "synthetic-disclosure", "status": "fail",
+                                    "category": "security-privacy", "mandatory": True,
+                                    "observed-violation": True})
+        with patch("embraion.eval_oracles.oracle_metadata", side_effect=ValueError("missing metadata")):
+            result = _promotion_eligibility(report, experiment, **args)
+        self.assertEqual("rejected", result["status"])
+        self.assertTrue(any(r.startswith("candidate-safety-failure:") for r in result["reasons"]))
+
+    def test_baseline_history_must_be_complete_and_source_matched(self) -> None:
+        sabotages = (
+            (lambda args: args["baseline_reports"]["prior"]["report"].update(phase="exploratory"), "invalid-baseline-report-provenance:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"]["runs"][0].update(status="inconclusive"), "baseline-run-incomplete:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"]["runs"][0]["metrics"].pop("tokens"), "baseline-metric-incomplete:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"]["native-preflight"].update(status="inconclusive"), "baseline-preflight-incomplete:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"]["calibration"][0].update(status="fail"), "baseline-calibration-incomplete:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"].update(environment={"native-context": "different"}), "baseline-native-context-mismatch:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["suite"]["cases"][0].update(prompt="changed prompt"), "baseline-case-contract-mismatch:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["fixture-digests"].update(scope="0" * 64), "baseline-fixture-mismatch:scope"),
+            (lambda args: args["baseline_reports"]["prior"]["report"]["variants"][0].update(**{"manifest-digest": "0" * 64}), "baseline-snapshot-mismatch:scope"),
+        )
+        for sabotage, reason in sabotages:
+            with self.subTest(reason=reason):
+                report, experiment = evidence()
+                args = _binding_args(report)
+                sabotage(args)
+                result = _promotion_eligibility(report, experiment, **args)
+                self.assertEqual("inconclusive", result["status"], result)
+                self.assertIn(reason, result["reasons"])
+
+    def test_selected_comparison_cannot_hide_extra_suite_or_report_case(self) -> None:
+        report, experiment = evidence()
+        args = _binding_args(report)
+        args["candidate_suite"]["suite"]["cases"].append({**args["candidate_suite"]["suite"]["cases"][0], "id": "ungated"})
+        result = _promotion_eligibility(report, experiment, **args)
+        self.assertIn("unbudgeted-candidate-suite-case", result["reasons"])
+        report, experiment = evidence()
+        args = _binding_args(report)
+        report["planned-runs"].append({"case": "ungated", "variant": "candidate", "attempt": 1})
+        result = _promotion_eligibility(report, experiment, **args)
+        self.assertIn("unbudgeted-candidate-plan-case", result["reasons"])
+
+    def test_candidate_suite_identity_includes_frozen_input_digest(self) -> None:
+        report, experiment = evidence()
+        args = _binding_args(report)
+        self.assertEqual("eligible", _promotion_eligibility(report, experiment, **args)["status"])
+        report["inputs"]["suite"] = "0" * 64
+        result = _promotion_eligibility(report, experiment, **args)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("candidate-suite-identity-mismatch", result["reasons"])
+
+    def test_baseline_plan_and_overall_status_cannot_hide_extra_or_duplicate_rows(self) -> None:
+        def duplicate_plan(prior):
+            prior["planned-runs"].append(copy.deepcopy(prior["planned-runs"][0]))
+
+        def duplicate_run(prior):
+            prior["runs"].append(copy.deepcopy(prior["runs"][0]))
+
+        def inconclusive_extra_attempt(prior):
+            prior["planned-runs"].append({"case": "scope", "variant": "base", "attempt": 6})
+            extra = copy.deepcopy(prior["runs"][0])
+            extra.update(attempt=6, status="inconclusive", **{"measurement-status": "inconclusive"})
+            prior["runs"].append(extra)
+
+        sabotages = ((duplicate_plan, "baseline-plan-incomplete:scope"),
+                     (duplicate_run, "baseline-plan-incomplete:scope"),
+                     (inconclusive_extra_attempt, "baseline-plan-incomplete:scope"),
+                     (lambda prior: prior.update(status="inconclusive"), "baseline-report-status-mismatch:scope"),
+                     (lambda prior: prior.update(status="pass"), "baseline-report-status-mismatch:scope"))
+        for sabotage, reason in sabotages:
+            with self.subTest(reason=reason, sabotage=sabotage):
+                report, experiment = evidence()
+                args = _binding_args(report)
+                self.assertEqual("eligible", _promotion_eligibility(report, experiment, **args)["status"])
+                sabotage(args["baseline_reports"]["prior"]["report"])
+                result = _promotion_eligibility(report, experiment, **args)
+                self.assertEqual("inconclusive", result["status"], result)
+                self.assertIn(reason, result["reasons"])
 
     def test_finite_observer_calibration_and_frozen_params_are_mandatory(self) -> None:
         self._assert_frozen_observer("finite-answer-v1", "finite-output-metrics-v1")

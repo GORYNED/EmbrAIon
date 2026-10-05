@@ -43,6 +43,35 @@ class TargetCases(unittest.TestCase):
         with self.assertRaises(ValueError):
             prepare_target_baseline(framework_root(), Path("unused"), target="../../arbitrary")
 
+    def test_security_fixture_uses_registered_source_gold_outside_workspace(self):
+        root = framework_root()
+        (root / "build").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "security"
+            prepare_target_baseline(root, output, target="security-flow")
+            suite = json.loads((output / "suite.json").read_text(encoding="utf-8"))
+            self.assertEqual(6, len(suite["cases"]))
+            self.assertEqual({"role": "reviewer", "access": "read-only"}, suite["execution"])
+            self.assertEqual({("en", "positive"), ("ru", "positive"), ("en", "negative"), ("ru", "negative")},
+                             {(case["language"], case["polarity"]) for case in suite["cases"]})
+            for case in suite["cases"]:
+                self.assertEqual("high", case["risk"])
+                fixture = output / case["fixture"]
+                oracle = case["oracles"][0]
+                self.assertEqual({"case": case["id"]}, oracle["params"])
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                self.assertEqual({"service.py", "contract.json"}, {p.name for p in fixture.iterdir()})
+                self.assertNotIn("expected-paths", (fixture / "contract.json").read_text())
+                params = case["observer"]["params"]
+                answer = {"result": params["expected-result"], "findings": params["expected-findings"],
+                          "questions": [], "procedures": params["required-procedures"]}
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+                if case["polarity"] == "positive":
+                    answer["findings"] = []
+                    outcome = reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)
+                    self.assertEqual("fail", outcome["status"])
+                    self.assertEqual(1, outcome["metrics"]["security-privacy"])
+
     def test_review_fixture_preserves_actual_source_diff_and_excludes_gold(self):
         root = framework_root()
         (root / "build").mkdir(exist_ok=True)

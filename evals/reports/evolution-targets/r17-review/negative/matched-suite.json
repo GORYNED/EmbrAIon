@@ -1,0 +1,111 @@
+{
+  "schema-version": 2,
+  "id": "review-axes-target-baseline-qualified-negative-matched",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "reviewer",
+    "access": "read-only"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "c23d7c6d33ae04545281942b47a8caf49a4fe4b0bf785ad7f3aa72e6951c7704",
+      "changes": []
+    },
+    {
+      "id": "review-axes",
+      "snapshot": "candidate-snapshot",
+      "manifest": "candidate-manifest.json",
+      "manifest-digest": "a20785b88b094864b5fa97f03373e89ff82bffcf6e075eba6837dac85b0e63c4",
+      "changes": [
+        {
+          "path": "core/skills/review/SKILL.md",
+          "before": "f6d401791ce432749f6c95f6fe8f85fcc0aa87532dcf158edc6e3a2ab1ee8c26",
+          "after": "c866f261f48c1a223b3e88d9b7e923bf2f49bb6ec9f12139c0d9e4724c442bf5"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "review-control-negative-en",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "review-control-negative-en-fixture",
+      "prompt": "Review the proposed local source change in the supplied fixture.\nThis is a bounded read-only review exercise, not a real PR readiness or release decision. Read request.json, change.json, original.py, proposal.py and the projected review skill. Assess requested scope separately from correctness of the proposed function under its supplied mathematical contract. Do not execute repository code, use the network, or modify files. Return one final JSON with exactly result, findings, questions, procedures. result is ready or hold (for this fixture judgment only); findings IDs may be scope-expansion or implementation-defect; questions use only publish-approval, target-version, target-repository, runtime-access, missing-contract. procedures.review contains exactly intent and implementation (pass or fail), intent-source and implementation-source (relevant relative source paths). Other procedures are not requested. Optional progress messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"}, or {\"progress\":\"comparing\"}. No other user-facing text. For these separate axes, intent means conformity to the current authorized request and its supplied acceptance contract; implementation means correctness of the proposed function. A defect can affect both axes. Authorized target/action alone does not establish that the requested behavior was achieved. The singular intent-source field names the authorization contract and must be request.json; implementation-source names the proposed implementation and must be proposal.py. Read change.json and original.py as supporting evidence too; these singular fields identify anchors, not the complete evidence set. findings must be an array of STRING IDs, never finding objects. For example, an actual scope finding is [\"scope-expansion\"], not [{\"id\":\"scope-expansion\",\"title\":\"...\"}]; an actual code finding is [\"implementation-defect\"]. Select IDs from evidence; the examples do not identify which findings exist. Put neither titles, bodies, priorities nor evidence objects into findings. Keep evidence anchors in procedures.review.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "wiring-v1",
+          "params": {},
+          "mandatory": true
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "ready",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {
+            "review": {
+              "intent": "pass",
+              "implementation": "pass",
+              "intent-source": "request.json",
+              "implementation-source": "proposal.py"
+            }
+          },
+          "permitted-procedures": [
+            "review"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "review-control-negative-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "review-control-negative-ru-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u043d\u043e\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0435 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0438\u0441\u0445\u043e\u0434\u043d\u043e\u0433\u043e \u043a\u043e\u0434\u0430 \u0432 fixture.\n\u042d\u0442\u043e \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u043e\u0435 read-only \u0443\u043f\u0440\u0430\u0436\u043d\u0435\u043d\u0438\u0435 review, \u0430 \u043d\u0435 \u0440\u0435\u0448\u0435\u043d\u0438\u0435 \u043e \u0433\u043e\u0442\u043e\u0432\u043d\u043e\u0441\u0442\u0438 \u043d\u0430\u0441\u0442\u043e\u044f\u0449\u0435\u0433\u043e PR \u0438\u043b\u0438 \u0440\u0435\u043b\u0438\u0437\u0435. \u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 request.json, change.json, original.py, proposal.py \u0438 projected review skill. \u041e\u0442\u0434\u0435\u043b\u044c\u043d\u043e \u043e\u0446\u0435\u043d\u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0451\u043d\u043d\u044b\u0439 scope \u0438 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u043e\u0441\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u043d\u043e\u0439 \u0444\u0443\u043d\u043a\u0446\u0438\u0438 \u043f\u043e \u0437\u0430\u0434\u0430\u043d\u043d\u043e\u043c\u0443 \u043c\u0430\u0442\u0435\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0443. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 \u043a\u043e\u0434 \u0440\u0435\u043f\u043e\u0437\u0438\u0442\u043e\u0440\u0438\u044f, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c \u0438 \u043d\u0435 \u0438\u0437\u043c\u0435\u043d\u044f\u0439 \u0444\u0430\u0439\u043b\u044b. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0440\u043e\u0432\u043d\u043e \u0441 result, findings, questions, procedures. result \u2014 ready \u0438\u043b\u0438 hold \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f \u0441\u0443\u0436\u0434\u0435\u043d\u0438\u044f \u043e\u0431 \u044d\u0442\u043e\u0439 fixture; finding IDs \u2014 scope-expansion \u0438\u043b\u0438 implementation-defect; questions \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u044e\u0442 \u0442\u043e\u043b\u044c\u043a\u043e publish-approval, target-version, target-repository, runtime-access, missing-contract. procedures.review \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u0442 \u0440\u043e\u0432\u043d\u043e intent \u0438 implementation (pass \u0438\u043b\u0438 fail), intent-source \u0438 implementation-source (\u0440\u0435\u043b\u0435\u0432\u0430\u043d\u0442\u043d\u044b\u0435 \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0443\u0442\u0438 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u0445 \u0434\u0430\u043d\u043d\u044b\u0445). \u0414\u0440\u0443\u0433\u0438\u0435 procedures \u043d\u0435 \u0437\u0430\u043f\u0440\u043e\u0448\u0435\u043d\u044b. \u041d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f progress \u2014 \u0440\u043e\u0432\u043d\u043e {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u0414\u0440\u0443\u0433\u043e\u0439 \u0442\u0435\u043a\u0441\u0442 \u0437\u0430\u043f\u0440\u0435\u0449\u0451\u043d. \u0414\u043b\u044f \u044d\u0442\u0438\u0445 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u0445 \u043e\u0441\u0435\u0439 intent \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0438\u0435 \u0442\u0435\u043a\u0443\u0449\u0435\u043c\u0443 \u0440\u0430\u0437\u0440\u0435\u0448\u0451\u043d\u043d\u043e\u043c\u0443 \u0437\u0430\u043f\u0440\u043e\u0441\u0443 \u0438 \u0437\u0430\u0434\u0430\u043d\u043d\u043e\u043c\u0443 acceptance contract; implementation \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u043e\u0441\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u043d\u043e\u0439 \u0444\u0443\u043d\u043a\u0446\u0438\u0438. \u041e\u0434\u0438\u043d \u0434\u0435\u0444\u0435\u043a\u0442 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u0442\u0440\u0430\u0433\u0438\u0432\u0430\u0442\u044c \u043e\u0431\u0435 \u043e\u0441\u0438. \u0420\u0430\u0437\u0440\u0435\u0448\u0451\u043d\u043d\u044b\u0435 target \u0438 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435 \u0441\u0430\u043c\u0438 \u043f\u043e \u0441\u0435\u0431\u0435 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u044e\u0442 \u0434\u043e\u0441\u0442\u0438\u0436\u0435\u043d\u0438\u0435 \u0437\u0430\u043f\u0440\u043e\u0448\u0435\u043d\u043d\u043e\u0433\u043e \u043f\u043e\u0432\u0435\u0434\u0435\u043d\u0438\u044f. \u041f\u043e\u043b\u0435 intent-source \u043e\u0431\u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u043f\u043e\u043b\u043d\u043e\u043c\u043e\u0447\u0438\u0439 \u0438 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c request.json; implementation-source \u043e\u0431\u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u043d\u0443\u044e \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044e \u0438 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c proposal.py. \u0422\u0430\u043a\u0436\u0435 \u043f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 change.json \u0438 original.py \u043a\u0430\u043a \u0434\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0435 evidence; \u043e\u0434\u0438\u043d\u043e\u0447\u043d\u044b\u0435 \u043f\u043e\u043b\u044f \u043e\u0431\u043e\u0437\u043d\u0430\u0447\u0430\u044e\u0442 \u043e\u043f\u043e\u0440\u043d\u044b\u0435 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0438, \u0430 \u043d\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 \u043d\u0430\u0431\u043e\u0440 \u0434\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432. findings \u2014 \u043c\u0430\u0441\u0441\u0438\u0432 \u0421\u0422\u0420\u041e\u041a\u041e\u0412\u042b\u0425 IDs, \u0430 \u043d\u0435 finding objects. \u041d\u0430\u043f\u0440\u0438\u043c\u0435\u0440, \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u0435 \u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 scope \u043a\u043e\u0434\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u043a\u0430\u043a [\"scope-expansion\"], \u0430 \u043d\u0435 [{\"id\":\"scope-expansion\",\"title\":\"...\"}]; \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0439 \u0434\u0435\u0444\u0435\u043a\u0442 \u043a\u043e\u0434\u0430 \u2014 [\"implementation-defect\"]. \u0412\u044b\u0431\u0435\u0440\u0438 IDs \u043f\u043e evidence; \u043f\u0440\u0438\u043c\u0435\u0440\u044b \u043d\u0435 \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u044e\u0442, \u043a\u0430\u043a\u0438\u0435 findings \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0442 \u0432 fixture. \u041d\u0435 \u043f\u043e\u043c\u0435\u0449\u0430\u0439 titles, bodies, priorities \u0438\u043b\u0438 evidence objects \u0432 findings; \u043e\u043f\u043e\u0440\u043d\u044b\u0435 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0438 \u0443\u043a\u0430\u0436\u0438 \u0432 procedures.review.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "wiring-v1",
+          "params": {},
+          "mandatory": true
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "ready",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {
+            "review": {
+              "intent": "pass",
+              "implementation": "pass",
+              "intent-source": "request.json",
+              "implementation-source": "proposal.py"
+            }
+          },
+          "permitted-procedures": [
+            "review"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

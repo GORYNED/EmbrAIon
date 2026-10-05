@@ -148,6 +148,66 @@ def _relative(base: Path, value: str) -> Path:
     return path
 
 
+def _file_digest(path: Path) -> str:
+    """Hash exact evidence bytes; ``identity`` hashes parsed JSON instead."""
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
+        raise ValueError("invalid or oversized experiment evidence")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def suite_fixture_digests(suite: dict[str, Any], suite_path: Path) -> dict[str, str]:
+    """Inventory the preserved fixture content for every declared case."""
+    result: dict[str, str] = {}
+    for case in suite.get("cases", []):
+        if not isinstance(case, dict) or not isinstance(case.get("id"), str) or not isinstance(case.get("fixture"), str):
+            raise ValueError("invalid experiment case fixture")
+        if case["id"] in result:
+            raise ValueError("duplicate experiment case fixture")
+        result[case["id"]] = identity(_files(_relative(suite_path.parent, case["fixture"])))
+    return result
+
+
+def load_baseline_reports(experiment: dict[str, Any], experiment_path: Path) -> tuple[dict[str, dict[str, Any]], list[tuple[Path, str]]]:
+    """Load pinned baseline-only evidence from the trusted controller tree.
+
+    Manifest digests here are SHA-256 of file bytes; report ``suite-digest``
+    remains the canonical JSON identity used by report v2.
+    """
+    references = experiment.get("baseline-reports", [])
+    if not isinstance(references, list):
+        raise ValueError("invalid baseline report references")
+    report_schema = _load(framework_root() / "schemas/experiment-report.schema.json")
+    suite_schema = _load(framework_root() / "schemas/experiment-suite.schema.json")
+    loaded: dict[str, dict[str, Any]] = {}
+    frozen: list[tuple[Path, str]] = []
+    for reference in references:
+        if not isinstance(reference, dict) or not isinstance(reference.get("id"), str) or reference["id"] in loaded:
+            raise ValueError("invalid or duplicate baseline report id")
+        report_path = _relative(experiment_path.parent, reference["path"])
+        suite_path = _relative(experiment_path.parent, reference["suite-path"])
+        report_bytes, suite_bytes = _file_digest(report_path), _file_digest(suite_path)
+        if report_bytes != reference["digest"] or suite_bytes != reference["suite-digest"]:
+            raise ValueError("baseline evidence digest mismatch")
+        report, suite = _load(report_path), _load(suite_path)
+        try:
+            Draft202012Validator(report_schema).validate(report)
+            Draft202012Validator(suite_schema).validate(suite)
+        except ValidationError:
+            raise ValueError("invalid preserved baseline evidence") from None
+        if report.get("suite-digest") != identity(suite) or report.get("inputs", {}).get("suite") != identity(suite):
+            raise ValueError("baseline suite identity mismatch")
+        fixture_digests = suite_fixture_digests(suite, suite_path)
+        if _file_digest(report_path) != report_bytes or _file_digest(suite_path) != suite_bytes:
+            raise ValueError("baseline evidence changed while loading")
+        loaded[reference["id"]] = {"report": report, "suite": suite,
+                                   "fixture-digests": fixture_digests}
+        frozen.extend(((report_path, report_bytes), (suite_path, suite_bytes)))
+        for case in suite["cases"]:
+            fixture = _relative(suite_path.parent, case["fixture"])
+            frozen.append((fixture, identity(_files(fixture))))
+    return loaded, frozen
+
+
 def capture_snapshot(source: Path, output: Path, manifest: Path, *, host: str = "codex",
                      regenerate: bool = False) -> dict[str, Any]:
     if host not in HOST_PREFIXES:
@@ -479,6 +539,10 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
             raise ValueError("fixture shadows Core, configuration or projections")
         for oracle in case["oracles"]:
             validate_params(oracle["id"], oracle["params"])
+            registered = oracle_metadata(oracle["id"])
+            if (("registry-digest" in registered or "metadata-digest" in oracle)
+                    and oracle.get("metadata-digest") != identity(registered)):
+                contamination.append({"case": case["id"], "reason": "registered-oracle-preparation-drift"})
             if not set(oracle.get("required-checks", [])).issubset(oracle_metadata(oracle["id"])["check-ids"]):
                 raise ValueError("unknown mandatory oracle check")
             oracle_ids.add(oracle["id"])
@@ -511,13 +575,26 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
             Draft202012Validator(_load(framework_root() / "schemas/experiment.schema.json")).validate(experiment_value)
         except ValidationError:
             raise ValueError("invalid frozen experiment manifest") from None
+    baseline_reports, frozen_baselines = (load_baseline_reports(experiment_value, experiment.absolute())
+                                          if experiment_value else ({}, []))
+    candidate_suite = {"suite": data, "fixture-digests": suite_fixture_digests(data, suite)}
+    sources.extend(path for path, _ in frozen_baselines)
+    _check_output_destination(output, suite, sources)
     corpus_digest = identity(_files(framework_root() / "evals/corpus"))
     schema_digest = identity(_files(framework_root() / "schemas"))
+    oracle_digests = {key: identity(oracle_metadata(key)) for key in sorted(oracle_ids)}
+    for case, _, _ in cases:
+        for oracle in case["oracles"]:
+            if "metadata-digest" in oracle and oracle["metadata-digest"] != oracle_digests[oracle["id"]]:
+                contamination.append({"case": case["id"], "reason": "registered-oracle-preparation-drift"})
+    fixture_digests = {case["id"]: identity(files) for case, _, files in cases}
     frozen_inputs = {"suite": identity(data), "evaluators": evaluator_files, "calibration-fixtures": calibration_digest,
                      "corpus": corpus_digest, "schemas": schema_digest,
                      "experiment": identity(experiment_value) if experiment_value else None,
                      "metric-rubric": rubric["digest"],
-                     "observer-metadata": {key: observer_metadata(key)["digest"] for key in sorted(observer_ids)}}
+                     "observer-metadata": {key: observer_metadata(key)["digest"] for key in sorted(observer_ids)},
+                      "oracle-metadata": oracle_digests,
+                     "fixtures": fixture_digests}
     frozen_manifests = {key: identity(value) for key, value in manifests.items()}
     preflight = (preflight_host(host, binary, roots[baseline], model, effort, timeout_seconds,
                                 workspace=scratch / "project", role=role, access=access)
@@ -542,6 +619,8 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 differences.append({"reason": "suite-drift"})
             if _files(RUNTIME_ROOT, runtime=True) != evaluator_files:
                 differences.append({"reason": "oracle-or-runner-drift"})
+            if {key: identity(oracle_metadata(key)) for key in sorted(oracle_ids)} != oracle_digests:
+                differences.append({"reason": "registered-oracle-data-drift"})
             if identity(_files(calibration_fixture)) != calibration_digest:
                 differences.append({"reason": "calibration-fixture-drift"})
             if identity(_files(framework_root() / "evals/corpus")) != corpus_digest:
@@ -550,6 +629,10 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 differences.append({"reason": "schema-drift"})
             if experiment and identity(_load(experiment)) != frozen_inputs["experiment"]:
                 differences.append({"reason": "experiment-budget-drift"})
+            for path, expected in frozen_baselines:
+                current = identity(_files(path)) if path.is_dir() else _file_digest(path)
+                if current != expected:
+                    differences.append({"reason": "baseline-evidence-drift"})
             for key, root in roots.items():
                 if identity(_load(_relative(suite.parent, variants[key]["manifest"]))) != frozen_manifests[key]:
                     differences.append({"variant": key, "reason": "manifest-drift"})
@@ -675,7 +758,17 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                                            "category": "quality-correctness", "status": "inconclusive"})
                             continue
                         try:
+                            if identity(oracle_metadata(oracle["id"])) != oracle_digests[oracle["id"]]:
+                                checks.append({"id": "checker-availability", "oracle": oracle["id"],
+                                               "mandatory": oracle["mandatory"], "category": "quality-correctness",
+                                               "status": "inconclusive"})
+                                continue
                             outcome = grade(oracle["id"], project, {}, oracle["params"])
+                            if identity(oracle_metadata(oracle["id"])) != oracle_digests[oracle["id"]]:
+                                checks.append({"id": "checker-availability", "oracle": oracle["id"],
+                                               "mandatory": oracle["mandatory"], "category": "quality-correctness",
+                                               "status": "inconclusive"})
+                                continue
                             for check in outcome["checks"]:
                                 observed = host_result["status"] == "completed" or initial_checks[(case["id"], oracle["id"])].get(check["id"]) == "pass" and check["status"] == "fail"
                                 checks.append({**check, "oracle": oracle["id"],
@@ -761,7 +854,9 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
               "measurement-status": "complete" if records and all(r["measurement-status"] == "complete" for r in records) else "inconclusive",
               "status": "pass" if records and not contamination and all(r["status"] == "pass" for r in records) else "inconclusive" if contamination or any(r["status"] == "inconclusive" for r in records) else "fail"}
     if experiment_value:
-        report["eligibility"] = promotion_eligibility(report, experiment_value)
+        report["eligibility"] = promotion_eligibility(report, experiment_value,
+                                                     baseline_reports=baseline_reports,
+                                                     candidate_suite=candidate_suite)
     try:
         Draft202012Validator(_load(framework_root() / "schemas/experiment-report.schema.json")).validate(report)
     except ValidationError:

@@ -6,12 +6,13 @@ from pathlib import Path
 from .common import framework_root, read_json, write_json
 from .eval_observers import STREAM_OBSERVER_ID, validate_params
 from .eval_oracles import oracle_metadata
-from .experiment_evals import _copy, _files, capture_snapshot
+from .experiment_evals import _copy, _files, capture_snapshot, identity
 from .skill_evals import _safe_relative
 
 TARGET_FILES = {
     "scope-action": "evals/evolution/targets.json",
     "review-axes": "evals/evolution/review-cases.json",
+    "security-flow": "evals/evolution/security-cases.json",
 }
 TARGETS = frozenset(TARGET_FILES)
 
@@ -35,13 +36,20 @@ def prepare_target_baseline(source: Path, output: Path, *, target: str, host: st
             destination = fixture / _safe_relative(name)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(content, encoding="utf-8", newline="\n")
-        validate_params(STREAM_OBSERVER_ID, entry["gold"])
+        oracle_params = {"case": entry["id"]} if target == "security-flow" else {}
+        if target == "security-flow":
+            from .security_oracles import expected_observation
+            gold = expected_observation(oracle_params, fixture)
+        else:
+            gold = entry["gold"]
+        validate_params(STREAM_OBSERVER_ID, gold)
         cases.append({"id": entry["id"], "language": entry["language"], "polarity": entry["polarity"],
             "risk": plan["risk"], "fixture": fixture.name, "prompt": entry["prompt"] + "\n" + protocol[entry["language"]],
             "allowed-paths": entry["allowed-paths"],
             **({"corpus-id": "framework-upgrade-scope-expansion"} if target == "scope-action" else {}),
-            "oracles": [{"id": oracle_id, "params": {}, "mandatory": True}],
-            "observer": {"id": STREAM_OBSERVER_ID, "params": entry["gold"], "mandatory": True}})
+            "oracles": [{"id": oracle_id, "params": oracle_params, "mandatory": True,
+                         "metadata-digest": identity(oracle_metadata(oracle_id))}],
+            "observer": {"id": STREAM_OBSERVER_ID, "params": gold, "mandatory": True}})
     suite = {"schema-version": 2, "id": target + "-target-baseline", "baseline": "baseline", "seed": 41,
         "execution": plan["execution"], "metric-rubric": "finite-stream-metrics-v1",
         "variants": [{"id": "baseline", "snapshot": "snapshot", "manifest": "snapshot.json",

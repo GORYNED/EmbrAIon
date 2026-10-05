@@ -1156,14 +1156,24 @@ def _eval_experiment(args: argparse.Namespace) -> int:
                                   regenerate=args.regenerate)
     elif args.experiment_command == "assess":
         from jsonschema import Draft202012Validator, ValidationError
+        from .experiment_evals import load_baseline_reports, suite_fixture_digests
         evidence = _load(Path(args.report))
-        experiment = _load(Path(args.experiment))
+        experiment_path = Path(args.experiment).absolute()
+        experiment = _load(experiment_path)
+        suite_path = Path(args.suite).absolute() if getattr(args, "suite", None) else None
+        suite = _load(suite_path) if suite_path else None
         try:
             Draft202012Validator(_load(framework_root() / "schemas/experiment-report.schema.json")).validate(evidence)
             Draft202012Validator(_load(framework_root() / "schemas/experiment.schema.json")).validate(experiment)
+            if suite is not None:
+                Draft202012Validator(_load(framework_root() / "schemas/experiment-suite.schema.json")).validate(suite)
         except ValidationError:
             raise ValueError("invalid experiment assessment evidence") from None
-        report = promotion_eligibility(evidence, experiment)
+        baselines, _ = load_baseline_reports(experiment, experiment_path)
+        candidate_suite = ({"suite": suite, "fixture-digests": suite_fixture_digests(suite, suite_path)}
+                           if suite is not None else None)
+        report = promotion_eligibility(evidence, experiment, baseline_reports=baselines,
+                                      candidate_suite=candidate_suite)
     elif args.experiment_command == "prepare":
         pilot = getattr(args, "pilot", "foundation")
         if getattr(args, "target", None) is not None and pilot != "evolution-target":
@@ -2310,7 +2320,7 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
     prepare.add_argument("--pilot", default="foundation", choices=["foundation", "finite-role", "evolution-target"])
     prepare.add_argument("--role", choices=["lead", "worker", "reviewer", "validator", "researcher", "steward"])
-    prepare.add_argument("--target", choices=["scope-action", "review-axes"])
+    prepare.add_argument("--target", choices=["scope-action", "review-axes", "security-flow"])
     prepare.set_defaults(func=_cmd_eval_experiment)
     prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
     capture = experiment_sub.add_parser("snapshot")
@@ -2336,6 +2346,7 @@ def build_parser() -> argparse.ArgumentParser:
     assess = experiment_sub.add_parser("assess")
     assess.add_argument("--report", required=True)
     assess.add_argument("--experiment", required=True)
+    assess.add_argument("--suite", help="Preserved candidate suite and fixtures; required for promotion eligibility")
     assess.set_defaults(func=_cmd_eval_experiment)
 
     eval_run = eval_sub.add_parser("run", help="Run one eval case", description="Evaluate an execution record against a behavioral eval case.")

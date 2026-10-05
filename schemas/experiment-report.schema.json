@@ -83,6 +83,14 @@
         "suite": {
           "$ref": "#/$defs/hash"
         },
+        "fixtures": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/hash"}
+        },
+        "oracle-metadata": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/hash"}
+        },
         "evaluators": {
           "type": "object",
           "additionalProperties": {

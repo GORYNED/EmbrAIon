@@ -32,11 +32,15 @@
     }
   ],
   "patch-digest": "33d6aaf59c71f444c83ae780216fbf609156f99e9b78edd0437ba5ff0fc9b58f",
-  "actual-evidence": [],
-  "promotion": "blocked-missing-baseline-and-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/review-r16-index.json",
+    "evals/reports/evolution-targets/review-r16p3-index.json",
+    "evals/reports/evolution-targets/r17-review/index.json"
+  ],
+  "promotion": "deferred-unproven-independent-benefit-on-r17-cases",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
-  "gold-review-ref": "evals/evolution/review-gold.json",
+  "gold-review-ref": "evals/evolution/review-gold-v3.json",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
   "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."

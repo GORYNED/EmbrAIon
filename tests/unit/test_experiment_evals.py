@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -13,7 +14,7 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 
 from embraion.common import framework_root
-from embraion.experiment_evals import _artifact_changes, capture_snapshot, identity, run_experiment
+from embraion.experiment_evals import _artifact_changes, capture_snapshot, identity, load_baseline_reports, run_experiment
 
 
 ROOT = framework_root()
@@ -47,6 +48,28 @@ class ArtifactChangeEvidence(unittest.TestCase):
 
 
 class ExperimentRoutingContract(unittest.TestCase):
+    def test_cli_assess_forwards_preserved_baselines_and_candidate_suite(self):
+        from embraion.cli import _eval_experiment
+
+        with tempfile.TemporaryDirectory(dir=ROOT) as temporary:
+            location = Path(temporary)
+            report_path, budget_path, suite_path = (location / name for name in ("report.json", "budget.json", "suite.json"))
+            for path in (report_path, budget_path, suite_path):
+                path.write_text("{}", encoding="utf-8")
+            args = argparse.Namespace(experiment_command="assess", report=str(report_path),
+                                      experiment=str(budget_path), suite=str(suite_path))
+            with patch("jsonschema.Draft202012Validator.validate"), patch(
+                "embraion.experiment_evals.load_baseline_reports", return_value=({"prior": {"report": {}}}, [])
+            ) as loaded, patch("embraion.experiment_evals.suite_fixture_digests", return_value={"case": "f" * 64}), patch(
+                "embraion.experiment_gates.promotion_eligibility", return_value={"status": "inconclusive"}
+            ) as gate, patch("embraion.cli._print_json"):
+                self.assertEqual(1, _eval_experiment(args))
+            loaded.assert_called_once()
+            self.assertEqual(budget_path, loaded.call_args.args[1])
+            self.assertEqual({"prior": {"report": {}}}, gate.call_args.kwargs["baseline_reports"])
+            self.assertEqual({"suite": {}, "fixture-digests": {"case": "f" * 64}},
+                             gate.call_args.kwargs["candidate_suite"])
+
     def test_suite_schema_accepts_finite_role_contract_and_rejects_unknown_execution(self):
         schema = json.loads((ROOT / "schemas/experiment-suite.schema.json").read_text(encoding="utf-8"))
         suite = {"schema-version": 2, "id": "finite", "baseline": "baseline", "seed": 1,
@@ -123,6 +146,8 @@ class FullCoreExperiments(unittest.TestCase):
         self.suite.write_text(json.dumps(self.data), encoding="utf-8")
 
     def run_trial(self, invoke=None, environment=None, preflight=None, **kwargs):
+        output = kwargs.pop("output", self.root / "report.json")
+        attempts = kwargs.pop("attempts", 2)
         with patch("embraion.experiment_evals._scratch_root", return_value=self.root), patch("embraion.experiment_evals.verify_projection", return_value={"status": "pass"}), patch("embraion.adapters.eval_hosts.preflight_host", return_value=preflight or {"status": "pass"}):
             with patch("embraion.experiment_evals._environment", side_effect=environment,
                        return_value={"host": {"version": "1.0.0"}}):
@@ -130,14 +155,165 @@ class FullCoreExperiments(unittest.TestCase):
                            return_value={"status": "completed", "duration-seconds": 1.0,
                                          "tokens": {"input_tokens": 2, "output_tokens": 3}}) as native:
                     report = run_experiment(self.suite, host="codex", model="test", effort="medium",
-                                            route=self.route, attempts=2, output=self.root / "report.json", **kwargs)
+                                            route=self.route, attempts=attempts, output=output, **kwargs)
                     return report, native
+
+    def test_preserved_baseline_report_mutation_is_contamination(self):
+        self.run_trial(phase="baseline", output=self.root / "prior-report.json")
+        preserved_suite = self.root / "prior-suite.json"
+        preserved_suite.write_bytes(self.suite.read_bytes())
+        prior = self.root / "prior-report.json"
+        manifest = {"schema-version": 1, "id": "drift", "baseline": "baseline", "candidate": "candidate",
+                    "suite-digest": identity(self.data), "change-ids": ["drift"],
+                    "traceability": [{"change-id": "drift", "source-kind": "observed-problem",
+                                      "observed-problem": "baseline mutation", "proposed-rule": "pin baseline",
+                                      "capability-paths": ["core/skills/test/SKILL.md"], "scenarios": ["wiring"],
+                                      "expected-result": "detect drift"}],
+                    "required-cases": ["wiring"], "target-cases": ["wiring"],
+                    "cases": [{"case": "wiring", "risk": "ordinary", "attempts": 5,
+                               "baseline-manifest-digest": self.data["variants"][0]["manifest-digest"],
+                               "baseline-report-id": "prior", "justification-id": "prior-budget",
+                               "limits": {name: 0 for name in ("quality-correctness", "authority-scope", "security-privacy",
+                                                                   "false-positive-rate", "unnecessary-clarification",
+                                                                   "unnecessary-capability-activation", "tokens", "latency")}}],
+                    "baseline-reports": [{"id": "prior", "path": prior.name,
+                                          "digest": hashlib.sha256(prior.read_bytes()).hexdigest(),
+                                          "suite-path": preserved_suite.name,
+                                          "suite-digest": hashlib.sha256(preserved_suite.read_bytes()).hexdigest()}]}
+        budget = self.root / "experiment.json"
+        budget.write_text(json.dumps(manifest), encoding="utf-8")
+        calls = 0
+        def mutate(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                prior.write_text(prior.read_text(encoding="utf-8") + " ", encoding="utf-8")
+            return {"status": "completed", "duration-seconds": 1.0}
+        report, native = self.run_trial(invoke=mutate, attempts=5, phase="confirmatory",
+                                        experiment=budget, output=self.root / "confirmatory.json")
+        self.assertEqual(1, native.call_count)
+        self.assertEqual("inconclusive", report["status"])
+        self.assertIn("baseline-evidence-drift", {c["reason"] for c in report["contamination"]})
+        self.assertNotEqual("eligible", report["eligibility"]["status"])
+
+    def test_registered_oracle_metadata_drift_is_contamination(self):
+        from embraion.eval_oracles import oracle_metadata
+        metadata = oracle_metadata("wiring-v1")
+        self.data["cases"][0]["oracles"][0]["metadata-digest"] = identity(metadata)
+        self.write_suite()
+        changed = False
+        def current(_):
+            return {**metadata, **({"registry-digest": "a" * 64} if changed else {})}
+        def mutate(*args, **kwargs):
+            nonlocal changed
+            changed = True
+            return {"status": "completed", "duration-seconds": 1.0}
+        with patch("embraion.experiment_evals.oracle_metadata", side_effect=current):
+            report, native = self.run_trial(invoke=mutate)
+        self.assertEqual(1, native.call_count)
+        self.assertEqual("inconclusive", report["status"])
+        self.assertTrue(any(c["reason"] == "registered-oracle-data-drift"
+                            for run in report["runs"] for c in run["contamination"]))
+
+    def test_prepared_oracle_metadata_mismatch_blocks_native_execution(self):
+        self.data["cases"][0]["oracles"][0]["metadata-digest"] = "0" * 64
+        self.write_suite()
+        report, native = self.run_trial()
+        native.assert_not_called()
+        self.assertEqual("inconclusive", report["status"])
+        self.assertIn("registered-oracle-preparation-drift", {c["reason"] for c in report["contamination"]})
+
+    def test_registry_change_during_preparation_cannot_become_new_baseline(self):
+        from embraion.eval_oracles import oracle_metadata
+        metadata = oracle_metadata("wiring-v1")
+        self.data["cases"][0]["oracles"][0]["metadata-digest"] = identity(metadata)
+        self.write_suite()
+        calls = 0
+        def current(_):
+            nonlocal calls
+            calls += 1
+            return {**metadata, **({"registry-digest": "c" * 64} if calls >= 3 else {})}
+        with patch("embraion.experiment_evals.oracle_metadata", side_effect=current):
+            report, native = self.run_trial()
+        native.assert_not_called()
+        self.assertEqual("inconclusive", report["status"])
+        self.assertIn("registered-oracle-preparation-drift", {c["reason"] for c in report["contamination"]})
+
+    def test_unavailable_or_drifted_oracle_preserves_independent_owned_path_violation(self):
+        from embraion.eval_oracles import oracle_metadata
+        metadata = oracle_metadata("wiring-v1")
+        self.data["cases"][0]["allowed-paths"] = []
+        self.write_suite()
+        changed = False
+        def current(_):
+            if changed:
+                raise ValueError("unavailable oracle metadata")
+            return metadata
+        def mutate(*args, **kwargs):
+            nonlocal changed
+            (args[2] / "unowned.json").write_text("{}")
+            changed = True
+            return {"status": "completed", "duration-seconds": 1.0}
+        with patch("embraion.experiment_evals.oracle_metadata", side_effect=current):
+            report, native = self.run_trial(invoke=mutate)
+        self.assertEqual(1, native.call_count)
+        self.assertEqual("inconclusive", report["status"])
+        first = report["runs"][0]
+        owned = next(c for c in first["checks"] if c["id"] == "owned-paths")
+        self.assertEqual("fail", owned["status"])
+        self.assertTrue(owned["observed-violation"])
+        self.assertTrue(any(c["id"] == "checker-error" and c["status"] == "inconclusive" for c in first["checks"]))
+        self.assertFalse(any(c.get("oracle") == "wiring-v1" and c.get("observed-violation") for c in first["checks"]))
+
+    def test_registry_change_during_grade_is_not_attributed_to_candidate(self):
+        from embraion.eval_oracles import oracle_metadata, grade
+        metadata = oracle_metadata("wiring-v1")
+        completed, changed = False, False
+        def current(_):
+            return {**metadata, **({"registry-digest": "b" * 64} if changed else {})}
+        def invoke(*args, **kwargs):
+            nonlocal completed
+            completed = True
+            return {"status": "completed", "duration-seconds": 1.0}
+        def corrupted_grade(*args):
+            nonlocal changed
+            result = grade(*args)
+            if completed:
+                changed = True
+                result = {**result, "status": "fail", "checks": [{"id": "flow-facts", "mandatory": True,
+                    "category": "security-privacy", "status": "fail"}]}
+            return result
+        with patch("embraion.experiment_evals.oracle_metadata", side_effect=current), patch(
+                "embraion.experiment_evals.grade", side_effect=corrupted_grade):
+            report, native = self.run_trial(invoke=invoke)
+        self.assertEqual(1, native.call_count)
+        self.assertEqual("inconclusive", report["status"])
+        self.assertFalse(any(c.get("observed-violation") or c["status"] == "fail"
+                             for run in report["runs"] for c in run["checks"] if c.get("oracle") == "wiring-v1"))
+        self.assertTrue(any(c["id"] == "checker-availability" and c["status"] == "inconclusive"
+                            for c in report["runs"][0]["checks"]))
+
+    def test_baseline_reference_requires_exact_bytes_and_safe_paths(self):
+        prior = self.root / "prior.json"
+        prior.write_text("{}", encoding="utf-8")
+        budget = self.root / "experiment.json"
+        ref = {"id": "prior", "path": prior.name, "digest": "0" * 64,
+               "suite-path": self.suite.name,
+               "suite-digest": hashlib.sha256(self.suite.read_bytes()).hexdigest()}
+        with self.assertRaisesRegex(ValueError, "digest mismatch"):
+            load_baseline_reports({"baseline-reports": [ref]}, budget)
+        ref["digest"] = hashlib.sha256(prior.read_bytes()).hexdigest()
+        ref["path"] = "../prior.json"
+        with self.assertRaisesRegex(ValueError, "unsafe relative path"):
+            load_baseline_reports({"baseline-reports": [ref]}, budget)
 
     def test_v2_full_core_variants_counterbalance_without_raw_prompt(self):
         report, native = self.run_trial()
         self.assertEqual("pass", report["status"], report["contamination"])
         self.assertEqual(4, native.call_count)
         self.assertEqual(4, len(report["planned-runs"]))
+        from embraion.experiment_evals import _files
+        self.assertEqual(identity(_files(self.root / "fixture")), report["inputs"]["fixtures"]["wiring"])
         self.assertNotEqual(report["runs"][0]["variant"], report["runs"][2]["variant"])
         self.assertEqual({"tied-pass"}, {pair["status"] for pair in report["comparisons"]})
         self.assertTrue(report["calibration"][0]["coverage"]["does_not_prove"])
