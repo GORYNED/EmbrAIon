@@ -1,5 +1,5 @@
 schema-version: 1
-catalog-version: 7
+catalog-version: 8
 
 capabilities:
   - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
@@ -17,6 +17,7 @@ capabilities:
   - { id: implementation, type: skill, path: skills/implementation, load: conditional, triggers: [implementation, writable-task] }
   - { id: code-organization, type: skill, path: skills/code-organization, load: conditional, triggers: [new-file, new-type, move-file, rename-file, code-organization, structure-audit] }
   - { id: research, type: skill, path: skills/research, load: conditional, triggers: [research, discovery] }
+  - { id: security-assessment, type: skill, path: skills/security-assessment, load: conditional, triggers: [security-assessment, trust-boundary, untrusted-input, privileged-operation, access-control] }
   - { id: review, type: skill, path: skills/review, load: conditional, triggers: [review, substantial-change] }
   - { id: validation, type: skill, path: skills/validation, load: conditional, triggers: [validation, test, regression] }
   - { id: debugging, type: skill, path: skills/debugging, load: conditional, triggers: [bug, failure, unexpected-behavior] }
