@@ -11,10 +11,19 @@ from jsonschema import Draft202012Validator
 from embraion.common import framework_root
 from embraion.eval_observers import CHECKPOINT_DECISION_STREAM_OBSERVER_ID, STREAM_OBSERVER_ID, reduce_output
 from embraion.eval_oracles import grade
-from embraion.experiment_targets import prepare_target_baseline
+from embraion.experiment_targets import TARGETS, prepare_target_baseline
 
 
 class TargetCases(unittest.TestCase):
+    def test_public_cli_accepts_every_registered_target(self):
+        from embraion.cli import build_parser
+        parser = build_parser()
+        for target in TARGETS:
+            with self.subTest(target=target):
+                args = parser.parse_args(["eval", "experiment", "prepare", "--pilot",
+                                          "evolution-target", "--target", target, "--output", "unused"])
+                self.assertEqual(target, args.target)
+
     def test_consumer_target_checks_artifact_without_running_fixture_tests(self):
         root = framework_root()
         (root / "build").mkdir(exist_ok=True)
