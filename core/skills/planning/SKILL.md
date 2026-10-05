@@ -24,3 +24,7 @@ description: Plan substantial or multi-step engineering work by resolving intent
 ## Activation contract
 
 Use structured planning for substantial, multi-step, or materially ambiguous work. Exclude a separate planning ceremony for a self-evident bounded edit. Stop when the next authorized steps, ownership, dependencies, and acceptance evidence are clear; return the smallest useful plan and remaining material uncertainties.
+
+## Resume evidence
+
+For a long-running task that needs a checkpoint, record the current requested outcome and request provenance, candidate identity, owned work, completed and unfinished steps, evidence references with their candidate/environment identities, and unresolved decisions. On resumption, reconcile later corrections or cancellations and recheck freshness before reusing evidence. A checkpoint records state and approval provenance; it never grants permissions or revives canceled approval. Refresh only evidence affected by changed conditions. Skip checkpoint ceremony for a short uninterrupted task; stop reconciliation when applicable state and remaining authorized work are clear.
