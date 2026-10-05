@@ -1,6 +1,6 @@
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.22.0
+  version: 0.23.0
 
 project:
   name: PythonReference

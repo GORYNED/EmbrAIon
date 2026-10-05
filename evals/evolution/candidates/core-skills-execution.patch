@@ -1,0 +1,87 @@
+--- a/core/skills/planning/SKILL.md
++++ b/core/skills/planning/SKILL.md
+@@ -24,3 +24,7 @@
+ ## Activation contract
+ 
+ Use structured planning for substantial, multi-step, or materially ambiguous work. Exclude a separate planning ceremony for a self-evident bounded edit. Stop when the next authorized steps, ownership, dependencies, and acceptance evidence are clear; return the smallest useful plan and remaining material uncertainties.
++
++## Resume evidence
++
++For a long-running task that needs a checkpoint, record the current requested outcome and request provenance, candidate identity, owned work, completed and unfinished steps, evidence references with their candidate/environment identities, and unresolved decisions. On resumption, reconcile later corrections or cancellations and recheck freshness before reusing evidence. A checkpoint records state and approval provenance; it never grants permissions or revives canceled approval. Refresh only evidence affected by changed conditions. Skip checkpoint ceremony for a short uninterrupted task; stop reconciliation when applicable state and remaining authorized work are clear.
+--- a/core/skills/research/SKILL.md
++++ b/core/skills/research/SKILL.md
+@@ -5,14 +5,16 @@
+ 
+ # Research
+ 
++Use for a bounded factual question or an engineering decision with unresolved evidence. An ordinary factual question needs source-backed findings, not an implementation reuse comparison.
++
+ ## Procedure
+ 
+ 1. Freeze the question and allowed source scope.
+ 2. Apply privacy and access policy before retrieval.
+-3. Prefer authoritative primary sources.
++3. For an engineering implementation decision, first inspect relevant repository code, project contracts, consumers, tests, and installed dependencies within the allowed source scope. Compare compatible reuse, a bounded extension, and a new implementation against required behavior and ownership; a matching name alone does not establish fit. For other questions, prefer authoritative primary sources. Use external primary sources when material facts remain unresolved or current external facts require verification.
+ 4. Record source-backed facts separately from inference.
+-5. Surface uncertainty, contradictions, and missing evidence.
+-6. Return concise findings and the recommended next step.
++5. Surface uncertainty, contradictions, and missing evidence. Narrow the next search to facts that could change the decision instead of repeatedly loading broad context.
++6. Stop when evidence supports the next authorized step and remaining uncertainty cannot change it. Return concise findings, limits, and the recommended next step; for an implementation decision, state the evidence-based adopt, extend, or build choice.
+ 
+ ## Guardrails
+ 
+--- a/core/skills/debugging/SKILL.md
++++ b/core/skills/debugging/SKILL.md
+@@ -5,16 +5,18 @@
+ 
+ # Debugging
+ 
++Use for a material or uncertain failure whose cause needs diagnosis. A self-evident typo can be corrected and verified without a hypothesis record.
++
+ ## Procedure
+ 
+ 1. Reproduce the failure or establish the strongest deterministic evidence available.
+ 2. Separate symptom, trigger, and suspected cause.
+ 3. Reduce the search space using logs, diffs, tests, boundaries, and recent changes.
+-4. Form one falsifiable hypothesis at a time.
+-5. Test the hypothesis with the smallest useful experiment.
+-6. Change implementation only after the cause is sufficiently supported.
++4. State the leading causal hypothesis, a plausible competing cause when one exists, and the observation that would distinguish them.
++5. Run the smallest permitted experiment that could falsify the leading hypothesis; preserve its result before editing.
++6. Change implementation only after the cause is sufficiently supported. If fixes repeatedly fail or evidence contradicts the cause, revisit the hypothesis and narrow the reproduction.
+ 7. Add or update a regression check when practical.
+-8. Verify the original failure no longer reproduces and that adjacent behavior remains intact.
++8. Stop when the original failure no longer reproduces and the affected adjacent contract remains intact. Report the cause, discriminating evidence, fix, checks, and any unresolved limit.
+ 
+ ## Guardrails
+ 
+--- a/core/skills/test-design/SKILL.md
++++ b/core/skills/test-design/SKILL.md
+@@ -8,8 +8,8 @@
+ Load when behavior, persistence, integration, or a regression needs a test strategy. Skip a separate test-design exercise for a trivial, reversible documentation or formatting edit with no behavior risk; still perform required project checks.
+ 
+ 1. List plausible failure modes and affected contracts, then map each risk to an assertion that would fail if the behavior were wrong. Follow project workflow, source authority, validation profile, and existing test conventions.
+-2. Prefer the strongest affordable oracle: externally visible behavior, independent reference result, historical fixture, round trip, invariant, or boundary case. Avoid assertions that repeat the implementation's own formula or merely check that a fixture contains the expected wording.
+-3. Choose the smallest useful set of unit, integration, property, or manual checks based on blast radius. Reuse installed project libraries and infrastructure; do not install a new testing library automatically.
++2. Establish expected results from an accepted contract, historical behavior, independent reference, or justified invariant before deriving assertions from the new implementation. Prefer externally visible behavior, historical fixtures, round trips, and boundary cases. Avoid assertions that repeat the implementation's own formula or merely check that a fixture contains the expected wording.
++3. Choose the smallest useful set of unit, integration, property, or manual checks based on blast radius. Include the relevant consumer or entry point when isolated units cannot demonstrate the requested result. Where practical and permitted, confirm that a controlled wrong result or disabled wiring makes the check fail; do not run untrusted mutation commands without required isolation. Reuse installed project libraries and infrastructure; do not install a new testing library automatically.
+ 4. Exercise the relevant failure path and report what was actually run. Mark platform, environment, or unavailable checks as limits, never as passes. Broaden only for a concrete remaining risk or required gate.
+ 
+-Output: a risk-to-assertion map, chosen or omitted checks with reasons, fresh results, and unresolved coverage. Use the canonical validation and review procedures for execution and readiness.
++Stop when material failure modes have sufficient coverage or remaining checks require unavailable evidence. Output: a risk-to-assertion map, chosen or omitted checks with reasons, fresh results, and unresolved coverage, including any runtime or platform property the checks cannot prove. Use the canonical validation and review procedures for execution and readiness.
+--- a/core/skills/implementation/SKILL.md
++++ b/core/skills/implementation/SKILL.md
+@@ -9,11 +9,11 @@
+ 
+ 1. Confirm owned paths, dependencies, and acceptance criteria.
+ 2. Read the minimum required rules and project constraints. Prefer configured Project Contract Slots for the project engineering workflow, source authority, and any relevant compatibility or persistence contract instead of assuming framework-generic facts. Before adding, moving, or renaming a source file or type, apply the code-organization skill and relevant project coding standard, including custom knowledge bindings. Load compatibility-migration, dependency-upgrade, performance-investigation, or an independently installed domain skill only when the change touches its stated trigger.
+-3. Make the smallest coherent change.
++3. Make the smallest coherent change. Edit documentation when requested or when an actual changed contract makes a current statement inaccurate. Distinguish verified current behavior, an unaccepted proposal, and historical evidence; preserve accurate project instructions and README text. A dependency change alone does not require a README rewrite.
+ 4. Preserve unrelated behavior and compatibility.
+ 5. Run focused checks while editing. When ready for review, complete all tests and CI required by impact for the current candidate; explicitly mark checks legitimately not required under validation policy. After a checkpoint or resumed session, re-identify the current files, candidate, and evidence; prior results count only if they still apply to the exact candidate and environment. Pending, missing, failing, or stale required evidence blocks readiness.
+ 6. Self-review the full cumulative diff and related code after implementation and required checks. Fix findings, rerun affected required checks, and repeat self-review before independent Reviewer dispatch. After Reviewer findings, the author or another implementation owner fixes them and repeats this cycle.
+-7. Report changed files, integration dependencies, evidence, and residual risk.
++7. Stop when the assigned change and applicable checks and reviews are complete. Report changed files, integration dependencies, evidence, and residual risk. Do not describe a planned release, unpromoted learning candidate, or unrun check as current behavior.
+ 
+ ## Guardrails
+ 

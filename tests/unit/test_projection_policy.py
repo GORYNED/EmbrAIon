@@ -343,6 +343,10 @@ class ProjectionPolicyTests(unittest.TestCase):
                 "validation",
                 "verification",
             }
+            # Catalog v8 introduces the explicitly approved conditional skill.
+            # The pending proposal still runs against the unchanged v7 Core.
+            if read_yaml(framework_root() / "core/catalog.yaml")["catalog-version"] >= 8:
+                expected_skills.add("security-assessment")
 
             codex_root = project / ".codex" / "agents"
             self.assertEqual(

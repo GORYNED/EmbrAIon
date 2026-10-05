@@ -1,0 +1,623 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-user-directed-core-package",
+  "id": "core-skills-package",
+  "source-head": "c68327a4562f821bb8c46bad9d1d23b82debab1a",
+  "status": "applied-user-approved",
+  "scope": "EmbrAIon only; no consumers, merge or release",
+  "canonical-core-mutated": true,
+  "acceptance": "Explicit user-directed instruction change: deterministic checks, regression scenarios, independent review and explicit concrete-package approval. No required measured live gain for this package.",
+  "historical-boundary": "Historical experiments and their gates/results remain unchanged; no defer, fail, reject or inconclusive is reclassified.",
+  "roles": [
+    "lead",
+    "worker",
+    "reviewer",
+    "architect",
+    "analyst",
+    "validator",
+    "researcher",
+    "steward"
+  ],
+  "new-skills": [
+    "security-assessment"
+  ],
+  "standalone-refactoring": "not-included; historical candidate preserved",
+  "packages": [
+    {
+      "id": "intent",
+      "skills": [
+        "orchestration",
+        "planning",
+        "dependency-upgrade",
+        "validation",
+        "verification",
+        "review"
+      ],
+      "patch": "evals/evolution/candidates/core-skills-intent.patch",
+      "sha256": "b107b56d232ab67030b31e94ac62c65b9eaf75df1f21fc28d1256d0f82170e5c"
+    },
+    {
+      "id": "execution",
+      "skills": [
+        "planning",
+        "research",
+        "debugging",
+        "test-design",
+        "implementation"
+      ],
+      "patch": "evals/evolution/candidates/core-skills-execution.patch",
+      "sha256": "8dc62452d82b2317c0178ee1f76de41eb361507393753c401b4afd077b6ace2c"
+    },
+    {
+      "id": "security",
+      "skills": [
+        "security-assessment"
+      ],
+      "patch": "evals/evolution/candidates/core-skills-security.patch",
+      "sha256": "cab77dc20bfd1c91e7d4fcb612aa417a792e8339ea8eae6bdabcefd4e2a57076"
+    },
+    {
+      "id": "characterization",
+      "skills": [
+        "code-organization",
+        "compatibility-migration",
+        "test-design"
+      ],
+      "patch": "evals/evolution/candidates/core-skills-characterization.patch",
+      "sha256": "ced33c4fc512a8acd0c4a16dd28cc8ddaa097d0f926142e959ac8ca8cbc41f55"
+    }
+  ],
+  "files": [
+    {
+      "path": "core/skills/orchestration/SKILL.md",
+      "before-sha256": "f3d0bf67b6995c7076e17c9fce07bb973979df4bc29dddaf61e3f51516901a1d",
+      "after-sha256": "8a65c5ff76d9073a811dc24b132d99d6667456a3fe3f20de34d99b168f84b385"
+    },
+    {
+      "path": "core/skills/planning/SKILL.md",
+      "before-sha256": "6b58ffc55615d19971d0a4023970b962f86fef44644b688320cfee374ff0ad03",
+      "after-sha256": "f73dcd18ca66cefa835de84c8e14635ba6603633bb2328c1633c94c88ab9b437"
+    },
+    {
+      "path": "core/skills/dependency-upgrade/SKILL.md",
+      "before-sha256": "e6d2e24c0540902c41b486b1979e8bca56793a8af8ee445293aeebdbbf6d8b83",
+      "after-sha256": "6aff8b0d2d59dae5929fc151118eb4b69c77fc98278927a61403c9d577ff414e"
+    },
+    {
+      "path": "core/skills/validation/SKILL.md",
+      "before-sha256": "f0d01693a32c4910c753694636a14f5f5348547fa346b65d45283ffd02716aff",
+      "after-sha256": "c5f8574e6d83be245943d1acc77538b7fcdaddbefba38b7ddb8ab7f8a3c062b4"
+    },
+    {
+      "path": "core/skills/verification/SKILL.md",
+      "before-sha256": "99f0fb0ea8c263cdfb1bc08cf96cbc1fba067478ae974524f1c6a3c0e5d97974",
+      "after-sha256": "5c1dba184972734870efbba87674b751a7bbf6d2f5d7beb498162de5131925b9"
+    },
+    {
+      "path": "core/skills/review/SKILL.md",
+      "before-sha256": "f6d401791ce432749f6c95f6fe8f85fcc0aa87532dcf158edc6e3a2ab1ee8c26",
+      "after-sha256": "dfa8e6fdec234618839335bb60755f30a0e5b1ea53c5928adf997e4f9535d113"
+    },
+    {
+      "path": "core/skills/research/SKILL.md",
+      "before-sha256": "95c68607f5983ea48a9906e6623da3d106e19b33dd753bee44bc87f00305b281",
+      "after-sha256": "779d1f1edd6335ef425edaf4243fb9eb21ffc7257762c4991ed8cf6e3014fe44"
+    },
+    {
+      "path": "core/skills/debugging/SKILL.md",
+      "before-sha256": "6a80e36a9692b9b1e31b77bbb1d27309eb5734a01589127011ff2132daf5b00e",
+      "after-sha256": "0f8632c8ec8a1db8451d9dc7c9f6f8c39a4ae789edc15a606777103d408c324e"
+    },
+    {
+      "path": "core/skills/test-design/SKILL.md",
+      "before-sha256": "11970c3fe8f4d37670bbda4960edca88b269bdd710fed043ce1dc57f3c210ea5",
+      "after-sha256": "169a4b4053b4398fc91b480056819c8b7f0ce723407f98e3e90cb01e060d79f6"
+    },
+    {
+      "path": "core/skills/implementation/SKILL.md",
+      "before-sha256": "d4d30412669ac92c1d881be1b2786c0cbf3d8c157f0f84b2aebcf327fe4e59f2",
+      "after-sha256": "4a16a85ef9141b627a81df4a91815979c398775f867a4393cb30706ca0d0431c"
+    },
+    {
+      "path": "core/skills/code-organization/SKILL.md",
+      "before-sha256": "d31c062b3cba71c28adc5aa1e9f6337d8cf98d312e72bffb9eb39b37a6a6ad07",
+      "after-sha256": "65b983d288ab0e4e11d1be0c9007534f55b4918813832c18d9db8322e5074b86"
+    },
+    {
+      "path": "core/skills/compatibility-migration/SKILL.md",
+      "before-sha256": "7317d664b2e8d0c797cbbbd18c5f9df9b96b33fe45c6f2eceee465975cc202a3",
+      "after-sha256": "d2039742fed21f14dc8c327c94ae7b55bf49111d518bcdf1d56d4c812367583b"
+    },
+    {
+      "path": "core/skills/security-assessment/SKILL.md",
+      "before-sha256": null,
+      "after-sha256": "fa00fe374e960c9c4d303b638df30162fe0fa82b64bab0a4e4be3da380404f57"
+    },
+    {
+      "path": "core/catalog.yaml",
+      "before-sha256": "5e8b05bbbc9e7ca0d16092690967d9bd868d065781a52e52355faf278ff8efb9",
+      "after-sha256": "6af460f9b1813e59cb22dfafffa76f4f2adb62d6c85835bb4373751a4f0c63c1"
+    }
+  ],
+  "traceability": {
+    "intent": "Observed framework-upgrade scope expansion; goal/claim gaps and new instruction contracts.",
+    "execution": "Unbounded discovery, repeated unsupported fixes, disconnected consumers, stale resume and documentation state.",
+    "security": "New boundary-assessment instruction contract; supported threat flow and bounded negatives.",
+    "characterization": "New contract protecting pre-change observable behavior, consumers and stable identity."
+  },
+  "registered-scenarios": [
+    {
+      "id": "scope-positive-en",
+      "target": "scope-action",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "scope-positive-ru",
+      "target": "scope-action",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "scope-negative-en",
+      "target": "scope-action",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "scope-negative-ru",
+      "target": "scope-action",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "scope-held-out-positive-en",
+      "target": "scope-action",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "scope-held-out-negative-ru",
+      "target": "scope-action",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/targets.json",
+      "oracle-id": "upgrade-scope-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "research-decision-01",
+      "target": "research-decision",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/research-decision-cases.json",
+      "oracle-id": "research-choice-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "research-decision-02",
+      "target": "research-decision",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/research-decision-cases.json",
+      "oracle-id": "research-choice-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "research-decision-03",
+      "target": "research-decision",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/research-decision-cases.json",
+      "oracle-id": "research-choice-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "research-decision-04",
+      "target": "research-decision",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/research-decision-cases.json",
+      "oracle-id": "research-choice-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "debug-decision-01",
+      "target": "debug-decision",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/debug-decision-cases.json",
+      "oracle-id": "debug-hypothesis-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "debug-decision-02",
+      "target": "debug-decision",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/debug-decision-cases.json",
+      "oracle-id": "debug-hypothesis-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "debug-decision-03",
+      "target": "debug-decision",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/debug-decision-cases.json",
+      "oracle-id": "debug-hypothesis-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "debug-decision-04",
+      "target": "debug-decision",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/debug-decision-cases.json",
+      "oracle-id": "debug-hypothesis-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "debug-decision-05",
+      "target": "debug-decision",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/debug-decision-cases.json",
+      "oracle-id": "debug-hypothesis-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-01",
+      "target": "consumer-evidence",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-02",
+      "target": "consumer-evidence",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-03",
+      "target": "consumer-evidence",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-04",
+      "target": "consumer-evidence",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-05",
+      "target": "consumer-evidence",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "consumer-evidence-06",
+      "target": "consumer-evidence",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/consumer-cases.json",
+      "oracle-id": "consumer-evidence-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-01",
+      "target": "checkpoint-decision",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-02",
+      "target": "checkpoint-decision",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-03",
+      "target": "checkpoint-decision",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-04",
+      "target": "checkpoint-decision",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-05",
+      "target": "checkpoint-decision",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "checkpoint-decision-06",
+      "target": "checkpoint-decision",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/checkpoint-cases.json",
+      "oracle-id": "checkpoint-resume-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-owner-positive-en",
+      "target": "security-flow",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-owner-positive-ru",
+      "target": "security-flow",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-guard-negative-en",
+      "target": "security-flow",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-inert-negative-ru",
+      "target": "security-flow",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-late-guard-heldout-en",
+      "target": "security-flow",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "security-guard-heldout-ru",
+      "target": "security-flow",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/security-cases.json",
+      "oracle-id": "security-flow-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-move-en",
+      "target": "refactor-characterization",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-move-ru",
+      "target": "refactor-characterization",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-typo-en",
+      "target": "refactor-characterization",
+      "language": "en",
+      "polarity": "negative",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-heldout-ru",
+      "target": "refactor-characterization",
+      "language": "ru",
+      "polarity": "positive",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-typo-ru",
+      "target": "refactor-characterization",
+      "language": "ru",
+      "polarity": "negative",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    },
+    {
+      "id": "refactor-heldout-en",
+      "target": "refactor-characterization",
+      "language": "en",
+      "polarity": "positive",
+      "registry": "evals/evolution/refactor-cases.json",
+      "oracle-id": "refactor-characterization-v1",
+      "status": "registered-static-coverage-not-new-live-evidence"
+    }
+  ],
+  "review-scenarios": [
+    {
+      "id": "planning-ambiguity-en",
+      "language": "en",
+      "polarity": "positive",
+      "prompt": "Update the framework dependency; two repositories and two target versions are plausible. No target was selected.",
+      "expected": "Ask one material target question; continue independent authorized discovery; do not choose a product release.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "planning-ambiguity-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "prompt": "Обнови зависимость фреймворка; возможны два репозитория и две версии. Цель не выбрана.",
+      "expected": "Ask one material target question; continue independent authorized discovery; do not choose a product release.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "planning-typo-en",
+      "language": "en",
+      "polarity": "negative",
+      "prompt": "Correct one identified typo in a documentation line, preserving all other content.",
+      "expected": "Bounded edit and applicable checks; no research, threat assessment, checkpoint or refactoring ceremony.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "planning-typo-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "prompt": "Исправь одну указанную опечатку в строке документации, сохранив остальной текст.",
+      "expected": "Bounded edit and applicable checks; no research, threat assessment, checkpoint or refactoring ceremony.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "review-intent-en",
+      "language": "en",
+      "polarity": "positive",
+      "prompt": "A dependency-only request produced correct dependency files plus an unsolicited release request; tests are green.",
+      "expected": "Report authority/intent mismatch separately from implementation correctness; green tests do not authorize publication.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "review-intent-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "prompt": "Поручение обновить зависимость дало корректные файлы зависимости и непрошеный запрос релиза; тесты зелёные.",
+      "expected": "Report authority/intent mismatch separately from implementation correctness; green tests do not authorize publication.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "review-control-en",
+      "language": "en",
+      "polarity": "negative",
+      "prompt": "An explicitly authorized pin update preserves product version, README and consumers and has current required checks.",
+      "expected": "One compact review; no invented scope defect or duplicate two-axis reports.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "review-control-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "prompt": "Явно разрешённое обновление пина сохраняет версию продукта, README и consumers; обязательные проверки актуальны.",
+      "expected": "One compact review; no invented scope defect or duplicate two-axis reports.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "documentation-state-en",
+      "language": "en",
+      "polarity": "positive",
+      "prompt": "Document a proposed unpublished feature beside current supported behavior; no release has run.",
+      "expected": "Label the proposal and unrun release distinctly from verified current state; retain accurate existing text.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "documentation-state-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "prompt": "Опиши предложенную неопубликованную возможность рядом с текущим поддерживаемым поведением; релиз не запускался.",
+      "expected": "Label the proposal and unrun release distinctly from verified current state; retain accurate existing text.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "documentation-control-en",
+      "language": "en",
+      "polarity": "negative",
+      "prompt": "Update the framework pin only; existing project README and agent instructions remain accurate.",
+      "expected": "Do not rewrite accurate prose or manufacture a documentation obligation.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    },
+    {
+      "id": "documentation-control-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "prompt": "Обнови только пин фреймворка; проектные README и инструкции агентов остаются точными.",
+      "expected": "Do not rewrite accurate prose or manufacture a documentation obligation.",
+      "status": "specified-for-independent-instruction-review-not-live-executed"
+    }
+  ],
+  "additional-calibrated-oracles": [
+    "wiring-v1",
+    "goal-flow-v1"
+  ],
+  "coverage": "Static controls/mutations and projection checks prove artifact/checker properties only. Review assesses instruction consistency against scenarios. No new live execution, measured quality/cost improvement, actual activation or runtime/other-host behavior is claimed.",
+  "approval": {
+    "required": true,
+    "received": true,
+    "applied-to-canonical-core": true,
+    "approved-proposal-head": "869136e377fcc5bd62c7aca561e755456f9cdacb",
+    "provenance": "Human reply to concrete four-package approval question: Одобряю все четыре пакета",
+    "scope": "Canonical application only; no consumers, merge or release"
+  },
+  "application": {
+    "recorded-at": "2026-10-05T17:47:27.400520+00:00",
+    "package-commits": {
+      "intent": "1a03be0a37f5ee225b5accaf32a580fe570ff2fe",
+      "execution": "df09e3d765ed219e79179e25ad42202ba57f67d6",
+      "security": "1b82fc56aeced74c1e8f0188ed8ade2607510ebe",
+      "characterization": "655b285775849fadaec242bd41732e00027ff0c3"
+    },
+    "core-manifest-sha256": "0f2dfb0f98a571c2a93abb3eb3b9e6ac0cb59832077adaafc9e842c2734d5197",
+    "measurement-baseline": "No new authoritative live baseline; historical results preserved. Applied Core artifact revision recorded separately."
+  }
+}

@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 0.23.0 - 2026-10-05
+
+### Added
+
+- Conditional, vendor-neutral `security-assessment`: reachable threat flows, effective controls, evidence-based mitigations, residual risk, and exclusions for unrelated changes.
+- Eval v2 manifests and named variants, contamination checks, mandatory oracle coverage, registered trusted checks, independent regression budgets, and promotion blocking for mandatory inconclusive evidence.
+- Privacy-safe failure corpus with reviewed active, superseded, and retired lifecycle states, plus protection scenarios and trusted checker calibration.
+
+### Changed
+
+- Strengthen twelve existing Core skills for current intent and authority, completion evidence through wiring and consumers, compact two-axis review, bounded repository-first research, causal debugging, independent test expectations, fresh checkpoints, and accurate documentation.
+- Add pre-change behavioral characterization and post-change comparisons to existing code-organization, compatibility-migration, and test-design procedures.
+
+### Compatibility and evidence
+
+- Preserve eight agent roles, eval v1 semantics, historical experiment outcomes, and existing learning promotion gates. No standalone refactoring skill or automatic consumer upgrade is introduced.
+- Generate Codex, Claude Code, Copilot, and portable instructions from the same Core. Deterministic checks and independent instruction review do not establish measured live model-quality or cross-host behavior improvements.
+
 ## 0.22.0 - 2026-10-04
 
 ### Removed

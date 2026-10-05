@@ -1,0 +1,101 @@
+--- a/core/skills/orchestration/SKILL.md
++++ b/core/skills/orchestration/SKILL.md
+@@ -20,6 +20,8 @@
+ 
+ ## Assignment routing contract
+ 
++Before dispatch or a dependent action, identify the current requested outcome, target, and authorized action. Reconcile later corrections or cancellations with earlier approvals; unaffected authorization persists. A dependency update, an independently requested product change, and publication are separate actions under canonical delivery controls. Plans and checkpoints describe state and do not grant authority. Clarify only material ambiguity that blocks the next action; do not infer an obligation to rewrite documentation from a dependency update.
++
+ 1. Classify every new delegated assignment, including a new assignment sent to an existing specialist. Resolve its project route before dispatch using the assignment's role, route/task class, data class, and access. Use the existing project resolver; role names and Lead's model never supply routing choices.
+ 2. Inspect the successful resolution, or the selected candidate of a task-class plan. Preserve its host, resolution, provenance, model, effort, options, and declared fallbacks. Missing or unknown resolution, resolver failure, and unavailable capability evidence are not host-default.
+ 3. Apply each explicit project field independently through the selected host's verified native mechanism. A model-only or effort-only override remains explicit. Host-default inheritance is permitted only when resolution is actually `host-default`; omit project selection fields in that case. An absent model alone never establishes host-default.
+--- a/core/skills/planning/SKILL.md
++++ b/core/skills/planning/SKILL.md
+@@ -7,11 +7,11 @@
+ 
+ ## Procedure
+ 
+-1. Resolve the requested outcome and canonical project truth. Use configured Project Contract Slots for constitution, architecture, source authority, and specification; add compatibility or persistence when the task touches those risks.
+-2. Identify ambiguity, affected capabilities, ownership boundaries, compatibility surfaces, privacy class, and validation impact.
++1. Resolve the current requested outcome, target, authorized action, and canonical project truth. Reconcile later corrections or cancellations with earlier instructions; unaffected authorization remains applicable. Use configured Project Contract Slots for constitution, architecture, source authority, and specification; add compatibility or persistence when the task touches those risks.
++2. Identify material ambiguity, affected capabilities, ownership boundaries, compatibility surfaces, privacy class, and validation impact. Ask only when an unresolved ambiguity can change the next authorized action; continue independent authorized work while it is resolved.
+ 3. Choose the smallest useful set of roles and skills. Select test-design for a material testing strategy, compatibility-migration for protected identities or data, performance-investigation for a measured performance question, dependency-upgrade for an actual version change, and independently installed domain skills only for their triggers.
+ 4. Decide whether structured specification work would materially improve the task.
+-5. Define acceptance criteria, dependency order, writable ownership, and validation depth. For a long task, record a checkpoint with candidate identity, completed checks, unresolved risks, and the evidence that must be refreshed after resumption.
++5. Define observable acceptance criteria, dependency order, writable ownership, and validation depth before dependent changes. Identify the implementation and relevant consumer evidence needed for completion. For a long task, record a checkpoint with candidate identity, completed checks, unresolved risks, and evidence that must be refreshed after resumption.
+ 6. Return a compact execution plan with explicit risks and unresolved questions.
+ 
+ ## Guardrails
+@@ -20,3 +20,7 @@
+ - Do not broaden scope to unrelated cleanup.
+ - Do not choose a concrete model merely because a role was selected.
+ - Prefer current authoritative project evidence over assumptions.
++
++## Activation contract
++
++Use structured planning for substantial, multi-step, or materially ambiguous work. Exclude a separate planning ceremony for a self-evident bounded edit. Stop when the next authorized steps, ownership, dependencies, and acceptance evidence are clear; return the smallest useful plan and remaining material uncertainties.
+--- a/core/skills/dependency-upgrade/SKILL.md
++++ b/core/skills/dependency-upgrade/SKILL.md
+@@ -7,9 +7,11 @@
+ 
+ Load for a requested dependency version change or a change whose solution requires one. Skip for ordinary feature work where the existing compatible dependency suffices; do not upgrade opportunistically.
+ 
+-1. Record the current exact version, requested target, package source, supported runtime/platforms, direct consumers, lockfile or manifest owner, and project source-authority rules. Do not use an uncontrolled `latest` target.
++1. Record the current exact version, requested dependency target, package source, supported runtime/platforms, direct consumers, lockfile or manifest owner, and project source-authority rules. Distinguish this update from a separately requested product change or publication; preserve the consuming project's version strategy. A framework upgrade alone supplies no product major-version decision or release authority. Do not use an uncontrolled `latest` target.
+ 2. Read authoritative release notes, migration guidance, advisories, and license changes for the specific version span. Inspect transitive changes and conflicts. Distinguish verified facts from hypotheses and record source links or local artifact paths.
+-3. Update the minimal manifest and lock or resolved dependency artifacts together. Make only required API/configuration migrations. Preserve unrelated pins and project-owned version strategy.
++3. Update the minimal manifest and lock or resolved dependency artifacts together. Make only required API/configuration migrations and refresh affected dependency instructions or generated projections when necessary. Change README or agent prose only for an explicit request or a concrete newly inaccurate statement, with that reason visible in the diff. Preserve unrelated pins and project-owned version strategy.
+ 4. Validate resolution and actual affected consumers, including build and focused behavior checks. Run required project CI or validation profiles and report platforms not exercised. If rollback is needed, identify the prior exact pin and affected data/configuration state.
+ 
+ Output: old/new exact versions, source evidence, transitive and migration impact, changed artifacts, consumer results, and residual risk. Follow canonical privacy, security, review, and release controls.
++
++Stop when the requested dependency target and required consumer migrations have applicable evidence, or a material compatibility prerequisite blocks them. Report missing evidence as a limit; do not publish to obtain it. An old release plan or checkpoint does not expand the current request.
+--- a/core/skills/validation/SKILL.md
++++ b/core/skills/validation/SKILL.md
+@@ -8,7 +8,7 @@
+ ## Procedure
+ 
+ 1. Classify the change impact.
+-2. Select the smallest checks that can falsify the intended behavior. Use test-design when risk requires a separate test strategy; use an independently installed domain skill when its trigger matches the affected platform, resource, or runtime risk.
++2. Select the smallest checks that can falsify the intended behavior and state which acceptance criterion each proves. Include the relevant consumer or entry-point path when an isolated helper or stub cannot establish the requested behavior. Use test-design when risk requires a separate test strategy; use an independently installed domain skill when its trigger matches the affected platform, resource, or runtime risk.
+ 3. Prefer a configured project profile from `.embraion/validation.yaml` when it matches the needed evidence.
+ 4. Run it through `embraion validation run <profile>`; use `--run-id` when execution evidence should receive the result automatically.
+ 5. Expand validation only when impact justifies it.
+@@ -21,3 +21,7 @@
+ - Never convert unavailable evidence into success.
+ - Do not generalize environment-specific evidence to untested environments.
+ - Keep validation proportional to risk and blast radius.
++
++## Activation contract
++
++Use a distinct validation plan for material behavior, integration, compatibility, or regression risk. A trivial reversible edit needs only applicable required checks. Stop when mandatory criteria have fresh evidence or an explicitly unresolved limitation; return observed results and coverage boundaries. Source inspection, successful test execution, and runtime evidence prove different properties and must not be substituted for one another.
+--- a/core/skills/verification/SKILL.md
++++ b/core/skills/verification/SKILL.md
+@@ -8,7 +8,7 @@
+ ## Procedure
+ 
+ 1. Inspect the full cumulative final diff against the reviewed base and confirm only intended files changed. For a PR identify the source HEAD SHA.
+-2. Re-check acceptance criteria against the final candidate, not an earlier intermediate state.
++2. Re-check acceptance criteria against the final candidate. Trace each material completion claim from the user's goal through substantive implementation, reachable wiring or entry point, and relevant consumer to fresh evidence. A declaration, generated stub, test count, or isolated helper pass is insufficient. For deletion, identify the removed responsibility and show that it is obsolete or preserved by a reachable replacement, including affected references and contracts.
+ 3. Confirm required tests and CI are fresh, passing, and applicable to that exact candidate. Reconcile any checkpoint or resumed session with the current candidate, environment, and evidence; changes invalidate affected results and review confirmation. For UI behavior, identify what was observed in live interaction and what was only inspected statically. Record checks legitimately not required by impact; pending, missing, failing, stale, or unavailable required evidence blocks readiness.
+ 4. Confirm the author's full diff and related-code self-review preceded independent review. For every PR or substantial implementation, confirm a different read-only Reviewer in the same authorized host reviewed the cumulative candidate and explicitly confirmed the final PR source HEAD SHA, reviewed base/diff, and current evidence. Any later candidate content or commit change invalidates confirmation.
+ 5. Check documentation, generated projections, schemas, and references for consistency.
+@@ -21,3 +21,5 @@
+ - Do not claim completion while required evidence is stale or missing.
+ - Do not hide unresolved risk behind a successful test count.
+ - Do not treat Reviewer confirmation as merge or release authorization.
++
++For substantive completion or handoff, return only claims supported within the evidence boundary, separating observed, proposed, unrun, and runtime-dependent results. Stop on missing mandatory evidence. Do not add unrelated runtime work or a separate proof report to a simple change already covered by applicable checks.
+--- a/core/skills/review/SKILL.md
++++ b/core/skills/review/SKILL.md
+@@ -9,8 +9,8 @@
+ 
+ 1. Confirm the author finished implementation, all impact-required tests and CI have fresh passing results for this candidate, and the author self-reviewed the full cumulative diff plus related code. Record legitimate not-required checks separately. Pending, missing, failing, stale, or unavailable required evidence blocks review readiness.
+ 2. Read intent, acceptance criteria, canonical contracts, full cumulative diff, related code and tests, current evidence, and known risks. Resolve configured Project Contract Slots that match the review surface, especially architecture, source authority, compatibility, persistence, and specification. For a PR identify its source HEAD SHA and reviewed base/diff.
+-3. Review correctness before style. For each added, moved, or renamed source file or type, check folder and namespace ownership, project rules, and dependency direction using the code-organization skill and any configured organization check. For scoped migrations, check preserved identifiers, metadata, references, and contracts with compatibility-migration when its trigger applies. Check dependency, performance, lifecycle, resources, concurrency, tests, platform assumptions, security, and privacy as applicable; use independently installed domain skills for their relevant triggers. For a UI behavior claim, distinguish observed live interaction from static code or screenshot inspection.
+-4. Rank material findings by impact. Give evidence and a reproduction or verification suggestion for each. State explicitly when no material findings remain.
++3. Assess two questions separately: does the candidate fulfill the current authorized intent and applicable contracts, and is its implementation correct? A pass on one does not settle the other. Review correctness before style. For each added, moved, or renamed source file or type, check folder and namespace ownership, project rules, and dependency direction using the code-organization skill and any configured organization check. For scoped migrations, check preserved identifiers, metadata, references, and contracts with compatibility-migration when its trigger applies. Check dependency, performance, lifecycle, resources, concurrency, tests, platform assumptions, security, and privacy as applicable; use independently installed domain skills for their relevant triggers. For a UI behavior claim, distinguish observed live interaction from static code or screenshot inspection.
++4. Rank material findings by impact and identify intent/contract mismatch, implementation defect, or both. Give evidence and a reproduction or verification suggestion for each. Treat missing evidence as uncertainty, not an invented defect. State explicitly when no material findings remain; keep one compact review instead of creating separate reports for the two questions.
+ 5. For every clear final candidate, including one with no findings, explicitly confirm the exact current full PR source HEAD SHA, reviewed base/diff, and required evidence, or state what blocks confirmation. After remediation or resumption, inspect the delta and cumulative final state with fresh applicable evidence. Any later candidate content or commit change, including cosmetic or metadata changes, invalidates confirmation.
+ 
+ ## Guardrails

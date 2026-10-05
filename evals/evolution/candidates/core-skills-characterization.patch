@@ -1,0 +1,36 @@
+--- a/core/skills/code-organization/SKILL.md
++++ b/core/skills/code-organization/SKILL.md
+@@ -10,6 +10,6 @@
+ 1. Inspect nearby source, existing meaningful folders, dependency direction, and project-owned architecture, source-authority, and coding-standard contracts. Resolve applicable `.embraion/knowledge.yaml` bindings, including custom entries. Do not invent a rule when the project has none.
+ 2. Identify the feature or responsibility that owns the code, then place it with that owner. Prefer an existing coherent folder. Add a folder only when it clarifies an actual boundary; avoid arbitrary depth and unrelated root-level `Helpers`, `Utils`, or `Common` dumping grounds.
+ 3. Use shared code only for a genuinely common purpose with a valid dependency direction. Check that the proposed location does not create reverse or cyclic dependencies. Follow project-specific folder, namespace, and assembly rules where they exist. Run a configured project organization check when available and relevant; report its scope and result. Keep names clear; do not strip prefixes mechanically.
+-4. When a requested audit or migration has an explicit scope, map old locations to proposed locations with an ownership and dependency rationale. Identify identity, persistence, import, build, and reference risks before moving code. Apply compatibility-migration or an installed domain skill only when its trigger matches. Preserve stable identifiers, metadata, and actual contracts; update affected references and validate the resulting structure.
++4. For an explicitly scoped material reorganization, establish a before-move map of ownership, dependencies, and references, plus an observed inventory of identity, persistence, import, build, and public contracts. Map old locations to proposed locations with an ownership and dependency rationale before moving code. Apply compatibility-migration or an installed domain skill only when its trigger matches. Preserve stable identifiers, metadata, and actual contracts; update affected references and check the same map and contracts afterward.
+ 
+-Do not turn an ordinary feature or fix into an opportunistic repository-wide reshuffle. Escalate unresolved ownership or dependency boundaries to the appropriate project authority or Architect.
++Stop when code has a justified owner and applicable references and contracts are checked. Report the placement or scoped move, affected references, checks, and unresolved risks. An ordinary feature, rename, or fix does not require a migration exercise or an opportunistic repository-wide reshuffle. Escalate unresolved ownership or dependency boundaries to the appropriate project authority or Architect.
+--- a/core/skills/compatibility-migration/SKILL.md
++++ b/core/skills/compatibility-migration/SKILL.md
+@@ -7,9 +7,9 @@
+ 
+ Load when a change can alter persisted data, stable IDs, public APIs, serialized names, or import/export contracts. Skip for internal refactoring with verified private reach and no compatibility surface; use ordinary implementation and validation there.
+ 
+-1. Identify the exact old and new contract from code, released artifacts, project compatibility and persistence slots, and known consumers. Include readers, writers, migrations, generated artifacts, external users, and version boundaries. Ask the project Steward to resolve unresolved identity or data-loss risk through the established workflow.
++1. Before changing code, record the observed baseline for public APIs, persisted shapes, and stable identities from code, representative historical fixtures or released artifacts, project compatibility and persistence slots, and known consumers. Identify the intended new contract and include readers, writers, migrations, generated artifacts, external users, and version boundaries. Ask the project Steward to resolve unresolved identity or data-loss risk through the established workflow.
+ 2. Choose the smallest compatible path: preserve the old surface, add a versioned reader/writer, or define an explicit breaking migration where authorized. Map each old form to the new form, including missing, malformed, and older records. Do not infer that a rename is safe merely because source references compile.
+ 3. Sequence changes so existing consumers continue working during rollout. State any dual-read/write window, upgrade order, backup or recovery requirement, and rollback boundary. Avoid turning one compatibility fix into a mass refactor.
+-4. Validate with representative historical fixtures and affected current consumers. Check stable identifiers, read/write round trips where meaningful, public call sites, and rollback or recovery behavior that the project actually supports.
++4. Recheck the same representative historical fixtures and affected current consumers after the change against the pre-change baseline, except for explicitly authorized differences. Check stable identifiers, read/write round trips where meaningful, public call sites, and rollback or recovery behavior that the project actually supports.
+ 
+-Output: affected contract and consumer inventory, migration mapping and sequence, fresh validation evidence, explicit rollback limit, and residual risk. Follow project-owned contracts and canonical privacy, review, and approval gates.
++Stop when affected contracts and consumers have evidence for the authorized migration or an unresolved compatibility risk blocks progress. Output: the baseline and affected contract and consumer inventory, migration mapping and sequence, fresh validation evidence, explicit authorized differences and rollback limits, and residual risk. Follow project-owned contracts and canonical privacy, review, and approval gates.
+--- a/core/skills/test-design/SKILL.md
++++ b/core/skills/test-design/SKILL.md
+@@ -13,3 +13,7 @@
+ 4. Exercise the relevant failure path and report what was actually run. Mark platform, environment, or unavailable checks as limits, never as passes. Broaden only for a concrete remaining risk or required gate.
+ 
+ Stop when material failure modes have sufficient coverage or remaining checks require unavailable evidence. Output: a risk-to-assertion map, chosen or omitted checks with reasons, fresh results, and unresolved coverage, including any runtime or platform property the checks cannot prove. Use the canonical validation and review procedures for execution and readiness.
++
++## Behavioral characterization
++
++For a material behavior change or reorganization, identify observable assertions at the relevant consumer before mutation, using the old behavior, a reference result, or accepted contracts as the oracle. Run the same assertions after mutation where practical and permitted, and explain any intentionally authorized difference. State unavailable pre-change or runtime evidence explicitly; do not infer it from the new implementation.
