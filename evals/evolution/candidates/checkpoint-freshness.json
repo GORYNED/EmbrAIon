@@ -9,7 +9,14 @@
   "capability-paths": [
     "core/skills/planning/SKILL.md"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "checkpoint-decision-01",
+    "checkpoint-decision-02",
+    "checkpoint-decision-03",
+    "checkpoint-decision-04",
+    "checkpoint-decision-05",
+    "checkpoint-decision-06"
+  ],
   "scenario-proposals": [
     "stale-checkpoint",
     "fresh-checkpoint",
@@ -25,11 +32,14 @@
     }
   ],
   "patch-digest": "f323b5e4401a7b3563f9c87e3b89fe2188259e10d5f766dfd1615f4df9aebdbe",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r29-checkpoint-decision-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R29 complete predeclared baseline with counts {\"pass\": 19, \"fail\": 17, \"inconclusive\": 4}; mandatory evidence incomplete for 5 observations. No candidate native invocation, no regrading, no Core-quality generalization or promotion."
 }

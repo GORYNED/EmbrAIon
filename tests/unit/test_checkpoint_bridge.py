@@ -18,6 +18,7 @@ from embraion.eval_observers import observe, reduce_output
 class CheckpointBridgeTests(unittest.TestCase):
     def setUp(self):
         self.root = framework_root()
+        (self.root / "build").mkdir(exist_ok=True)
         registry = json.loads((self.root / "evals/evolution/checkpoint-cases.json").read_bytes())
         with tempfile.TemporaryDirectory(dir=self.root / "build") as temporary:
             fixture = Path(temporary)

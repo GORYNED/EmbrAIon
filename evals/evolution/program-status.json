@@ -1,7 +1,7 @@
 {
   "schema-version": 1,
   "kind": "advisory-program-status",
-  "updated-at": "2026-10-05T06:53:40.338030+00:00",
+  "updated-at": "2026-10-05T07:19:01.823489+00:00",
   "scope": "EmbrAIon only; no consumer updates, merge or release",
   "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
   "canonical-core-mutated": false,
@@ -32,14 +32,14 @@
     },
     {
       "stage": 2,
-      "status": "trusted-oracles-validated-new-protocol-preparing",
+      "status": "baselines-recorded-mandatory-evidence-incomplete",
       "research": "R27 cohort baseline18pass2fail complete with equal captured native context. An unnecessary additional complete-suite baseline15pass4fail1inconclusive is preserved and blocks its planned candidate comparison. No unknown observation is waived; no candidate trial yet.",
-      "debugging": "R28 stopped after4graded observations (0pass1fail3inconclusive): prompt conflicts with necessary CLI reads. Journal preserved; contractv3 permits read-only file inspection and requires fresh baseline. No candidate trial or Core promotion. R29 contractv3 baseline25planned trials running; syntactic/source evidence remain separate and unknown mandatory evidence is not waived.",
+      "debugging": "R29 baseline25planned/completed:4pass20fail1inconclusive;15observations incomplete mandatory measurement. Syntax is separate from causal truth. R28 protocol remains diagnostic. No candidate trial or promotion.",
       "remaining": [
         "Research/debugging baselines and isolated comparisons",
         "Consumer oracle, handoff and knowledge-state experiments"
       ],
-      "handoff": "Six checkpoint cases integrated; bounded-prefix and native partial-output authority retention gap fixed. R29 baseline40planned trials running. No candidate trial or Core promotion."
+      "handoff": "R29 baseline40planned/completed:19pass17fail4inconclusive;5observations incomplete mandatory measurement. No candidate trial or promotion."
     },
     {
       "stage": 3,
@@ -65,10 +65,12 @@
   ],
   "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
   "latest-pushed-ci": {
-    "commit": "82261434973a02f2b62ecfc0bf1da9af5452c161",
-    "validate-run": 37264494270,
-    "docs-run": 37264494244,
-    "status": "passed"
+    "commit": "6c215f090a4b083a3d2f1b7ad132112773eed928",
+    "validate-run": 37275258473,
+    "docs-run": 37275258462,
+    "status": "docs-passed-validation-failed-test-setup",
+    "failure": "Three new checkpoint bridge tests assumed build already existed in a cold checkout.",
+    "remediation": "Create build in test setUp; all three affected tests pass in a fresh Git archive without build. New source HEAD requires fresh CI."
   },
   "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
   "overall": "incomplete; authorized implementation and live experiments continue",

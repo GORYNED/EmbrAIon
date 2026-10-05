@@ -9,7 +9,13 @@
   "capability-paths": [
     "core/skills/debugging/SKILL.md"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "debug-decision-01",
+    "debug-decision-02",
+    "debug-decision-03",
+    "debug-decision-04",
+    "debug-decision-05"
+  ],
   "scenario-proposals": [
     "competing-root-causes",
     "contradictory-log-evidence",
@@ -25,11 +31,14 @@
     }
   ],
   "patch-digest": "919bc9bb43bcf73dd8727abfbbbcd0f9fad381cdba7d2e440f78e22ade8ce752",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r29-debug-decision-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R29 complete predeclared baseline with counts {\"pass\": 4, \"fail\": 20, \"inconclusive\": 1}; mandatory evidence incomplete for 15 observations. No candidate native invocation, no regrading, no Core-quality generalization or promotion."
 }
