@@ -34,6 +34,10 @@ class CoreSkillPackageTests(unittest.TestCase):
         # checkout when the temporary directory is nested beneath a worktree.
         subprocess.run(["git", "-c", "core.fsmonitor=false", "init", "--quiet", str(cls.candidate)],
                        check=True, capture_output=True)
+        # Exercise the Windows default even on Linux/macOS. Applying an
+        # immutable proposal must preserve LF bytes despite checkout defaults.
+        subprocess.run(["git", "-c", "core.fsmonitor=false", "config", "core.autocrlf", "true"],
+                       cwd=cls.candidate, check=True, capture_output=True)
         for name in ("core", "adapters", "schemas", "templates"):
             shutil.copytree(ROOT / name, cls.candidate / name)
         shutil.copyfile(ROOT / "framework.yaml", cls.candidate / "framework.yaml")
@@ -45,7 +49,8 @@ class CoreSkillPackageTests(unittest.TestCase):
             if digest(patch) != package["sha256"]:
                 raise AssertionError("proposal patch digest changed: " + package["id"])
             for suffix in (["--check"], []):
-                subprocess.run(["git", "-c", "core.fsmonitor=false", "apply", *suffix, str(patch)],
+                subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", "core.autocrlf=false",
+                                "apply", *suffix, str(patch)],
                                cwd=cls.candidate, check=True, capture_output=True)
 
     @classmethod
