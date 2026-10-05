@@ -13,3 +13,7 @@ Load when behavior, persistence, integration, or a regression needs a test strat
 4. Exercise the relevant failure path and report what was actually run. Mark platform, environment, or unavailable checks as limits, never as passes. Broaden only for a concrete remaining risk or required gate.
 
 Stop when material failure modes have sufficient coverage or remaining checks require unavailable evidence. Output: a risk-to-assertion map, chosen or omitted checks with reasons, fresh results, and unresolved coverage, including any runtime or platform property the checks cannot prove. Use the canonical validation and review procedures for execution and readiness.
+
+## Behavioral characterization
+
+For a material behavior change or reorganization, identify observable assertions at the relevant consumer before mutation, using the old behavior, a reference result, or accepted contracts as the oracle. Run the same assertions after mutation where practical and permitted, and explain any intentionally authorized difference. State unavailable pre-change or runtime evidence explicitly; do not infer it from the new implementation.
