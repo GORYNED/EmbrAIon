@@ -24,6 +24,28 @@ class TargetCases(unittest.TestCase):
                                           "evolution-target", "--target", target, "--output", "unused"])
                 self.assertEqual(target, args.target)
 
+    def test_structured_target_is_opt_in_and_keeps_gold_private(self):
+        root = framework_root()
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "consumer"
+            prepare_target_baseline(root, output, target="consumer-evidence", structured_output=True)
+            suite = json.loads((output / "suite.json").read_bytes())
+            for case in suite["cases"]:
+                self.assertEqual("artifact-response-v1", case["response-contract"])
+                self.assertNotIn("expected-result", case["prompt"])
+                self.assertNotIn(case["observer"]["params"]["forbidden-marker"], case["prompt"])
+                self.assertEqual({}, case["observer"]["params"]["required-procedures"])
+                # Public finding vocabulary is identical for controls and
+                # positives; the selected expected finding remains private.
+                self.assertIn("consumer-disconnected", case["prompt"])
+
+    def test_unsupported_structured_target_fails_before_snapshot(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "unused"
+            with self.assertRaisesRegex(ValueError, "no registered response contract"):
+                prepare_target_baseline(framework_root(), output, target="review-axes", structured_output=True)
+            self.assertFalse(output.exists())
+
     def test_consumer_target_checks_artifact_without_running_fixture_tests(self):
         root = framework_root()
         (root / "build").mkdir(exist_ok=True)

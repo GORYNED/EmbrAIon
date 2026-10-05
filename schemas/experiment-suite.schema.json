@@ -31,6 +31,7 @@
         "polarity": {"enum": ["positive", "negative"]}, "language": {"enum": ["en", "ru"]},
         "risk": {"enum": ["ordinary", "high"]},
         "corpus-id": {"$ref": "#/$defs/id"},
+        "response-contract": {"enum": ["artifact-response-v1", "research-response-v1", "debug-response-v1", "checkpoint-response-v1", "security-response-v1"]},
         "allowed-paths": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
         "observer": {"type": "object", "additionalProperties": false, "required": ["id", "params", "mandatory"],
           "properties": {"id": {"enum": ["finite-answer-v1", "finite-stream-v1", "decision-stream-v1", "debug-decision-stream-v1", "checkpoint-decision-stream-v1"]}, "params": {"type": "object"}, "mandatory": {"type": "boolean"}}},

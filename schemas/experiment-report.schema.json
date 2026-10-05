@@ -332,6 +332,7 @@
               "mandatory": {"type": "boolean"}
             }
           },
+          "response-contract": {"enum": ["artifact-response-v1", "research-response-v1", "debug-response-v1", "checkpoint-response-v1", "security-response-v1"]},
           "owned-paths-required": {
             "type": "boolean"
           }

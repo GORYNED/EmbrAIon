@@ -148,7 +148,8 @@ def describe_host(binary: str) -> dict[str, Any]:
 def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str | None,
                 effort: str | None, timeout: int, skills: list[str], scratch: Path, *,
                 role: str = "worker", access: str = "workspace-write",
-                observer: Callable[[Path, dict[str, Any]], dict[str, Any]] | None = None) -> dict[str, Any]:
+                observer: Callable[[Path, dict[str, Any]], dict[str, Any]] | None = None,
+                response_contract: str | None = None) -> dict[str, Any]:
     if role not in NATIVE_ROLES:
         raise ValueError("unsupported native role")
     if access not in NATIVE_ACCESS:
@@ -157,6 +158,11 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
         raise ValueError("invalid native model selector")
     if effort is not None and effort not in VALID_EFFORTS:
         raise ValueError("unsupported native effort")
+    schema = None
+    if response_contract is not None:
+        from ..response_contracts import resolve_response_contract
+
+        schema = resolve_response_contract(response_contract)
     if host == "codex":
         windows_sandbox = _windows_sandbox()
         if os.name == "nt" and windows_sandbox is None:
@@ -168,9 +174,14 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
         # previous attempt. Raw observations have their own short lifetime.
         from ..experiment_evals import _observation_root
         with tempfile.TemporaryDirectory(prefix="native-observation-", dir=_observation_root()) as observation:
+            native_kwargs: dict[str, Any] = {}
+            if schema is not None:
+                schema_path = Path(observation) / "response-schema.json"
+                schema_path.write_text(json.dumps(schema, sort_keys=True), encoding="utf-8")
+                native_kwargs["output_schema"] = schema_path
             result = _invoke_codex(binary, project, prompt, model, effort, timeout, skills, Path(observation),
                                    developer_instructions=instructions, windows_sandbox=windows_sandbox,
-                                   trusted_workspace=True, sandbox=access)
+                                   trusted_workspace=True, sandbox=access, **native_kwargs)
             if result.get("status") != "completed":
                 from .eval_observations import codex_failure_metadata
                 result["native-failure"] = codex_failure_metadata(Path(observation))

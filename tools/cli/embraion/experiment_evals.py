@@ -25,6 +25,7 @@ from .eval_observers import (calibration as observer_calibration, digest as obse
                              metadata as observer_metadata, observe as observe_native,
                              reduce_output, validate_params as validate_observer_params)
 from .skill_evals import _check_output_destination, _safe_relative
+from .response_contracts import resolve_response_contract
 
 SOURCE_PREFIXES = ("core/", "adapters/", "schemas/", "tools/cli/", "templates/",
                    ".agents/", ".codex/", ".claude/", ".github/agents/", ".github/skills/", ".embraion/", "embraion/")
@@ -553,6 +554,10 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
             observed = case["observer"]
             validate_observer_params(observed["id"], observed["params"])
             observer_ids.add(observed["id"])
+        if "response-contract" in case:
+            if "observer" not in case:
+                raise ValueError("response contract requires a mandatory observer")
+            resolve_response_contract(case["response-contract"], case["observer"])
         cases.append((case, fixture, fixture_files))
     calibrations = [{"id": key, **calibration(key, framework_root()), "coverage": oracle_metadata(key)["coverage"]}
                     for key in sorted(oracle_ids)]
@@ -740,7 +745,9 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
 
                             host_result = invoke_host(host, binary, project, case["prompt"], model, effort,
                                                       timeout_seconds, [p.split("/")[2] for p in manifests[key]["files"] if p.startswith(".agents/skills/") and p.endswith("/SKILL.md")], scratch,
-                                                      role=role, access=access, observer=native_observer)
+                                                      role=role, access=access, observer=native_observer,
+                                                      **({"response_contract": case["response-contract"]}
+                                                         if "response-contract" in case else {}))
                         except (OSError, ValueError, RuntimeError):
                             host_result = {"status": "native-infrastructure-error", "duration-seconds": None}
                     if "observer" in case:
@@ -849,7 +856,9 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                                   **({"observer": {"id": case["observer"]["id"],
                                                    "params-digest": observer_digest(case["observer"]["params"]),
                                                    "mandatory": case["observer"]["mandatory"]}}
-                                     if "observer" in case else {})} for case, _, _ in cases],
+                                     if "observer" in case else {}),
+                                  **({"response-contract": case["response-contract"]}
+                                     if "response-contract" in case else {})} for case, _, _ in cases],
               "runs": records, "comparisons": comparisons, "contamination": contamination,
               "limitations": limitations,
               "metric-rubric": rubric,

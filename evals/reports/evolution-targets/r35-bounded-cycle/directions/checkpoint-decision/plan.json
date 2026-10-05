@@ -1,0 +1,19 @@
+{
+  "source-archive": "a8734fed9f33c989410bf5408af8d05461b384fe682a0a4998629a417c524209",
+  "controller-sha256": "32f20b7be5904b0d88ce71f3d19ee88ed1cba20ff27960d0598928d5674bac0b",
+  "target": "checkpoint-decision",
+  "cohorts": [
+    "cohort-1",
+    "cohort-2",
+    "cohort-3"
+  ],
+  "baseline": "five ordinary, ten high-risk repeats",
+  "exploratory": "three counterbalanced pairs per case",
+  "confirmation": "only after observed targeted benefit; not launched by this controller",
+  "revision-limit": 1,
+  "native-concurrency": 3,
+  "candidate-run": "after all baseline cohorts are qualified and every budget is frozen",
+  "target-benefit": "At least one determinate targeted failed-to-passed comparison. Cost reductions alone do not establish a new skill benefit.",
+  "artifact-baseline": "Original source fixture and trusted contract/consumer/identity characterization precede any model mutation.",
+  "activation-boundary": "Closed output syntax does not establish internal activation, and no forced procedure-zero result counts as benefit."
+}

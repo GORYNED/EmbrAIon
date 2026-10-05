@@ -1,0 +1,31 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-export-validation",
+  "validated-suites": 25,
+  "validated-reports": 12,
+  "validated-snapshot-manifests": 31,
+  "invalid-preparations": [
+    {
+      "path": "directions/checkpoint-decision/cohort-1/matched-suite.json",
+      "digest": "d68fe1faaaab9fdaad8de69d62852559515e92c9454876b861deb8e3cb8c54df",
+      "status": "invalid-preparation-not-executed",
+      "reason": "Prepared matched-suite ID exceeds schema limit of 64 characters.",
+      "historical-content": "preserved without rewriting or regrading"
+    },
+    {
+      "path": "directions/checkpoint-decision/cohort-2/matched-suite.json",
+      "digest": "4609ca6fcf72e0252d02dbfa8a0044bcabf7499154c3b2bb263c22f21b4b838c",
+      "status": "invalid-preparation-not-executed",
+      "reason": "Prepared matched-suite ID exceeds schema limit of 64 characters.",
+      "historical-content": "preserved without rewriting or regrading"
+    },
+    {
+      "path": "directions/checkpoint-decision/cohort-3/matched-suite.json",
+      "digest": "94f278b731d20cc63e75731fd6cb5073bad837b9c690f4f3eabf9835f12f116e",
+      "status": "invalid-preparation-not-executed",
+      "reason": "Prepared matched-suite ID exceeds schema limit of 64 characters.",
+      "historical-content": "preserved without rewriting or regrading"
+    }
+  ],
+  "meaning": "These unexecuted matched preparations cannot be used for baseline qualification, comparison or promotion. Baseline journals are independent and remain historical; no matched candidate runs occurred."
+}

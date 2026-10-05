@@ -179,6 +179,63 @@ class FullCoreExperiments(unittest.TestCase):
                                             route=self.route, attempts=attempts, output=output, **kwargs)
                     return report, native
 
+    def artifact_observer(self):
+        return {"id": "finite-stream-v1", "mandatory": True,
+                "params": {"expected-result": "unchanged", "expected-findings": [],
+                           "expected-questions": [], "required-procedures": {},
+                           "permitted-procedures": [], "security-findings": [],
+                           "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"}}
+
+    def test_response_contract_is_prevalidated_before_native_run(self):
+        self.data["cases"][0].update({"observer": self.artifact_observer(),
+                                      "response-contract": "artifact-response-v1"})
+        self.data["cases"][0]["observer"]["id"] = "finite-answer-v1"
+        self.write_suite()
+        with self.assertRaisesRegex(ValueError, "matching mandatory observer"):
+            self.run_trial()
+        self.assertFalse((self.root / "report.json.runs.jsonl").exists())
+        self.data["cases"][0]["observer"] = self.artifact_observer()
+        self.data["cases"][0]["observer"]["params"]["required-procedures"] = {"review": {"result": "done"}}
+        self.data["cases"][0]["observer"]["params"]["permitted-procedures"] = ["review"]
+        self.write_suite()
+        with self.assertRaisesRegex(ValueError, "empty expected procedures"):
+            self.run_trial()
+
+    def test_response_contract_is_passed_and_reported(self):
+        self.data["cases"][0].update({"observer": self.artifact_observer(),
+                                      "response-contract": "artifact-response-v1"})
+        self.write_suite()
+        report, native = self.run_trial(attempts=1)
+        self.assertEqual("artifact-response-v1", native.call_args.kwargs["response_contract"])
+        self.assertEqual("artifact-response-v1", report["case-contracts"][0]["response-contract"])
+        schema = json.loads((ROOT / "schemas/experiment-report.schema.json").read_text(encoding="utf-8"))
+        self.assertFalse(list(Draft202012Validator(schema).iter_errors(report)))
+
+    def test_response_schema_drift_contaminates_before_native_run(self):
+        self.data["cases"][0].update({"observer": self.artifact_observer(),
+                                      "response-contract": "artifact-response-v1"})
+        self.write_suite()
+        from embraion.experiment_evals import _files
+        original_files = _files
+        schema_reads = 0
+
+        def changed_schema(root, **kwargs):
+            nonlocal schema_reads
+            result = original_files(root, **kwargs)
+            if root == ROOT / "schemas":
+                schema_reads += 1
+                if schema_reads > 1:
+                    result = {**result, "response-artifact.schema.json": "0" * 64}
+            return result
+
+        with patch("embraion.experiment_evals._files", side_effect=changed_schema):
+            report, native = self.run_trial(attempts=1)
+        native.assert_not_called()
+        self.assertEqual("artifact-response-v1", report["case-contracts"][0]["response-contract"])
+        self.assertIn("schema-drift", {item["reason"] for item in report["contamination"]})
+        schema = json.loads((ROOT / "schemas/experiment-report.schema.json").read_text(encoding="utf-8"))
+        self.assertFalse(list(Draft202012Validator(schema).iter_errors(report)))
+
     def test_preserved_baseline_report_mutation_is_contamination(self):
         self.run_trial(phase="baseline", output=self.root / "prior-report.json")
         preserved_suite = self.root / "prior-suite.json"

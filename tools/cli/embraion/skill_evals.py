@@ -187,10 +187,17 @@ def _terminate_host(process: subprocess.Popen[bytes], *, windows: bool) -> None:
 
 def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path,
                   *, developer_instructions: str | None = None, windows_sandbox: str | None = None,
-                  trusted_workspace: bool = False, sandbox: str = "workspace-write") -> dict[str, Any]:
+                  trusted_workspace: bool = False, sandbox: str = "workspace-write",
+                  output_schema: Path | None = None) -> dict[str, Any]:
     if sandbox not in {"read-only", "workspace-write"}:
         raise ValueError("unsupported native sandbox")
     argv = [binary, "exec", "--ignore-user-config", "--ephemeral", "--json", "--sandbox", sandbox, "--skip-git-repo-check", "--cd", str(root), "--output-last-message", str(scratch / "last-message.txt")]
+    if output_schema is not None:
+        if (output_schema.is_symlink() or not output_schema.is_file()
+                or output_schema.resolve().parent != scratch.resolve()
+                or output_schema.stat().st_size > 100_000):
+            raise ValueError("invalid trusted output schema")
+        argv += ["--output-schema", str(output_schema)]
     if model:
         argv += ["--model", model]
     if effort:

@@ -1,0 +1,20 @@
+[
+  {
+    "target": "debug-decision",
+    "cohort": "cohort-1",
+    "phase": "baseline",
+    "exit": 0
+  },
+  {
+    "target": "debug-decision",
+    "cohort": "cohort-2",
+    "phase": "baseline",
+    "exit": 0
+  },
+  {
+    "target": "debug-decision",
+    "cohort": "cohort-3",
+    "phase": "baseline",
+    "exit": 0
+  }
+]

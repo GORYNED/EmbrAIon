@@ -1,0 +1,81 @@
+{
+  "source-head": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+  "base": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "ci": {
+    "head": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+    "passed": true,
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37315617373,
+        "headSha": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+        "status": "completed",
+        "workflowName": "docs"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37315617140,
+        "headSha": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+        "status": "completed",
+        "workflowName": "validate"
+      }
+    ]
+  },
+  "assignment": {
+    "route": {
+      "host": "codex",
+      "route": "complex",
+      "task-class": null,
+      "role": "reviewer",
+      "resolution": "project-deployment",
+      "provenance": [
+        "route"
+      ],
+      "deployment": "codex-sol",
+      "provider": null,
+      "model": "gpt-6-sol",
+      "effort": "high",
+      "options": {},
+      "fallbacks": [],
+      "billing": {
+        "mode": "subscription"
+      },
+      "data": "PRIVATE"
+    },
+    "client-contexts": [
+      {
+        "model": "gpt-6-sol",
+        "effort": "high",
+        "sandbox": "read-only",
+        "approval-policy": "never"
+      }
+    ],
+    "applied-selection": "verified-client-model-effort-read-only",
+    "exit-code": 0,
+    "timed-out": false
+  },
+  "review": {
+    "findings": [],
+    "no-material-findings": true,
+    "reviewed-head": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+    "reviewed-base": "371f62b788bfb02d7484d065c43888109a55d39a",
+    "full-cumulative-confirmed": true,
+    "evidence-reviewed": [
+      "The 145 source paths in build/cumulative-source.diff match all non-report paths in build/cumulative-files.txt; five key file digests match build/source-manifest.json.",
+      "Reviewed implementation, schemas, target registries, response contracts, related tests, and historical report indexes. Core has no cumulative diff; v1 remains separate.",
+      "Confirmed contamination checks, case-specific budgets, mandatory inconclusive gates, controller-held gold, registered observers, and unsupported-host inconclusive handling.",
+      "build/unit.log reports 711 passing tests; build/source-validation.log passes. build/review-ci.json records successful docs and validate runs for the reviewed head."
+    ],
+    "coverage-limitations": [
+      "The archive has no Git metadata; head and base attribution relies on the supplied frozen archive and CI record.",
+      "Historical report rows were reviewed through indexes, provenance, and schemas rather than individually.",
+      "This was a read-only source review; no candidate code or tests were run, and native sandbox enforcement was not independently probed."
+    ],
+    "changed": "None.",
+    "architecture": "Canonical Core remains unpromoted.",
+    "validation": "Reviewed supplied local and exact-head CI evidence.",
+    "risks": "No material source finding; no merge, release, or promotion approval is granted.",
+    "workers": []
+  },
+  "boundary": "Approves only the reviewed foundation source; not later methodology changes, merge, release or Core promotion."
+}

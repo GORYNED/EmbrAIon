@@ -1,0 +1,21 @@
+{
+  "host": "codex",
+  "route": "complex",
+  "task-class": null,
+  "role": "analyst",
+  "resolution": "project-deployment",
+  "provenance": [
+    "route"
+  ],
+  "deployment": "codex-sol",
+  "provider": null,
+  "model": "gpt-6-sol",
+  "effort": "high",
+  "options": {},
+  "fallbacks": [],
+  "billing": {
+    "mode": "subscription"
+  },
+  "data": "PUBLIC",
+  "access": "read-only"
+}

@@ -1178,12 +1178,15 @@ def _eval_experiment(args: argparse.Namespace) -> int:
         pilot = getattr(args, "pilot", "foundation")
         if getattr(args, "target", None) is not None and pilot != "evolution-target":
             raise ValueError("--target requires --pilot evolution-target")
+        if getattr(args, "structured_output", False) and pilot != "evolution-target":
+            raise ValueError("--structured-output requires --pilot evolution-target")
         if pilot == "evolution-target":
             if getattr(args, "target", None) is None or getattr(args, "role", None) is not None:
                 raise ValueError("evolution target requires --target and owns its role/access")
             from .experiment_targets import prepare_target_baseline
             report = prepare_target_baseline(Path(args.source), Path(args.output), target=args.target,
-                                             host=args.host, regenerate=args.regenerate)
+                                             host=args.host, regenerate=args.regenerate,
+                                             structured_output=getattr(args, "structured_output", False))
         elif pilot == "finite-role":
             if getattr(args, "role", None) is None:
                 raise ValueError("finite role pilot requires --role")
@@ -2324,6 +2327,7 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--target", choices=sorted(TARGETS))
     prepare.set_defaults(func=_cmd_eval_experiment)
     prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
+    prepare.add_argument("--structured-output", action="store_true", help="Opt into registered response syntax; requires a new baseline")
     capture = experiment_sub.add_parser("snapshot")
     capture.add_argument("--source", default=".")
     capture.add_argument("--output", required=True)

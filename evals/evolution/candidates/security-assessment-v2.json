@@ -1,0 +1,60 @@
+{
+  "change-id": "security-assessment-v2",
+  "stage": 3,
+  "status": "deferred-bounded-cycle",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "R21 preserved two tied assessment failures and one guarded held-out quality regression. Expired raw answers do not establish the particular wrong field or its cause.",
+  "proposed-rule": "Make effective control ordering, bounded negative conclusions and requested output scope explicit. Test this one revision without attributing an unobserved root cause to R21.",
+  "capability-paths": [
+    "core/skills/security-assessment/SKILL.md",
+    "core/catalog.yaml"
+  ],
+  "scenarios": [
+    "security-owner-positive-en",
+    "security-owner-positive-ru",
+    "security-guard-negative-en",
+    "security-inert-negative-ru",
+    "security-late-guard-heldout-en",
+    "security-guard-heldout-ru"
+  ],
+  "scenario-proposals": [
+    "reachable-untrusted-command",
+    "authorization-boundary-change",
+    "blocked-dangerous-operation",
+    "inert-http-api-control",
+    "security-held-out-en-ru"
+  ],
+  "expected-result": "Supported eight-part threat findings, useful mitigations, and no unnecessary activation or new authority.",
+  "core-delta": [
+    {
+      "path": "core/skills/security-assessment/SKILL.md",
+      "before": null,
+      "after": "d8e23eac3df402143b430e743607e97293422fc94fa1422af2bd77156dedc1a6"
+    },
+    {
+      "path": "core/catalog.yaml",
+      "before": "5e8b05bbbc9e7ca0d16092690967d9bd868d065781a52e52355faf278ff8efb9",
+      "after": "c7483952a7e3f55d5db870b0e878b23236d7c2a463b3c6dd20f6df3a94483e3c"
+    }
+  ],
+  "patch-digest": "b3817dd695412389c63d3cf564c457a0959c170e879c28c0a9eaba4829f222f1",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+    "evals/reports/evolution-targets/r35-bounded-cycle/security-v2-projections.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "decision-boundary": "One advisory revision only. Old rejection remains historical; no canonical Core change or promotion approval.",
+  "revision": 1,
+  "revision-limit": 1,
+  "previous-candidate": "security-assessment",
+  "historical-evidence": [
+    "evals/reports/evolution-targets/r21-security-exploratory/index.json",
+    "evals/reports/evolution-targets/r21-security-baseline/index.json",
+    "evals/reports/evolution-targets/r21-security-matched/index.json"
+  ],
+  "evidence-boundary": "Only original Core native trials. Revised candidate has deterministic projections but no native comparison; mandatory unknown baseline blocks promotion."
+}

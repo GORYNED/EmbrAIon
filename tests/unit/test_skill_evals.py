@@ -96,6 +96,12 @@ class SkillEvalTests(unittest.TestCase):
     def run_eval(self, **kwargs: object) -> dict:
         return run_suite(self.suite, host="codex", model="gpt-test", effort="high", attempts=2, output=self.root / "report.json", codex_binary=str(self.host), **kwargs)
 
+    def test_v1_skill_suite_keeps_native_invocation_without_output_schema(self) -> None:
+        with patch("embraion.skill_evals._invoke_codex", return_value={"status": "completed"}) as native:
+            self.run_eval()
+        self.assertTrue(native.called)
+        self.assertTrue(all("output_schema" not in call.kwargs for call in native.call_args_list))
+
     def test_paired_attempts_and_privacy_minimal_report(self) -> None:
         digest = _digest(self.root / "fixture")
         report = self.run_eval()

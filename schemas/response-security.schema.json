@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result", "findings", "questions", "procedures"],
+  "properties": {
+    "result": {"type": "string"},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "procedures": {
+      "anyOf": [
+        {"type": "object", "additionalProperties": false, "properties": {}, "required": []},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["security-assessment"],
+          "properties": {
+            "security-assessment": {
+              "type": "object", "additionalProperties": false,
+              "required": ["asset", "entry", "trust-boundary", "reachable-operation", "existing-control", "evidence", "mitigation", "residual-risk", "priority", "preconditions"],
+              "properties": {
+                "asset": {"type": "string"},
+                "entry": {"type": "string"},
+                "trust-boundary": {"type": "string"},
+                "reachable-operation": {"type": "string"},
+                "existing-control": {"type": "string"},
+                "evidence": {"type": "array", "items": {"type": "string"}},
+                "mitigation": {"type": "string"},
+                "residual-risk": {"type": "string"},
+                "priority": {"type": "string"},
+                "preconditions": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -168,6 +168,40 @@ class NativeRoleTests(unittest.TestCase):
         argv = process.call_args.args[0]
         self.assertEqual("read-only", argv[argv.index("--sandbox") + 1])
 
+    def test_registered_response_schema_is_trusted_temporary_native_input(self) -> None:
+        observed = []
+
+        def native(*args, **kwargs):
+            schema_path = kwargs["output_schema"]
+            observed.append(schema_path)
+            self.assertEqual(args[-1], schema_path.parent)
+            self.assertFalse(schema_path.parent.is_relative_to(self.project))
+            self.assertEqual("object", json.loads(schema_path.read_text(encoding="utf-8"))["type"])
+            return {"status": "completed"}
+
+        with patch("embraion.adapters.eval_hosts._windows_sandbox", return_value="unelevated"), patch(
+            "embraion.adapters.eval_hosts._invoke_codex", side_effect=native
+        ) as invoke:
+            self.invoke(response_contract="artifact-response-v1")
+            self.assertEqual(1, invoke.call_count)
+            with self.assertRaisesRegex(ValueError, "unknown response contract"):
+                self.invoke(response_contract="../schema.json")
+        self.assertFalse(observed[0].exists())
+
+    def test_native_schema_cli_option_is_opt_in(self) -> None:
+        schema = self.root / "schema.json"
+        schema.write_text('{"type":"object"}', encoding="utf-8")
+        with patch("embraion.skill_evals.subprocess.Popen") as process:
+            process.return_value.poll.return_value = 0
+            process.return_value.returncode = 0
+            _invoke_codex("unused", self.project, "prompt", None, None, 1, [], self.root,
+                          output_schema=schema)
+        argv = process.call_args.args[0]
+        self.assertEqual(str(schema), argv[argv.index("--output-schema") + 1])
+        with self.assertRaisesRegex(ValueError, "trusted output schema"):
+            _invoke_codex("unused", self.project, "prompt", None, None, 1, [], self.root,
+                          output_schema=self.project / "schema.json")
+
     def test_read_only_preflight_uses_reviewer_and_actual_nonce_answer(self) -> None:
         home = self.root / "eval-home"
         home.mkdir()

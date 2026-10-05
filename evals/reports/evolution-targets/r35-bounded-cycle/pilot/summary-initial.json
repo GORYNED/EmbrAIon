@@ -1,0 +1,65 @@
+{
+  "pilot": "initial",
+  "controller-sha256": "1b996c0cbd34beea1aaa1a78b35c5ef056fe77564a3e26ae26788daa303bfb2b",
+  "results": [
+    {
+      "target": "scope-action",
+      "exit": 1,
+      "qualified-measurement": false,
+      "reason": "controller-or-report-unavailable"
+    },
+    {
+      "target": "research-decision",
+      "exit": 1,
+      "qualified-measurement": false,
+      "reason": "controller-or-report-unavailable"
+    },
+    {
+      "target": "debug-decision",
+      "exit": 1,
+      "qualified-measurement": false,
+      "reason": "controller-or-report-unavailable"
+    },
+    {
+      "target": "checkpoint-decision",
+      "exit": 1,
+      "qualified-measurement": false,
+      "reason": "controller-or-report-unavailable"
+    },
+    {
+      "target": "security-flow",
+      "exit": 1,
+      "qualified-measurement": false,
+      "reason": "controller-or-report-unavailable"
+    },
+    {
+      "target": "refactor-characterization",
+      "exit": 0,
+      "qualified-measurement": true,
+      "status": "pass",
+      "counts": {
+        "pass": 2,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "report-sha256": "2d3536e9478bd6502f5d75e99ad7a085e6ec43a904f330ee62085d7afebdfc04",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "exit": 0,
+      "qualified-measurement": false,
+      "status": "fail",
+      "counts": {
+        "pass": 0,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "report-sha256": "c52aec2a79ded9957b21c63a56c3aa36458ba394e1537cd9633bba93af7be101",
+      "limitations": [],
+      "preflight-status": "pass"
+    }
+  ],
+  "promotion": "not-eligible-diagnostic"
+}

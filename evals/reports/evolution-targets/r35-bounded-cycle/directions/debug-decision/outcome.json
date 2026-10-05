@@ -1,0 +1,7 @@
+{
+  "decision": "defer",
+  "reason": "Full baseline has missing mandatory evidence. No candidate invocation or budget waiver.",
+  "candidate-run": "not-run",
+  "confirmation": "not-run",
+  "promotion": "blocked"
+}

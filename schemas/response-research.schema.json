@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision", "findings", "facts", "evidence", "questions", "procedures"],
+  "properties": {
+    "decision": {"enum": ["adopt", "extend", "build"]},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "facts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capability", "signature", "consumer", "editable"],
+      "properties": {
+        "capability": {"enum": ["complete", "partial", "incompatible", "absent"]},
+        "signature": {"enum": ["one-arg", "two-arg", "none"]},
+        "consumer": {"type": "string"},
+        "editable": {"type": "boolean"}
+      }
+    },
+    "evidence": {"type": "array", "minItems": 5, "maxItems": 6, "items": {"type": "string"}},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "procedures": {"type": "object", "additionalProperties": false, "properties": {}, "required": []}
+  }
+}

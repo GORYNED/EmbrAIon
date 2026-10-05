@@ -1,0 +1,43 @@
+{
+  "source-archive": "a8734fed9f33c989410bf5408af8d05461b384fe682a0a4998629a417c524209",
+  "controller-sha256": "1b996c0cbd34beea1aaa1a78b35c5ef056fe77564a3e26ae26788daa303bfb2b",
+  "targets": {
+    "scope-action": [
+      "scope-positive-en",
+      "scope-held-out-negative-ru"
+    ],
+    "research-decision": [
+      "research-decision-01",
+      "research-decision-04"
+    ],
+    "debug-decision": [
+      "debug-decision-02",
+      "debug-decision-05"
+    ],
+    "checkpoint-decision": [
+      "checkpoint-decision-03",
+      "checkpoint-decision-04"
+    ],
+    "security-flow": [
+      "security-owner-positive-en",
+      "security-guard-heldout-ru"
+    ],
+    "refactor-characterization": [
+      "refactor-heldout-ru",
+      "refactor-typo-en"
+    ],
+    "consumer-evidence": [
+      "consumer-evidence-01",
+      "consumer-evidence-06"
+    ]
+  },
+  "diagnostic-attempts": 1,
+  "repeat-ceiling": 1,
+  "concurrency": 2,
+  "selection": "Predeclared EN/RU positive/control and held-out diagnostic slices, not promotion coverage.",
+  "methodology-correction": "Registered public JSON response schemas; original artifact and stream graders unchanged.",
+  "qualification": "Determinate mandatory checks, complete measured categories, no contamination or limitations.",
+  "activation-coverage": "Schema constrains procedures syntax only; actual internal capability activation remains unverified.",
+  "candidate-runs": "Not scheduled by this diagnostic controller. Qualified full baseline and budgets required first.",
+  "failure-policy": "Preserve first attempt. Repeat the whole pilot once without method edits when any mandatory measurement remains unknown. Still unreliable directions defer."
+}

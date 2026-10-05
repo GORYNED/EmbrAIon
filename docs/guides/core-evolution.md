@@ -129,3 +129,25 @@ Fixture Python and tests are never executed. A successful static result proves t
 Consumer observer findings describe remaining implementation defects, not repaired test gaps. The disconnected source case has source-derived `consumer-disconnected` gold; a truthful report is not counted as a false finding. This correction occurred before native baseline execution; frozen R30 validation and its unfinished source audit remain preserved.
 
 The completed R31 consumer baseline preserves all 30 planned invocations: two pass, 20 fail and eight inconclusive. Fourteen observations lack complete mandatory measurement; no candidate invocation or promotion follows. Its controls establish sensitivity to two specified mutations only. A control rewrite therefore does not establish that broader sample coverage was unnecessary. Unsupported assertion or report syntax is distinct from a demonstrated Core defect. The exact report and coverage limits are retained under `evals/reports/evolution-targets/r31-consumer-baseline/`; the R30 bounded source audit timed out and provides no independent approval. Any changed fixture, checker or output contract requires a new baseline.
+
+## Bounded methodology correction
+
+Opt into a new public response contract when preparing a supported target:
+
+```text
+python tools/source.py eval experiment prepare --source build/evolution/original --output build/evolution/structured-consumer --pilot evolution-target --target consumer-evidence --host codex --regenerate --structured-output
+```
+
+The case selects a registered `response-contract` ID, never a schema path or command. Public JSON schemas belong to `schemas/`; the Codex adapter supplies trusted schema bytes through native `--output-schema` outside the writable candidate workspace. Expected findings, source facts and decisions remain with the trusted observer. Schema-valid wrong decisions, including an unauthorized `publish` judgment, still fail substantive checks. Old v1 calls and v2 reports without an opt-in retain their definitions.
+
+Structured preparation uses output vocabulary without decision mappings and requires a new baseline. Static file, wiring, consumer, characterization and ownership checks remain independent of the response format. The native schema constrains the final answer only; incomplete or unsupported earlier output still blocks mandatory evidence. Closed procedure fields cannot prove internal activation or reduced ceremonies. No runtime or other-host behavioral portability follows from a Codex result; unavailable native bindings are inconclusive.
+
+The bounded cycle permits one methodology correction and one repeat diagnostic pilot. Directions still missing required evidence are deferred, with the original failure retained. Qualified directions get three paired exploratory repeats; five ordinary or ten high-risk confirmation repeats run only after observed benefit. Each candidate has at most one revision. Review and verification patches with no observed benefit remain deferred. A decision record must distinguish infrastructure readiness, experiment outcome and human promotion approval; a completed bounded cycle can produce no eligible Core changes.
+
+## Closed bounded cycle
+
+Export validation preserves three unexecuted checkpoint matched-suite preparations with overlong IDs as invalid historical preparations. They are not executable suites or eligible comparison evidence; `preparation-validation.json` records the limitation without rewriting the original files.
+
+The decisions are retained in `evals/evolution/bounded-cycle.json`, with exact manifests, reports and interrupted journals under `evals/reports/evolution-targets/r35-bounded-cycle/`. All 13 directions are deferred for their stated evidence or benefit gap. The earlier security v1 rejection remains historical; its sole revision has four passing deterministic projections but no qualified native comparison. No Core procedure, role or skill is promoted.
+
+Correct response controls pass for all 39 registered cases. Live structural JSON conformance still does not ensure supported value grammar, complete earlier messages or supported artifact syntax. The debug baseline retains 25 observations, three with mandatory evidence gaps. Checkpoint and security baselines stopped after an irreversible required gap, retaining respectively 11 of 40 and 47 of 60 planned observations. Unfinished invocations remain unassessed. No replacement runs, budget waiver, confirmation or composition follows. A known failure can coexist with missing mandatory evidence; report outcome counts alone do not establish qualification. Final PR acceptance requires current-head CI and independent cumulative review separately from these experiment decisions.
