@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import tempfile
 import unittest
@@ -99,6 +100,35 @@ class TargetCases(unittest.TestCase):
                 answer["result"] = "hold" if answer["result"] == "ready" else "ready"
                 self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
 
+    def test_goal_fixture_binds_source_proof_without_exposing_gold(self):
+        root = framework_root()
+        (root / "build").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "goal"
+            prepare_target_baseline(root, output, target="goal-flow")
+            suite = json.loads((output / "suite.json").read_bytes())
+            self.assertEqual({"role": "validator", "access": "read-only"}, suite["execution"])
+            self.assertEqual(6, len(suite["cases"]))
+            for case in suite["cases"]:
+                fixture = output / case["fixture"]
+                oracle = case["oracles"][0]
+                self.assertEqual("goal-flow-v1", oracle["id"])
+                self.assertEqual({"case": case["id"]}, oracle["params"])
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                self.assertEqual([], case["allowed-paths"])
+                self.assertNotIn("corpus-id", case)
+                self.assertEqual(6, len(list(fixture.iterdir())))
+                for path in fixture.iterdir():
+                    self.assertNotIn("expected-facts", path.read_text(encoding="utf-8"))
+                    self.assertNotIn("gold-rationale", path.read_text(encoding="utf-8"))
+                params = case["observer"]["params"]
+                answer = {"result": params["expected-result"], "findings": params["expected-findings"],
+                          "questions": [], "procedures": params["required-procedures"]}
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+                answer = copy.deepcopy(answer)
+                answer["procedures"]["validation"]["end-to-end"] = "unsupported"
+                self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+
     def test_review_gold_detects_axes_conflation_and_inert_comment_false_finding(self):
         root = framework_root()
         registry = json.loads((root / "evals/evolution/review-cases.json").read_text(encoding="utf-8"))
@@ -115,6 +145,33 @@ class TargetCases(unittest.TestCase):
         result = reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)
         self.assertEqual("fail", result["status"])
         self.assertEqual(1, result["metrics"]["false-positive-rate"])
+
+    def test_research_choice_uses_source_and_independent_outside_gold(self):
+        root = framework_root()
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "research"
+            prepare_target_baseline(root, output, target="research-choice")
+            suite = json.loads((output / "suite.json").read_bytes())
+            self.assertEqual({"role": "researcher", "access": "read-only"}, suite["execution"])
+            self.assertEqual(6, len(suite["cases"]))
+            self.assertEqual({"adopt", "extend", "build"},
+                             {case["observer"]["params"]["expected-result"] for case in suite["cases"]})
+            for case in suite["cases"]:
+                fixture = output / case["fixture"]
+                oracle = case["oracles"][0]
+                self.assertEqual("research-choice-v1", oracle["id"])
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                self.assertEqual([], case["allowed-paths"])
+                self.assertEqual(5, len(list(fixture.iterdir())))
+                for path in fixture.iterdir():
+                    self.assertNotIn("expected-facts", path.read_text(encoding="utf-8"))
+                params = case["observer"]["params"]
+                answer = {"result": params["expected-result"], "findings": params["expected-findings"],
+                          "questions": [], "procedures": params["required-procedures"]}
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
+                answer = copy.deepcopy(answer)
+                answer["result"] = "build" if params["expected-result"] != "build" else "adopt"
+                self.assertEqual("fail", reduce_output(STREAM_OBSERVER_ID, [json.dumps(answer)], True, params)["status"])
 
 
 if __name__ == "__main__":

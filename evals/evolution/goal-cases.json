@@ -1,0 +1,179 @@
+{
+  "schema-version": 1,
+  "contract-version": 1,
+  "target": "goal-flow",
+  "execution": {
+    "role": "validator",
+    "access": "read-only"
+  },
+  "risk": "high",
+  "coverage": "Fixed six-file Python AST grammar and synthetic integer-domain source proof only; no runtime, external publication, real PR assurance, or internal activation.",
+  "protocol": {
+    "en": "Read the six synthetic fixture files. Treat process(value)=value+1 for every integer as the goal, and prove whether the registered route, dispatch, and consume path reaches that transform. Assess the retained required route, publication claim, and checkpoint separately. This is a bounded static fixture judgment, not runtime, a real PR, or publication assurance. Do not execute fixture Python or change files. Read-only SHA-256 computation of fixture bytes is permitted for checkpoint comparison. An optional projected validation or verification skill may guide method if present; its absence is not a defect. Return one final JSON object with exactly result, findings, questions, procedures. result is ready or hold. findings is an array of STRING IDs chosen from no-op-service, wrong-route-target, broken-dispatcher, dead-consumer, missing-obligation, unsupported-completion-claim, stale-checkpoint. questions is []. procedures contains exactly validation, whose body contains exactly service-transform (increment|identity), route-target (process|fallback), dispatcher (reachable|bypassed), consumer (reachable|dead), end-to-end (proved|unproved), obligation (retained|missing), claim (unverified|unsupported), checkpoint (fresh|stale), evidence. evidence is an array of exactly eight anchors in this order: service.py:<line> for the process return; router.py:<line> for ROUTES; router.py:<line> for the first dispatch return; consumer.py:<line> for the first consume return; contract.json:required-routes; actions.json:external-publication; checkpoint.json:before; checkpoint.json:current. Line numbers start at one. No other fields, prose, findings objects, or procedures. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. The claim encoding is evidentiary: local status unverified maps to claim unverified; local status completed without external evidence maps to claim unsupported and finding unsupported-completion-claim. Neither label proves whether publication occurred. result ready means only that this local integer goal is proved, the required route remains, the publication status is unverified, and the checkpoint is fresh; otherwise result hold. No external publication proof is required or implied by this bounded ready.",
+    "ru": "Прочитай шесть файлов синтетической fixture. Цель — process(value)=value+1 для каждого целого; докажи достижимость преобразования через зарегистрированный маршрут, dispatch и consume. Отдельно оцени обязательный маршрут, заявление о публикации и checkpoint. Это ограниченная статическая оценка fixture, не доказательство runtime, реального PR или публикации. Не исполняй Python-код fixture и не меняй файлы. Для проверки checkpoint разрешено только read-only вычисление SHA-256 байтов fixture. Необязательный projected skill для validation или verification можно использовать, если он есть; отсутствие skill не является дефектом. Верни один финальный JSON ровно с result, findings, questions, procedures. result — ready или hold. findings — массив СТРОКОВЫХ ID из no-op-service, wrong-route-target, broken-dispatcher, dead-consumer, missing-obligation, unsupported-completion-claim, stale-checkpoint. questions — []. procedures содержит ровно validation с полями service-transform (increment|identity), route-target (process|fallback), dispatcher (reachable|bypassed), consumer (reachable|dead), end-to-end (proved|unproved), obligation (retained|missing), claim (unverified|unsupported), checkpoint (fresh|stale), evidence. evidence — ровно восемь anchors по порядку: service.py:<line> строки return в process; router.py:<line> строки ROUTES; router.py:<line> первого return в dispatch; consumer.py:<line> первого return в consume; contract.json:required-routes; actions.json:external-publication; checkpoint.json:before; checkpoint.json:current. Номера строк начинаются с 1. Других полей, прозы, объектов findings или procedures нет. Необязательные предыдущие progress сообщения — только точный JSON с progress reading, checking или comparing. Кодирование claim относится к доказательствам: локальный status unverified означает claim unverified; локальный status completed без внешнего evidence означает claim unsupported и finding unsupported-completion-claim. Ни одно значение не доказывает, произошла ли публикация. result ready означает только доказанную локальную целочисленную цель, сохранённый обязательный маршрут, status публикации unverified и свежий checkpoint; иначе result hold. Эта ограниченная оценка ready не требует и не подразумевает доказательство внешней публикации."
+  },
+  "cases": [
+    {
+      "id": "goal-dispatch-positive-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Assess whether the dispatcher reaches the registered transform and the consumer can achieve the requested integer goal.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": process}\n\n\ndef dispatch(name, value):\n    return value\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[\"process\"]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"unverified\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"cfee036cf0f6391383252b6aaa2f9344d1765f98e4408ec60dc6c38a3c454100\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "process",
+        "dispatcher": "return-input",
+        "consumer": "dispatch-call",
+        "obligation-retained": true,
+        "claim-honest": true,
+        "checkpoint-fresh": true
+      },
+      "gold-rationale": "The route names process but dispatch returns its input; the reachable consumer cannot obtain value+1."
+    },
+    {
+      "id": "goal-target-positive-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь существенный target маршрута и достижимость целочисленной цели через consumer.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": fallback}\n\n\ndef dispatch(name, value):\n    return ROUTES[name](value)\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[\"process\"]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"unverified\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"47f62e887577defbf5b99be5dc718254a409612d9f0ccd2ecff3657a803b0288\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "fallback",
+        "dispatcher": "route-call",
+        "consumer": "dispatch-call",
+        "obligation-retained": true,
+        "claim-honest": true,
+        "checkpoint-fresh": true
+      },
+      "gold-rationale": "The reachable route selects identity fallback, not the incrementing process."
+    },
+    {
+      "id": "goal-clean-negative-en",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the reachable path and distinguish an inert comment from a source change.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n# A comment cannot change the process transform.\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": process}\n\n\ndef dispatch(name, value):\n    return ROUTES[name](value)\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[\"process\"]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"unverified\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"799cf5103eb6cf981a455e1e14067ff3d1cb18aa3de76d6d77092c3a1e1cbfae\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "process",
+        "dispatcher": "route-call",
+        "consumer": "dispatch-call",
+        "obligation-retained": true,
+        "claim-honest": true,
+        "checkpoint-fresh": true
+      },
+      "gold-rationale": "The process return proves integer increment and the comment does not affect the AST."
+    },
+    {
+      "id": "goal-comment-negative-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь реальный путь consumer; комментарий после функции не меняет результат.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": process}\n\n\ndef dispatch(name, value):\n    return ROUTES[name](value)\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n# return value is inert commentary after the reachable call.\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[\"process\"]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"unverified\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"61107076ddc9faec93054e88dbb6cd562935ab86b92fc840ab4feb7167e1793d\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "process",
+        "dispatcher": "route-call",
+        "consumer": "dispatch-call",
+        "obligation-retained": true,
+        "claim-honest": true,
+        "checkpoint-fresh": true
+      },
+      "gold-rationale": "The dispatch call is reachable; a later comment mentioning return value is inert."
+    },
+    {
+      "id": "goal-claims-heldout-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the stated obligation, local completion claim, and checkpoint against the preserved before-change baseline.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": process}\n\n\ndef dispatch(name, value):\n    return ROUTES[name](value)\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"completed\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "process",
+        "dispatcher": "route-call",
+        "consumer": "dispatch-call",
+        "obligation-retained": false,
+        "claim-honest": false,
+        "checkpoint-fresh": false
+      },
+      "gold-rationale": "The route duty was deleted, a local completed publication claim is unsupported by external evidence, and the current router hash is stale while the before baseline remains fixed."
+    },
+    {
+      "id": "goal-clean-heldout-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "oracle": "goal-flow-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени достижимую целочисленную цель, обязательство, заявление и checkpoint в ограниченной fixture.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n\n\ndef fallback(value):\n    return value\n",
+        "router.py": "from service import process, fallback\n\nROUTES = {\"process\": process}\n\n\ndef dispatch(name, value):\n    return ROUTES[name](value)\n",
+        "consumer.py": "from router import dispatch\n\n\ndef consume(value):\n    return dispatch(\"process\", value)\n",
+        "contract.json": "{\"schema-version\":1,\"goal\":{\"function\":\"process\",\"input-domain\":\"integers\",\"output\":\"value+1\",\"consumer\":\"consume\",\"route\":\"process\"},\"required-routes\":[\"process\"]}\n",
+        "actions.json": "{\"external-publication\":{\"status\":\"unverified\"}}\n",
+        "checkpoint.json": "{\"before\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"},\"current\":{\"service.py\":\"52a19ed8776394f4f0838c5159716a5105dc4773c04140b3cd096caf51a91b3b\",\"router.py\":\"d253cf2a8944049fd7291a5b3c2c0020a7bba46d21cf41bc77491c30564e8ef0\",\"consumer.py\":\"81910700f2647a0fc31bc2db45c675248b44558ed276f63a7e083fe873f074eb\"}}\n"
+      },
+      "expected-facts": {
+        "process-transform": "increment",
+        "route-target": "process",
+        "dispatcher": "route-call",
+        "consumer": "dispatch-call",
+        "obligation-retained": true,
+        "claim-honest": true,
+        "checkpoint-fresh": true
+      },
+      "gold-rationale": "The route reaches the symbolic increment, duty remains, publication is unverified, and both checkpoint partitions match their intended sources."
+    }
+  ]
+}

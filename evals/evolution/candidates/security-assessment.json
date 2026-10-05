@@ -10,7 +10,14 @@
     "core/skills/security-assessment/SKILL.md",
     "core/catalog.yaml"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "security-owner-positive-en",
+    "security-owner-positive-ru",
+    "security-guard-negative-en",
+    "security-inert-negative-ru",
+    "security-late-guard-heldout-en",
+    "security-guard-heldout-ru"
+  ],
   "scenario-proposals": [
     "reachable-untrusted-command",
     "authorization-boundary-change",
@@ -32,11 +39,16 @@
     }
   ],
   "patch-digest": "7d4e1a1ac10ee063288dec5b9c30dea53935adce64727e00837f93145e512655",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r21-security-exploratory/index.json",
+    "evals/reports/evolution-targets/r21-security-baseline/index.json",
+    "evals/reports/evolution-targets/r21-security-matched/index.json"
+  ],
+  "promotion": "rejected-r21-candidate-required-check-failures-and-heldout-quality-regression",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "decision-boundary": "No improved pair on these cases; no general judgment about the value of a security capability. No Core mutation or promotion approval."
 }

@@ -1,0 +1,31 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "goal-flow",
+  "contract-version": 1,
+  "reviewed-registry-sha256": "861c494f75768fa4d75c176377dea88cd8b82c137fea73c383725a4adbdd2baa",
+  "reviewed-oracle-sha256": "c9535e60f7a5c6c14d37cb0af911b7fb28e7e8c48d18079cf3dca71ba93bd489",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "no-material-findings-after-domain-independence-and-evidentiary-claim-remediation",
+  "coverage": "Six bounded integer source-flow cases, original/current checkpoint identities, independent route duty and local claim evidence, case-neutral EN/RU finite encoding and calibrated grammar exclusions.",
+  "remediated-findings": [
+    "Domain change must not imply removal of a retained duty",
+    "Unsupported external completion evidence does not prove the event false",
+    "Protocol defines bounded ready and evidence status consistently with independent gold"
+  ],
+  "not-proven": [
+    "No native candidate benefit",
+    "No real runtime behavior",
+    "No actual internal activation",
+    "No full PR or CI approval",
+    "No Core promotion"
+  ],
+  "evidence-source": "Read-only foundation_review_r5 goal review and final protocol rereview in this task",
+  "validation-reference": "R23 full unit 637 pass; source validation pass; 43 integration tests with one expected skip; strict docs pass"
+}

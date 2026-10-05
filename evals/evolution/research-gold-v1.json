@@ -1,0 +1,28 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "research-choice",
+  "contract-version": 1,
+  "reviewed-registry-sha256": "22b2734b6cd069b179feac5586f5fcfd70ab5b7b811b6e120cac938978bb25fe",
+  "reviewed-oracle-sha256": "6077b14ec7ddf9088980c2e096ffcc121a9f8eef80cb195fc81f59c879fb6aac",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "No material static finding after EN/RU ownership taxonomy clarification and exact integer schema-version validation.",
+  "coverage": "Six source-grounded synthetic choices, bounded AST, independent source/ownership facts, source anchors and case-neutral adopt/extend/build vocabulary.",
+  "remediated-findings": [
+    "Build includes a new owned adapter that can reuse a frozen incompatible API"
+  ],
+  "not-proven": [
+    "No native candidate benefit",
+    "No runtime or general repository reuse",
+    "No actual internal activation",
+    "No full PR approval",
+    "No Core promotion"
+  ],
+  "evidence-source": "foundation_review_r5 bounded research review and taxonomy rereview in this task"
+}

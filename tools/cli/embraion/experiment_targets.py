@@ -13,6 +13,8 @@ TARGET_FILES = {
     "scope-action": "evals/evolution/targets.json",
     "review-axes": "evals/evolution/review-cases.json",
     "security-flow": "evals/evolution/security-cases.json",
+    "goal-flow": "evals/evolution/goal-cases.json",
+    "research-choice": "evals/evolution/research-cases.json",
 }
 TARGETS = frozenset(TARGET_FILES)
 
@@ -36,9 +38,15 @@ def prepare_target_baseline(source: Path, output: Path, *, target: str, host: st
             destination = fixture / _safe_relative(name)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(content, encoding="utf-8", newline="\n")
-        oracle_params = {"case": entry["id"]} if target == "security-flow" else {}
+        oracle_params = {"case": entry["id"]} if target in ("security-flow", "goal-flow", "research-choice") else {}
         if target == "security-flow":
             from .security_oracles import expected_observation
+            gold = expected_observation(oracle_params, fixture)
+        elif target == "goal-flow":
+            from .goal_oracles import expected_observation
+            gold = expected_observation(oracle_params, fixture)
+        elif target == "research-choice":
+            from .research_oracles import expected_observation
             gold = expected_observation(oracle_params, fixture)
         else:
             gold = entry["gold"]

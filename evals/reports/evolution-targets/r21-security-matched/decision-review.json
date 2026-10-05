@@ -1,0 +1,22 @@
+{
+  "kind": "independent-report-metadata-review",
+  "target": "security-flow",
+  "contract-version": 2,
+  "reviewed-index-sha256": "21aa8477fe2942db16ac8296879c9156a6feee7bc23d78b9d50c0600e4bbfa09",
+  "reviewed-reports": {
+    "positive": "859d7a62b885d189635dac9c958a9f0f5f72676e422f3cfc090ba792b9bc7802",
+    "negative": "6a2337639f3580cbd62110617664b2b2bafe52841ea5f363febd49a065f1c203",
+    "held-out": "b661f1a0e6c2f337ef280378d2ab6526ff3c079e907a13113a5ae5168202ee13"
+  },
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "Report hashes and eighteen pair outcomes match the index; rejection in the bounded R21 profile is consistent.",
+  "coverage": "Preserved typed metadata only: no raw responses, reruns, runtime proof, Core promotion or full-PR approval.",
+  "evidence-source": "foundation_review_r5 research/security metadata assignment in this task"
+}

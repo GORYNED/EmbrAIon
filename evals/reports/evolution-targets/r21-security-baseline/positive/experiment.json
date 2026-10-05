@@ -1,0 +1,82 @@
+{
+  "schema-version": 1,
+  "id": "security-assessment-r21-positive",
+  "baseline": "baseline",
+  "candidate": "security-assessment",
+  "suite-digest": "f417bf2777749b6f1e26c384e66adb9100859974d8a34bf28e05b5e1804d4c82",
+  "change-ids": [
+    "security-assessment"
+  ],
+  "traceability": [
+    {
+      "change-id": "security-assessment",
+      "source-kind": "new-contract",
+      "observed-problem": "New general-purpose security assessment contract requires reachable threat evidence and excludes speculative filename-based findings.",
+      "proposed-rule": "Add a conditional capability to existing roles; retain canonical security rules and independent access/routing.",
+      "capability-paths": [
+        "core/skills/security-assessment/SKILL.md",
+        "core/catalog.yaml"
+      ],
+      "expected-result": "Supported eight-part threat findings, useful mitigations, and no unnecessary activation or new authority.",
+      "scenarios": [
+        "security-owner-positive-en",
+        "security-owner-positive-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "security-owner-positive-en",
+    "security-owner-positive-ru"
+  ],
+  "target-cases": [
+    "security-owner-positive-en",
+    "security-owner-positive-ru"
+  ],
+  "cases": [
+    {
+      "case": "security-owner-positive-en",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 44650.5,
+        "latency": 27.039800000000003
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-owner-positive-en-r21-budget"
+    },
+    {
+      "case": "security-owner-positive-ru",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 30212.6,
+        "latency": 24.534799999999997
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-owner-positive-ru-r21-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "qualified-baseline-report.json",
+      "digest": "116f8e77b9ca511bab4b34174b31ed7d0af671b6119aa195f99ecf6aa2214901",
+      "suite-path": "suite.json",
+      "suite-digest": "d3990360d369d3d9962748963c45de987ea627134d1a224882529feb504ceb88"
+    }
+  ]
+}

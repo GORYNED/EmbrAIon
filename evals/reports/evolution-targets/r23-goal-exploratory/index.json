@@ -1,0 +1,73 @@
+{
+  "schema-version": 1,
+  "target": "goal-flow",
+  "contract-version": 1,
+  "phase": "exploratory",
+  "source-archive": "e907b415c97cddb97f7f2d94d0d8a54844cdeabc16d008006ba00d37532ac92e",
+  "trials": 18,
+  "attempts-per-case": 3,
+  "cohorts": [
+    {
+      "cohort": "positive",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "exploratory-report.json": "fd64f65a45d7533008294440da70d9348e618162504eab89dd55bbbde7b7ed43",
+        "matched-suite.json": "44befe673fa477553197e7e1ac0f417c6459b953e9061e0d6c519a6b57de5709",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "10b9bd1c551ab8037f1715c648ac64ca76d753137947d32e11d390f301912019"
+      }
+    },
+    {
+      "cohort": "negative",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "exploratory-report.json": "55470deaa63468c13120176a6f84358542ff9c320dccf237fd197e926f280576",
+        "matched-suite.json": "860fedf715649983e9242d72c261106388c97ab87271317bc14f33d2af6e658a",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "8c72784ec04355ec5228721bdf59a476c7cb59818456d694d54398d51c7092ae"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "files": {
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "exploratory-report.json": "f897b1dd8581c93e81e0099253cb27263171cd421724eba5ee159114e690a9ab",
+        "matched-suite.json": "f9a73ef48c76cfec356ffd77bd25b1fdbcd89a044b5291d7272ef940ebfef6e2",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "d2fda028130b7dcd9c8b6c47441634d9583865fe344feccde36fd53d3c890366"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 18,
+    "fail": 0,
+    "inconclusive": 0
+  },
+  "coverage": "Bounded integer source reachability, retained route duty, unsupported completion evidence and original/current checkpoint identity; no runtime, real publication, internal activation or other-host behavior.",
+  "qualification": "Exploratory only; the preplanned ten-repeat high-risk baseline is separate.",
+  "candidate": "Prepared only; no native candidate result in this index.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained; source snapshots remain in the immutable local R23 controller archive."
+}

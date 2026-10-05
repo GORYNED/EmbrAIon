@@ -1,0 +1,9 @@
+{
+  "schema-version": 1,
+  "asset": "document-body",
+  "entry": "read_document(actor, document_id, store)",
+  "actor": {"authenticated": "boolean", "id": "owner-identity"},
+  "record": {"owner_id": "owner-identity", "body": "private-body", "label": "public-label"},
+  "store": "get(document_id) returns one record",
+  "boundary": "document owner identity must match authenticated actor identity before body return"
+}

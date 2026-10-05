@@ -1,0 +1,71 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-program-status",
+  "updated-at": "2026-10-05T04:36:05.212258+00:00",
+  "scope": "EmbrAIon only; no consumer updates, merge or release",
+  "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "canonical-core-mutated": false,
+  "promotion-authorized": false,
+  "host-boundary": "Schema, trusted static oracles and gates are host-neutral; four host projections checked. Live comparisons here are Codex only. Effective backend settings remain unverified where native evidence is unavailable.",
+  "stages": [
+    {
+      "stage": 0,
+      "status": "infrastructure-implemented-baselines-partial",
+      "evidence": [
+        "evals/reports/evolution-targets/r17-review/index.json",
+        "evals/reports/evolution-targets/r21-security-baseline/index.json"
+      ],
+      "remaining": "Scope baseline has three inconclusive observations and is not qualified. No universal behavioral baseline is claimed."
+    },
+    {
+      "stage": 1,
+      "status": "experiments-in-progress",
+      "decisions": {
+        "review-axes": "deferred-no-observed-standalone-benefit-on-R17-cases",
+        "scope-action": "inconclusive-no-candidate-native-run",
+        "goal-proof": "R23 eighteen passing exploration observations; ten-repeat baseline running"
+      },
+      "remaining": [
+        "Goal matched comparison",
+        "Separate planning, validation and dependency-upgrade experiments"
+      ]
+    },
+    {
+      "stage": 2,
+      "status": "trusted-oracles-being-integrated",
+      "research": "Six reviewed synthetic adopt/extend/build cases; full validation in progress, native not run",
+      "debugging": "Bounded causal-judgment oracle assigned",
+      "remaining": [
+        "Research/debugging baselines and isolated comparisons",
+        "Consumer oracle, handoff and knowledge-state experiments"
+      ]
+    },
+    {
+      "stage": 3,
+      "status": "candidate-rejected-in-bounded-R21-profile",
+      "evidence": [
+        "evals/reports/evolution-targets/r21-security-matched/index.json"
+      ],
+      "remaining": "A different candidate or broader observer requires a new declared experiment; no current security skill promotion is justified."
+    },
+    {
+      "stage": 4,
+      "status": "candidate-draft-unpromoted",
+      "remaining": "Characterization oracle, existing-skills comparison, removal ablation if applicable and decision"
+    },
+    {
+      "stage": 5,
+      "status": "foundation-implemented-evolution-ongoing",
+      "remaining": "Reviewed protection scenarios from confirmed failures, near-misses, oracle gaps and new contracts; corpus lifecycle review"
+    }
+  ],
+  "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
+  "latest-pushed-ci": {
+    "commit": "160f37d00501e34b5d200cfbba9aa9dd90fabec4",
+    "validate-run": 37261617036,
+    "docs-run": 37261617004,
+    "status": "passed"
+  },
+  "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
+  "overall": "incomplete; authorized implementation and live experiments continue"
+}

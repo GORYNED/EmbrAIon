@@ -1,0 +1,93 @@
+{
+  "schema-version": 1,
+  "target": "security-flow",
+  "contract-version": 2,
+  "frozen-source-archive": "b043be840126c5171751fff673181359b5130f96691ba6240adfc5641a5a5ce5",
+  "trials": 18,
+  "phase": "exploratory",
+  "attempts-per-case": 3,
+  "cohorts": [
+    {
+      "cohort": "positive",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "failures": [],
+      "files": {
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "exploratory-report.json": "4ea45139e27bf19e88e9c2f88ea676e710aa41fc2473c24e7f4c456a72bac904",
+        "matched-suite.json": "88677f0df5cc703f774a13963a823b55baea41690f781d7c2c50527f08e7fcc3",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "d3990360d369d3d9962748963c45de987ea627134d1a224882529feb504ceb88"
+      }
+    },
+    {
+      "cohort": "negative",
+      "status": "fail",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 5,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "failures": [
+        {
+          "case": "security-guard-negative-en",
+          "attempt": 3,
+          "failed-checks": [
+            "required-procedures"
+          ]
+        }
+      ],
+      "files": {
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "exploratory-report.json": "7930d59a6150b853b7fbc1389c1a5ed13af63b7da1485c3e54909b594cc63597",
+        "matched-suite.json": "03d6b7449c92f2d4055d5e8c707db92e48c0f871494e727a1de4f260dd2875b1",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "f4d6996e5b2eabcecbe2ac82235da02af8317f795cd54fdbbcbf51d96e10bdfa"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "status": "fail",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 5,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "failures": [
+        {
+          "case": "security-late-guard-heldout-en",
+          "attempt": 2,
+          "failed-checks": [
+            "required-procedures"
+          ]
+        }
+      ],
+      "files": {
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "exploratory-report.json": "6c39d626bb66922ad2094b8e455d2ed6d655d9d83f8b3955afd7b1c8ce1a061a",
+        "matched-suite.json": "c0af33606b83e9ff24682e846134be50466496a66c69eba510dbfdf869bf85d7",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "8ad16285bd9de0d3841bbcb2c844cedebbf8b703a6ee6a553d33a0dd9d31627e"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 16,
+    "fail": 2,
+    "inconclusive": 0
+  },
+  "coverage": "Source-grounded finite judgments and exact assessment fields for six synthetic grammar cases. No runtime exploitation, unrestricted threat quality, other-host behavior, or internal activation is established.",
+  "observed-failure-boundary": "Two determinate required-procedure mismatches. Findings checks did not record a missed registered threat. Raw answers expired; no unobserved root cause is assigned.",
+  "qualification": "Three repeats are exploratory only; the preplanned ten-repeat baseline is separate and all initial failures remain here.",
+  "candidate": "Prepared only; no native candidate result in this index.",
+  "canonical-core-mutated": false,
+  "promotion-authorized": false,
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in the frozen local controller archive."
+}

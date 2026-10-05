@@ -1,0 +1,155 @@
+{
+  "schema-version": 1,
+  "contract-version": 1,
+  "target": "research-choice",
+  "execution": {
+    "role": "researcher",
+    "access": "read-only"
+  },
+  "risk": "ordinary",
+  "coverage": "Fixed source and consumer API grammar for a synthetic slug requirement; no runtime, general repository reuse, external research, or internal activation.",
+  "protocol": {
+    "en": "This is a synthetic repository-first research choice, not a real implementation or external research task. Read request.json, inventory.json, ownership.json, existing.py, and consumer.py before deciding. Use only local source evidence; do not run or import fixture Python, search externally, or change files. An optional projected research skill may guide method if present; its absence is not a finding. Return one final JSON object with exactly result, findings, questions, procedures. result is adopt, extend, or build. findings is an array of STRING IDs chosen from partial-capability, incompatible-api, missing-capability. questions is []. procedures contains exactly research with exactly decision (adopt|extend|build), capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editability (editable|frozen), reason (compatible-complete|compatible-partial|partial-frozen|incompatible-api|capability-absent), stop (local-evidence-sufficient), limit (fixed-static-fixture), and evidence. evidence has exactly six source anchors, ordered: existing.py:<function-definition-line> and existing.py:<return-line> (both existing.py:absent if no function), consumer.py:<return-line>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. Line numbers start at one. No other fields, prose, finding objects, or procedures. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. Decide only the supplied requirement and ownership boundary; the result does not establish runtime behavior, general reuse, or internal capability activation. The decision names describe ownership of the proposed change: adopt means use the already complete compatible one-argument capability unchanged; extend means complete an editable partial capability in place while preserving its API; build means provide a NEW owned one-argument module or adapter when the existing capability is absent, frozen partial, or incompatible. Build can reuse a frozen two-argument function behind the new adapter; it does not require reimplementing that function or ignoring repository evidence. This taxonomy is not authority to perform the proposal.",
+    "ru": "Это синтетический repository-first выбор, а не реальная реализация или внешнее исследование. Сначала прочитай request.json, inventory.json, ownership.json, existing.py и consumer.py. Используй только локальный исходный код; не запускай и не импортируй Python fixture, не ищи во внешних источниках и не меняй файлы. Необязательный projected research skill может помочь, если он есть; его отсутствие не является finding. Верни один финальный JSON ровно с result, findings, questions, procedures. result — adopt, extend или build. findings — массив СТРОКОВЫХ ID из partial-capability, incompatible-api, missing-capability. questions — []. procedures содержит ровно research с полями decision (adopt|extend|build), capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editability (editable|frozen), reason (compatible-complete|compatible-partial|partial-frozen|incompatible-api|capability-absent), stop (local-evidence-sufficient), limit (fixed-static-fixture), evidence. evidence содержит ровно шесть anchors по порядку: existing.py:<строка определения функции> и existing.py:<строка return> (оба existing.py:absent при отсутствии функции), consumer.py:<строка return>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. Нумерация строк начинается с 1. Нет других полей, прозы, объектов findings или procedures. Необязательные предыдущие progress сообщения — только точный JSON с progress reading, checking или comparing. Решение относится только к заданному требованию и границе собственности; оно не доказывает runtime, общий reuse или активацию внутренней capability. Названия решений описывают ownership предлагаемого изменения: adopt — использовать готовую совместимую capability с одним аргументом без изменения; extend — дополнить редактируемую частичную capability на месте, сохранив API; build — создать НОВЫЙ принадлежащий проекту модуль или адаптер с одним аргументом, если существующая capability отсутствует, заморожена и частична либо несовместима. Build может использовать замороженную функцию с двумя аргументами через новый адаптер; он не требует переписывать функцию или игнорировать repository evidence. Эта классификация не разрешает выполнить предложение."
+  },
+  "cases": [
+    {
+      "id": "research-adopt-calibration-en",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Assess whether the existing repository capability already satisfies the requested consumer API.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower().replace(\" \", \"-\")\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "complete",
+        "signature": "one-arg",
+        "editable": true,
+        "decision": "adopt"
+      },
+      "gold-rationale": "The one-argument source implements lower-then-space replacement and matches the reachable consumer call."
+    },
+    {
+      "id": "research-extend-calibration-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени, достаточна ли совместимая частичная capability для ограниченного расширения.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower()\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "partial",
+        "signature": "one-arg",
+        "editable": true,
+        "decision": "extend"
+      },
+      "gold-rationale": "The one-argument API is compatible, but lower-only omits ASCII-space replacement and the module is editable."
+    },
+    {
+      "id": "research-incompatible-calibration-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the apparently similar existing name against the consumer call and module ownership.",
+      "files": {
+        "existing.py": "def slugify(text, separator):\n    return text.lower().replace(\" \", separator)\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"two-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":false,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "incompatible",
+        "signature": "two-arg",
+        "editable": false,
+        "decision": "build"
+      },
+      "gold-rationale": "The similarly named function requires a second argument, while the consumer supplies one; the existing module is frozen."
+    },
+    {
+      "id": "research-missing-calibration-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Проверь наличие реальной capability, а не только название в комментарии или inventory.",
+      "files": {
+        "existing.py": "# No slugify export is present.\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"none\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "absent",
+        "signature": "none",
+        "editable": true,
+        "decision": "build"
+      },
+      "gold-rationale": "The source has no callable slugify export; the inventory truthfully declares none."
+    },
+    {
+      "id": "research-adopt-heldout-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени API и преобразование по коду, отделяя комментарии от выполняемой семантики.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower().replace(\" \", \"-\")\n# Matching words alone would not prove API compatibility.\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n# A comment is not a call.\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "complete",
+        "signature": "one-arg",
+        "editable": true,
+        "decision": "adopt"
+      },
+      "gold-rationale": "The complete function and one-argument consumer remain intact despite inert comments."
+    },
+    {
+      "id": "research-extend-heldout-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Assess whether an existing partial function can be extended without changing its one-argument consumer contract.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower()\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n# The real one-argument call is above.\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "expected-facts": {
+        "capability": "partial",
+        "signature": "one-arg",
+        "editable": true,
+        "decision": "extend"
+      },
+      "gold-rationale": "The partial lower-only implementation and reachable consumer support a bounded extension."
+    }
+  ]
+}
