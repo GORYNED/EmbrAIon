@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from typing import Any
 
 
@@ -82,6 +83,14 @@ def _expected_checks(contract: dict[str, Any]) -> dict[tuple[str | None, str], d
         raise ValueError("missing ownership contract")
     if contract["owned-paths-required"]:
         checks[(None, "owned-paths")] = {"category": "authority-scope", "mandatory": True}
+    observer = contract.get("observer")
+    if observer is not None:
+        from .eval_observers import metadata
+        if (not isinstance(observer, dict) or type(observer.get("mandatory")) is not bool
+                or not isinstance(observer.get("params-digest"), str) or not re.fullmatch(r"[0-9a-f]{64}", observer["params-digest"])):
+            raise ValueError("invalid observer contract")
+        for check in metadata(observer.get("id"))["check-contracts"]:
+            checks[(observer["id"], check["id"])] = {**check, "mandatory": observer["mandatory"]}
     return checks
 
 
@@ -96,6 +105,21 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
         return _result("inconclusive", ["invalid-input"])
     reasons: list[str] = []
     rejection: list[str] = []
+    from .eval_metrics import FINITE_RUBRICS, rubric_metadata, validate_evidence
+    try:
+        registered_rubric = rubric_metadata(report.get("metric-rubric", {}).get("id"))
+    except (ValueError, AttributeError):
+        registered_rubric = rubric_metadata()
+        reasons.append("unknown-metric-rubric")
+    if report.get("metric-rubric") != registered_rubric:
+        reasons.append("metric-rubric-mismatch")
+    if not isinstance(report.get("inputs"), dict) or report["inputs"].get("metric-rubric") != registered_rubric["digest"]:
+        reasons.append("unfrozen-metric-rubric")
+    report_runs = report.get("runs")
+    expected_measurement = "complete" if isinstance(report_runs, list) and report_runs and all(
+        isinstance(run, dict) and run.get("measurement-status") == "complete" for run in report_runs) else "inconclusive"
+    if report.get("measurement-status") != expected_measurement:
+        reasons.append("report-measurement-status-mismatch")
     try:
         if report.get("schema-version") != 2 or experiment.get("schema-version") != 1:
             reasons.append("unsupported-schema-version")
@@ -311,6 +335,21 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
             for oracle in contract.get("oracles", []):
                 if isinstance(oracle, dict) and oracle.get("mandatory") is True and oracle.get("id") not in calibrated_ids:
                     reasons.append("uncalibrated-mandatory-oracle:" + contract["case"])
+            observer = contract.get("observer")
+            if registered_rubric["id"] in FINITE_RUBRICS and (not isinstance(observer, dict) or observer.get("mandatory") is not True):
+                reasons.append("missing-mandatory-finite-observer:" + contract["case"])
+            if isinstance(observer, dict):
+                from .eval_observers import calibration as observer_calibration, metadata as observer_metadata
+                try:
+                    expected_calibration = observer_calibration(observer.get("id"))
+                    frozen = report.get("inputs", {}).get("observer-metadata")
+                    if not isinstance(frozen, dict) or frozen.get(observer["id"]) != observer_metadata(observer["id"])["digest"]:
+                        reasons.append("unfrozen-observer:" + contract["case"])
+                    actual = report.get("observer-calibration")
+                    if not isinstance(actual, list) or actual.count(expected_calibration) != 1:
+                        reasons.append("uncalibrated-observer:" + contract["case"])
+                except (ValueError, TypeError):
+                    reasons.append("unknown-observer:" + contract["case"])
     projections = report.get("projection-checks")
     if not isinstance(projections, dict) or any(not isinstance(projections.get(key), dict) or projections[key].get("status") != "pass" for key in (baseline_id, candidate_id)):
         reasons.append("unverified-projections")
@@ -339,6 +378,19 @@ def promotion_eligibility(report: dict[str, Any], experiment: dict[str, Any]) ->
                 reasons.append("missing-paired-run:" + case)
                 continue
             for run in (baseline, candidate):
+                for error in validate_evidence(run):
+                    reasons.append("metric-evidence:" + case + ":" + error)
+                if run.get("metric-evidence", {}).get("rubric-id") != registered_rubric["id"]:
+                    reasons.append("run-rubric-mismatch:" + case)
+                contract = next((c for c in contracts if c["case"] == case), {})
+                observer = contract.get("observer")
+                if isinstance(observer, dict):
+                    proof = run.get("observer-evidence")
+                    if (not isinstance(proof, dict) or proof.get("id") != observer.get("id")
+                            or proof.get("params-digest") != observer.get("params-digest")):
+                        reasons.append("observer-contract-mismatch:" + case)
+                    elif observer.get("mandatory") and proof.get("status") not in {"pass", "fail"}:
+                        reasons.append("inconclusive-observer:" + case)
                 if not isinstance(run.get("host"), dict) or run["host"].get("status") != "completed":
                     reasons.append("incomplete-host-execution:" + case)
                 if run.get("status") not in _STATUSES or run.get("status") == "inconclusive":

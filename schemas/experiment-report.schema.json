@@ -19,6 +19,8 @@
     "variants",
     "projection-checks",
     "calibration",
+    "observer-calibration",
+    "metric-rubric",
     "case-contracts",
     "planned-runs",
     "runs",
@@ -73,7 +75,9 @@
         "calibration-fixtures",
         "corpus",
         "schemas",
-        "experiment"
+        "experiment",
+        "metric-rubric",
+        "observer-metadata"
       ],
       "properties": {
         "suite": {
@@ -96,6 +100,13 @@
         },
         "experiment": {
           "$ref": "#/$defs/nullable-hash"
+        },
+        "metric-rubric": {
+          "$ref": "#/$defs/hash"
+        },
+        "observer-metadata": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/hash"}
         }
       }
     },
@@ -219,6 +230,20 @@
         "$ref": "#/$defs/plan"
       }
     },
+    "observer-calibration": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status", "controls", "metadata-digest", "coverage"],
+        "properties": {
+          "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+          "status": {"$ref": "#/$defs/status"},
+          "controls": {"type": "array", "items": {"type": "object"}},
+          "metadata-digest": {"$ref": "#/$defs/hash"},
+          "coverage": {"type": "object"}
+        }
+      }
+    },
     "case-contracts": {
       "type": "array",
       "minItems": 1,
@@ -283,12 +308,25 @@
                 "required-checks": {
                   "type": "array",
                   "uniqueItems": true,
-                  "items": {"type": "string"}
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             }
           },
-          "owned-paths-required": {"type": "boolean"}
+          "observer": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "params-digest", "mandatory"],
+            "properties": {
+              "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+              "params-digest": {"$ref": "#/$defs/hash"},
+              "mandatory": {"type": "boolean"}
+            }
+          },
+          "owned-paths-required": {
+            "type": "boolean"
+          }
         }
       }
     },
@@ -326,6 +364,7 @@
           "host": {
             "type": "object"
           },
+          "observer-evidence": {"$ref": "#/$defs/observer-evidence"},
           "activation": {
             "const": "unverified"
           },
@@ -403,6 +442,105 @@
               },
               "latency": {
                 "$ref": "#/$defs/measurement"
+              }
+            }
+          },
+          "measurement-status": {
+            "enum": [
+              "complete",
+              "inconclusive"
+            ]
+          },
+          "metric-evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "rubric-id",
+              "rubric-digest",
+              "measurements"
+            ],
+            "properties": {
+              "rubric-id": {
+                "enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1"]
+              },
+              "rubric-digest": {
+                "$ref": "#/$defs/hash"
+              },
+              "measurements": {
+                "type": "array",
+                "minItems": 8,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "metric",
+                    "status",
+                    "value",
+                    "reason",
+                    "unit",
+                    "source",
+                    "coverage"
+                  ],
+                  "properties": {
+                    "metric": {
+                      "enum": [
+                        "quality-correctness",
+                        "authority-scope",
+                        "security-privacy",
+                        "false-positive-rate",
+                        "unnecessary-clarification",
+                        "unnecessary-capability-activation",
+                        "tokens",
+                        "latency"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "measured",
+                        "inconclusive"
+                      ]
+                    },
+                    "value": {
+                      "$ref": "#/$defs/measurement"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "unit": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "source": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "coverage": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "proves",
+                        "does-not-prove"
+                      ],
+                      "properties": {
+                        "proves": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 300
+                        },
+                        "does-not-prove": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 300
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -491,9 +629,57 @@
           "const": true
         }
       }
+    },
+    "metric-rubric": {
+      "type": "object",
+      "required": ["id", "metrics", "digest"],
+      "properties": {"id": {"enum": ["foundation-metrics-v1", "finite-output-metrics-v1", "finite-stream-metrics-v1"]},
+        "metrics": {"type": "object"}, "digest": {"$ref": "#/$defs/hash"}}
+    },
+    "measurement-status": {
+      "enum": [
+        "complete",
+        "inconclusive"
+      ]
     }
   },
   "$defs": {
+    "observer-evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "id", "reason", "params-digest", "observation-digest", "checks", "metrics", "coverage"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "id": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+        "reason": {"type": "string", "maxLength": 80},
+        "params-digest": {"$ref": "#/$defs/hash"},
+        "observation-digest": {"$ref": "#/$defs/nullable-hash"},
+        "checks": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "oracle", "mandatory", "category", "status", "observed-violation"],
+          "properties": {
+            "id": {"enum": ["finite-answer", "result", "findings", "questions", "required-procedures", "synthetic-disclosure"]},
+            "oracle": {"enum": ["finite-answer-v1", "finite-stream-v1"]},
+            "mandatory": {"type": "boolean"},
+            "category": {"enum": ["quality-correctness", "security-privacy"]},
+            "status": {"enum": ["pass", "fail"]},
+            "observed-violation": {"type": "boolean"}
+          }
+        }},
+        "metrics": {"type": "object", "additionalProperties": false,
+          "required": ["security-privacy", "false-positive-rate", "unnecessary-clarification", "unnecessary-capability-activation"],
+          "properties": {
+            "security-privacy": {"$ref": "#/$defs/measurement"},
+            "false-positive-rate": {"$ref": "#/$defs/measurement"},
+            "unnecessary-clarification": {"$ref": "#/$defs/measurement"},
+            "unnecessary-capability-activation": {"$ref": "#/$defs/measurement"}
+          }},
+        "coverage": {"type": "object", "additionalProperties": false,
+          "required": ["proves", "does-not-prove", "prerequisites"],
+          "properties": {"proves": {"type": "string", "maxLength": 500},
+            "does-not-prove": {"type": "string", "maxLength": 500},
+            "prerequisites": {"type": "array", "items": {"type": "string", "maxLength": 100}}}}
+      }
+    },
     "hash": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"

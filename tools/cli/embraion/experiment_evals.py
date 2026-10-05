@@ -20,6 +20,10 @@ from jsonschema import Draft202012Validator, ValidationError
 
 from .common import framework_root, read_yaml, utc_now, write_json
 from .eval_oracles import calibration, grade, oracle_metadata, validate_params
+from .eval_metrics import FINITE_RUBRICS, measure, rubric_metadata
+from .eval_observers import (calibration as observer_calibration, digest as observer_digest,
+                             metadata as observer_metadata, observe as observe_native,
+                             reduce_output, validate_params as validate_observer_params)
 from .skill_evals import _check_output_destination, _safe_relative
 
 SOURCE_PREFIXES = ("core/", "adapters/", "schemas/", "tools/cli/", "templates/",
@@ -41,6 +45,20 @@ def _scratch_root() -> Path:
         raise ValueError("experiment scratch contains a link")
     if root.resolve().is_relative_to(framework_root().resolve()) or root.resolve().is_relative_to(RUNTIME_ROOT.resolve()):
         raise ValueError("experiment scratch overlaps trusted controller")
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _observation_root() -> Path:
+    """Keep trusted native output outside workspace and writable temp grants."""
+    controller = framework_root().resolve(strict=True)
+    temporary = Path(tempfile.gettempdir()).resolve()
+    if controller.is_relative_to(temporary) or (os.name != "nt" and controller.is_relative_to(Path("/tmp"))):
+        raise ValueError("trusted observation storage overlaps writable temporary roots")
+    root = controller / "build" / "native-observations"
+    for path in (root.parent, root):
+        if path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction()):
+            raise ValueError("trusted observation storage contains a link")
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -369,11 +387,19 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
         raise ValueError("invalid experiment protocol")
     if attempts is not None and (type(attempts) is not int or not 1 <= attempts <= 20):
         raise ValueError("invalid attempt count")
+    execution = data.get("execution", {"role": "worker", "access": "workspace-write"})
+    role, access = execution["role"], execution["access"]
+    rubric_id = data.get("metric-rubric", "foundation-metrics-v1")
+    rubric = rubric_metadata(rubric_id)
+    if rubric_id in FINITE_RUBRICS and any(
+            case.get("observer", {}).get("id") != FINITE_RUBRICS[rubric_id]
+            or case["observer"].get("mandatory") is not True for case in data["cases"]):
+        raise ValueError("finite metric rubric requires mandatory registered observer in every case")
     if route.get("host") != host or route.get("model") != model or route.get("effort") != effort:
         raise ValueError("host cannot apply resolved experiment route")
-    if route.get("data") not in {"PUBLIC", "PRIVATE", "CONFIDENTIAL"} or route.get("role") != "worker" or route.get("resolution") != "project-deployment":
-        raise ValueError("experiment needs an explicit eligible worker deployment; unknown context fails closed")
-    if route.get("access") != "workspace-write":
+    if route.get("data") not in {"PUBLIC", "PRIVATE", "CONFIDENTIAL"} or route.get("role") != role or route.get("resolution") != "project-deployment":
+        raise ValueError("experiment needs an explicit matching deployment; unknown context fails closed")
+    if route.get("access") != access:
         raise ValueError("experiment native sandbox does not match resolved access")
     if output.exists():
         raise ValueError("experiment report already exists; preserve previous evidence")
@@ -425,6 +451,7 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
     cases = []
     initial_checks = {}
     oracle_ids = set()
+    observer_ids = set()
     for case in data["cases"]:
         for allowed in case.get("allowed-paths", []):
             _safe_relative(allowed)
@@ -438,11 +465,18 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 raise ValueError("unknown mandatory oracle check")
             oracle_ids.add(oracle["id"])
             initial_checks[(case["id"], oracle["id"])] = {c["id"]: c["status"] for c in grade(oracle["id"], fixture, {}, oracle["params"])["checks"]}
+        if "observer" in case:
+            observed = case["observer"]
+            validate_observer_params(observed["id"], observed["params"])
+            observer_ids.add(observed["id"])
         cases.append((case, fixture, fixture_files))
     calibrations = [{"id": key, **calibration(key, framework_root()), "coverage": oracle_metadata(key)["coverage"]}
                     for key in sorted(oracle_ids)]
     if any(c["status"] != "pass" for c in calibrations):
         limitations.append({"reason": "oracle-calibration-unavailable"})
+    observer_calibrations = [observer_calibration(key) for key in sorted(observer_ids)]
+    if any(row["status"] != "pass" for row in observer_calibrations):
+        limitations.append({"reason": "observer-calibration-unavailable"})
     sources = list(roots.values()) + [f for _, f, _ in cases]
     sources += [_relative(suite.parent, v["manifest"]) for v in variants.values()]
     sources += [RUNTIME_ROOT, *[framework_root() / name for name in ("core", "adapters", "tools", "schemas", "evals/corpus", "evals/foundation/fixtures")]]
@@ -463,9 +497,12 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
     schema_digest = identity(_files(framework_root() / "schemas"))
     frozen_inputs = {"suite": identity(data), "evaluators": evaluator_files, "calibration-fixtures": calibration_digest,
                      "corpus": corpus_digest, "schemas": schema_digest,
-                     "experiment": identity(experiment_value) if experiment_value else None}
+                     "experiment": identity(experiment_value) if experiment_value else None,
+                     "metric-rubric": rubric["digest"],
+                     "observer-metadata": {key: observer_metadata(key)["digest"] for key in sorted(observer_ids)}}
     frozen_manifests = {key: identity(value) for key, value in manifests.items()}
-    preflight = (preflight_host(host, binary, roots[baseline], model, effort, timeout_seconds, workspace=scratch / "project")
+    preflight = (preflight_host(host, binary, roots[baseline], model, effort, timeout_seconds,
+                                workspace=scratch / "project", role=role, access=access)
                  if not contamination and not limitations else {"status": "inconclusive", "reason": "unverified-execution-context"})
     frozen_environment = _environment(binary, route)
     # The adapter declares one exact trust registration during infrastructure
@@ -548,19 +585,25 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 if preflight["status"] != "pass":
                     # Record nonexecution, not simulated trials or repeated
                     # grading after a known infrastructure prerequisite failed.
+                    unavailable_observer = (reduce_output(case["observer"]["id"], [], False, case["observer"]["params"])
+                                            if "observer" in case else None)
+                    unavailable_checks = ([{"id": "observer-availability", "oracle": case["observer"]["id"],
+                                            "category": "quality-correctness", "mandatory": case["observer"]["mandatory"],
+                                            "status": "inconclusive"}] if unavailable_observer else [])
                     records.append({"case": case["id"], "variant": key, "attempt": attempt,
                                     "status": "inconclusive", "host": {"status": "not-run", "duration-seconds": None},
                                     "checks": [{"id": "native-tools-availability", "category": "runtime",
-                                                "mandatory": True, "status": "inconclusive"}],
-                                    "metrics": {name: None for name in ("quality-correctness", "authority-scope",
-                                        "security-privacy", "false-positive-rate", "unnecessary-clarification",
-                                        "unnecessary-capability-activation", "tokens", "latency")},
+                                                "mandatory": True, "status": "inconclusive"}, *unavailable_checks],
+                                    **measure({"status": "not-run", "duration-seconds": None}, unavailable_checks, None,
+                                              observer=unavailable_observer, rubric_id=rubric_id),
+                                    **({"observer-evidence": unavailable_observer} if unavailable_observer else {}),
                                     "contamination": [], "activation": "unverified"})
                     journal_entry("run-result", records[-1])
                     continue
                 pre = contamination + drift()
                 host_result = {"status": "not-run", "duration-seconds": None}
                 checks = []
+                observer_proof = None
                 with _trial_workspace(scratch) as project:
                     copy_ok = True
                     try:
@@ -578,10 +621,34 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                     before_project = _files(project) if project.is_dir() else {}
                     if not pre and not limitations:
                         try:
+                            native_observer = None
+                            if "observer" in case:
+                                spec = case["observer"]
+
+                                def native_observer(raw_directory: Path, native_result: dict[str, Any]) -> dict[str, Any]:
+                                    nonlocal observer_proof
+                                    observer_proof = observe_native(spec["id"], raw_directory, native_result, spec["params"],
+                                                                    execution_host=host)
+                                    return {"status": observer_proof["status"], "observer-id": spec["id"],
+                                            **({"observation-digest": observer_proof["observation-digest"]}
+                                               if observer_proof["observation-digest"] else {}),
+                                            "params-digest": observer_proof["params-digest"]}
+
                             host_result = invoke_host(host, binary, project, case["prompt"], model, effort,
-                                                      timeout_seconds, [p.split("/")[2] for p in manifests[key]["files"] if p.startswith(".agents/skills/") and p.endswith("/SKILL.md")], scratch)
+                                                      timeout_seconds, [p.split("/")[2] for p in manifests[key]["files"] if p.startswith(".agents/skills/") and p.endswith("/SKILL.md")], scratch,
+                                                      role=role, access=access, observer=native_observer)
                         except (OSError, ValueError, RuntimeError):
                             host_result = {"status": "native-infrastructure-error", "duration-seconds": None}
+                    if "observer" in case:
+                        if observer_proof is None:
+                            observer_proof = reduce_output(case["observer"]["id"], [], False, case["observer"]["params"])
+                        for observed_check in observer_proof["checks"]:
+                            checks.append({**observed_check,
+                                           "mandatory": case["observer"]["mandatory"] and observed_check["mandatory"]})
+                        if observer_proof["status"] == "inconclusive":
+                            checks.append({"id": "observer-availability", "oracle": case["observer"]["id"],
+                                           "category": "quality-correctness", "mandatory": case["observer"]["mandatory"],
+                                           "status": "inconclusive"})
                     journal_entry("native-observation", {"case": case["id"], "variant": key, "attempt": attempt, "host": host_result})
                     for oracle in case["oracles"]:
                         if not copy_ok:
@@ -610,6 +677,7 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                             unauthorized = sum(not any(d["path"] == p or d["path"].startswith(p + "/") for p in case["allowed-paths"]) for d in changes)
                             checks.append({"id": "owned-paths", "mandatory": True, "category": "authority-scope",
                                            "status": "pass" if unauthorized == 0 else "fail",
+                                           "unauthorized-count": unauthorized,
                                            "observed-violation": unauthorized > 0,
                                            "coverage": "local file mutations only; external action authority remains unverified"})
                         after = _files(project, selected=True)
@@ -625,14 +693,10 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
                 status = _check_status(checks)
                 if contaminated or host_result["status"] != "completed":
                     status = "inconclusive"
-                token_usage = host_result.get("tokens", {})
-                metrics = {"quality-correctness": None if any(c["status"] not in {"pass", "fail"} for c in checks if c["mandatory"]) else sum(c["status"] == "fail" for c in checks if c["mandatory"] and c["category"] not in {"authority-scope", "security-privacy"}),
-                           "authority-scope": unauthorized, "security-privacy": None, "false-positive-rate": None,
-                           "unnecessary-clarification": None, "unnecessary-capability-activation": None,
-                           "tokens": sum(token_usage.get(k, 0) for k in ("input_tokens", "output_tokens")) if token_usage else None,
-                           "latency": host_result.get("duration-seconds")}
                 records.append({"case": case["id"], "variant": key, "attempt": attempt, "status": status,
-                                "host": host_result, "checks": checks, "metrics": metrics,
+                                "host": host_result, "checks": checks,
+                                **measure(host_result, checks, unauthorized, observer=observer_proof, rubric_id=rubric_id),
+                                **({"observer-evidence": observer_proof} if observer_proof else {}),
                                 "contamination": contaminated, "activation": "unverified"})
                 journal_entry("run-result", records[-1])
                 if progress:
@@ -658,15 +722,22 @@ def _run_experiment(suite: Path, *, host: str, model: str | None, effort: str | 
               "inputs": frozen_inputs, "experiment-digest": frozen_inputs["experiment"], "seed": data["seed"],
               "variants": [{"id": k, "manifest-digest": m["digest"], "core-digest": m["core-digest"],
                             "projection-digest": m["projection-digest"], "changes": variants[k]["changes"]} for k, m in manifests.items()],
-              "projection-checks": projections, "calibration": calibrations, "planned-runs": schedule,
+              "projection-checks": projections, "calibration": calibrations,
+              "observer-calibration": observer_calibrations, "planned-runs": schedule,
               "native-preflight": preflight,
               "case-contracts": [{"case": case["id"], "language": case["language"], "polarity": case["polarity"], "risk": case["risk"],
                                   "corpus-id": case.get("corpus-id"),
                                   "owned-paths-required": "allowed-paths" in case,
                                   "oracles": [{"id": o["id"], "mandatory": o["mandatory"],
-                                               "required-checks": o.get("required-checks", [])} for o in case["oracles"]]} for case, _, _ in cases],
+                                               "required-checks": o.get("required-checks", [])} for o in case["oracles"]],
+                                  **({"observer": {"id": case["observer"]["id"],
+                                                   "params-digest": observer_digest(case["observer"]["params"]),
+                                                   "mandatory": case["observer"]["mandatory"]}}
+                                     if "observer" in case else {})} for case, _, _ in cases],
               "runs": records, "comparisons": comparisons, "contamination": contamination,
               "limitations": limitations,
+              "metric-rubric": rubric,
+              "measurement-status": "complete" if records and all(r["measurement-status"] == "complete" for r in records) else "inconclusive",
               "status": "pass" if records and not contamination and all(r["status"] == "pass" for r in records) else "inconclusive" if contamination or any(r["status"] == "inconclusive" for r in records) else "fail"}
     if experiment_value:
         report["eligibility"] = promotion_eligibility(report, experiment_value)

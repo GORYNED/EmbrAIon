@@ -1165,13 +1165,41 @@ def _eval_experiment(args: argparse.Namespace) -> int:
             raise ValueError("invalid experiment assessment evidence") from None
         report = promotion_eligibility(evidence, experiment)
     elif args.experiment_command == "prepare":
-        report = prepare_baseline(Path(args.source), Path(args.output), host=args.host, regenerate=args.regenerate)
+        pilot = getattr(args, "pilot", "foundation")
+        if getattr(args, "target", None) is not None and pilot != "evolution-target":
+            raise ValueError("--target requires --pilot evolution-target")
+        if pilot == "evolution-target":
+            if getattr(args, "target", None) is None or getattr(args, "role", None) is not None:
+                raise ValueError("evolution target requires --target and owns its role/access")
+            from .experiment_targets import prepare_target_baseline
+            report = prepare_target_baseline(Path(args.source), Path(args.output), target=args.target,
+                                             host=args.host, regenerate=args.regenerate)
+        elif pilot == "finite-role":
+            if getattr(args, "role", None) is None:
+                raise ValueError("finite role pilot requires --role")
+            from .experiment_cases import prepare_role_baseline
+            report = prepare_role_baseline(Path(args.source), Path(args.output), role=args.role,
+                                           host=args.host, regenerate=args.regenerate)
+        else:
+            if getattr(args, "role", None) is not None:
+                raise ValueError("--role requires --pilot finite-role")
+            report = prepare_baseline(Path(args.source), Path(args.output), host=args.host, regenerate=args.regenerate)
     else:
+        from jsonschema import Draft202012Validator, ValidationError
+        suite = _load(Path(args.suite))
+        try:
+            Draft202012Validator(_load(framework_root() / "schemas/experiment-suite.schema.json")).validate(suite)
+        except ValidationError:
+            raise ValueError("invalid experiment suite schema") from None
+        execution = suite.get("execution", {"role": "worker", "access": "workspace-write"})
         project = project_root(Path(args.path))
-        selected = route(args.host, args.route_class, args.data, role="worker", access="workspace-write", project=project)
+        selected = route(args.host, args.route_class, args.data, role=execution["role"],
+                         access=execution["access"], project=project)
+        if selected.get("role") not in (None, execution["role"]) or selected.get("access") not in (None, execution["access"]):
+            raise ValueError("resolved experiment role or access mismatch")
         # Access remains independent of role/model and is applied by the native
         # adapter. The resolver may omit the validated access from its result.
-        selected = {**selected, "access": "workspace-write"}
+        selected = {**selected, "role": execution["role"], "access": execution["access"]}
         report = run_experiment(Path(args.suite), host=args.host, model=selected.get("model"),
             effort=selected.get("effort"), route=selected, output=Path(args.output), attempts=args.attempts,
             phase=args.phase, timeout_seconds=args.timeout, binary=args.binary or args.host,
@@ -2280,6 +2308,9 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--source", default=".")
     prepare.add_argument("--output", required=True)
     prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    prepare.add_argument("--pilot", default="foundation", choices=["foundation", "finite-role", "evolution-target"])
+    prepare.add_argument("--role", choices=["lead", "worker", "reviewer", "validator", "researcher", "steward"])
+    prepare.add_argument("--target", choices=["scope-action"])
     prepare.set_defaults(func=_cmd_eval_experiment)
     prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
     capture = experiment_sub.add_parser("snapshot")

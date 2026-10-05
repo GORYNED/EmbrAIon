@@ -4,9 +4,11 @@ import copy
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from embraion.experiment_gates import experiment_digest, promotion_eligibility, validate_failure_corpus
 from embraion.eval_oracles import oracle_metadata
+from embraion.eval_metrics import measure, rubric_metadata
 from embraion.experiment_evals import identity, _files
 
 
@@ -65,16 +67,62 @@ def evidence() -> tuple[dict, dict]:
         run["host"] = {"status": "completed"}
         run["checks"] = [{**check, "oracle": "wiring-v1", "status": "fail" if run["variant"] == "base" and check["id"] == "registration" else "pass"}
                          for check in oracle_metadata("wiring-v1")["check-contracts"] if check["mandatory"]]
+    report["metric-rubric"] = rubric_metadata()
+    report["inputs"]["metric-rubric"] = report["metric-rubric"]["digest"]
+    for run in report["runs"]:
+        run["measurement-status"] = "complete"
+        run["metric-evidence"] = {"rubric-id": "foundation-metrics-v1"}
+    report["measurement-status"] = "complete"
     return report, experiment
 
 
 class ExperimentGateTests(unittest.TestCase):
+    def setUp(self):
+        # Synthetic records isolate pairing, budgets and promotion contracts.
+        # Actual metric evidence is tested without this stub below and in
+        # test_eval_metrics; these records are not live evidence.
+        validator = patch("embraion.eval_metrics.validate_evidence", return_value=[])
+        validator.start()
+        self.addCleanup(validator.stop)
+
     def test_matched_improvement_is_evidence_ready_without_promotion_authority(self) -> None:
         report, experiment = evidence()
         result = promotion_eligibility(report, experiment)
         self.assertEqual("eligible", result["status"], result)
         self.assertFalse(result["authorizes_core_promotion"])
         self.assertTrue(result["review_required"])
+
+    def test_finite_observer_calibration_and_frozen_params_are_mandatory(self) -> None:
+        self._assert_frozen_observer("finite-answer-v1", "finite-output-metrics-v1")
+
+    def test_stream_observer_calibration_and_frozen_params_are_mandatory(self) -> None:
+        self._assert_frozen_observer("finite-stream-v1", "finite-stream-metrics-v1")
+
+    def _assert_frozen_observer(self, observer_id, rubric_id):
+        from embraion.eval_observers import calibration, digest, metadata, reduce_output
+        report, experiment = evidence()
+        params = {"expected-result": "unchanged", "expected-findings": [], "expected-questions": [],
+                  "required-procedures": {}, "permitted-procedures": [], "security-findings": [],
+                  "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"}
+        proof = reduce_output(observer_id, [json.dumps({"result": "unchanged", "findings": [], "questions": [], "procedures": {}})], True, params)
+        report["metric-rubric"] = rubric_metadata(rubric_id)
+        report["inputs"]["metric-rubric"] = report["metric-rubric"]["digest"]
+        report["observer-calibration"] = [calibration(observer_id)]
+        report["inputs"]["observer-metadata"] = {proof["id"]: metadata(observer_id)["digest"]}
+        report["case-contracts"][0]["observer"] = {"id": proof["id"], "params-digest": digest(params), "mandatory": True}
+        for run in report["runs"]:
+            run["metric-evidence"] = {"rubric-id": rubric_id}
+            run["observer-evidence"] = copy.deepcopy(proof)
+            run["checks"].extend(copy.deepcopy(proof["checks"]))
+        self.assertEqual("eligible", promotion_eligibility(report, experiment)["status"])
+        report["inputs"]["observer-metadata"] = {}
+        self.assertIn("unfrozen-observer:scope", promotion_eligibility(report, experiment)["reasons"])
+        report["inputs"]["observer-metadata"] = {proof["id"]: metadata(observer_id)["digest"]}
+        report["observer-calibration"][0]["controls"].pop()
+        self.assertIn("uncalibrated-observer:scope", promotion_eligibility(report, experiment)["reasons"])
+        report["observer-calibration"] = [calibration(observer_id)]
+        report["runs"][0]["observer-evidence"]["params-digest"] = "0" * 64
+        self.assertIn("observer-contract-mismatch:scope", promotion_eligibility(report, experiment)["reasons"])
 
     def test_tied_pass_has_no_observed_benefit(self) -> None:
         report, experiment = evidence()
@@ -242,6 +290,41 @@ class ExperimentGateTests(unittest.TestCase):
         old["replacement-ids"] = []
         old.pop("obsolete-contract-proof", None)
         self.assertIn("retirement-needs-proof:framework-upgrade-scope-expansion", validate_failure_corpus(corpus))
+
+
+class MetricEvidenceGateTests(unittest.TestCase):
+    """No metric-validation stub: production reports must supply real coverage."""
+
+    def test_numeric_fields_alone_never_make_live_evidence_ready(self):
+        report, experiment = evidence()
+        result = promotion_eligibility(report, experiment)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("metric-evidence:scope:missing-or-unknown-metric-rubric", result["reasons"])
+
+    def test_honest_partial_measurement_blocks_promotion(self):
+        report, experiment = evidence()
+        for run in report["runs"]:
+            run["host"].update({"duration-seconds": 1.0, "tokens": {"input_tokens": 1, "output_tokens": 1}})
+            run.update(measure(run["host"], run["checks"], None))
+        report["measurement-status"] = "inconclusive"
+        result = promotion_eligibility(report, experiment)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("missing-metric:scope:unnecessary-capability-activation", result["reasons"])
+        self.assertFalse(any("metric-evidence:" in reason for reason in result["reasons"]), result)
+
+    def test_forged_zero_and_forged_coverage_cannot_satisfy_budget(self):
+        report, experiment = evidence()
+        for run in report["runs"]:
+            run["host"].update({"duration-seconds": 1.0, "tokens": {"input_tokens": 1, "output_tokens": 1}})
+            run.update(measure(run["host"], run["checks"], None))
+            for row in run["metric-evidence"]["measurements"]:
+                if row["metric"] == "unnecessary-capability-activation":
+                    row.update(value=0, status="measured", reason="observed")
+                    row["coverage"]["proves"] = "All skill use verified"
+                    run["metrics"][row["metric"]] = 0
+        result = promotion_eligibility(report, experiment)
+        self.assertEqual("inconclusive", result["status"])
+        self.assertIn("metric-evidence:scope:unsupported-metric-claim:unnecessary-capability-activation", result["reasons"])
 
 
 if __name__ == "__main__":

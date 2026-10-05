@@ -12,9 +12,64 @@ import tempfile
 import tomllib
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from ..skill_evals import VALID_EFFORTS, _invoke_codex
+
+NATIVE_ROLES = frozenset({"lead", "worker", "reviewer", "architect", "analyst", "validator", "researcher", "steward"})
+NATIVE_ACCESS = frozenset({"read-only", "workspace-write"})
+READ_ONLY_ROLES = frozenset({"reviewer", "architect", "analyst", "researcher"})
+
+
+def _model_bearing(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(key in {"model", "model_reasoning_effort", "model_provider"} or _model_bearing(item)
+                   for key, item in value.items())
+    return isinstance(value, list) and any(_model_bearing(item) for item in value)
+
+
+def _native_instructions(project: Path, role: str, access: str) -> str | None:
+    """Load a bounded, model-neutral Core projection without following profile links."""
+    config = project / (".codex/config.toml" if role == "lead" else f".codex/agents/{role}.toml")
+    if any(path.is_symlink() for path in (project / ".codex", config.parent, config)):
+        return None
+    try:
+        if not config.is_file() or config.stat().st_size > 128_000:
+            return None
+        profile = tomllib.loads(config.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeError):
+        return None
+    if _model_bearing(profile):
+        return None
+    instructions = profile.get("developer_instructions")
+    if not isinstance(instructions, str) or not instructions or len(instructions) > 64_000:
+        return None
+    if role == "lead":
+        ceiling = profile.get("sandbox_mode", "workspace-write")
+    else:
+        if profile.get("name") != role:
+            return None
+        ceiling = profile.get("sandbox_mode")
+    if (ceiling not in NATIVE_ACCESS or (ceiling == "read-only" and access == "workspace-write")
+            or (role in READ_ONLY_ROLES and (ceiling != "read-only" or access != "read-only"))):
+        return None
+    return instructions
+
+
+def _observer_outcome(observer: Callable[[Path, dict[str, Any]], dict[str, Any]],
+                      raw_directory: Path, native_result: dict[str, Any]) -> dict[str, Any]:
+    try:
+        outcome = observer(raw_directory, native_result)
+        if (not isinstance(outcome, dict) or outcome.get("status") not in {"pass", "fail", "inconclusive"}
+                or set(outcome) - {"status", "observer-id", "observation-digest", "params-digest"}
+                or any(not isinstance(value, str) or len(value) > 128 for value in outcome.values())
+                or ("observer-id" in outcome and not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", outcome["observer-id"]))
+                or any(not re.fullmatch(r"[a-f0-9]{64}", outcome[key])
+                       for key in ("observation-digest", "params-digest") if key in outcome)):
+            raise ValueError("invalid observer outcome")
+        return outcome
+    except Exception:
+        return {"status": "inconclusive", "reason": "observer-unavailable"}
 
 
 def binding_available(host: str, route: dict[str, Any]) -> bool:
@@ -40,7 +95,7 @@ def describe_context(host: str) -> dict[str, Any]:
     if host == "codex":
         home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
         names = ("AGENTS.md", "config.toml")
-        policy = {"sandbox": "workspace-write", "user-config": "ignored", "session": "ephemeral"}
+        policy = {"sandbox": "explicit-per-invocation-access", "user-config": "ignored", "session": "ephemeral"}
         policy["project-trust"] = "explicit-stable-fixture-in-private-eval-profile"
         if os.name == "nt":
             policy["windows-sandbox-explicit-argument"] = _windows_sandbox() or "unverified"
@@ -91,7 +146,13 @@ def describe_host(binary: str) -> dict[str, Any]:
 
 
 def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str | None,
-                effort: str | None, timeout: int, skills: list[str], scratch: Path) -> dict[str, Any]:
+                effort: str | None, timeout: int, skills: list[str], scratch: Path, *,
+                role: str = "worker", access: str = "workspace-write",
+                observer: Callable[[Path, dict[str, Any]], dict[str, Any]] | None = None) -> dict[str, Any]:
+    if role not in NATIVE_ROLES:
+        raise ValueError("unsupported native role")
+    if access not in NATIVE_ACCESS:
+        raise ValueError("unsupported native access")
     if model is not None and not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", model):
         raise ValueError("invalid native model selector")
     if effort is not None and effort not in VALID_EFFORTS:
@@ -100,27 +161,21 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
         windows_sandbox = _windows_sandbox()
         if os.name == "nt" and windows_sandbox is None:
             return {"status": "native-sandbox-unverified", "duration-seconds": None}
-        # This pilot resolves Worker; the main config represents Lead and must
-        # never silently supply a different role's instructions.
-        config = project / ".codex/agents/worker.toml"
-        try:
-            profile = tomllib.loads(config.read_text(encoding="utf-8"))
-            instructions = profile.get("developer_instructions")
-        except (OSError, ValueError):
-            return {"status": "native-config-unverified", "duration-seconds": None}
-        if not isinstance(instructions, str) or not instructions or len(instructions) > 64000:
-            return {"status": "native-config-unverified", "duration-seconds": None}
-        if profile.get("name") != "worker" or profile.get("sandbox_mode") != "workspace-write":
+        instructions = _native_instructions(project, role, access)
+        if instructions is None:
             return {"status": "native-config-unverified", "duration-seconds": None}
         # Stable project trust must not imply retained answers or events from a
         # previous attempt. Raw observations have their own short lifetime.
-        from ..experiment_evals import _scratch_root
-        with tempfile.TemporaryDirectory(prefix="native-observation-", dir=_scratch_root()) as observation:
+        from ..experiment_evals import _observation_root
+        with tempfile.TemporaryDirectory(prefix="native-observation-", dir=_observation_root()) as observation:
             result = _invoke_codex(binary, project, prompt, model, effort, timeout, skills, Path(observation),
                                    developer_instructions=instructions, windows_sandbox=windows_sandbox,
-                                   trusted_workspace=True)
+                                   trusted_workspace=True, sandbox=access)
+            if observer is not None:
+                result["observer"] = _observer_outcome(observer, Path(observation), result)
         result["configuration-evidence"] = "explicit-native-developer-instructions-argument"
-        result["role-evidence"] = "worker-profile-explicit-argument"
+        result["role-evidence"] = f"{role}-profile-explicit-argument"
+        result["access-evidence"] = access
         return result
     # Missing native containment/event translation is not host-default or a pass.
     return {"status": "native-eval-backend-unavailable", "duration-seconds": None,
@@ -128,14 +183,21 @@ def invoke_host(host: str, binary: str, project: Path, prompt: str, model: str |
 
 
 def preflight_host(host: str, binary: str, snapshot: Path, model: str | None,
-                   effort: str | None, timeout: int, *, workspace: Path | None = None) -> dict[str, Any]:
-    """Prove tool read/write on harmless data before scoring Core behavior.
+                   effort: str | None, timeout: int, *, workspace: Path | None = None,
+                   role: str = "worker", access: str = "workspace-write") -> dict[str, Any]:
+    """Prove bounded tool access on harmless data before scoring Core behavior.
 
     Successful model completion alone never proves operational tools. This is
     infrastructure evidence, not a security isolation or Core quality claim.
     """
-    result: dict[str, Any] = {"status": "inconclusive", "kind": "fixture-read-write",
-                              "coverage": "nonce read and local file write only; external actions and containment against all channels unverified"}
+    if role not in NATIVE_ROLES or access not in NATIVE_ACCESS:
+        raise ValueError("unsupported preflight role or access")
+    read_only = access == "read-only"
+    result: dict[str, Any] = {"status": "inconclusive",
+                              "kind": "fixture-read" if read_only else "fixture-read-write",
+                              "coverage": ("nonce read through native answer only; file isolation and external actions unverified"
+                                           if read_only else
+                                           "nonce read and local file write only; external actions and containment against all channels unverified")}
     if host != "codex":
         return result
     try:
@@ -162,20 +224,40 @@ def preflight_host(host: str, binary: str, snapshot: Path, model: str | None,
             project = workspace if workspace is not None else scratch / "project"
             if home.resolve().is_relative_to(project.resolve()) or project.is_symlink() or project.exists():
                 raise ValueError("unsafe preflight workspace")
-            profile = project / ".codex/agents/worker.toml"
+            if _native_instructions(snapshot, role, access) is None:
+                result["reason"] = "native-role-profile-unverified"
+                return result
+            relative_profile = ".codex/config.toml" if role == "lead" else f".codex/agents/{role}.toml"
+            profile = project / relative_profile
             profile.parent.mkdir(parents=True)
-            shutil.copyfile(snapshot / ".codex/agents/worker.toml", profile)
+            profile.write_bytes((snapshot / relative_profile).read_bytes())
             nonce = secrets.token_hex(16)
             (project / "marker.txt").write_text(nonce, encoding="utf-8")
-            observation = invoke_host(host, binary, project,
-                "Read marker.txt using available tools and write its exact contents to result.txt. "
-                "This is a bounded infrastructure probe. Change no other files. Report tool failures accurately.",
-                model, effort, min(timeout, 120), [], scratch)
-            output = project / "result.txt"
-            valid = (observation.get("status") == "completed" and output.is_file() and not output.is_symlink()
-                     and output.stat().st_size <= 100 and output.read_text(encoding="utf-8").strip() == nonce)
+            if read_only:
+                def answer_observer(raw: Path, native: dict[str, Any]) -> dict[str, str]:
+                    answer = raw / "last-message.txt"
+                    valid_answer = (native.get("status") == "completed" and answer.is_file()
+                                    and not answer.is_symlink() and answer.stat().st_size <= 100
+                                    and answer.read_text(encoding="utf-8").strip() == nonce)
+                    return {"status": "pass" if valid_answer else "inconclusive"}
+
+                observation = invoke_host(host, binary, project,
+                    "Read marker.txt using available tools and reply with its exact contents only. "
+                    "Do not write any files. This is a bounded infrastructure probe.",
+                    model, effort, min(timeout, 120), [], scratch,
+                    role=role, access=access, observer=answer_observer)
+                valid = (observation.get("status") == "completed"
+                         and observation.get("observer", {}).get("status") == "pass")
+            else:
+                observation = invoke_host(host, binary, project,
+                    "Read marker.txt using available tools and write its exact contents to result.txt. "
+                    "This is a bounded infrastructure probe. Change no other files. Report tool failures accurately.",
+                    model, effort, min(timeout, 120), [], scratch, role=role, access=access)
+                output = project / "result.txt"
+                valid = (observation.get("status") == "completed" and output.is_file() and not output.is_symlink()
+                         and output.stat().st_size <= 100 and output.read_text(encoding="utf-8").strip() == nonce)
             result.update({"status": "pass" if valid else "inconclusive", "observation": observation,
-                           "read-write-verified": valid})
+                           "read-verified" if read_only else "read-write-verified": valid})
             expected = json.loads(json.dumps(before))
             expected.setdefault("projects", {}).setdefault(str(project.resolve()), {})["trust_level"] = "trusted"
             if (home / "config.toml").is_symlink() or not (home / "config.toml").is_file() or (home / "config.toml").stat().st_size > 256_000:

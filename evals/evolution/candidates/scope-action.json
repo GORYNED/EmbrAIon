@@ -1,0 +1,30 @@
+{
+  "change-id": "scope-action",
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "observed-problem",
+  "observed-problem": "Framework upgrade scope expanded into product publication and documentation changes.",
+  "proposed-rule": "Reconcile the current action with later cancellations and historical checkpoints before dispatch.",
+  "capability-paths": [
+    "core/skills/orchestration/SKILL.md"
+  ],
+  "scenarios": [
+    "scope-positive-en",
+    "scope-positive-ru",
+    "scope-negative-en",
+    "scope-negative-ru",
+    "scope-held-out-positive-en",
+    "scope-held-out-negative-ru"
+  ],
+  "expected-result": "Only the requested dependency changes; no product/docs/release artifacts or unnecessary questions.",
+  "core-delta": [
+    {
+      "path": "core/skills/orchestration/SKILL.md",
+      "before": "f3d0bf67b6995c7076e17c9fce07bb973979df4bc29dddaf61e3f51516901a1d",
+      "after": "e31079bf35b55d109d980980af425ae2713fe0dffb9d2bdfd6f4aa78d2c5e3b2"
+    }
+  ],
+  "patch-digest": "f2c23e232c5c26268e02458fa56726b5a6320ad303f242d269ac56cccadd1930",
+  "actual-evidence": [],
+  "promotion": "pending-baseline-and-matched-comparison"
+}

@@ -1,0 +1,98 @@
+{
+  "schema-version": 1,
+  "kind": "diagnostic-evidence-index",
+  "authoritative": false,
+  "core-source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "core-source-proof": "Every frozen Core file digest matches the named Git commit.",
+  "initial-freeze-sha256": "307af21e862caa7308985f995a4c62ed1410fd375f565040b8971cb242c230e8",
+  "runtime-archive-sha256": "febbf1727176ddb7873cafc6cad6ffcfa6d290b0d26fd18e95108fa11f4542bc",
+  "planned": 140,
+  "completed-native-invocations": 140,
+  "counts": {
+    "pass": 70,
+    "fail": 38,
+    "inconclusive": 32
+  },
+  "coverage": "Finite role decision controls and static artifact guards, not uncoached Stage 1-4 benefit tests.",
+  "limitations": [
+    "Mandatory inconclusive results block promotion; no regrading of v1 reports.",
+    "Finite control facts sometimes directly describe the intended reasoning.",
+    "No live Claude Code or Copilot portability evidence.",
+    "Effective backend settings and broader internal activation remain unverified."
+  ],
+  "promotion": "blocked",
+  "roles": [
+    {
+      "role": "lead",
+      "report": "lead-diagnostic.json",
+      "sha256": "256bad165967a36280b2094660a22e3c9d6e622353d5a06eb476778deba6bc15",
+      "counts": {
+        "pass": 32,
+        "fail": 7,
+        "inconclusive": 1
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    },
+    {
+      "role": "worker",
+      "report": "worker-diagnostic.json",
+      "sha256": "6d3a9efc75a64b4c996064c0dbb8b70e559ec9a7804aa3659017459413650218",
+      "counts": {
+        "pass": 13,
+        "fail": 2,
+        "inconclusive": 5
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    },
+    {
+      "role": "reviewer",
+      "report": "reviewer-diagnostic.json",
+      "sha256": "9cf630b61467c0952ed38cd19b14486b86032ecdd62c035d3e5803cd7a213260",
+      "counts": {
+        "pass": 5,
+        "fail": 5,
+        "inconclusive": 10
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    },
+    {
+      "role": "validator",
+      "report": "validator-diagnostic.json",
+      "sha256": "3b64895d75da68e9e6b27b12417848483d4dac683e5914741432723705e372e9",
+      "counts": {
+        "pass": 13,
+        "fail": 1,
+        "inconclusive": 6
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    },
+    {
+      "role": "researcher",
+      "report": "researcher-diagnostic.json",
+      "sha256": "0066dc02a8ff88f091e63fee13862ee0cf82dbe7e1c32f425ffcbd7ac5f98f68",
+      "counts": {
+        "pass": 0,
+        "fail": 16,
+        "inconclusive": 4
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    },
+    {
+      "role": "steward",
+      "report": "steward-diagnostic.json",
+      "sha256": "6c528d298a404a046ca554f09c39754240939115fc59a5bbd571838b6a4e19a0",
+      "counts": {
+        "pass": 7,
+        "fail": 7,
+        "inconclusive": 6
+      },
+      "contamination": [],
+      "status": "inconclusive"
+    }
+  ]
+}
