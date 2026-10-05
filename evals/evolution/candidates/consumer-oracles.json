@@ -9,7 +9,14 @@
   "capability-paths": [
     "core/skills/test-design/SKILL.md"
   ],
-  "scenarios": [],
+  "scenarios": [
+    "consumer-evidence-01",
+    "consumer-evidence-02",
+    "consumer-evidence-03",
+    "consumer-evidence-04",
+    "consumer-evidence-05",
+    "consumer-evidence-06"
+  ],
   "scenario-proposals": [
     "mirrored-wrong-formula",
     "green-helper-disconnected-consumer",
@@ -25,11 +32,19 @@
     }
   ],
   "patch-digest": "6cdbdb608c98d6e4c8e9895d9f1aabf8f8edf0f3b92dd17a5be310b48f316aa6",
-  "actual-evidence": [],
-  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r31-consumer-baseline/index.json",
+    "evals/evolution/consumer-audit-r30.json",
+    "evals/evolution/consumer-report-correction.json"
+  ],
+  "promotion": "blocked-mandatory-baseline-evidence-inconclusive-no-native-candidate",
   "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
   "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
   "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
   "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
-  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "oracle-id": "consumer-evidence-v1",
+  "observer-id": "finite-stream-v1",
+  "coverage-boundary": "Trusted static literal assertions at the public consumer against accepted samples; specified identity and wrong-delta mutations. No fixture execution, actual runtime/test-run result or independent model reasoning is proved. Finite observer metrics remain emitted-output proxies.",
+  "decision-boundary": "R31 is a completed but unqualified baseline. Limited control adequacy and unsupported output/source grammar prevent broad Core conclusions. No historical regrading, selective retry or cost compensation. Changed instrumentation requires a newly declared baseline, not an exception to promotion gates."
 }

@@ -21,6 +21,7 @@ TARGET_FILES = {
     "debug-decision": "evals/evolution/debug-decision-cases.json",
     "refactor-characterization": "evals/evolution/refactor-cases.json",
     "checkpoint-decision": "evals/evolution/checkpoint-cases.json",
+    "consumer-evidence": "evals/evolution/consumer-cases.json",
 }
 TARGETS = frozenset(TARGET_FILES)
 
@@ -44,11 +45,14 @@ def prepare_target_baseline(source: Path, output: Path, *, target: str, host: st
             destination = fixture / _safe_relative(name)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(content, encoding="utf-8", newline="\n")
-        oracle_params = {"case": entry["source-case"] if target in ("research-decision", "debug-decision") else entry["id"]} if target in ("security-flow", "goal-flow", "research-choice", "research-decision", "debug-hypothesis", "debug-decision", "refactor-characterization", "checkpoint-decision") else {}
+        oracle_params = {"case": entry["source-case"] if target in ("research-decision", "debug-decision") else entry["id"]} if target in ("security-flow", "goal-flow", "research-choice", "research-decision", "debug-hypothesis", "debug-decision", "refactor-characterization", "checkpoint-decision", "consumer-evidence") else {}
         observer_id = (CHECKPOINT_DECISION_STREAM_OBSERVER_ID if target == "checkpoint-decision" else
                        DECISION_STREAM_OBSERVER_ID if target == "research-decision" else
                        DEBUG_DECISION_STREAM_OBSERVER_ID if target == "debug-decision" else STREAM_OBSERVER_ID)
-        if target == "checkpoint-decision":
+        if target == "consumer-evidence":
+            from .consumer_oracles import expected_observation
+            gold = expected_observation(oracle_params, fixture)
+        elif target == "checkpoint-decision":
             from .checkpoint_oracles import expected_observation
             gold = expected_observation(oracle_params, fixture)
         elif target == "security-flow":

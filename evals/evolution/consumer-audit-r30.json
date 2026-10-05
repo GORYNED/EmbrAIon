@@ -1,0 +1,57 @@
+{
+  "purpose": "bounded-source-audit-not-pr-approval",
+  "route": {
+    "host": "codex",
+    "route": "complex",
+    "task-class": null,
+    "role": "analyst",
+    "resolution": "project-deployment",
+    "provenance": [
+      "route"
+    ],
+    "deployment": "codex-sol",
+    "provider": null,
+    "model": "gpt-6-sol",
+    "effort": "high",
+    "options": {},
+    "fallbacks": [],
+    "billing": {
+      "mode": "subscription"
+    },
+    "data": "PRIVATE"
+  },
+  "native-version": "codex-cli 0.159.0",
+  "applied-selection": "verified-client-model-effort-and-read-only-sandbox",
+  "backend-weights": "unverified",
+  "owned-source": {
+    "tools/cli/embraion/consumer_oracles.py": "90d005faabe369cdd6dfe0c02a14efa1a23da201f0e416e20bc7ae2b48108bf2",
+    "evals/evolution/consumer-cases.json": "0ad2f0c0abf78625c222390c5cdfa864b2bdaa21c84a70aa95ced53335c11694",
+    "tests/unit/test_consumer_oracles.py": "0b32b5b15979247566e23281c958f3ef65b13802d5404bea5eb96619157f8136",
+    "tools/cli/embraion/experiment_targets.py": "a1c587592643a2670c5b25795337572fa9f16f9ee4acbcb4f0c6c2c3da405bf3",
+    "tests/unit/test_experiment_targets.py": "950d6c84e707880f2d3a1f27ea138c4d9fffd8714e5ae6b1030b58365f4592c9"
+  },
+  "exit-code": -15,
+  "timed-out": true,
+  "client-turn-contexts": [
+    {
+      "model": "gpt-6-sol",
+      "effort": "high",
+      "approval_policy": "never",
+      "sandbox-type": "read-only"
+    }
+  ],
+  "duration-seconds": 180.101,
+  "developer-instructions-sha256": "a1abb86ba99bc5ca5e3c5190f6c083ba1784784eb60b171e4010ebf81e44fcb2",
+  "schema-version": 1,
+  "status": "inconclusive",
+  "native-source-archive": "3a0d885a13482cf66fe0f978c00d0342a1794af481b22b858337780d3ae4dcc6",
+  "reason": "Native Analyst invocation did not complete within its declared 180-second limit; no source-audit result or cause is inferred.",
+  "review-approval": false,
+  "promotion-authorized": false,
+  "native-output-digests": {
+    "events.jsonl": "06919d91b1a07e1f3e8f5547877c35cd9e582dd7bda197813cc87137651d4c04",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dispatch.json": "d9aeaafaa0ff6662f59320d5c5f61764a5b24573621aa13544d90e10b6d69a91",
+    "prompt.txt": "df3cd7f58e33840b945e47f1b5a9db1c0b28d44fd31b0cb9e2a7fb59d6ad63ba"
+  }
+}

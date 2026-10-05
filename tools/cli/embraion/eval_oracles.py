@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from . import checkpoint_oracles, debug_oracles, goal_oracles, refactor_oracles, research_oracles, security_oracles
+from . import checkpoint_oracles, consumer_oracles, debug_oracles, goal_oracles, refactor_oracles, research_oracles, security_oracles
 
 
 _WIRING_ID = "wiring-v1"
@@ -43,12 +43,14 @@ _UPGRADE_CHECKS = (
 def _require_oracle(oracle_id: str) -> None:
     if oracle_id not in (_WIRING_ID, _UPGRADE_ID, security_oracles.ORACLE_ID, goal_oracles.ORACLE_ID,
                           research_oracles.ORACLE_ID, debug_oracles.ORACLE_ID, refactor_oracles.ORACLE_ID,
-                          checkpoint_oracles.ORACLE_ID):
+                          checkpoint_oracles.ORACLE_ID, consumer_oracles.ORACLE_ID):
         raise ValueError("unknown oracle")
 
 
 def oracle_metadata(oracle_id: str) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == consumer_oracles.ORACLE_ID:
+        return consumer_oracles.oracle_metadata(oracle_id)
     if oracle_id == checkpoint_oracles.ORACLE_ID:
         return checkpoint_oracles.oracle_metadata(oracle_id)
     if oracle_id == refactor_oracles.ORACLE_ID:
@@ -114,6 +116,8 @@ def oracle_metadata(oracle_id: str) -> dict[str, Any]:
 
 def validate_params(oracle_id: str, params: dict[str, Any]) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == consumer_oracles.ORACLE_ID:
+        return consumer_oracles.validate_params(oracle_id, params)
     if oracle_id == checkpoint_oracles.ORACLE_ID:
         return checkpoint_oracles.validate_params(oracle_id, params)
     if oracle_id == refactor_oracles.ORACLE_ID:
@@ -218,6 +222,8 @@ def _check(check_id: str, category: str, passed: bool) -> dict[str, Any]:
 
 def grade(oracle_id: str, project: Path, before: dict[str, str], params: dict[str, Any]) -> dict[str, Any]:
     validate_params(oracle_id, params)
+    if oracle_id == consumer_oracles.ORACLE_ID:
+        return consumer_oracles.grade(oracle_id, project, before, params)
     if oracle_id == checkpoint_oracles.ORACLE_ID:
         return checkpoint_oracles.grade(oracle_id, project, before, params)
     if oracle_id == refactor_oracles.ORACLE_ID:
@@ -323,6 +329,8 @@ _WIRING_SABOTAGES = {
 
 def calibration(oracle_id: str, framework: Path) -> dict[str, Any]:
     _require_oracle(oracle_id)
+    if oracle_id == consumer_oracles.ORACLE_ID:
+        return consumer_oracles.calibration(oracle_id, framework)
     if oracle_id == checkpoint_oracles.ORACLE_ID:
         return checkpoint_oracles.calibration(oracle_id, framework)
     if oracle_id == refactor_oracles.ORACLE_ID:

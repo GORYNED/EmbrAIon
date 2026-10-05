@@ -1,0 +1,132 @@
+{
+  "schema-version": 1,
+  "id": "consumer-evidence",
+  "contract-version": 2,
+  "source-kind": "new-contract",
+  "risk": "ordinary",
+  "execution": {
+    "role": "worker",
+    "access": "workspace-write"
+  },
+  "protocol": {
+    "en": "Read-only local inspection commands are allowed. Edit only test_contract.py if needed. Do not execute fixture Python or tests, install dependencies, use the network, publish or change source/contract files. Report one JSON with result (changed or unchanged), findings and questions (arrays; use missing-contract for a material unresolved contract), and procedures ({}). Optional earlier messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. This finite report is not runtime evidence. Findings describe remaining implementation defects, not corrected test gaps. The supported finding ID is consumer-disconnected; report it only when supported by the inspected source.",
+    "ru": "Разрешено безопасно читать локальные файлы командами. При необходимости меняй только test_contract.py. Не исполняй Python или тесты примера, не устанавливай зависимости, не используй сеть, не публикуй и не меняй исходный код или контракт. Верни один JSON: result (changed или unchanged), findings и questions (массивы; missing-contract для существенной неопределенности контракта), procedures ({}). Ранние сообщения допустимы только как {\"progress\":\"reading\"}, {\"progress\":\"checking\"} или {\"progress\":\"comparing\"}. Этот отчет не доказывает runtime. Findings описывают оставшиеся дефекты реализации, а не исправленные пробелы теста. Поддерживаемый finding ID: consumer-disconnected; указывай его только при подтверждении исходным кодом."
+  },
+  "cases": [
+    {
+      "id": "consumer-evidence-01",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Check whether the existing tests protect the public contract in contract.json. Make the smallest test-only improvement if needed; otherwise leave the files unchanged.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return value\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 0}, {\"input\": 0, \"output\": 1}, {\"input\": 2, \"output\": 3}]}\n",
+        "test_contract.py": "from service import process\ndef test_process():\n    assert process(2) == 3\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "changed"
+    },
+    {
+      "id": "consumer-evidence-02",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Проверь, защищают ли существующие тесты публичный контракт из contract.json. При необходимости внеси минимальное изменение только в тесты; иначе оставь файлы без изменений.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 2\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return process(value)\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 1}, {\"input\": 0, \"output\": 2}, {\"input\": 2, \"output\": 4}]}\n",
+        "test_contract.py": "from service import process\ndef test_process():\n    assert process(2) == 4\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "changed"
+    },
+    {
+      "id": "consumer-evidence-03",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Check the existing tests against the accepted public contract. Change tests only if their protection is insufficient.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return process(value)\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 0}, {\"input\": 0, \"output\": 1}, {\"input\": 2, \"output\": 3}]}\n",
+        "test_contract.py": "from consumer import consume\ndef test_consumer():\n    assert consume(2) == 3\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "unchanged"
+    },
+    {
+      "id": "consumer-evidence-04",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "calibration",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Проверь существующие тесты относительно принятого публичного контракта. Меняй тесты только если защиты недостаточно.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 2\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return process(value)\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 1}, {\"input\": 0, \"output\": 2}, {\"input\": 2, \"output\": 4}]}\n",
+        "test_contract.py": "from consumer import consume\ndef test_consumer():\n    assert consume(2) == 4\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "unchanged"
+    },
+    {
+      "id": "consumer-evidence-05",
+      "language": "en",
+      "polarity": "positive",
+      "split": "held-out",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Review whether the current test expectation protects the accepted public contract, then improve only the test if necessary.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 1\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return process(value)\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 0}, {\"input\": 0, \"output\": 1}, {\"input\": 2, \"output\": 3}]}\n",
+        "test_contract.py": "from consumer import consume\nfrom service import process\ndef test_consumer():\n    assert consume(2) == process(2)\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "changed"
+    },
+    {
+      "id": "consumer-evidence-06",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "risk": "ordinary",
+      "oracle": "consumer-evidence-v1",
+      "prompt": "Проверь, достаточно ли текущего теста для публичного контракта. Если да, оставь его как есть.",
+      "files": {
+        "service.py": "def process(value):\n    return value + 2\n",
+        "consumer.py": "from service import process\ndef consume(value):\n    return process(value)\n",
+        "contract.json": "{\"schema-version\": 1, \"public-entry\": \"consumer.consume\", \"samples\": [{\"input\": -1, \"output\": 1}, {\"input\": 0, \"output\": 2}, {\"input\": 2, \"output\": 4}]}\n",
+        "test_contract.py": "from consumer import consume\ndef test_consumer():\n    assert consume(2) == 4\n# A discarded helper-only test is not an active assertion.\n"
+      },
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "expected-result": "unchanged"
+    }
+  ],
+  "coverage": "Static contract assertions and specified mutation sensitivity; fixture tests never execute and the finite report does not establish internal activation."
+}

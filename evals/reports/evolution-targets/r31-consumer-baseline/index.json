@@ -1,0 +1,374 @@
+{
+  "schema-version": 1,
+  "target": "consumer-evidence",
+  "phase": "baseline",
+  "source-archive": "42ca3f4ebc41515bdab8642547a916cf2dc8c5fd9f27ed1eb94154daa4d85689",
+  "planned-native-trials": 30,
+  "attempts-per-case": 5,
+  "counts": {
+    "pass": 2,
+    "fail": 20,
+    "inconclusive": 8
+  },
+  "incomplete-evidence": [
+    {
+      "case": "consumer-evidence-01",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability",
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "consumer-evidence-01",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "consumer-evidence-01",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability",
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "consumer-evidence-01",
+      "attempt": 4,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability",
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "consumer-evidence-01",
+      "attempt": 5,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability",
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "consumer-evidence-02",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-02",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-02",
+      "attempt": 4,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability",
+        "public-consumer",
+        "mutation-sensitivity"
+      ],
+      "observer-reason": "native-output-unavailable"
+    },
+    {
+      "case": "consumer-evidence-02",
+      "attempt": 5,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-03",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-05",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-05",
+      "attempt": 2,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-05",
+      "attempt": 3,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    },
+    {
+      "case": "consumer-evidence-05",
+      "attempt": 4,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "test-shape",
+        "independent-expectation",
+        "public-consumer",
+        "mutation-sensitivity",
+        "checker-availability"
+      ],
+      "observer-reason": "complete-finite-answer"
+    }
+  ],
+  "qualification": "All planned invocations graded, but mandatory measurement is incomplete. Not an authoritative baseline for promotion.",
+  "decision": "No native candidate trial, budgets, confirmation, composition or promotion. No selective retry or regrading.",
+  "coverage": "Static literal assertions at a public consumer, accepted sample values, fixed source/contract and sensitivity to two specified mutations; no fixture code or tests executed.",
+  "control-adequacy-boundary": "The unchanged controls are sufficient only for the two registered mutation classes. Their one public input assertion does not prove comprehensive future regression protection across all listed samples. A control-preserved failure alone cannot establish that a broader coverage addition was unnecessary; actual extra sample coverage is not reconstructed from expired workspaces.",
+  "observer-boundary": "Finite format, finding IDs, questions and procedure outputs are assessed under the declared narrow output grammar. Missing measurements do not imply a Core semantic defect. No useful internal activation is proved.",
+  "read-only-live-diagnostics": [
+    {
+      "kind": "read-only-completed-live-shape-diagnostic",
+      "observation-digest": "0aa1d0d72891e0816fe033791237f99f9c944ba63361c1a43fc2b5e40c00a89e",
+      "shape": {
+        "message-count": 4,
+        "bare-json": true,
+        "markdown-json-fence": false,
+        "exact-keys": true,
+        "known-keys-present": [
+          "findings",
+          "procedures",
+          "questions",
+          "result"
+        ],
+        "unknown-key-count": 0,
+        "result-enum": true,
+        "result-type": "str",
+        "findings-ids": true,
+        "questions-ids": true,
+        "procedures-empty": true,
+        "procedures-known": true
+      },
+      "not-proven": "No Core conclusion, no regrading or attribution unless digest matches a recorded run.",
+      "matched-runs": [
+        {
+          "case": "consumer-evidence-02",
+          "attempt": 2
+        },
+        {
+          "case": "consumer-evidence-02",
+          "attempt": 5
+        },
+        {
+          "case": "consumer-evidence-03",
+          "attempt": 1
+        },
+        {
+          "case": "consumer-evidence-03",
+          "attempt": 2
+        },
+        {
+          "case": "consumer-evidence-03",
+          "attempt": 4
+        },
+        {
+          "case": "consumer-evidence-03",
+          "attempt": 5
+        },
+        {
+          "case": "consumer-evidence-04",
+          "attempt": 1
+        },
+        {
+          "case": "consumer-evidence-04",
+          "attempt": 2
+        },
+        {
+          "case": "consumer-evidence-04",
+          "attempt": 3
+        },
+        {
+          "case": "consumer-evidence-04",
+          "attempt": 4
+        },
+        {
+          "case": "consumer-evidence-05",
+          "attempt": 2
+        },
+        {
+          "case": "consumer-evidence-05",
+          "attempt": 4
+        },
+        {
+          "case": "consumer-evidence-06",
+          "attempt": 1
+        },
+        {
+          "case": "consumer-evidence-06",
+          "attempt": 2
+        },
+        {
+          "case": "consumer-evidence-06",
+          "attempt": 4
+        }
+      ]
+    },
+    {
+      "kind": "read-only-completed-live-shape-diagnostic",
+      "observation-digest": "0b80da4dc177fca60c8eba0223884b8f1260daba7128e935e1307eb2d964a868",
+      "shape": {
+        "message-count": 4,
+        "bare-json": true,
+        "markdown-json-fence": false,
+        "exact-keys": true,
+        "prefix-structure": [
+          {
+            "json-object": true,
+            "fixed-progress": true,
+            "skill-announcement-prefix": false
+          },
+          {
+            "json-object": true,
+            "fixed-progress": true,
+            "skill-announcement-prefix": false
+          },
+          {
+            "json-object": true,
+            "fixed-progress": true,
+            "skill-announcement-prefix": false
+          }
+        ],
+        "known-keys-present": [
+          "findings",
+          "procedures",
+          "questions",
+          "result"
+        ],
+        "unknown-key-count": 0,
+        "result-enum": true,
+        "result-type": "str",
+        "findings-ids": true,
+        "questions-ids": true,
+        "procedures-empty": true,
+        "procedures-known": true
+      },
+      "not-proven": "No Core conclusion, no regrading or attribution unless digest matches a recorded run.",
+      "matched-runs": [
+        {
+          "case": "consumer-evidence-04",
+          "attempt": 5
+        },
+        {
+          "case": "consumer-evidence-05",
+          "attempt": 1
+        },
+        {
+          "case": "consumer-evidence-06",
+          "attempt": 5
+        }
+      ]
+    }
+  ],
+  "infra-boundary": "One native failure has unclassified error events; no root cause is inferred. Diagnostics preserve structure/digests only and do not change historical results.",
+  "files": {
+    "candidate-manifest.json": "5a6369dc5f66894ff5fcfa5f3f158d08cc9d23817d92fb402b937e98dca6e5bb",
+    "matched-suite.json": "29fff9a466a10c1581f4565f5c16acc956d60b0545ab337930f936229a6a199e",
+    "qualified-baseline-report.json": "108f1d22e948472aa8eea33cc61321eb10e2e03e9502185c2b519753427b055d",
+    "snapshot.json": "86ccfc9dcd613c82a6e10b303dfee291d692658b9e8f72279b2a54760742fd3c",
+    "suite.json": "78ae385aa94cf8d7783ec30b0c8dfd5c967822565c6a4bbdace7635f056d5d65"
+  },
+  "canonical-core-mutated": false,
+  "promotion-authorized": false,
+  "snapshots": "Exact manifests retained; immutable snapshots remain in local R31 controller."
+}

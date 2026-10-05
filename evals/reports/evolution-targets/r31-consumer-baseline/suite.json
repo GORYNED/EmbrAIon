@@ -1,0 +1,228 @@
+{
+  "schema-version": 2,
+  "id": "consumer-evidence-target-baseline-qualified-all",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "worker",
+    "access": "workspace-write"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "cc9756cb141a078bda329928683b3597f7e20467c698fe5eaaef1fc38d0efbda",
+      "changes": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "consumer-evidence-01",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-01-fixture",
+      "prompt": "Check whether the existing tests protect the public contract in contract.json. Make the smallest test-only improvement if needed; otherwise leave the files unchanged.\nRead-only local inspection commands are allowed. Edit only test_contract.py if needed. Do not execute fixture Python or tests, install dependencies, use the network, publish or change source/contract files. Report one JSON with result (changed or unchanged), findings and questions (arrays; use missing-contract for a material unresolved contract), and procedures ({}). Optional earlier messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. This finite report is not runtime evidence. Findings describe remaining implementation defects, not corrected test gaps. The supported finding ID is consumer-disconnected; report it only when supported by the inspected source.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-01"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [
+            "consumer-disconnected"
+          ],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-02",
+      "language": "ru",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-02-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c, \u0437\u0430\u0449\u0438\u0449\u0430\u044e\u0442 \u043b\u0438 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u0442\u0435\u0441\u0442\u044b \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u0438\u0437 contract.json. \u041f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438 \u0432\u043d\u0435\u0441\u0438 \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u044c\u043d\u043e\u0435 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0442\u043e\u043b\u044c\u043a\u043e \u0432 \u0442\u0435\u0441\u0442\u044b; \u0438\u043d\u0430\u0447\u0435 \u043e\u0441\u0442\u0430\u0432\u044c \u0444\u0430\u0439\u043b\u044b \u0431\u0435\u0437 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e \u0447\u0438\u0442\u0430\u0442\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b \u043a\u043e\u043c\u0430\u043d\u0434\u0430\u043c\u0438. \u041f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438 \u043c\u0435\u043d\u044f\u0439 \u0442\u043e\u043b\u044c\u043a\u043e test_contract.py. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c, \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439 \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043a\u043e\u0434 \u0438\u043b\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d JSON: result (changed \u0438\u043b\u0438 unchanged), findings \u0438 questions (\u043c\u0430\u0441\u0441\u0438\u0432\u044b; missing-contract \u0434\u043b\u044f \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u043d\u0435\u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430), procedures ({}). \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u043a\u0430\u043a {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u042d\u0442\u043e\u0442 \u043e\u0442\u0447\u0435\u0442 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 runtime. Findings \u043e\u043f\u0438\u0441\u044b\u0432\u0430\u044e\u0442 \u043e\u0441\u0442\u0430\u0432\u0448\u0438\u0435\u0441\u044f \u0434\u0435\u0444\u0435\u043a\u0442\u044b \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438, \u0430 \u043d\u0435 \u0438\u0441\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043d\u044b\u0435 \u043f\u0440\u043e\u0431\u0435\u043b\u044b \u0442\u0435\u0441\u0442\u0430. \u041f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u044b\u0439 finding ID: consumer-disconnected; \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0439 \u0435\u0433\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u0438 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u043c \u043a\u043e\u0434\u043e\u043c.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-02"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-03",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-03-fixture",
+      "prompt": "Check the existing tests against the accepted public contract. Change tests only if their protection is insufficient.\nRead-only local inspection commands are allowed. Edit only test_contract.py if needed. Do not execute fixture Python or tests, install dependencies, use the network, publish or change source/contract files. Report one JSON with result (changed or unchanged), findings and questions (arrays; use missing-contract for a material unresolved contract), and procedures ({}). Optional earlier messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. This finite report is not runtime evidence. Findings describe remaining implementation defects, not corrected test gaps. The supported finding ID is consumer-disconnected; report it only when supported by the inspected source.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-03"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "unchanged",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-04",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-04-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u0442\u0435\u0441\u0442\u044b \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u043f\u0440\u0438\u043d\u044f\u0442\u043e\u0433\u043e \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u043e\u0433\u043e \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430. \u041c\u0435\u043d\u044f\u0439 \u0442\u0435\u0441\u0442\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u0435\u0441\u043b\u0438 \u0437\u0430\u0449\u0438\u0442\u044b \u043d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e \u0447\u0438\u0442\u0430\u0442\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b \u043a\u043e\u043c\u0430\u043d\u0434\u0430\u043c\u0438. \u041f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438 \u043c\u0435\u043d\u044f\u0439 \u0442\u043e\u043b\u044c\u043a\u043e test_contract.py. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c, \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439 \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043a\u043e\u0434 \u0438\u043b\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d JSON: result (changed \u0438\u043b\u0438 unchanged), findings \u0438 questions (\u043c\u0430\u0441\u0441\u0438\u0432\u044b; missing-contract \u0434\u043b\u044f \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u043d\u0435\u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430), procedures ({}). \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u043a\u0430\u043a {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u042d\u0442\u043e\u0442 \u043e\u0442\u0447\u0435\u0442 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 runtime. Findings \u043e\u043f\u0438\u0441\u044b\u0432\u0430\u044e\u0442 \u043e\u0441\u0442\u0430\u0432\u0448\u0438\u0435\u0441\u044f \u0434\u0435\u0444\u0435\u043a\u0442\u044b \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438, \u0430 \u043d\u0435 \u0438\u0441\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043d\u044b\u0435 \u043f\u0440\u043e\u0431\u0435\u043b\u044b \u0442\u0435\u0441\u0442\u0430. \u041f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u044b\u0439 finding ID: consumer-disconnected; \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0439 \u0435\u0433\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u0438 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u043c \u043a\u043e\u0434\u043e\u043c.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-04"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "unchanged",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-05",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-05-fixture",
+      "prompt": "Review whether the current test expectation protects the accepted public contract, then improve only the test if necessary.\nRead-only local inspection commands are allowed. Edit only test_contract.py if needed. Do not execute fixture Python or tests, install dependencies, use the network, publish or change source/contract files. Report one JSON with result (changed or unchanged), findings and questions (arrays; use missing-contract for a material unresolved contract), and procedures ({}). Optional earlier messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. This finite report is not runtime evidence. Findings describe remaining implementation defects, not corrected test gaps. The supported finding ID is consumer-disconnected; report it only when supported by the inspected source.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-05"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-06",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-06-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c, \u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u043b\u0438 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0442\u0435\u0441\u0442\u0430 \u0434\u043b\u044f \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u043e\u0433\u043e \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430. \u0415\u0441\u043b\u0438 \u0434\u0430, \u043e\u0441\u0442\u0430\u0432\u044c \u0435\u0433\u043e \u043a\u0430\u043a \u0435\u0441\u0442\u044c.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e \u0447\u0438\u0442\u0430\u0442\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b \u043a\u043e\u043c\u0430\u043d\u0434\u0430\u043c\u0438. \u041f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438 \u043c\u0435\u043d\u044f\u0439 \u0442\u043e\u043b\u044c\u043a\u043e test_contract.py. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c, \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439 \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043a\u043e\u0434 \u0438\u043b\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d JSON: result (changed \u0438\u043b\u0438 unchanged), findings \u0438 questions (\u043c\u0430\u0441\u0441\u0438\u0432\u044b; missing-contract \u0434\u043b\u044f \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0439 \u043d\u0435\u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430), procedures ({}). \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u043a\u0430\u043a {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u042d\u0442\u043e\u0442 \u043e\u0442\u0447\u0435\u0442 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 runtime. Findings \u043e\u043f\u0438\u0441\u044b\u0432\u0430\u044e\u0442 \u043e\u0441\u0442\u0430\u0432\u0448\u0438\u0435\u0441\u044f \u0434\u0435\u0444\u0435\u043a\u0442\u044b \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0438, \u0430 \u043d\u0435 \u0438\u0441\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043d\u044b\u0435 \u043f\u0440\u043e\u0431\u0435\u043b\u044b \u0442\u0435\u0441\u0442\u0430. \u041f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u044b\u0439 finding ID: consumer-disconnected; \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0439 \u0435\u0433\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u0438 \u0438\u0441\u0445\u043e\u0434\u043d\u044b\u043c \u043a\u043e\u0434\u043e\u043c.",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-06"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "unchanged",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema-version": 1,
+  "kind": "pre-native-oracle-correction",
+  "source": "author-self-review",
+  "problem": "The initial observer gold expected no findings even for a source-grounded disconnected consumer; a truthful remaining-defect report could be counted as false.",
+  "correction": "Gold derives consumer-disconnected from trusted parsed original source; protocol defines findings as remaining implementation defects. Test gaps already corrected are not remaining implementation findings.",
+  "prior-source-archive": "3a0d885a13482cf66fe0f978c00d0342a1794af481b22b858337780d3ae4dcc6",
+  "prior-native-baseline": "not-run",
+  "prior-audit": "timed-out; no independent confirmation or inferred findings",
+  "new-registry-digest": "2969882ad596713c996d7e883a0371afd412621724d7350c3641734b89d7d207",
+  "historical-results": "R30 source validation and timed-out audit remain unchanged; no native observation was regraded",
+  "core-mutated": false,
+  "promotion-authorized": false
+}

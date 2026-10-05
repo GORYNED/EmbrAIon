@@ -15,6 +15,40 @@ from embraion.experiment_targets import prepare_target_baseline
 
 
 class TargetCases(unittest.TestCase):
+    def test_consumer_target_checks_artifact_without_running_fixture_tests(self):
+        root = framework_root()
+        (root / "build").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=root / "build") as temporary:
+            output = Path(temporary) / "consumer"
+            prepare_target_baseline(root, output, target="consumer-evidence")
+            suite = json.loads((output / "suite.json").read_bytes())
+            Draft202012Validator(json.loads((root / "schemas/experiment-suite.schema.json").read_bytes())).validate(suite)
+            self.assertEqual({"role": "worker", "access": "workspace-write"}, suite["execution"])
+            self.assertEqual(6, len(suite["cases"]))
+            self.assertEqual({"en", "ru"}, {case["language"] for case in suite["cases"]})
+            for case in suite["cases"]:
+                oracle = case["oracles"][0]
+                fixture = output / case["fixture"]
+                self.assertEqual(["test_contract.py"], case["allowed-paths"])
+                self.assertEqual("consumer-evidence-v1", oracle["id"])
+                self.assertEqual("fail" if case["polarity"] == "positive" else "pass",
+                                 grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                contract = json.loads((fixture / "contract.json").read_bytes())
+                if case["polarity"] == "positive":
+                    sample = contract["samples"][2]
+                    (fixture / "test_contract.py").write_text(
+                        'from consumer import consume\ndef test_contract():\n'
+                        f'    assert consume({sample["input"]}) == {sample["output"]}\n')
+                self.assertEqual("pass", grade(oracle["id"], fixture, {}, oracle["params"])["status"])
+                params = case["observer"]["params"]
+                answer = json.dumps({"result": params["expected-result"], "findings": params["expected-findings"], "questions": [], "procedures": {}})
+                self.assertEqual("pass", reduce_output(STREAM_OBSERVER_ID, [answer], True, params)["status"])
+                if case["id"] == "consumer-evidence-01":
+                    missing = json.dumps({"result": "changed", "findings": [], "questions": [], "procedures": {}})
+                    result = reduce_output(STREAM_OBSERVER_ID, [missing], True, params)
+                    self.assertEqual("fail", result["status"])
+                    self.assertEqual(0, result["metrics"]["false-positive-rate"])
+
     def test_scope_fixture_exercises_actual_change_and_preservation(self):
         root = framework_root()
         (root / "build").mkdir(exist_ok=True)

@@ -1,7 +1,7 @@
 {
   "schema-version": 1,
   "kind": "advisory-program-status",
-  "updated-at": "2026-10-05T07:19:01.823489+00:00",
+  "updated-at": "2026-10-05T09:13:26.751874+00:00",
   "scope": "EmbrAIon only; no consumer updates, merge or release",
   "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
   "canonical-core-mutated": false,
@@ -39,7 +39,13 @@
         "Research/debugging baselines and isolated comparisons",
         "Consumer oracle, handoff and knowledge-state experiments"
       ],
-      "handoff": "R29 baseline40planned/completed:19pass17fail4inconclusive;5observations incomplete mandatory measurement. No candidate trial or promotion."
+      "handoff": "R29 baseline40planned/completed:19pass17fail4inconclusive;5observations incomplete mandatory measurement. No candidate trial or promotion.",
+      "consumer": "R31 baseline30planned/completed:2pass20fail8inconclusive;14observations incomplete mandatory measurement. Control preservation proves only the two specified mutation classes, not comprehensive sample coverage. No native candidate, budgets or promotion. Source audit R30 timed out; no independent approval inferred.",
+      "consumer-evidence": [
+        "evals/reports/evolution-targets/r31-consumer-baseline/index.json",
+        "evals/evolution/consumer-audit-r30.json",
+        "evals/evolution/consumer-report-correction.json"
+      ]
     },
     {
       "stage": 3,
@@ -65,23 +71,22 @@
   ],
   "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
   "latest-pushed-ci": {
-    "commit": "6c215f090a4b083a3d2f1b7ad132112773eed928",
-    "validate-run": 37275258473,
-    "docs-run": 37275258462,
-    "status": "docs-passed-validation-failed-test-setup",
-    "failure": "Three new checkpoint bridge tests assumed build already existed in a cold checkout.",
-    "remediation": "Create build in test setUp; all three affected tests pass in a fresh Git archive without build. New source HEAD requires fresh CI."
+    "commit": "07132a1a04551fa5dd95193fc0853e2ed18092da",
+    "validate-run": 37277620694,
+    "docs-run": 37277620682,
+    "status": "passed",
+    "boundary": "Exact committed source only; the new consumer checker is a later local change and requires fresh validation and CI."
   },
   "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
   "overall": "incomplete; authorized implementation and live experiments continue",
   "latest-local-validation": {
-    "source-archive": "36bb03d86bcebeba7a6b3760fdb74154dc80a46cc8dc9dc8b073341bcd787fcc",
-    "unit-tests": 699,
+    "source-archive": "42ca3f4ebc41515bdab8642547a916cf2dc8c5fd9f27ed1eb94154daa4d85689",
+    "unit-tests": 708,
     "unit-status": "passed",
     "source-validation": "passed",
     "strict-docs": "passed",
     "integration-tests": 43,
     "integration-status": "passed-with-one-expected-skip",
-    "boundary": "R29 frozen code, before this advisory status update and subsequent native evidence. Canonical Core remains original."
+    "boundary": "R31 frozen source, before these advisory status and preserved evidence updates. Canonical Core remains original."
   }
 }
