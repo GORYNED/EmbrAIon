@@ -3,9 +3,9 @@
   "kind": "advisory-user-directed-core-package",
   "id": "core-skills-package",
   "source-head": "c68327a4562f821bb8c46bad9d1d23b82debab1a",
-  "status": "prepared-awaiting-checks-review-and-package-approval",
+  "status": "applied-user-approved",
   "scope": "EmbrAIon only; no consumers, merge or release",
-  "canonical-core-mutated": false,
+  "canonical-core-mutated": true,
   "acceptance": "Explicit user-directed instruction change: deterministic checks, regression scenarios, independent review and explicit concrete-package approval. No required measured live gain for this package.",
   "historical-boundary": "Historical experiments and their gates/results remain unchanged; no defer, fail, reject or inconclusive is reclassified.",
   "roles": [
@@ -603,7 +603,21 @@
   "coverage": "Static controls/mutations and projection checks prove artifact/checker properties only. Review assesses instruction consistency against scenarios. No new live execution, measured quality/cost improvement, actual activation or runtime/other-host behavior is claimed.",
   "approval": {
     "required": true,
-    "received": false,
-    "applied-to-canonical-core": false
+    "received": true,
+    "applied-to-canonical-core": true,
+    "approved-proposal-head": "869136e377fcc5bd62c7aca561e755456f9cdacb",
+    "provenance": "Human reply to concrete four-package approval question: Одобряю все четыре пакета",
+    "scope": "Canonical application only; no consumers, merge or release"
+  },
+  "application": {
+    "recorded-at": "2026-10-05T17:47:27.400520+00:00",
+    "package-commits": {
+      "intent": "1a03be0a37f5ee225b5accaf32a580fe570ff2fe",
+      "execution": "df09e3d765ed219e79179e25ad42202ba57f67d6",
+      "security": "1b82fc56aeced74c1e8f0188ed8ade2607510ebe",
+      "characterization": "655b285775849fadaec242bd41732e00027ff0c3"
+    },
+    "core-manifest-sha256": "0f2dfb0f98a571c2a93abb3eb3b9e6ac0cb59832077adaafc9e842c2734d5197",
+    "measurement-baseline": "No new authoritative live baseline; historical results preserved. Applied Core artifact revision recorded separately."
   }
 }
