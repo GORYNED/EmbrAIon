@@ -1,0 +1,56 @@
+{
+  "change-id": "security-assessment-v2",
+  "revision": 1,
+  "checks": [
+    {
+      "host": "codex",
+      "status": "pass",
+      "manifest-digest": "e3bc4a9d823efd04a323e4443cd9c21dcadea896fbaf209145c0a2eea7d2bebe",
+      "core-digest": "5d845332a5c0ff60de636a06a20c7c86b6be4b05cd0456d1cd627f7c85a8004b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "host": "claude-code",
+      "status": "pass",
+      "manifest-digest": "67ef80758441724d9dc629c8d6a713bcba172d48d49b42ecff0636b8c0194105",
+      "core-digest": "5d845332a5c0ff60de636a06a20c7c86b6be4b05cd0456d1cd627f7c85a8004b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "host": "copilot",
+      "status": "pass",
+      "manifest-digest": "8d2ba681ea99e587a9ac677d218c95aacb14d3bc970d1beb386f0dda161d2909",
+      "core-digest": "5d845332a5c0ff60de636a06a20c7c86b6be4b05cd0456d1cd627f7c85a8004b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    },
+    {
+      "host": "portable",
+      "status": "pass",
+      "manifest-digest": "9ce354fb3832e8f697a326633081cd5d5cf2dd0beb5115e5a9cf3688645479ef",
+      "core-digest": "5d845332a5c0ff60de636a06a20c7c86b6be4b05cd0456d1cd627f7c85a8004b",
+      "projection": {
+        "status": "pass",
+        "differences": [],
+        "coverage": "prepared projection only; native activation remains unverified"
+      },
+      "live-behavior": "not-checked"
+    }
+  ],
+  "promotion-authorized": false,
+  "boundary": "Deterministic representations only. No Core change or behavioral promotion."
+}

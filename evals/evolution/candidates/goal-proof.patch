@@ -1,0 +1,7 @@
+--- a/core/skills/verification/SKILL.md
++++ b/core/skills/verification/SKILL.md
+@@ -23,0 +24,4 @@
++
++## Goal and claim verification
++
++For a substantive behavior change, trace each material acceptance claim from the user's goal through the implementation, entry point or wiring, and relevant consumer to fresh evidence. A declaration, generated stub, test count, or isolated helper pass does not prove the consumer receives the behavior. For deletion, identify the removed responsibility and prove it is obsolete or preserved by a reachable replacement, including affected references and contracts. Separate observed results from proposed, unavailable, or runtime-dependent results. Stop the completion claim at the evidence boundary; do not add an unrelated runtime check to a data-only task.

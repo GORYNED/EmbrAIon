@@ -1,0 +1,82 @@
+{
+  "schema-version": 1,
+  "id": "security-assessment-r21-negative",
+  "baseline": "baseline",
+  "candidate": "security-assessment",
+  "suite-digest": "0ef1d6b0ead8c41746d487b537ccdb451c0553e8a02d997d2f8a8f52fee15236",
+  "change-ids": [
+    "security-assessment"
+  ],
+  "traceability": [
+    {
+      "change-id": "security-assessment",
+      "source-kind": "new-contract",
+      "observed-problem": "New general-purpose security assessment contract requires reachable threat evidence and excludes speculative filename-based findings.",
+      "proposed-rule": "Add a conditional capability to existing roles; retain canonical security rules and independent access/routing.",
+      "capability-paths": [
+        "core/skills/security-assessment/SKILL.md",
+        "core/catalog.yaml"
+      ],
+      "expected-result": "Supported eight-part threat findings, useful mitigations, and no unnecessary activation or new authority.",
+      "scenarios": [
+        "security-guard-negative-en",
+        "security-inert-negative-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "security-guard-negative-en",
+    "security-inert-negative-ru"
+  ],
+  "target-cases": [
+    "security-guard-negative-en",
+    "security-inert-negative-ru"
+  ],
+  "cases": [
+    {
+      "case": "security-guard-negative-en",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 43763.9,
+        "latency": 36.376000000000005
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-guard-negative-en-r21-budget"
+    },
+    {
+      "case": "security-inert-negative-ru",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 11987.300000000001,
+        "latency": 19.0132
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-inert-negative-ru-r21-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "qualified-baseline-report.json",
+      "digest": "c497c9da4150254c7d69bb2b23bc9b406383da1fd79ea09998614aa731c8677e",
+      "suite-path": "suite.json",
+      "suite-digest": "f4d6996e5b2eabcecbe2ac82235da02af8317f795cd54fdbbcbf51d96e10bdfa"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "change-id": "upgrade-actions",
+  "stage": 1,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "observed-problem",
+  "observed-problem": "The real framework upgrade failure expanded a dependency update into unrelated product publication and documentation edits.",
+  "proposed-rule": "Record dependency update, product change, and publication as distinct acceptance and authority decisions.",
+  "capability-paths": [
+    "core/skills/dependency-upgrade/SKILL.md"
+  ],
+  "scenarios": [],
+  "scenario-proposals": [
+    "scope-upgrade-only",
+    "explicit-product-release",
+    "already-upgraded",
+    "accurate-docs-preserved",
+    "upgrade-actions-held-out-en-ru"
+  ],
+  "expected-result": "Minimal consumer dependency update with no inferred product version, publication, or unnecessary documentation changes.",
+  "core-delta": [
+    {
+      "path": "core/skills/dependency-upgrade/SKILL.md",
+      "before": "e6d2e24c0540902c41b486b1979e8bca56793a8af8ee445293aeebdbbf6d8b83",
+      "after": "d6a212b80e8af71a0f9725e117d93c705626e7fe8edfb2814991a04fff376028"
+    }
+  ],
+  "patch-digest": "ed52c2268da43074ab05deb6626ed54403731dd21b004fd7e7ae005848e16bbf",
+  "actual-evidence": [],
+  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

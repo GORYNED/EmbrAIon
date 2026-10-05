@@ -1,0 +1,311 @@
+{
+  "decision": "defer",
+  "reason": "A mandatory baseline evidence gap already blocks the entire comparison; remaining trials stopped without replacement or selective retry.",
+  "mandatory-gaps-observed": [
+    {
+      "cohort": "cohort-2",
+      "case": "checkpoint-decision-03",
+      "attempt": 2,
+      "mandatory-inconclusive": [
+        "observer-availability"
+      ],
+      "measurement": "inconclusive"
+    }
+  ],
+  "journals": [
+    {
+      "cohort": "cohort-1",
+      "planned": [
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 5
+        }
+      ],
+      "completed": [
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "fail"
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "fail"
+        },
+        {
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "cohort": "cohort-2",
+      "planned": [
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 5
+        }
+      ],
+      "completed": [
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "inconclusive"
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "cohort": "cohort-3",
+      "planned": [
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 5
+        }
+      ],
+      "completed": [
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "candidate-run": "not-run",
+  "budgets": "not-frozen",
+  "confirmation": "not-run",
+  "promotion": "blocked",
+  "stopped-processes": 9,
+  "boundary": "Incomplete baseline. Unfinished invocations are unassessed, not failed or passed Core behavior. Completed graded checks and known violations remain in original journals.",
+  "privacy": "Raw unfinished observations and temporary workspaces remain local; no credentials or raw model messages are published."
+}

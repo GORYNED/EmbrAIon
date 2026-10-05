@@ -1,0 +1,100 @@
+{
+  "schema-version": 2,
+  "id": "refactor-characterization-target-baseline-qualified-held-out",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "worker",
+    "access": "workspace-write"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "a3788ea6f436696b49fa8bf621063c9a8831bd077029f8eed7a8506367593e55",
+      "changes": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "refactor-heldout-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "refactor-heldout-ru-fixture",
+      "prompt": "\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0438 \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044e normalize \u0438\u0437 legacy.py \u0432 ops/offset.py. \u0421\u043e\u0445\u0440\u0430\u043d\u0438 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u043f\u043e\u0432\u0435\u0434\u0435\u043d\u0438\u0435 \u0438 \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u044b. \u041e\u0431\u043d\u043e\u0432\u0438 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 references \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442\u0438.\n\u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u0437\u0430\u043f\u0440\u043e\u0441 \u0438 \u0440\u0435\u043b\u0435\u0432\u0430\u043d\u0442\u043d\u044b\u0439 source. \u0412\u044b\u043f\u043e\u043b\u043d\u0438 \u0442\u043e\u043b\u044c\u043a\u043e \u0437\u0430\u043f\u0440\u043e\u0448\u0435\u043d\u043d\u043e\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0435 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 fixture Python, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c, \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439 \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0438\u044e. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d JSON: result (changed \u0438\u043b\u0438 hold), findings \u0438 questions (\u043c\u0430\u0441\u0441\u0438\u0432\u044b \u043f\u0440\u0438\u043c\u0435\u043d\u0438\u043c\u044b\u0445 ID), procedures ({} \u0438\u043b\u0438 \u043a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0439 refactoring object). \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u043a\u0430\u043a {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u043b\u0438\u0431\u043e {\"progress\":\"comparing\"}. Finding IDs: behavior-changed, public-api-lost, consumer-broken, identity-loss. Question IDs: missing-contract. Finite answer \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 runtime. \u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u0430\u043d\u0434\u044b \u043d\u0435 \u0442\u0440\u0435\u0431\u0443\u044e\u0442\u0441\u044f.",
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/offset.py",
+        "ops/__init__.py"
+      ],
+      "oracles": [
+        {
+          "id": "refactor-characterization-v1",
+          "params": {
+            "case": "refactor-heldout-ru"
+          },
+          "mandatory": true,
+          "metadata-digest": "1163b056c1e9731322be068d76d95e23cee1e154fa22cf982adbfabdc17ecf11"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [
+            "refactoring"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "refactor-heldout-en",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "refactor-heldout-en-fixture",
+      "prompt": "Extract the integer normalization implementation into ops/offset.py; preserve callers, saved references and externally visible behavior. Keep this a local structure-only change.\nRead the local request and relevant source. Perform only the requested local change. Do not execute fixture Python, install anything, use the network, publish or edit documentation. Return one JSON with result (changed or hold), findings and questions (arrays of applicable IDs), procedures ({} or a compact refactoring object). Optional prior messages must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. Finding IDs: behavior-changed, public-api-lost, consumer-broken, identity-loss. Question IDs: missing-contract. A finite answer is not runtime evidence. No additional commands are required.",
+      "allowed-paths": [
+        "legacy.py",
+        "consumer.py",
+        "ops/offset.py",
+        "ops/__init__.py"
+      ],
+      "oracles": [
+        {
+          "id": "refactor-characterization-v1",
+          "params": {
+            "case": "refactor-heldout-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "1163b056c1e9731322be068d76d95e23cee1e154fa22cf982adbfabdc17ecf11"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [
+            "refactoring"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

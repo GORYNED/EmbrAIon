@@ -1,0 +1,44 @@
+{
+  "change-id": "debugging-hypotheses",
+  "stage": 2,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "Repeated fixes can preserve the same unsupported causal story instead of distinguishing competing explanations.",
+  "proposed-rule": "Record predicted observations and revise the hypothesis when evidence contradicts it.",
+  "capability-paths": [
+    "core/skills/debugging/SKILL.md"
+  ],
+  "scenarios": [
+    "debug-decision-01",
+    "debug-decision-02",
+    "debug-decision-03",
+    "debug-decision-04",
+    "debug-decision-05"
+  ],
+  "scenario-proposals": [
+    "competing-root-causes",
+    "contradictory-log-evidence",
+    "repeated-failed-fix",
+    "obvious-typo-control-en-ru"
+  ],
+  "expected-result": "Fewer unsupported fixes and repeated edits; bounded cause evidence before remediation.",
+  "core-delta": [
+    {
+      "path": "core/skills/debugging/SKILL.md",
+      "before": "6a80e36a9692b9b1e31b77bbb1d27309eb5734a01589127011ff2132daf5b00e",
+      "after": "f4091c80895e73f00d7f4cf8a45a49d6b3a9816ae40c550f283db94492e83491"
+    }
+  ],
+  "patch-digest": "919bc9bb43bcf73dd8727abfbbbcd0f9fad381cdba7d2e440f78e22ade8ce752",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r29-debug-decision-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R29 complete predeclared baseline with counts {\"pass\": 4, \"fail\": 20, \"inconclusive\": 1}; mandatory evidence incomplete for 15 observations. No candidate native invocation, no regrading, no Core-quality generalization or promotion."
+}

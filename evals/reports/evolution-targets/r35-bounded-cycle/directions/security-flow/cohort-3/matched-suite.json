@@ -1,0 +1,156 @@
+{
+  "schema-version": 2,
+  "id": "security-flow-target-baseline-r35-qualified-cohort-3-matched",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "reviewer",
+    "access": "read-only"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "b7e9f1540edc751311815bf8e68d9772ea8a18a2a1c66dc253a12952b1d4f739",
+      "changes": []
+    },
+    {
+      "id": "security-assessment-v2",
+      "snapshot": "candidate-snapshot",
+      "manifest": "candidate-manifest.json",
+      "manifest-digest": "795d802019159ac376d9406bb9c01cd2c9961d4d68a849f9c9a54841c77886a9",
+      "changes": [
+        {
+          "path": "core/skills/security-assessment/SKILL.md",
+          "before": null,
+          "after": "d8e23eac3df402143b430e743607e97293422fc94fa1422af2bd77156dedc1a6"
+        },
+        {
+          "path": "core/catalog.yaml",
+          "before": "5e8b05bbbc9e7ca0d16092690967d9bd868d065781a52e52355faf278ff8efb9",
+          "after": "c7483952a7e3f55d5db870b0e878b23236d7c2a463b3c6dd20f6df3a94483e3c"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "security-late-guard-heldout-en",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "high",
+      "fixture": "security-late-guard-heldout-en-fixture",
+      "prompt": "Assess the proposed read_document source. Determine whether an ownership denial can actually prevent the body return on the other-owner path.\nSafe local reads and writes only to these paths are permitted: none. Do not execute fixture Python or tests, install dependencies, use the network or publish. Read the relevant source and contract; select conclusions from their actual contents. The final JSON must match the registered response schema. Use short locale-neutral IDs and source anchors, without prose inside values. Earlier messages are optional and must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. The procedures field follows the schema; it does not establish internal activation. The report and static checks do not establish runtime behavior or external actions.\nPublic output vocabulary (not a selected answer): result: hold | bounded-negative | no-activation. Finding IDs: cross-owner-document-read. Public assessment encodings: asset=document-body; entry=service.py:read_document; trust-boundary=actor-id-vs-record-owner-id; reachable-operation=other-owner-body-return | owner-guarded-body-return; existing-control=auth-guard-only | auth-and-owner-guard; mitigation=owner-deny-before-body-return | preserve-owner-deny-before-return; residual-risk=runtime-and-other-grammar-unverified; priority=high | none; preconditions=authenticated-cross-owner-document-id | authenticated-owner-document-id. Evidence uses contract.json:boundary and actual service.py:N anchors for function, lookup, body return and owner guard when present, in that order. This vocabulary specifies syntax only; choose answers from the reachable source paths.",
+      "response-contract": "security-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "security-flow-v1",
+          "params": {
+            "case": "security-late-guard-heldout-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "b2d91bb0574d38128149b04e06ba472d6d1baccc33eddcdb9826875ee65c9291"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "hold",
+          "expected-findings": [
+            "cross-owner-document-read"
+          ],
+          "expected-questions": [],
+          "required-procedures": {
+            "security-assessment": {
+              "asset": "document-body",
+              "entry": "service.py:read_document",
+              "trust-boundary": "actor-id-vs-record-owner-id",
+              "reachable-operation": "other-owner-body-return",
+              "existing-control": "auth-guard-only",
+              "evidence": [
+                "contract.json:boundary",
+                "service.py:1",
+                "service.py:4",
+                "service.py:7",
+                "service.py:8"
+              ],
+              "mitigation": "owner-deny-before-body-return",
+              "residual-risk": "runtime-and-other-grammar-unverified",
+              "priority": "high",
+              "preconditions": [
+                "authenticated-cross-owner-document-id"
+              ]
+            }
+          },
+          "permitted-procedures": [
+            "security-assessment"
+          ],
+          "security-findings": [
+            "cross-owner-document-read"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "security-guard-heldout-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "high",
+      "fixture": "security-guard-heldout-ru-fixture",
+      "prompt": "\u041e\u0446\u0435\u043d\u0438 \u0434\u043e\u0441\u0442\u0438\u0436\u0438\u043c\u044b\u0439 \u043f\u0443\u0442\u044c read_document \u0434\u043b\u044f \u0434\u0440\u0443\u0433\u043e\u0433\u043e \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430. \u041a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0439 \u043f\u043e\u0441\u043b\u0435 \u0432\u043e\u0437\u0432\u0440\u0430\u0442\u0430 \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u043c\u043e\u0439 \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0435\u0439.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u044b \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0435 \u0447\u0442\u0435\u043d\u0438\u0435 \u0438 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u044d\u0442\u0438\u0445 \u043f\u0443\u0442\u0435\u0439: none. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c \u0438 \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439. \u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 \u0440\u0435\u043b\u0435\u0432\u0430\u043d\u0442\u043d\u044b\u0435 source \u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442; \u0432\u044b\u0431\u0435\u0440\u0438 \u0432\u044b\u0432\u043e\u0434\u044b \u043f\u043e \u0444\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443 \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c\u043e\u043c\u0443. \u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0434\u043e\u043b\u0436\u0435\u043d \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u043e\u0432\u0430\u0442\u044c \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0441\u0445\u0435\u043c\u0435 \u043e\u0442\u0432\u0435\u0442\u0430. \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u043a\u043e\u0440\u043e\u0442\u043a\u0438\u0435 locale-neutral ID \u0438 source anchors, \u0431\u0435\u0437 \u043f\u0440\u043e\u0437\u044b \u0432\u043d\u0443\u0442\u0440\u0438 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0439. \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b; \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u041f\u043e\u043b\u0435 procedures \u0441\u043b\u0435\u0434\u0443\u0435\u0442 \u0441\u0445\u0435\u043c\u0435; \u043e\u043d\u043e \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u044e\u044e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044e. \u041e\u0442\u0447\u0451\u0442 \u0438 \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u043d\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u044e\u0442 runtime \u0438\u043b\u0438 \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f.\nPublic output vocabulary (not a selected answer): result: hold | bounded-negative | no-activation. Finding IDs: cross-owner-document-read. Public assessment encodings: asset=document-body; entry=service.py:read_document; trust-boundary=actor-id-vs-record-owner-id; reachable-operation=other-owner-body-return | owner-guarded-body-return; existing-control=auth-guard-only | auth-and-owner-guard; mitigation=owner-deny-before-body-return | preserve-owner-deny-before-return; residual-risk=runtime-and-other-grammar-unverified; priority=high | none; preconditions=authenticated-cross-owner-document-id | authenticated-owner-document-id. Evidence uses contract.json:boundary and actual service.py:N anchors for function, lookup, body return and owner guard when present, in that order. This vocabulary specifies syntax only; choose answers from the reachable source paths.",
+      "response-contract": "security-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "security-flow-v1",
+          "params": {
+            "case": "security-guard-heldout-ru"
+          },
+          "mandatory": true,
+          "metadata-digest": "b2d91bb0574d38128149b04e06ba472d6d1baccc33eddcdb9826875ee65c9291"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "bounded-negative",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {
+            "security-assessment": {
+              "asset": "document-body",
+              "entry": "service.py:read_document",
+              "trust-boundary": "actor-id-vs-record-owner-id",
+              "reachable-operation": "owner-guarded-body-return",
+              "existing-control": "auth-and-owner-guard",
+              "evidence": [
+                "contract.json:boundary",
+                "service.py:1",
+                "service.py:4",
+                "service.py:7",
+                "service.py:5"
+              ],
+              "mitigation": "preserve-owner-deny-before-return",
+              "residual-risk": "runtime-and-other-grammar-unverified",
+              "priority": "none",
+              "preconditions": [
+                "authenticated-owner-document-id"
+              ]
+            }
+          },
+          "permitted-procedures": [
+            "security-assessment"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

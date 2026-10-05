@@ -1141,6 +1141,86 @@ def _cmd_eval_skills_run(args: argparse.Namespace) -> int:
     return 0 if all(row["behavior-passed"] for row in report["runs"] if row["variant"] == "candidate") else 1
 
 
+def _cmd_eval_experiment(args: argparse.Namespace) -> int:
+    try:
+        return _eval_experiment(args)
+    except (ValueError, OSError, KeyError) as error:
+        raise RuntimeError("Cannot evaluate experiment: invalid input or unavailable environment (" + type(error).__name__ + ").") from None
+
+
+def _eval_experiment(args: argparse.Namespace) -> int:
+    from .experiment_evals import capture_snapshot, prepare_baseline, run_experiment, _load
+    from .experiment_gates import promotion_eligibility
+    if args.experiment_command == "snapshot":
+        report = capture_snapshot(Path(args.source), Path(args.output), Path(args.manifest), host=args.host,
+                                  regenerate=args.regenerate)
+    elif args.experiment_command == "assess":
+        from jsonschema import Draft202012Validator, ValidationError
+        from .experiment_evals import load_baseline_reports, suite_fixture_digests
+        evidence = _load(Path(args.report))
+        experiment_path = Path(args.experiment).absolute()
+        experiment = _load(experiment_path)
+        suite_path = Path(args.suite).absolute() if getattr(args, "suite", None) else None
+        suite = _load(suite_path) if suite_path else None
+        try:
+            Draft202012Validator(_load(framework_root() / "schemas/experiment-report.schema.json")).validate(evidence)
+            Draft202012Validator(_load(framework_root() / "schemas/experiment.schema.json")).validate(experiment)
+            if suite is not None:
+                Draft202012Validator(_load(framework_root() / "schemas/experiment-suite.schema.json")).validate(suite)
+        except ValidationError:
+            raise ValueError("invalid experiment assessment evidence") from None
+        baselines, _ = load_baseline_reports(experiment, experiment_path)
+        candidate_suite = ({"suite": suite, "fixture-digests": suite_fixture_digests(suite, suite_path)}
+                           if suite is not None else None)
+        report = promotion_eligibility(evidence, experiment, baseline_reports=baselines,
+                                      candidate_suite=candidate_suite)
+    elif args.experiment_command == "prepare":
+        pilot = getattr(args, "pilot", "foundation")
+        if getattr(args, "target", None) is not None and pilot != "evolution-target":
+            raise ValueError("--target requires --pilot evolution-target")
+        if getattr(args, "structured_output", False) and pilot != "evolution-target":
+            raise ValueError("--structured-output requires --pilot evolution-target")
+        if pilot == "evolution-target":
+            if getattr(args, "target", None) is None or getattr(args, "role", None) is not None:
+                raise ValueError("evolution target requires --target and owns its role/access")
+            from .experiment_targets import prepare_target_baseline
+            report = prepare_target_baseline(Path(args.source), Path(args.output), target=args.target,
+                                             host=args.host, regenerate=args.regenerate,
+                                             structured_output=getattr(args, "structured_output", False))
+        elif pilot == "finite-role":
+            if getattr(args, "role", None) is None:
+                raise ValueError("finite role pilot requires --role")
+            from .experiment_cases import prepare_role_baseline
+            report = prepare_role_baseline(Path(args.source), Path(args.output), role=args.role,
+                                           host=args.host, regenerate=args.regenerate)
+        else:
+            if getattr(args, "role", None) is not None:
+                raise ValueError("--role requires --pilot finite-role")
+            report = prepare_baseline(Path(args.source), Path(args.output), host=args.host, regenerate=args.regenerate)
+    else:
+        from jsonschema import Draft202012Validator, ValidationError
+        suite = _load(Path(args.suite))
+        try:
+            Draft202012Validator(_load(framework_root() / "schemas/experiment-suite.schema.json")).validate(suite)
+        except ValidationError:
+            raise ValueError("invalid experiment suite schema") from None
+        execution = suite.get("execution", {"role": "worker", "access": "workspace-write"})
+        project = project_root(Path(args.path))
+        selected = route(args.host, args.route_class, args.data, role=execution["role"],
+                         access=execution["access"], project=project)
+        if selected.get("role") not in (None, execution["role"]) or selected.get("access") not in (None, execution["access"]):
+            raise ValueError("resolved experiment role or access mismatch")
+        # Access remains independent of role/model and is applied by the native
+        # adapter. The resolver may omit the validated access from its result.
+        selected = {**selected, "role": execution["role"], "access": execution["access"]}
+        report = run_experiment(Path(args.suite), host=args.host, model=selected.get("model"),
+            effort=selected.get("effort"), route=selected, output=Path(args.output), attempts=args.attempts,
+            phase=args.phase, timeout_seconds=args.timeout, binary=args.binary or args.host,
+            experiment=Path(args.experiment) if args.experiment else None)
+    _print_json(report)
+    return 0 if report.get("status") in {None, "pass", "eligible", "prepared"} else 1
+
+
 def _cmd_eval_run(args: argparse.Namespace) -> int:
     report = run_case(
         args.case,
@@ -2234,6 +2314,45 @@ def build_parser() -> argparse.ArgumentParser:
     eval_skills_run.add_argument("--route-class", default="ordinary", choices=["bounded-write", "ordinary", "substantial", "complex"])
     eval_skills_run.add_argument("--data", default="PRIVATE", choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"])
     eval_skills_run.set_defaults(func=_cmd_eval_skills_run)
+
+    eval_experiment = eval_sub.add_parser("experiment", help="Capture and compare immutable full-Core variants")
+    experiment_sub = eval_experiment.add_subparsers(dest="experiment_command", required=True)
+    prepare = experiment_sub.add_parser("prepare")
+    prepare.add_argument("--source", default=".")
+    prepare.add_argument("--output", required=True)
+    prepare.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    prepare.add_argument("--pilot", default="foundation", choices=["foundation", "finite-role", "evolution-target"])
+    prepare.add_argument("--role", choices=["lead", "worker", "reviewer", "validator", "researcher", "steward"])
+    from .experiment_targets import TARGETS
+    prepare.add_argument("--target", choices=sorted(TARGETS))
+    prepare.set_defaults(func=_cmd_eval_experiment)
+    prepare.add_argument("--regenerate", action="store_true", help="Explicitly refresh only staged baseline projections")
+    prepare.add_argument("--structured-output", action="store_true", help="Opt into registered response syntax; requires a new baseline")
+    capture = experiment_sub.add_parser("snapshot")
+    capture.add_argument("--source", default=".")
+    capture.add_argument("--output", required=True)
+    capture.add_argument("--manifest", required=True)
+    capture.add_argument("--regenerate", action="store_true", help="Explicitly prepare projections from unchanged Core")
+    capture.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    capture.set_defaults(func=_cmd_eval_experiment)
+    native_run = experiment_sub.add_parser("run")
+    native_run.add_argument("--suite", required=True)
+    native_run.add_argument("--output", required=True)
+    native_run.add_argument("--experiment")
+    native_run.add_argument("--host", default="codex", choices=["codex", "claude-code", "copilot", "portable"])
+    native_run.add_argument("--binary")
+    native_run.add_argument("--path", default=".")
+    native_run.add_argument("--route-class", default="substantial", choices=["bounded-write", "ordinary", "substantial", "complex"])
+    native_run.add_argument("--data", default="PRIVATE", choices=["PUBLIC", "PRIVATE", "CONFIDENTIAL"])
+    native_run.add_argument("--phase", default="exploratory", choices=["baseline", "exploratory", "confirmatory"])
+    native_run.add_argument("--attempts", type=int)
+    native_run.add_argument("--timeout", type=int, default=180)
+    native_run.set_defaults(func=_cmd_eval_experiment)
+    assess = experiment_sub.add_parser("assess")
+    assess.add_argument("--report", required=True)
+    assess.add_argument("--experiment", required=True)
+    assess.add_argument("--suite", help="Preserved candidate suite and fixtures; required for promotion eligibility")
+    assess.set_defaults(func=_cmd_eval_experiment)
 
     eval_run = eval_sub.add_parser("run", help="Run one eval case", description="Evaluate an execution record against a behavioral eval case.")
     eval_run.add_argument("--case", required=True)

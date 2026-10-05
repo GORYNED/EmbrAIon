@@ -1,0 +1,35 @@
+{
+  "change-id": "knowledge-state",
+  "stage": 2,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "A proposed change or historical record can be rewritten as current project truth, with an unnecessary README obligation.",
+  "proposed-rule": "Label current state, proposals, and history; edit documentation only for requested or materially stale facts.",
+  "capability-paths": [
+    "core/skills/implementation/SKILL.md"
+  ],
+  "scenarios": [],
+  "scenario-proposals": [
+    "proposal-versus-current-state",
+    "historical-release-record",
+    "accurate-readme-control",
+    "materially-stale-instruction-en-ru"
+  ],
+  "expected-result": "Accurate current-state claims and minimal justified documentation changes.",
+  "core-delta": [
+    {
+      "path": "core/skills/implementation/SKILL.md",
+      "before": "d4d30412669ac92c1d881be1b2786c0cbf3d8c157f0f84b2aebcf327fe4e59f2",
+      "after": "34e953d4e3886fb62074e7fb08527fb8164f33f4ca2561f051e4673bba5b98dd"
+    }
+  ],
+  "patch-digest": "dec007c02bb6cb5fa93fa748e005cecc4a68a2d553168ba4d0b88949d662e74f",
+  "actual-evidence": [],
+  "promotion": "blocked-unregistered-scenarios-and-missing-matched-evidence",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established."
+}

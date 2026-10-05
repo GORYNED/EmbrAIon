@@ -1,0 +1,49 @@
+{
+  "change-id": "goal-proof",
+  "stage": 1,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "Passing isolated checks can conceal absent wiring, unused implementation, removed obligations, or an unsupported completion claim.",
+  "proposed-rule": "Connect each completion claim to the requested result and relevant consumer evidence.",
+  "capability-paths": [
+    "core/skills/verification/SKILL.md"
+  ],
+  "scenarios": [
+    "goal-dispatch-positive-en",
+    "goal-target-positive-ru",
+    "goal-clean-negative-en",
+    "goal-comment-negative-ru",
+    "goal-claims-heldout-en",
+    "goal-clean-heldout-ru"
+  ],
+  "scenario-proposals": [
+    "disconnected-wiring",
+    "wrong-target",
+    "missing-consumer",
+    "deleted-duty",
+    "false-completion",
+    "goal-proof-near-negative-en-ru"
+  ],
+  "expected-result": "Detect substantive completion failures and preserve truthful limits without blocking unrelated simple tasks.",
+  "core-delta": [
+    {
+      "path": "core/skills/verification/SKILL.md",
+      "before": "99f0fb0ea8c263cdfb1bc08cf96cbc1fba067478ae974524f1c6a3c0e5d97974",
+      "after": "16c1f610622f56a52024c65b216900a4061405ebcef159c7ee248073260f1b95"
+    }
+  ],
+  "patch-digest": "dc192c89781ebecaef5fddc2d998fb3fa5260910c1bd9f7df90b8b5b3d6a13a4",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r23-goal-exploratory/index.json",
+    "evals/reports/evolution-targets/r23-goal-baseline/index.json",
+    "evals/reports/evolution-targets/r23-goal-matched/index.json"
+  ],
+  "promotion": "deferred-r23-no-independent-targeted-improvement",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "decision-boundary": "All 18 matched pairs tied-pass in this finite profile. Historical checkpoint identity is checker-owned evidence, not independently observed model proof. No Core mutation or approval."
+}

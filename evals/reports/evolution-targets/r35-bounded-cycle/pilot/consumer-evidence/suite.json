@@ -1,0 +1,94 @@
+{
+  "schema-version": 2,
+  "id": "consumer-evidence-target-baseline-r35-diagnostic",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "worker",
+    "access": "workspace-write"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "00ba583b4a61a8ec2e21532432fc14c400f04969b798babc447deaec89fdc49d",
+      "changes": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "consumer-evidence-01",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-01-fixture",
+      "prompt": "Check whether the existing tests protect the public contract in contract.json. Make the smallest test-only improvement if needed; otherwise leave the files unchanged.\nSafe local reads and writes only to these paths are permitted: test_contract.py. Do not execute fixture Python or tests, install dependencies, use the network or publish. Read the relevant source and contract; select conclusions from their actual contents. The final JSON must match the registered response schema. Use short locale-neutral IDs and source anchors, without prose inside values. Earlier messages are optional and must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. The procedures field follows the schema; it does not establish internal activation. The report and static checks do not establish runtime behavior or external actions.\nPublic output vocabulary (not a selected answer): result: changed | unchanged | hold; finding IDs: consumer-disconnected (remaining implementation defect, not a corrected test gap).",
+      "response-contract": "artifact-response-v1",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-01"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "changed",
+          "expected-findings": [
+            "consumer-disconnected"
+          ],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "consumer-evidence-06",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "consumer-evidence-06-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c, \u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u043b\u0438 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0442\u0435\u0441\u0442\u0430 \u0434\u043b\u044f \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u043e\u0433\u043e \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u0430. \u0415\u0441\u043b\u0438 \u0434\u0430, \u043e\u0441\u0442\u0430\u0432\u044c \u0435\u0433\u043e \u043a\u0430\u043a \u0435\u0441\u0442\u044c.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u044b \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0435 \u0447\u0442\u0435\u043d\u0438\u0435 \u0438 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u044d\u0442\u0438\u0445 \u043f\u0443\u0442\u0435\u0439: test_contract.py. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c \u0438 \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439. \u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 \u0440\u0435\u043b\u0435\u0432\u0430\u043d\u0442\u043d\u044b\u0435 source \u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442; \u0432\u044b\u0431\u0435\u0440\u0438 \u0432\u044b\u0432\u043e\u0434\u044b \u043f\u043e \u0444\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443 \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c\u043e\u043c\u0443. \u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0434\u043e\u043b\u0436\u0435\u043d \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u043e\u0432\u0430\u0442\u044c \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0441\u0445\u0435\u043c\u0435 \u043e\u0442\u0432\u0435\u0442\u0430. \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u043a\u043e\u0440\u043e\u0442\u043a\u0438\u0435 locale-neutral ID \u0438 source anchors, \u0431\u0435\u0437 \u043f\u0440\u043e\u0437\u044b \u0432\u043d\u0443\u0442\u0440\u0438 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0439. \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b; \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u041f\u043e\u043b\u0435 procedures \u0441\u043b\u0435\u0434\u0443\u0435\u0442 \u0441\u0445\u0435\u043c\u0435; \u043e\u043d\u043e \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u044e\u044e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044e. \u041e\u0442\u0447\u0451\u0442 \u0438 \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u043d\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u044e\u0442 runtime \u0438\u043b\u0438 \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f.\nPublic output vocabulary (not a selected answer): result: changed | unchanged | hold; finding IDs: consumer-disconnected (remaining implementation defect, not a corrected test gap).",
+      "response-contract": "artifact-response-v1",
+      "allowed-paths": [
+        "test_contract.py"
+      ],
+      "oracles": [
+        {
+          "id": "consumer-evidence-v1",
+          "params": {
+            "case": "consumer-evidence-06"
+          },
+          "mandatory": true,
+          "metadata-digest": "502c6c51bca0dca2c4ba56a99eb45d14cc24a9e2572988fcd4d263a7dde301a8"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "unchanged",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {},
+          "permitted-procedures": [],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

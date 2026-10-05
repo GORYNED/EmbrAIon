@@ -1,0 +1,7 @@
+--- a/core/skills/debugging/SKILL.md
++++ b/core/skills/debugging/SKILL.md
+@@ -24,0 +25,4 @@
++
++## Discriminating experiments
++
++For a material failure, record the leading causal hypothesis, a plausible competing explanation when one exists, and the observation that would distinguish them. Choose the smallest permitted experiment that could falsify the hypothesis. Preserve its result before changing implementation. After repeated failed fixes or contradictory evidence, revisit the causal model and narrow the reproduction rather than repeating the same edit with different wording. Do not require a hypothesis ledger for a self-evident typo; stop when the cause is sufficiently supported and the original failure plus affected adjacent contract is verified.

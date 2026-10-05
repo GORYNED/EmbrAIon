@@ -1,0 +1,87 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-program-status",
+  "updated-at": "2026-10-05T14:53:34.419295+00:00",
+  "scope": "EmbrAIon only; no consumer updates, merge or release",
+  "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "canonical-core-mutated": false,
+  "promotion-authorized": false,
+  "host-boundary": "Named synthetic profile only. Structural schemas do not cover every finite value or earlier message; static graders do not establish runtime behavior, actual internal activation, real external authority or other-host portability. Mandatory uncertainty never becomes pass.",
+  "stages": [
+    {
+      "stage": 0,
+      "status": "foundation-implemented-separate-PR-acceptance-gates",
+      "evidence": [
+        "evals/reports/evolution-targets/r17-review/index.json",
+        "evals/reports/evolution-targets/r21-security-baseline/index.json"
+      ],
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment."
+    },
+    {
+      "stage": 1,
+      "status": "bounded-cycle-closed-see-explicit-decisions",
+      "decisions": {
+        "review-axes": "deferred-no-observed-standalone-benefit-on-R17-cases",
+        "scope-action": "inconclusive-no-candidate-native-run",
+        "goal-proof": "R23 baseline59pass1fail; matched36pass18tied pairs, deferred-no-independent-benefit"
+      },
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment."
+    },
+    {
+      "stage": 2,
+      "status": "bounded-cycle-closed-see-explicit-decisions",
+      "research": "R27 cohort baseline18pass2fail complete with equal captured native context. An unnecessary additional complete-suite baseline15pass4fail1inconclusive is preserved and blocks its planned candidate comparison. No unknown observation is waived; no candidate trial yet.",
+      "debugging": "R29 baseline25planned/completed:4pass20fail1inconclusive;15observations incomplete mandatory measurement. Syntax is separate from causal truth. R28 protocol remains diagnostic. No candidate trial or promotion.",
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment.",
+      "handoff": "R29 baseline40planned/completed:19pass17fail4inconclusive;5observations incomplete mandatory measurement. No candidate trial or promotion.",
+      "consumer": "R31 baseline30planned/completed:2pass20fail8inconclusive;14observations incomplete mandatory measurement. Control preservation proves only the two specified mutation classes, not comprehensive sample coverage. No native candidate, budgets or promotion. Source audit R30 timed out; no independent approval inferred.",
+      "consumer-evidence": [
+        "evals/reports/evolution-targets/r31-consumer-baseline/index.json",
+        "evals/evolution/consumer-audit-r30.json",
+        "evals/evolution/consumer-report-correction.json"
+      ]
+    },
+    {
+      "stage": 3,
+      "status": "bounded-cycle-closed-see-explicit-decisions",
+      "evidence": [
+        "evals/reports/evolution-targets/r21-security-matched/index.json"
+      ],
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment."
+    },
+    {
+      "stage": 4,
+      "status": "bounded-cycle-closed-see-explicit-decisions",
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment.",
+      "evidence": [
+        "evals/reports/evolution-targets/r27-refactor-baseline/index.json"
+      ]
+    },
+    {
+      "stage": 5,
+      "status": "reviewed-corpus-and-contract-protection-procedure-retained",
+      "remaining": "No further work in this bounded cycle; deferred directions require a newly declared experiment."
+    }
+  ],
+  "acceptance-boundary": "Finite-output proxies do not prove useful internal activation, unrestricted task quality, runtime behavior, external publication or behavior on other hosts.",
+  "latest-pushed-ci": {
+    "commit": "2ed24b7d6c1dbf9d3417725f2b27d2b57cbbe0cd",
+    "status": "passed-foundation-head",
+    "validate-run": 37315617140,
+    "docs-run": 37315617373,
+    "boundary": "Later methodology/report changes require current-head CI; this is historical foundation evidence only."
+  },
+  "pull-request": "https://github.com/GORYNED/EmbrAIon/pull/74",
+  "overall": "bounded experiments closed with explicit defer decisions; final PR CI and independent review required before acceptance",
+  "latest-local-validation": {
+    "source-archive": "922ffd240bf35bb7815d3a95ed9a81dc3e9a845c1a57675fe4344137ab7781ff",
+    "unit-tests": 723,
+    "unit-status": "passed",
+    "source-validation": "passed",
+    "strict-docs": "R35-passed",
+    "integration-tests": 43,
+    "integration-status": "R35-passed-with-one-expected-skip",
+    "boundary": "R36 adds the source-derived response-control regression test; final advisory exports and docs require their own validation/current-head CI."
+  },
+  "bounded-cycle-ref": "evals/evolution/bounded-cycle.json"
+}

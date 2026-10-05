@@ -1,0 +1,20 @@
+{
+  "controller-sha256": "4f21092c6c097fe5c5c5b980f91b28f62d45165d7f0bf9d0c47f6fc278d6d757",
+  "initial-controller-sha256": "1b996c0cbd34beea1aaa1a78b35c5ef056fe77564a3e26ae26788daa303bfb2b",
+  "repeat": 1,
+  "ceiling": 1,
+  "targets": [
+    "scope-action",
+    "research-decision",
+    "debug-decision",
+    "checkpoint-decision",
+    "security-flow",
+    "refactor-characterization",
+    "consumer-evidence"
+  ],
+  "concurrency": 2,
+  "changed": "Controller dispatch now uses each immutable suite execution role/access.",
+  "unchanged": "Schemas, source, projections, fixtures, oracles, observers, suites and selected cases.",
+  "comparability": "This is a diagnostic repeat, not a matched candidate comparison. No quality gain over the failed initial dispatch is claimed.",
+  "stop-rule": "Still unreliable directions defer. No further methodology correction or pilot retry."
+}

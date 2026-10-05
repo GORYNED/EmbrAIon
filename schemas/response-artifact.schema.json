@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result", "findings", "questions", "procedures"],
+  "properties": {
+    "result": {"type": "string"},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "procedures": {"type": "object", "additionalProperties": false, "properties": {}, "required": []}
+  }
+}

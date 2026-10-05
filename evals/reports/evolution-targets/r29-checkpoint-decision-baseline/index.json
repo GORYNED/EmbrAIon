@@ -1,0 +1,114 @@
+{
+  "schema-version": 1,
+  "target": "checkpoint-decision",
+  "phase": "baseline",
+  "source-archive": "36bb03d86bcebeba7a6b3760fdb74154dc80a46cc8dc9dc8b073341bcd787fcc",
+  "planned-native-trials": 40,
+  "attempts-per-case": {
+    "checkpoint-decision-01": 5,
+    "checkpoint-decision-02": 5,
+    "checkpoint-decision-03": 10,
+    "checkpoint-decision-04": 5,
+    "checkpoint-decision-05": 10,
+    "checkpoint-decision-06": 5
+  },
+  "counts": {
+    "pass": 19,
+    "fail": 17,
+    "inconclusive": 4
+  },
+  "incomplete-evidence": [
+    {
+      "case": "checkpoint-decision-01",
+      "attempt": 2,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "native-output-unavailable"
+    },
+    {
+      "case": "checkpoint-decision-04",
+      "attempt": 4,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "native-output-unavailable"
+    },
+    {
+      "case": "checkpoint-decision-05",
+      "attempt": 6,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "native-output-unavailable"
+    },
+    {
+      "case": "checkpoint-decision-06",
+      "attempt": 1,
+      "host-status": "completed",
+      "native-failure": null,
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "finite-answer-unavailable"
+    },
+    {
+      "case": "checkpoint-decision-06",
+      "attempt": 5,
+      "host-status": "host-failed",
+      "native-failure": {
+        "source": "codex-error-events-v1",
+        "status": "reported",
+        "reported-events": 2,
+        "categories": [
+          "unclassified"
+        ]
+      },
+      "mandatory-inconclusive-checks": [
+        "observer-availability"
+      ],
+      "observer-reason": "native-output-unavailable"
+    }
+  ],
+  "qualification": "All planned invocations completed; mandatory evidence remains inconclusive. This is not an authoritative baseline for candidate promotion.",
+  "decision": "No candidate native invocation, budgets, confirmation, composition or promotion. Known failed checks remain evidence and cannot be compensated by passes or cost savings.",
+  "coverage": "Bounded synthetic checkpoint freshness, approval provenance and finite action/readiness judgments. No actual runtime verification, real approval, external publication or internal activation proof.",
+  "infrastructure-boundary": "Reported structured native errors remain transport hints, not inferred causes. No selective retry or regrading occurs.",
+  "files": {
+    "candidate-manifest.json": "e4d849966bcf179a3ec198f8fce1a314cfc1473e9374d6bd15c8a210191a238b",
+    "matched-suite.json": "32b575b33187ca3ba8692f8eb4210e3354f33379abf9871962e2e66a5d708894",
+    "qualified-baseline-report.json": "87f5d4cddeb52573381a22d8032f2c782e84ba194c1602a0b2994dff854820c3",
+    "snapshot.json": "42f07747cad6ad77c87966309b658208c1fb3f3863338f376d3853e1dd2a647f",
+    "suite.json": "579444152d2b4f42fbd8c7dd1763adbf8800e76251ae5f8ac47e445ed49caafe"
+  },
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "snapshots": "Exact manifests retained. Immutable source snapshots remain in the R29 local controller."
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://embraion.dev/schemas/core-snapshot.schema.json",
+  "title": "Immutable full Core and host projection identity",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema-version", "kind", "host", "source-commit", "created-utc", "files", "core-digest", "generator-digest", "projection-digest", "generator-runtime-digest", "preparation", "activation", "digest"],
+  "properties": {
+    "schema-version": {"const": 2}, "kind": {"const": "core-snapshot"},
+    "host": {"enum": ["codex", "claude-code", "copilot", "portable"]},
+    "source-commit": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64}|unverified)$"},
+    "created-utc": {"type": "string", "minLength": 1},
+    "files": {"type": "object", "minProperties": 1, "maxProperties": 1500, "additionalProperties": {"$ref": "#/$defs/digest"}},
+    "core-digest": {"$ref": "#/$defs/digest"}, "generator-digest": {"$ref": "#/$defs/digest"},
+    "projection-digest": {"$ref": "#/$defs/digest"}, "generator-runtime-digest": {"$ref": "#/$defs/digest"},
+    "digest": {"$ref": "#/$defs/digest"}, "activation": {"const": "unverified"},
+    "preparation": {"oneOf": [{"type": "null"}, {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "source-manifest-digest", "derived-delta"],
+      "properties": {
+        "kind": {"const": "explicit-projection-refresh"}, "source-manifest-digest": {"$ref": "#/$defs/digest"},
+        "derived-delta": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["path", "before", "after"], "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "before": {"oneOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]},
+            "after": {"oneOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]}
+          }}}
+      }
+    }]}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

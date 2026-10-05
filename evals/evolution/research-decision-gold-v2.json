@@ -1,0 +1,26 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "research-decision",
+  "contract-version": 2,
+  "reviewed-registry-sha256": "0dbda308de3dc6ef395156b932db8e80eef4d3bfabaaaacaef65fb6e7b5dcc13",
+  "reviewed-observer-sha256": "d19dc19de8e8894031e483fd03bc99604b5dfff1bb6bfc4267a27fabd32f792f",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "No material finding in outcome-neutral source judgment protocol; syntax, semantic truth and known disclosures checked separately.",
+  "coverage": "Four static source-derived EN/RU judgments; no selected answer or source-case identity in candidate-facing prompt.",
+  "not-proven": [
+    "Native candidate benefit",
+    "General reuse quality",
+    "Runtime behavior",
+    "Internal activation",
+    "Full PR approval",
+    "Core promotion"
+  ],
+  "evidence-source": "foundation_review_r5 bounded pretrial review in this task"
+}

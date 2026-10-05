@@ -1,0 +1,26 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "security-flow",
+  "contract-version": 2,
+  "reviewed-registry-sha256": "6c64b68472b0307ee1152b71c38ed15f22f6ec931d903a01b70c3d596353bf80",
+  "reviewed-oracle-sha256": "2b9ef7024c020107551a1a22e81d2e710cf8ff3ca18b1ccf2bd96820e3109bb6",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "no-material-findings-in-bounded-gold-and-registry-drift-rereview",
+  "coverage": "Six source/path facts, closed EN/RU protocol, metadata unavailable handling, pre/post grader digest checks and preservation of independent observed violations.",
+  "residual-limit": "A trusted registry changed and restored entirely inside one grade call can evade before/after hashes; candidate writable scope excludes the registry.",
+  "not-proven": [
+    "No native candidate benefit",
+    "No runtime assurance",
+    "No actual skill activation",
+    "No full PR or CI approval",
+    "No Core promotion"
+  ],
+  "evidence-source": "Read-only foundation_review_r5 R20/R21 bounded rereview in this task; earlier P2 findings were remediated and reviewed."
+}

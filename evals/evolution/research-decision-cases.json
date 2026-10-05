@@ -1,0 +1,85 @@
+{
+  "schema-version": 1,
+  "contract-version": 2,
+  "target": "research-decision",
+  "execution": {
+    "role": "researcher",
+    "access": "read-only"
+  },
+  "risk": "ordinary",
+  "coverage": "Outcome-neutral finite syntax over a bounded synthetic repository choice; source truth from research-choice-v1, no actual external research or internal activation.",
+  "protocol": {
+    "en": "Use only request.json, inventory.json, ownership.json, existing.py, and consumer.py for this synthetic repository decision. Do not execute source, use external research, or change files. The allowed decisions are adopt (reuse an existing capability unchanged), extend (improve an existing compatible capability), and build (create a new owned module or adapter). These names define actions, not source predicates. Return one final JSON object with exactly decision, findings, facts, evidence, questions, procedures. decision is adopt|extend|build. findings is a unique array of string IDs selected from partial-capability, incompatible-api, missing-capability; use [] when none apply. facts contains exactly capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editable (true|false). evidence is a unique array of six source anchors, in any order: existing.py:<function-definition-line>, existing.py:<return-line>, consumer.py:<return-line>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. Line numbers start at one. questions is []; procedures is {}. Do not add prose or other keys. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. Stop when these local facts support a bounded choice; do not claim general reuse quality, runtime behavior, or internal activation.",
+    "ru": "Для этого синтетического решения используй только request.json, inventory.json, ownership.json, existing.py и consumer.py. Не исполняй исходный код, не проводи внешнее исследование и не меняй файлы. Допустимые решения: adopt (повторно использовать существующую capability без изменений), extend (улучшить существующую совместимую capability), build (создать новый принадлежащий проекту модуль или адаптер). Эти названия описывают действия, а не условия в исходном коде. Верни один финальный JSON ровно с decision, findings, facts, evidence, questions, procedures. decision — adopt|extend|build. findings — уникальный массив строковых ID из partial-capability, incompatible-api, missing-capability; [] если они не применимы. facts содержит ровно capability (complete|partial|incompatible|absent), signature (one-arg|two-arg|none), consumer (one-arg-call), editable (true|false). evidence — уникальный массив из шести anchors в любом порядке: existing.py:<строка определения функции>, existing.py:<строка return>, consumer.py:<строка return>, request.json:required, inventory.json:declared-signature, ownership.json:existing-editable. Номера строк начинаются с 1. questions — []; procedures — {}. Не добавляй прозу или другие поля. Необязательные предыдущие progress сообщения — только точный JSON с progress reading, checking или comparing. Остановись, когда локальных фактов достаточно для ограниченного решения; не утверждай общую пригодность повторного использования, runtime или внутреннюю активацию."
+  },
+  "cases": [
+    {
+      "id": "research-decision-01",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Choose a bounded implementation approach for the supplied requirement. Examine source, API, inventory, and ownership evidence.",
+      "files": {
+        "existing.py": "def slugify(text, separator):\n    return text.lower().replace(\" \", separator)\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"two-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":false,\"new-module-allowed\":true}\n"
+      },
+      "source-case": "research-incompatible-calibration-en"
+    },
+    {
+      "id": "research-decision-02",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Выбери ограниченный способ реализации требования на основании локального кода, API, inventory и ownership.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower()\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "source-case": "research-extend-calibration-ru"
+    },
+    {
+      "id": "research-decision-03",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Choose a bounded implementation approach using the local capability and its actual consumer.",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower().replace(\" \", \"-\")\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "source-case": "research-adopt-calibration-en"
+    },
+    {
+      "id": "research-decision-04",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "oracle": "research-choice-v1",
+      "allowed-paths": [],
+      "prompt": "Какой ограниченный следующий шаг поддерживают существующая capability, consumer и контракт?",
+      "files": {
+        "existing.py": "def slugify(text):\n    return text.lower().replace(\" \", \"-\")\n# Matching words alone would not prove API compatibility.\n",
+        "consumer.py": "from existing import slugify\n\n\ndef publish(text):\n    return slugify(text)\n# A comment is not a call.\n",
+        "request.json": "{\"schema-version\":1,\"required\":{\"operation\":\"slugify\",\"input\":\"str\",\"output\":\"lowercase-then-ascii-space-to-hyphen\",\"consumer-call\":\"one-positional-arg\"}}\n",
+        "inventory.json": "{\"component\":\"existing.py\",\"declared-signature\":\"one-arg\"}\n",
+        "ownership.json": "{\"existing-editable\":true,\"new-module-allowed\":true}\n"
+      },
+      "source-case": "research-adopt-heldout-ru"
+    }
+  ]
+}

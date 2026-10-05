@@ -1,0 +1,111 @@
+{
+  "schema-version": 2,
+  "id": "debug-decision-target-baseline-r35-qualified-cohort-2",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "analyst",
+    "access": "read-only"
+  },
+  "metric-rubric": "debug-decision-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "3e37118d42788e31468baf87448041b03930658d3c7c90d4391b072093a81f71",
+      "changes": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "debug-decision-03",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "ordinary",
+      "fixture": "debug-decision-03-fixture",
+      "prompt": "Assess the direct one-line mismatch using the recorded observation.\nSafe local reads and writes only to these paths are permitted: none. Do not execute fixture Python or tests, install dependencies, use the network or publish. Read the relevant source and contract; select conclusions from their actual contents. The final JSON must match the registered response schema. Use short locale-neutral IDs and source anchors, without prose inside values. Earlier messages are optional and must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. The procedures field follows the schema; it does not establish internal activation. The report and static checks do not establish runtime behavior or external actions.\nPublic output vocabulary (not a selected answer): finding IDs: unsupported-leading-hypothesis, repeated-failed-fix. Evidence uses source.py:N for relevant compute/cached returns and run branch, contract.json:expected, observations.json:direct, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Recorded observations and attempts are supplied synthetic evidence, not proof of actual executions or historical provenance.",
+      "response-contract": "debug-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "debug-hypothesis-v1",
+          "params": {
+            "case": "debug-typo-control-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "8a16b8d0c50dc8e7569fab591d3e8a2e48e4ed710addccce3fb89027d37ff8a1"
+        }
+      ],
+      "observer": {
+        "id": "debug-decision-stream-v1",
+        "params": {
+          "expected-cause": "typo",
+          "expected-findings": [],
+          "expected-facts": {
+            "mode": "simple",
+            "compute-step": 2,
+            "cache-step": null,
+            "cause": "typo",
+            "leading": "none",
+            "attempt-count": 0
+          },
+          "expected-evidence": [
+            "source.py:2",
+            "contract.json:expected",
+            "observations.json:direct"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "debug-decision-04",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "debug-decision-04-fixture",
+      "prompt": "Assess the two paths and recorded observations for a bounded causal judgment.\nSafe local reads and writes only to these paths are permitted: none. Do not execute fixture Python or tests, install dependencies, use the network or publish. Read the relevant source and contract; select conclusions from their actual contents. The final JSON must match the registered response schema. Use short locale-neutral IDs and source anchors, without prose inside values. Earlier messages are optional and must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. The procedures field follows the schema; it does not establish internal activation. The report and static checks do not establish runtime behavior or external actions.\nPublic output vocabulary (not a selected answer): finding IDs: unsupported-leading-hypothesis, repeated-failed-fix. Evidence uses source.py:N for relevant compute/cached returns and run branch, contract.json:expected, observations.json:direct, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Recorded observations and attempts are supplied synthetic evidence, not proof of actual executions or historical provenance.",
+      "response-contract": "debug-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "debug-hypothesis-v1",
+          "params": {
+            "case": "debug-competing-compute-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "8a16b8d0c50dc8e7569fab591d3e8a2e48e4ed710addccce3fb89027d37ff8a1"
+        }
+      ],
+      "observer": {
+        "id": "debug-decision-stream-v1",
+        "params": {
+          "expected-cause": "compute",
+          "expected-findings": [],
+          "expected-facts": {
+            "mode": "complex",
+            "compute-step": 2,
+            "cache-step": 1,
+            "cause": "compute",
+            "leading": "compute",
+            "attempt-count": 0
+          },
+          "expected-evidence": [
+            "source.py:2",
+            "source.py:6",
+            "source.py:10",
+            "contract.json:expected",
+            "observations.json:cache-off",
+            "observations.json:cache-on",
+            "narrative.json:leading",
+            "attempts.json:records"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

@@ -164,6 +164,35 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
             }
         )
 
+    # Registered experiment artifacts are data, never executable test commands.
+    corpus = root / "evals/corpus/failures.json"
+    if corpus.is_file():
+        try:
+            from .experiment_gates import validate_failure_corpus
+            from .eval_oracles import oracle_metadata
+            data = read_json(corpus)
+            messages = _schema_errors(data, root / "schemas/failure-corpus.schema.json")
+            messages += validate_failure_corpus(data)
+            for entry in data.get("entries", []):
+                oracle_metadata(entry["oracle-id"])
+            if messages:
+                add("failure-corpus", "evals/corpus/failures.json", "Invalid corpus contract or lifecycle")
+        except (OSError, ValueError, KeyError, TypeError):
+            add("failure-corpus", "evals/corpus/failures.json", "Invalid corpus or unknown oracle")
+
+    for directory in ("evals/experiments", "evals/baselines", "evals/reports"):
+        for path in sorted((root / directory).glob("*.json")):
+            try:
+                data = read_json(path)
+                schema_name = ("core-snapshot" if data.get("kind") == "core-snapshot" else
+                               "experiment-report" if data.get("evidence-kind") == "live-native-full-core" else
+                               "experiment-suite" if data.get("schema-version") == 2 and "variants" in data else
+                               "experiment" if data.get("schema-version") == 1 and "candidate" in data else None)
+                if schema_name and _schema_errors(data, root / f"schemas/{schema_name}.schema.json"):
+                    add("experiment-schema", path.relative_to(root).as_posix(), "Invalid experiment artifact")
+            except (OSError, ValueError, TypeError, AttributeError):
+                add("experiment-schema", path.relative_to(root).as_posix(), "Invalid experiment JSON")
+
     for path in find_model_agnostic_violations(root):
         add(
             "model-agnostic-invariant",

@@ -1,0 +1,7 @@
+--- a/core/skills/orchestration/SKILL.md
++++ b/core/skills/orchestration/SKILL.md
+@@ -19,0 +20,4 @@
++
++## Current action contract
++
++Before dispatch or a dependent action, identify the current requested outcome, target, and authorized action. Reconcile later corrections or cancellations with earlier approvals and checkpoints; historical plans record work but grant no new authority. Keep a dependency update, an independently requested product change, and publication as separate actions under the canonical delivery controls. Ask only when a material unresolved ambiguity prevents the next action. Do not infer an obligation to rewrite project documentation from a dependency update.

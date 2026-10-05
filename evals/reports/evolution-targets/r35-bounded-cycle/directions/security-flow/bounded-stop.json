@@ -1,0 +1,627 @@
+{
+  "decision": "defer",
+  "reason": "A mandatory baseline evidence gap already blocks the entire comparison; remaining trials stopped without replacement or selective retry.",
+  "mandatory-gaps-observed": [
+    {
+      "cohort": "cohort-3",
+      "case": "security-guard-heldout-ru",
+      "attempt": 5,
+      "mandatory-inconclusive": [
+        "observer-availability"
+      ],
+      "measurement": "inconclusive"
+    }
+  ],
+  "journals": [
+    {
+      "cohort": "cohort-1",
+      "planned": [
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 10
+        }
+      ],
+      "completed": [
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 5,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 6,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 7,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 8,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 9,
+          "status": "fail"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "variant": "baseline",
+          "attempt": 10,
+          "status": "fail"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 5,
+          "status": "pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 6,
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "cohort": "cohort-2",
+      "planned": [
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 10
+        }
+      ],
+      "completed": [
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 5,
+          "status": "pass"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 6,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 7,
+          "status": "pass"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 8,
+          "status": "pass"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 9,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "variant": "baseline",
+          "attempt": 10,
+          "status": "pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "cohort": "cohort-3",
+      "planned": [
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 10
+        }
+      ],
+      "completed": [
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 5,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 6,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 7,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 8,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 9,
+          "status": "pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "variant": "baseline",
+          "attempt": 10,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 1,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 2,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 3,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 4,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 5,
+          "status": "inconclusive"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 6,
+          "status": "fail"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 7,
+          "status": "fail"
+        }
+      ]
+    }
+  ],
+  "candidate-run": "not-run",
+  "budgets": "not-frozen",
+  "confirmation": "not-run",
+  "promotion": "blocked",
+  "stopped-processes": 10,
+  "boundary": "Incomplete baseline. Unfinished invocations are unassessed, not failed or passed Core behavior. Completed graded checks and known violations remain in original journals.",
+  "privacy": "Raw unfinished observations and temporary workspaces remain local; no credentials or raw model messages are published."
+}

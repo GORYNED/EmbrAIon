@@ -1,0 +1,167 @@
+{
+  "schema-version": 1,
+  "contract-version": 1,
+  "target": "debug-hypothesis",
+  "execution": {
+    "role": "analyst",
+    "access": "read-only"
+  },
+  "risk": "ordinary",
+  "coverage": "Pre-recorded synthetic integer branch observations and bounded source snapshots; no actual runtime, general debugging, or internal activation.",
+  "protocol": {
+    "en": "This is a bounded synthetic debugging assessment. Read source.py, contract.json, observations.json, narrative.json, and attempts.json; use the pre-recorded observations, not a new command or self-reported causal claim. Do not execute fixture code, generate shell commands, change files, or infer real runtime proof. An optional projected debugging skill may guide the method if present. Return one final JSON object with exactly result, findings, questions, procedures. result is compute-cause, cache-cause, or typo-cause. findings is an array of STRING IDs chosen from unsupported-leading-hypothesis and repeated-failed-fix. questions is []. procedures contains exactly debugging. For a competing-hypothesis fixture its body has exactly cause (compute|cache), leading (compute|cache), competing (compute|cache), narrative (retain|revise), discriminator (cache-on-vs-off), attempts (none|repeated-compute), next-step (fix-compute|fix-cache), and evidence. Evidence has exactly eight ordered anchors: source.py:<compute-return-line>, source.py:<cached-return-line>, source.py:<run-if-line>, contract.json:expected, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. For an obvious direct typo with no competing hypothesis, debugging has only cause (typo), next-step (fix-typo), evidence of exactly source.py:<compute-return-line>, contract.json:expected, observations.json:direct in that order. Line numbers start at one. No other fields, prose, finding objects, or procedures. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. This result is a fixture-only causal judgment, not general debugging or evidence that historical fixes really ran. The finite labels encode supplied evidence only: cache-off failing the expected result while cache-on matches supports compute; the reverse supports cache. If that supported cause differs from narrative.leading, encode narrative revise and finding unsupported-leading-hypothesis; otherwise retain without that finding. Two source-consistent recorded compute edits that preserve the failing cache-on observation encode attempts repeated-compute and finding repeated-failed-fix. This finding means recorded ineffective edits only, never proof of real historical execution. With no recorded edits encode attempts none. For the direct typo fixture use only its compact procedure; no hypothesis ledger. next-step names the supported branch, not a command or authority to apply a fix.",
+    "ru": "Это ограниченная синтетическая оценка debugging. Прочитай source.py, contract.json, observations.json, narrative.json и attempts.json; опирайся на заранее записанные наблюдения, а не на новую команду или самоописание причины. Не исполняй код fixture, не генерируй shell-команды, не меняй файлы и не утверждай реальное runtime-доказательство. Необязательный projected debugging skill можно использовать, если он есть. Верни один финальный JSON ровно с result, findings, questions, procedures. result — compute-cause, cache-cause или typo-cause. findings — массив СТРОКОВЫХ ID из unsupported-leading-hypothesis и repeated-failed-fix. questions — []. procedures содержит ровно debugging. Для fixture с конкурирующими гипотезами body содержит ровно cause (compute|cache), leading (compute|cache), competing (compute|cache), narrative (retain|revise), discriminator (cache-on-vs-off), attempts (none|repeated-compute), next-step (fix-compute|fix-cache), evidence. Evidence — ровно восемь anchors по порядку: source.py:<строка return compute>, source.py:<строка return cached>, source.py:<строка if в run>, contract.json:expected, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Для очевидной прямой опечатки без конкурирующей гипотезы debugging имеет только cause (typo), next-step (fix-typo), evidence ровно из source.py:<строка return compute>, contract.json:expected, observations.json:direct по порядку. Номера строк начинаются с 1. Нет других полей, прозы, объектов findings или procedures. Необязательные предыдущие progress сообщения — только точный JSON с progress reading, checking или comparing. Результат относится только к fixture, не доказывает общий debugging или реальность исторических исправлений. Конечные метки кодируют только предоставленное evidence: если cache-off не совпадает с expected, а cache-on совпадает, поддерживается compute; обратная ситуация поддерживает cache. Если подтверждённая причина отличается от narrative.leading, укажи narrative revise и finding unsupported-leading-hypothesis; иначе retain без этого finding. Две согласованные с исходным кодом записанные правки compute, сохраняющие неудачное наблюдение cache-on, означают attempts repeated-compute и finding repeated-failed-fix. Этот finding означает только записанные неэффективные правки, не доказательство реального исторического исполнения. Без записанных правок attempts none. Для прямой опечатки используй только компактную процедуру без журнала гипотез. next-step называет подтверждённую ветвь, а не команду или разрешение исправления."
+  },
+  "cases": [
+    {
+      "id": "debug-competing-compute-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess competing compute and cache causes using the recorded cache-on and cache-off probes.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n\n\ndef cached(value):\n    return value + 1\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"983569c7c43ea25f45f2aedfde7b9089e7d55880a9014a9ed23f1b7b7f8b76c2\",\"input\":41,\"cache-off\":43,\"cache-on\":42}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "expected-facts": {
+        "mode": "complex",
+        "compute-step": 2,
+        "cache-step": 1,
+        "cause": "compute",
+        "leading": "compute",
+        "attempt-count": 0
+      },
+      "gold-rationale": "Cache-off fails while cache-on passes, so the compute branch is the supported cause."
+    },
+    {
+      "id": "debug-contradictory-cache-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Сопоставь прежнюю версию причины с заранее записанными наблюдениями двух ветвей.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 1\n\n\ndef cached(value):\n    return value + 2\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"input\":41,\"cache-off\":42,\"cache-on\":43}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "expected-facts": {
+        "mode": "complex",
+        "compute-step": 1,
+        "cache-step": 2,
+        "cause": "cache",
+        "leading": "compute",
+        "attempt-count": 0
+      },
+      "gold-rationale": "The leading compute narrative conflicts with cache-off passing and cache-on failing; revise to cache."
+    },
+    {
+      "id": "debug-repeated-cache-en",
+      "language": "en",
+      "polarity": "positive",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess two recorded compute-targeted fix attempts and the discriminating current probes.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 1\n\n\ndef cached(value):\n    return value + 2\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"input\":41,\"cache-off\":42,\"cache-on\":43}\n",
+        "narrative.json": "{\"leading\":\"compute\",\"competing\":\"cache\"}\n",
+        "attempts.json": "{\"records\":[{\"edit-target\":\"compute\",\"source\":\"def compute(value):\\n    return value + 2\\n\\n\\ndef cached(value):\\n    return value + 2\\n\\n\\ndef run(value, use_cache):\\n    if use_cache:\\n        return cached(value)\\n    return compute(value)\\n\",\"revision\":\"fcfe862c202ddd8ebff144070cfae5e1dfde16b1c900793604ea418d38c71f67\",\"observed-cache-on\":43},{\"edit-target\":\"compute\",\"source\":\"def compute(value):\\n    return value + 1\\n\\n\\ndef cached(value):\\n    return value + 2\\n\\n\\ndef run(value, use_cache):\\n    if use_cache:\\n        return cached(value)\\n    return compute(value)\\n\",\"revision\":\"d55befb3d10994c5a2ef7bf49811debe905b0162dc80746a53b4f4b60c8bf674\",\"observed-cache-on\":43}]}\n"
+      },
+      "expected-facts": {
+        "mode": "complex",
+        "compute-step": 1,
+        "cache-step": 2,
+        "cause": "cache",
+        "leading": "compute",
+        "attempt-count": 2
+      },
+      "gold-rationale": "Both source snapshots preserve a failing cache-on branch; repeated compute edits did not address the cache cause."
+    },
+    {
+      "id": "debug-typo-control-en",
+      "language": "en",
+      "polarity": "negative",
+      "split": "calibration",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Assess the direct one-line mismatch using the recorded direct observation.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"compute\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"e71dac9e776fd46cb68622231859f97c84923ebafd71884609fc98cde0fc1f22\",\"input\":41,\"direct\":43}\n",
+        "narrative.json": "{\"leading\":\"none\",\"competing\":\"none\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "expected-facts": {
+        "mode": "simple",
+        "compute-step": 2,
+        "cache-step": null,
+        "cause": "typo",
+        "leading": "none",
+        "attempt-count": 0
+      },
+      "gold-rationale": "The simple return adds two instead of one and needs no competing-hypothesis ledger."
+    },
+    {
+      "id": "debug-competing-heldout-ru",
+      "language": "ru",
+      "polarity": "positive",
+      "split": "held-out",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени две ветви и прежнюю гипотезу по записанным наблюдениям без запуска кода.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 1\n\n\ndef cached(value):\n    return value + 2\n\n\ndef run(value, use_cache):\n    if use_cache:\n        return cached(value)\n    return compute(value)\n# The comment does not change either branch.\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"run\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"91ba4842e5eea7bd85ca0d6afd3155fe20c6efac4205030da7f78c97fa80a13a\",\"input\":41,\"cache-off\":42,\"cache-on\":43}\n",
+        "narrative.json": "{\"leading\":\"cache\",\"competing\":\"compute\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "expected-facts": {
+        "mode": "complex",
+        "compute-step": 1,
+        "cache-step": 2,
+        "cause": "cache",
+        "leading": "cache",
+        "attempt-count": 0
+      },
+      "gold-rationale": "Cache-on fails while cache-off passes and the prior cache hypothesis is supported."
+    },
+    {
+      "id": "debug-typo-heldout-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "split": "held-out",
+      "oracle": "debug-hypothesis-v1",
+      "allowed-paths": [],
+      "prompt": "Оцени прямую очевидную ошибку без лишнего журнала гипотез.",
+      "files": {
+        "source.py": "def compute(value):\n    return value + 2\n# A nearby note is not a second hypothesis.\n",
+        "contract.json": "{\"schema-version\":1,\"input\":41,\"expected\":42,\"entry\":\"compute\"}\n",
+        "observations.json": "{\"schema-version\":1,\"source-revision\":\"80a4a65c03ca21e039701fcb7e90a481a0b257894c4c8b30f01e326ce3531bfa\",\"input\":41,\"direct\":43}\n",
+        "narrative.json": "{\"leading\":\"none\",\"competing\":\"none\"}\n",
+        "attempts.json": "{\"records\":[]}\n"
+      },
+      "expected-facts": {
+        "mode": "simple",
+        "compute-step": 2,
+        "cache-step": null,
+        "cause": "typo",
+        "leading": "none",
+        "attempt-count": 0
+      },
+      "gold-rationale": "The direct return adds two; the trailing comment is inert and no hypothesis ledger is needed."
+    }
+  ]
+}

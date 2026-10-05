@@ -1,0 +1,359 @@
+{
+  "kind": "deterministic-response-controls",
+  "status": "pass",
+  "controls": [
+    {
+      "target": "scope-action",
+      "case": "scope-positive-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "scope-action",
+      "case": "scope-positive-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "scope-action",
+      "case": "scope-negative-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "scope-action",
+      "case": "scope-negative-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "scope-action",
+      "case": "scope-held-out-positive-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "scope-action",
+      "case": "scope-held-out-negative-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-01",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-02",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-03",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-04",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-05",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "case": "consumer-evidence-06",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-move-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-move-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-typo-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-heldout-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-typo-ru",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "case": "refactor-heldout-en",
+      "response-contract": "artifact-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "research-decision",
+      "case": "research-decision-01",
+      "response-contract": "research-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "research-decision",
+      "case": "research-decision-02",
+      "response-contract": "research-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "research-decision",
+      "case": "research-decision-03",
+      "response-contract": "research-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "research-decision",
+      "case": "research-decision-04",
+      "response-contract": "research-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "case": "debug-decision-01",
+      "response-contract": "debug-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "case": "debug-decision-02",
+      "response-contract": "debug-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "case": "debug-decision-03",
+      "response-contract": "debug-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "case": "debug-decision-04",
+      "response-contract": "debug-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "case": "debug-decision-05",
+      "response-contract": "debug-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-01",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-02",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-03",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-04",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-05",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "case": "checkpoint-decision-06",
+      "response-contract": "checkpoint-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-owner-positive-en",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-owner-positive-ru",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-guard-negative-en",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-inert-negative-ru",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-late-guard-heldout-en",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "case": "security-guard-heldout-ru",
+      "response-contract": "security-response-v1",
+      "source-derived-correct-control-schema-valid": true,
+      "correct-control-observer-status": "pass",
+      "registered-controls-and-mutations": "pass",
+      "status": "pass"
+    }
+  ],
+  "coverage": "Correct source-derived answers satisfy both public syntax and trusted observer; existing known mutations are detected. Does not establish live stream reliability, artifact behavior or other-host portability.",
+  "gold-boundary": "Selected correct values remain controller-owned and are not included in this public report or response schemas."
+}

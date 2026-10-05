@@ -1,0 +1,109 @@
+{
+  "pilot": "repeat",
+  "controller-sha256": "4f21092c6c097fe5c5c5b980f91b28f62d45165d7f0bf9d0c47f6fc278d6d757",
+  "results": [
+    {
+      "target": "scope-action",
+      "exit": 0,
+      "qualified-measurement": false,
+      "status": "inconclusive",
+      "counts": {
+        "pass": 0,
+        "fail": 0,
+        "inconclusive": 2
+      },
+      "report-sha256": "1ae7287e80f7551f462fc916d02411fb4ca92a17c4e491d3bbd302342f7eaa2e",
+      "limitations": [
+        {
+          "reason": "native-tools-preflight-unavailable"
+        }
+      ],
+      "preflight-status": "inconclusive"
+    },
+    {
+      "target": "research-decision",
+      "exit": 0,
+      "qualified-measurement": false,
+      "status": "fail",
+      "counts": {
+        "pass": 0,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "report-sha256": "da63a77b485084437e006801b559ec56537ef2d26283c081079c7e7119fd41b5",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "debug-decision",
+      "exit": 0,
+      "qualified-measurement": true,
+      "status": "fail",
+      "counts": {
+        "pass": 0,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "report-sha256": "4f2f1c595afcb8875cc0df2f981be8c6ccd854c8604b96aafb8efd4414b67a6f",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "checkpoint-decision",
+      "exit": 0,
+      "qualified-measurement": true,
+      "status": "fail",
+      "counts": {
+        "pass": 1,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "report-sha256": "680db8e720c914d9af24ee9b12a30c2578a044e7f8a36ee86c03a6449560f034",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "security-flow",
+      "exit": 0,
+      "qualified-measurement": true,
+      "status": "fail",
+      "counts": {
+        "pass": 1,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "report-sha256": "e64150b685fb608f555acdac4705e374cde29d32e8e6280175a8dff206a98890",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "refactor-characterization",
+      "exit": 0,
+      "qualified-measurement": false,
+      "status": "inconclusive",
+      "counts": {
+        "pass": 1,
+        "fail": 0,
+        "inconclusive": 1
+      },
+      "report-sha256": "4e33e07685b5cd7a83f5dbe5c9dcefda972fd2848e39a8630058a02ea30a296b",
+      "limitations": [],
+      "preflight-status": "pass"
+    },
+    {
+      "target": "consumer-evidence",
+      "exit": 0,
+      "qualified-measurement": false,
+      "status": "fail",
+      "counts": {
+        "pass": 0,
+        "fail": 2,
+        "inconclusive": 0
+      },
+      "report-sha256": "a41df291aa5aced06e537d53208a4bac8091084fb85e3d4c04bf0f9f48885867",
+      "limitations": [],
+      "preflight-status": "pass"
+    }
+  ],
+  "promotion": "not-eligible-diagnostic"
+}

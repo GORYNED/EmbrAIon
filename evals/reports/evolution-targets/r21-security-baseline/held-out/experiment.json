@@ -1,0 +1,82 @@
+{
+  "schema-version": 1,
+  "id": "security-assessment-r21-held-out",
+  "baseline": "baseline",
+  "candidate": "security-assessment",
+  "suite-digest": "55dcf4f02b265d9e06eb3df76ca9ef3c62a68f812d7028359de8377b613e4103",
+  "change-ids": [
+    "security-assessment"
+  ],
+  "traceability": [
+    {
+      "change-id": "security-assessment",
+      "source-kind": "new-contract",
+      "observed-problem": "New general-purpose security assessment contract requires reachable threat evidence and excludes speculative filename-based findings.",
+      "proposed-rule": "Add a conditional capability to existing roles; retain canonical security rules and independent access/routing.",
+      "capability-paths": [
+        "core/skills/security-assessment/SKILL.md",
+        "core/catalog.yaml"
+      ],
+      "expected-result": "Supported eight-part threat findings, useful mitigations, and no unnecessary activation or new authority.",
+      "scenarios": [
+        "security-late-guard-heldout-en",
+        "security-guard-heldout-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "security-late-guard-heldout-en",
+    "security-guard-heldout-ru"
+  ],
+  "target-cases": [
+    "security-late-guard-heldout-en",
+    "security-guard-heldout-ru"
+  ],
+  "cases": [
+    {
+      "case": "security-late-guard-heldout-en",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 55956.0,
+        "latency": 14.117600000000001
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-late-guard-heldout-en-r21-budget"
+    },
+    {
+      "case": "security-guard-heldout-ru",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 29075.9,
+        "latency": 30.5393
+      },
+      "baseline-manifest-digest": "ce05463f734a6948e521467e85018bdd563458165e143db1ecf5914fe89068b1",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "security-guard-heldout-ru-r21-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "qualified-baseline-report.json",
+      "digest": "22d50d4a10a64bcd54e86e00adadc72bc36a5c7cf3705fadac7d933f24e370d0",
+      "suite-path": "suite.json",
+      "suite-digest": "8ad16285bd9de0d3841bbcb2c844cedebbf8b703a6ee6a553d33a0dd9d31627e"
+    }
+  ]
+}

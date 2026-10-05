@@ -1,0 +1,134 @@
+{
+  "schema-version": 2,
+  "id": "debug-decision-target-baseline-r35-qualified-cohort-1-matched",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "analyst",
+    "access": "read-only"
+  },
+  "metric-rubric": "debug-decision-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "3e37118d42788e31468baf87448041b03930658d3c7c90d4391b072093a81f71",
+      "changes": []
+    },
+    {
+      "id": "debugging-hypotheses",
+      "snapshot": "candidate-snapshot",
+      "manifest": "candidate-manifest.json",
+      "manifest-digest": "39e1cada5c9a1f6203f1e59094d69fd081f387f9f1ff9fc26d72b7887c8cb0be",
+      "changes": [
+        {
+          "path": "core/skills/debugging/SKILL.md",
+          "before": "6a80e36a9692b9b1e31b77bbb1d27309eb5734a01589127011ff2132daf5b00e",
+          "after": "f4091c80895e73f00d7f4cf8a45a49d6b3a9816ae40c550f283db94492e83491"
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "debug-decision-01",
+      "language": "ru",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "debug-decision-01-fixture",
+      "prompt": "Assess the recorded observations and the earlier narrative for the bounded source path.\n\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u044b \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0435 \u0447\u0442\u0435\u043d\u0438\u0435 \u0438 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u044d\u0442\u0438\u0445 \u043f\u0443\u0442\u0435\u0439: none. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python \u0438\u043b\u0438 \u0442\u0435\u0441\u0442\u044b \u043f\u0440\u0438\u043c\u0435\u0440\u0430, \u043d\u0435 \u0443\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043d\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u0441\u0435\u0442\u044c \u0438 \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439. \u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 \u0440\u0435\u043b\u0435\u0432\u0430\u043d\u0442\u043d\u044b\u0435 source \u0438 \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442; \u0432\u044b\u0431\u0435\u0440\u0438 \u0432\u044b\u0432\u043e\u0434\u044b \u043f\u043e \u0444\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u043c\u0443 \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u043c\u043e\u043c\u0443. \u0424\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0434\u043e\u043b\u0436\u0435\u043d \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u043e\u0432\u0430\u0442\u044c \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0441\u0445\u0435\u043c\u0435 \u043e\u0442\u0432\u0435\u0442\u0430. \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439 \u043a\u043e\u0440\u043e\u0442\u043a\u0438\u0435 locale-neutral ID \u0438 source anchors, \u0431\u0435\u0437 \u043f\u0440\u043e\u0437\u044b \u0432\u043d\u0443\u0442\u0440\u0438 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0439. \u0420\u0430\u043d\u043d\u0438\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b; \u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u044b \u0442\u043e\u043b\u044c\u043a\u043e {\"progress\":\"reading\"}, {\"progress\":\"checking\"} \u0438\u043b\u0438 {\"progress\":\"comparing\"}. \u041f\u043e\u043b\u0435 procedures \u0441\u043b\u0435\u0434\u0443\u0435\u0442 \u0441\u0445\u0435\u043c\u0435; \u043e\u043d\u043e \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u044e\u044e \u0430\u043a\u0442\u0438\u0432\u0430\u0446\u0438\u044e. \u041e\u0442\u0447\u0451\u0442 \u0438 \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u043d\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u044e\u0442 runtime \u0438\u043b\u0438 \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f.\nPublic output vocabulary (not a selected answer): finding IDs: unsupported-leading-hypothesis, repeated-failed-fix. Evidence uses source.py:N for relevant compute/cached returns and run branch, contract.json:expected, observations.json:direct, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Recorded observations and attempts are supplied synthetic evidence, not proof of actual executions or historical provenance.",
+      "response-contract": "debug-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "debug-hypothesis-v1",
+          "params": {
+            "case": "debug-contradictory-cache-ru"
+          },
+          "mandatory": true,
+          "metadata-digest": "8a16b8d0c50dc8e7569fab591d3e8a2e48e4ed710addccce3fb89027d37ff8a1"
+        }
+      ],
+      "observer": {
+        "id": "debug-decision-stream-v1",
+        "params": {
+          "expected-cause": "cache",
+          "expected-findings": [
+            "unsupported-leading-hypothesis"
+          ],
+          "expected-facts": {
+            "mode": "complex",
+            "compute-step": 1,
+            "cache-step": 2,
+            "cause": "cache",
+            "leading": "compute",
+            "attempt-count": 0
+          },
+          "expected-evidence": [
+            "source.py:2",
+            "source.py:6",
+            "source.py:10",
+            "contract.json:expected",
+            "observations.json:cache-off",
+            "observations.json:cache-on",
+            "narrative.json:leading",
+            "attempts.json:records"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "debug-decision-02",
+      "language": "en",
+      "polarity": "positive",
+      "risk": "ordinary",
+      "fixture": "debug-decision-02-fixture",
+      "prompt": "Assess the recorded observations and prior attempted changes before choosing a cause.\nSafe local reads and writes only to these paths are permitted: none. Do not execute fixture Python or tests, install dependencies, use the network or publish. Read the relevant source and contract; select conclusions from their actual contents. The final JSON must match the registered response schema. Use short locale-neutral IDs and source anchors, without prose inside values. Earlier messages are optional and must be exactly {\"progress\":\"reading\"}, {\"progress\":\"checking\"} or {\"progress\":\"comparing\"}. The procedures field follows the schema; it does not establish internal activation. The report and static checks do not establish runtime behavior or external actions.\nPublic output vocabulary (not a selected answer): finding IDs: unsupported-leading-hypothesis, repeated-failed-fix. Evidence uses source.py:N for relevant compute/cached returns and run branch, contract.json:expected, observations.json:direct, observations.json:cache-off, observations.json:cache-on, narrative.json:leading, attempts.json:records. Recorded observations and attempts are supplied synthetic evidence, not proof of actual executions or historical provenance.",
+      "response-contract": "debug-response-v1",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "debug-hypothesis-v1",
+          "params": {
+            "case": "debug-repeated-cache-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "8a16b8d0c50dc8e7569fab591d3e8a2e48e4ed710addccce3fb89027d37ff8a1"
+        }
+      ],
+      "observer": {
+        "id": "debug-decision-stream-v1",
+        "params": {
+          "expected-cause": "cache",
+          "expected-findings": [
+            "unsupported-leading-hypothesis",
+            "repeated-failed-fix"
+          ],
+          "expected-facts": {
+            "mode": "complex",
+            "compute-step": 1,
+            "cache-step": 2,
+            "cause": "cache",
+            "leading": "compute",
+            "attempt-count": 2
+          },
+          "expected-evidence": [
+            "source.py:2",
+            "source.py:6",
+            "source.py:10",
+            "contract.json:expected",
+            "observations.json:cache-off",
+            "observations.json:cache-on",
+            "narrative.json:leading",
+            "attempts.json:records"
+          ],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

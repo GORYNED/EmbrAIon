@@ -1,0 +1,260 @@
+{
+  "schema-version": 1,
+  "target": "security-flow",
+  "contract-version": 2,
+  "phase": "exploratory",
+  "source-archive": "b043be840126c5171751fff673181359b5130f96691ba6240adfc5641a5a5ce5",
+  "native-trials": 36,
+  "paired-attempts-per-case": 3,
+  "cohorts": [
+    {
+      "cohort": "positive",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 12,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "inconclusive",
+        "reasons": [
+          "confirmation-required",
+          "incomplete-confirmation-plan:security-owner-positive-en",
+          "incomplete-confirmation-plan:security-owner-positive-ru",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "security-owner-positive-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-owner-positive-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-owner-positive-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "f4ad560593de2648cd6ad72abeec08f0a3163db08e0466c080cbef2eb128ae82",
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "experiment.json": "3d9b2f5ca4a03bdbf41d554e5047220f3be9512a8d621fca8b2e3ab7e3f57ed5",
+        "matched-exploratory-report.json": "859d7a62b885d189635dac9c958a9f0f5f72676e422f3cfc090ba792b9bc7802",
+        "matched-suite.json": "88677f0df5cc703f774a13963a823b55baea41690f781d7c2c50527f08e7fcc3",
+        "qualified-baseline-report.json": "116f8e77b9ca511bab4b34174b31ed7d0af671b6119aa195f99ecf6aa2214901",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "d3990360d369d3d9962748963c45de987ea627134d1a224882529feb504ceb88"
+      }
+    },
+    {
+      "cohort": "negative",
+      "status": "fail",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 8,
+        "fail": 4,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "rejected",
+        "reasons": [
+          "candidate-required-check-failure:security-guard-negative-en",
+          "confirmation-required",
+          "incomplete-confirmation-plan:security-guard-negative-en",
+          "incomplete-confirmation-plan:security-inert-negative-ru",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "security-guard-negative-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-fail"
+        },
+        {
+          "case": "security-guard-negative-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-inert-negative-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "2ec8f20ede4d413d35257f889c145aa1dc1070d259e95f1af58b614857b736fe",
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "experiment.json": "c01625d15c7ddc3bc51e38a1e89224f9561eba4c6fd29792d0c66485a09822ec",
+        "matched-exploratory-report.json": "6a2337639f3580cbd62110617664b2b2bafe52841ea5f363febd49a065f1c203",
+        "matched-suite.json": "03d6b7449c92f2d4055d5e8c707db92e48c0f871494e727a1de4f260dd2875b1",
+        "qualified-baseline-report.json": "c497c9da4150254c7d69bb2b23bc9b406383da1fd79ea09998614aa731c8677e",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "f4d6996e5b2eabcecbe2ac82235da02af8317f795cd54fdbbcbf51d96e10bdfa"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "status": "fail",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 11,
+        "fail": 1,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "rejected",
+        "reasons": [
+          "budget-regression:security-guard-heldout-ru:quality-correctness",
+          "candidate-regression:security-guard-heldout-ru",
+          "candidate-required-check-failure:security-guard-heldout-ru",
+          "confirmation-required",
+          "incomplete-confirmation-plan:security-guard-heldout-ru",
+          "incomplete-confirmation-plan:security-late-guard-heldout-en",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "security-late-guard-heldout-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-late-guard-heldout-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "regressed"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        },
+        {
+          "case": "security-guard-heldout-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "security-assessment",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "8385e925eb411045771609be21513f43ae6f1d11db5a0331d230b7c73ec11036",
+        "candidate-manifest.json": "02fe722e40fc6162ab5a73d01839e348dcd3bda93b3f452c47e3c618d42674f0",
+        "experiment.json": "e2c0ace8bf85f970f9a71cc965b9c2ff8c168c27ea385e131e5e89c023f89898",
+        "matched-exploratory-report.json": "b661f1a0e6c2f337ef280378d2ab6526ff3c079e907a13113a5ae5168202ee13",
+        "matched-suite.json": "c0af33606b83e9ff24682e846134be50466496a66c69eba510dbfdf869bf85d7",
+        "qualified-baseline-report.json": "22d50d4a10a64bcd54e86e00adadc72bc36a5c7cf3705fadac7d933f24e370d0",
+        "snapshot.json": "3752fbbb8495bf7be6bde93df1de2b972f573521248bea64fffc45429304d914",
+        "suite.json": "8ad16285bd9de0d3841bbcb2c844cedebbf8b703a6ee6a553d33a0dd9d31627e"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 31,
+    "fail": 5,
+    "inconclusive": 0
+  },
+  "pair-counts": {
+    "improved": 0,
+    "regressed": 1,
+    "tied-pass": 15,
+    "tied-fail": 2,
+    "inconclusive": 0
+  },
+  "decision": "Do not advance this candidate to confirmation, composition or Core promotion: no improved pair, two tied failures and one held-out quality regression. Preserve the candidate as an unpromoted rejected experiment in this bounded profile.",
+  "scope": "This rejects promotion of this patch using this frozen finite-source protocol; it is not universal evidence that security skills lack value.",
+  "coverage": "Exact finite assessment structure and registered finding IDs only; no actual internal activation, runtime, or general natural-language threat analysis.",
+  "raw-answer-boundary": "Raw outputs expired under the protocol. A required-procedure mismatch records no unobserved specific field or causal explanation.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "independent-decision-review": "decision-review.json",
+  "snapshots": "Exact manifests retained; source snapshots remain in the immutable local R21 controller archive."
+}

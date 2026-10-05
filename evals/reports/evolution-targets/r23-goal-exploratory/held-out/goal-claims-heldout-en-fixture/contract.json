@@ -1,0 +1,1 @@
+{"schema-version":1,"goal":{"function":"process","input-domain":"integers","output":"value+1","consumer":"consume","route":"process"},"required-routes":[]}

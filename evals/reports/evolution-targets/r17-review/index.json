@@ -1,0 +1,144 @@
+{
+  "schema-version": 1,
+  "target": "review-axes",
+  "contract-version": 3,
+  "frozen-source-archive": "5a22549c771f7b4d3682c5ce43cb20b9cc86b4762033d849627afab675a30a50",
+  "baseline-trials": 30,
+  "matched-exploratory-trials": 36,
+  "cohorts": [
+    {
+      "cohort": "positive",
+      "baseline": {
+        "qualified-for-frozen-r17-profile": true,
+        "status": "pass",
+        "runs": 10
+      },
+      "matched": {
+        "phase": "exploratory",
+        "runs": 12,
+        "status": "pass",
+        "measurement-status": "complete",
+        "comparisons": {
+          "improved": 0,
+          "regressed": 0,
+          "tied-pass": 6,
+          "tied-fail": 0,
+          "inconclusive": 0
+        },
+        "eligibility": {
+          "status": "inconclusive",
+          "reasons": [
+            "confirmation-required",
+            "incomplete-confirmation-plan:review-code-positive-ru",
+            "incomplete-confirmation-plan:review-intent-positive-en",
+            "no-observed-target-improvement"
+          ],
+          "authorizes_core_promotion": false,
+          "review_required": true
+        }
+      },
+      "files": {
+        "baseline-report.json": "79fea13ebfbf24404103578fce344153ba7824f4b929dafa8361007746434304",
+        "budget-justification.json": "a7169d54a1e5bb3bdc7e67cf3c4c0406433e3fed2dc2c7595dd81123ae294bc3",
+        "candidate-manifest.json": "142d757fdde82b53203b49f96decaa78947aca1f3147212abb8cd72e8a4c696a",
+        "experiment.json": "186ec427ebca4bbbc6317cef1d74ea9c12a0ee6231bd28377d6f496c592dc0b9",
+        "matched-exploratory-report.json": "f07aab013cc6d237e4b488f28ba55b9ca7ceac53ecc118abf261e7181c5044a4",
+        "matched-suite.json": "e4920850908827762e900eaf31fde4a5c542a066e76c6811f0566f1637461f56",
+        "snapshot.json": "0bc77271cadba3c1fa2a0630d6837731ba50d9f9fdd2dd9be5169947991793d7",
+        "suite.json": "fe7eedb17f216c74ae14da2c89cc6644253564f1baa880f22ff5cd07ee76ef90"
+      }
+    },
+    {
+      "cohort": "negative",
+      "baseline": {
+        "qualified-for-frozen-r17-profile": true,
+        "status": "pass",
+        "runs": 10
+      },
+      "matched": {
+        "phase": "exploratory",
+        "runs": 12,
+        "status": "pass",
+        "measurement-status": "complete",
+        "comparisons": {
+          "improved": 0,
+          "regressed": 0,
+          "tied-pass": 6,
+          "tied-fail": 0,
+          "inconclusive": 0
+        },
+        "eligibility": {
+          "status": "inconclusive",
+          "reasons": [
+            "confirmation-required",
+            "incomplete-confirmation-plan:review-control-negative-en",
+            "incomplete-confirmation-plan:review-control-negative-ru",
+            "no-observed-target-improvement"
+          ],
+          "authorizes_core_promotion": false,
+          "review_required": true
+        }
+      },
+      "files": {
+        "baseline-report.json": "6ae05fd49c7bc527c34cf4076c08273d3d0893c67ea5f95378e7d8226cb0dd6d",
+        "budget-justification.json": "0e22eec2f3495e123635eb97d17bf10b02a032dc21b8995b8f89850aa1ab2985",
+        "candidate-manifest.json": "142d757fdde82b53203b49f96decaa78947aca1f3147212abb8cd72e8a4c696a",
+        "experiment.json": "510b4191781e0b24164dad610a366714b0679aebd95aebc52b23029a0799fdea",
+        "matched-exploratory-report.json": "fdea8fe3b0cbc6a9ec2b7dceba577bf9d6bcd9bf2b4d479843798f5dcd7c2abc",
+        "matched-suite.json": "cbd4ea9aa366056903fd562962c331eaaf0ede94e11056ffcc2893c9a9ffd551",
+        "snapshot.json": "0bc77271cadba3c1fa2a0630d6837731ba50d9f9fdd2dd9be5169947991793d7",
+        "suite.json": "8347c2ee6003d5a1dea8b1d8ed406fe8b9a8b528306b63a38677d7f94b35cae2"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "baseline": {
+        "qualified-for-frozen-r17-profile": true,
+        "status": "pass",
+        "runs": 10
+      },
+      "matched": {
+        "phase": "exploratory",
+        "runs": 12,
+        "status": "pass",
+        "measurement-status": "complete",
+        "comparisons": {
+          "improved": 0,
+          "regressed": 0,
+          "tied-pass": 6,
+          "tied-fail": 0,
+          "inconclusive": 0
+        },
+        "eligibility": {
+          "status": "inconclusive",
+          "reasons": [
+            "confirmation-required",
+            "incomplete-confirmation-plan:review-held-out-code-en",
+            "incomplete-confirmation-plan:review-held-out-intent-ru",
+            "no-observed-target-improvement"
+          ],
+          "authorizes_core_promotion": false,
+          "review_required": true
+        }
+      },
+      "files": {
+        "baseline-report.json": "28a4ae5a1a1165f9f5eadf25e1fe740aa24ae6bfabac651739a8d344643f6941",
+        "budget-justification.json": "e2b98cdfb0ad9917de5a2927d1bb4f1b824138d7f219a47f40e894d56e5a420e",
+        "candidate-manifest.json": "142d757fdde82b53203b49f96decaa78947aca1f3147212abb8cd72e8a4c696a",
+        "experiment.json": "4bc8beb715cf4b46a2c2a2b6df9b1c46c5af80b2f6ebeade8073be2e1dba3b9c",
+        "matched-exploratory-report.json": "2e6a95ff3b7c47d452cb1d4c2796f4cb8653ca41f97d590728d4884293255cc1",
+        "matched-suite.json": "7ce27cdfe8b486f0b2d2e3dc8201a3343418a10444501b925e3df5b6c24a3efe",
+        "snapshot.json": "0bc77271cadba3c1fa2a0630d6837731ba50d9f9fdd2dd9be5169947991793d7",
+        "suite.json": "2cfdf8b70607d5e67c745121ea31755a44e3e8546c24090ed17a616c6e3f0a4d"
+      }
+    }
+  ],
+  "decision": "defer-unproven-independent-benefit",
+  "canonical-core-mutated": false,
+  "promotion-authorized": false,
+  "coverage": "Six finite source review judgments in one Codex/Linux model-effort profile; not unrestricted review quality or other host behavior.",
+  "qualification-boundary": "Baseline qualified only for the frozen R17 evaluator, fixture and host profile. Later oracle-metadata binding changes require a new baseline; no retrospective metadata filling or regrading.",
+  "snapshots": "Exact manifests retained; source snapshots remain in the private immutable controller archive. Reconstruct from the pinned original source and declared patch with the pinned generator before a fresh protocol, never silently reuse different projections.",
+  "confirmation": "Not performed: all exploratory quality pairs tied-pass, so targeted correctness benefit was not established. No post-hoc cost-only benefit criterion.",
+  "composition": "Blocked until standalone benefit and full confirmation exist; no candidate promoted merely to enable composition."
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "debug-hypothesis",
+  "contract-version": 1,
+  "reviewed-registry-sha256": "e4c83ba7d96f80e3529d091f38378f1d8993473fe4f57ff5bb7b9a2a6bfdf279",
+  "reviewed-oracle-sha256": "abf9dd46e791dd8a9228b88930a547546fc6063f76290eb3446af5a14eb7150d",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "No remaining material finding in bounded static remediation rereview.",
+  "remediated-findings": [
+    "Exact integer contract types reject bool/float equality",
+    "EN/RU finite mapping and recorded-ineffective-edit semantics explicitly specified"
+  ],
+  "coverage": "Six fixed integer source cases and checker-validated recorded hashes; no real historical execution or candidate code execution.",
+  "not-proven": [
+    "Native candidate benefit",
+    "Runtime behavior",
+    "Historical attempts actually occurred",
+    "Internal activation",
+    "Full PR approval",
+    "Core promotion"
+  ],
+  "evidence-source": "foundation_review_r5 bounded remediation rereview in this task"
+}

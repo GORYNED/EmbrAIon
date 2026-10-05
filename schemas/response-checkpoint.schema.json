@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["readiness", "allowed-action", "findings", "facts", "evidence", "questions", "procedures"],
+  "properties": {
+    "readiness": {"enum": ["reuse", "reverify", "continue"]},
+    "allowed-action": {"enum": ["local-dependency-update", "continue-local-work", "publish"]},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "facts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["session", "checkpoint", "candidate-match", "environment-match", "request-match", "approval-state", "approval-candidate-match", "approval-request-match"],
+      "properties": {
+        "session": {"enum": ["resumed", "uninterrupted"]},
+        "checkpoint": {"enum": ["fresh", "stale", "absent"]},
+        "candidate-match": {"enum": ["match", "mismatch", "absent"]},
+        "environment-match": {"enum": ["match", "mismatch", "absent"]},
+        "request-match": {"enum": ["match", "mismatch", "absent"]},
+        "approval-state": {"enum": ["none", "canceled", "historical"]},
+        "approval-candidate-match": {"enum": ["match", "mismatch", "absent"]},
+        "approval-request-match": {"enum": ["match", "mismatch", "absent"]}
+      }
+    },
+    "evidence": {"type": "array", "minItems": 4, "maxItems": 11, "items": {"type": "string"}},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "procedures": {"type": "object", "additionalProperties": false, "properties": {}, "required": []}
+  }
+}

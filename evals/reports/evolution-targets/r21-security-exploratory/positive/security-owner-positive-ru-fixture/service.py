@@ -1,0 +1,8 @@
+def read_document(actor, document_id, store):
+    if not actor.authenticated:
+        raise PermissionError("authentication required")
+    record = store.get(document_id)
+    # A record may belong to a different actor.
+    if record is None:
+        raise KeyError(document_id)
+    return record.body

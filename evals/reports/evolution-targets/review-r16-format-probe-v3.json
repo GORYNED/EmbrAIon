@@ -1,0 +1,52 @@
+{
+  "plan": {
+    "kind": "format-diagnostic-only",
+    "planned": 1,
+    "target-case": "review-intent-positive-en",
+    "coverage": "Fixed structural booleans only; no raw output, semantic judgment, baseline replacement, or regrading.",
+    "runtime-archive": "16a0c7344311bac36156a862ad6daa1378040229234e932dfa4060306b635ac5",
+    "requested-model": "gpt-6-sol",
+    "requested-effort": "high",
+    "effective-backend": "unverified",
+    "prompt-sha256": "f88163e92db6d0586defe8bc012cdb078c29921899fdbe8575baa5b3ec921126",
+    "protocol-delta": "Explicit string finding IDs; no semantic answer supplied."
+  },
+  "host": {
+    "status": "completed",
+    "duration-seconds": 14.118,
+    "exit-code": 0,
+    "completed": true,
+    "failed": false,
+    "tool-calls": 2,
+    "tokens": {
+      "input_tokens": 32503,
+      "output_tokens": 382,
+      "cached_input_tokens": 27392
+    },
+    "usage-complete": true,
+    "observed-reads": [],
+    "observer": {
+      "status": "pass",
+      "observer-id": "finite-stream-v1"
+    },
+    "configuration-evidence": "explicit-native-developer-instructions-argument",
+    "role-evidence": "reviewer-profile-explicit-argument",
+    "access-evidence": "read-only"
+  },
+  "format": {
+    "observer-status": "pass",
+    "observer-reason": "complete-finite-answer",
+    "json-parsed": true,
+    "top-level-object": true,
+    "exact-fields": true,
+    "result-finite": true,
+    "findings-id-list": true,
+    "findings-object-list": false,
+    "questions-allowed": true,
+    "procedures-object": true,
+    "procedure-keys-allowed": true,
+    "procedure-bodies-finite": true,
+    "workspace-unchanged": true,
+    "environment-unchanged": true
+  }
+}

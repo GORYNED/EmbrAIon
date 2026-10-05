@@ -1,0 +1,20 @@
+{
+  "kind": "independent-corpus-initial-review",
+  "case-id": "framework-upgrade-scope-expansion",
+  "reviewed-status": "active",
+  "reviewed-narrative-sha256": "be49e1f70959be0ef9c24fead5c1cf66c6be73c2a769822425add497b25536e3",
+  "reviewed-seed-sha256": "b2b6d06cb443c22f919b44a126d9b0190b66621a25f1004c563a641910ac96e1",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "effective-backend-settings": "unverified",
+  "finding": "Initial active entry is applicable, privacy-safe and matches the upgrade oracle coverage.",
+  "provenance-boundary": "User-confirmed scope dispute; this sanitized corpus does not prove remote publication or cancellation.",
+  "lifecycle-decision": "Retain active seed with its original scope contract; no supersession or retirement.",
+  "promotion-authorized": false,
+  "full-pr-review": false,
+  "evidence-source": "foundation_review_r5 bounded corpus review in this task"
+}

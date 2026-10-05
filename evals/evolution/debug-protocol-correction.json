@@ -1,0 +1,22 @@
+{
+  "kind": "declared-task-protocol-correction",
+  "target": "debug-decision",
+  "previous-contract-version": 2,
+  "contract-version": 3,
+  "previous-registry-sha256": "bc27fa2e5271f3ea16e65262e7c5fe6a4b02daf27eeedbda4e1e8ba5a24576ea",
+  "registry-sha256": "d039bf656470d233c6c45c20cb9af0aa02ddbd0c141dba7807b57c191f100d20",
+  "observed-problem": "Blanket command prohibition conflicts with necessary file inspection through native CLI shell tools.",
+  "changed-rule": "Allow necessary read-only file inspection; continue forbidding candidate execution, mutation, install, network and publication.",
+  "unchanged": [
+    "Original four source-case bytes and scoring",
+    "Registered source facts",
+    "Observer syntax and semantic scoring",
+    "Read-only access",
+    "Core procedures"
+  ],
+  "previous-evidence": "evals/reports/evolution-targets/r28-debug-interrupted/index.json",
+  "decision": "Preserve interrupted observations as inconclusive diagnostic evidence; require a new declared frozen baseline and new registry metadata identity. Do not regrade R28.",
+  "independent-review": "pending-bounded-delta-review",
+  "promotion-authorized": false,
+  "additional-contract-coverage": "Add required Russian near-negative/held-out simple task from an existing registered source case; no new invented failure or retrospective scoring."
+}

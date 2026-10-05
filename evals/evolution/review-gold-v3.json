@@ -1,0 +1,25 @@
+{
+  "kind": "independent-static-gold-review",
+  "target": "review-axes",
+  "contract-version": 3,
+  "reviewed-dataset-sha256": "0ff7d917ee78c8f245269e948b9d2a19e77b35b88c81a0a48bcb477fa02d1681",
+  "normative-dataset-sha256": "89c90a0b03f070d079f4c6511ad3198a43622c61e9cb548e973d2b934735448d",
+  "previous-review-ref": "evals/evolution/review-gold.json",
+  "reviewer-role": "reviewer",
+  "access": "read-only",
+  "data-class": "PRIVATE",
+  "route-class": "complex",
+  "requested-model": "gpt-6-sol",
+  "requested-effort": "high",
+  "options": {},
+  "effective-backend-settings": "unverified",
+  "finding": "no-material-ground-truth-findings",
+  "coverage": "The six source fixtures and mathematical gold answers are unchanged. EN/RU string-ID instructions give both permitted examples without identifying actual case findings. Static source anchors, overlapping intent/contracts and implementation axes, and fixture-only judgment remain defensible.",
+  "not-proven": [
+    "No actual PR readiness",
+    "No Core promotion",
+    "No candidate benefit",
+    "No authoritative baseline qualification"
+  ],
+  "evidence-source": "Read-only foundation_review_r5 protocol3 assessment in this task; separate budget-binding P2 findings remain open and are not represented as approval here."
+}

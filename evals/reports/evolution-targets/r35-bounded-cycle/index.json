@@ -1,0 +1,658 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-bounded-cycle-evidence",
+  "source-archive": "a8734fed9f33c989410bf5408af8d05461b384fe682a0a4998629a417c524209",
+  "original-core-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "host": "codex",
+  "pilot": {
+    "methodology-corrections": 1,
+    "repeats": 1,
+    "initial-dispatch-error": "Five controllers assigned Worker instead of their registered execution role/access; failed before native invocation. Sole repeat resolved each registered route. Schemas, fixtures, gold, observers and oracles did not change.",
+    "decisions": [
+      {
+        "target": "checkpoint-decision",
+        "measurement": "complete",
+        "status": "fail",
+        "counts": {
+          "pass": 1,
+          "fail": 1,
+          "inconclusive": 0
+        },
+        "incomplete": [],
+        "limitations": [],
+        "report-ref": "pilot/checkpoint-decision/pilot-repeat.json"
+      },
+      {
+        "target": "consumer-evidence",
+        "measurement": "inconclusive",
+        "status": "fail",
+        "counts": {
+          "pass": 0,
+          "fail": 2,
+          "inconclusive": 0
+        },
+        "incomplete": [
+          {
+            "case": "consumer-evidence-01",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "completed",
+            "mandatory-inconclusive": [
+              "observer-availability",
+              "test-shape",
+              "independent-expectation",
+              "public-consumer",
+              "mutation-sensitivity",
+              "checker-availability"
+            ]
+          }
+        ],
+        "limitations": [],
+        "report-ref": "pilot/consumer-evidence/pilot-repeat.json"
+      },
+      {
+        "target": "debug-decision",
+        "measurement": "complete",
+        "status": "fail",
+        "counts": {
+          "pass": 0,
+          "fail": 2,
+          "inconclusive": 0
+        },
+        "incomplete": [],
+        "limitations": [],
+        "report-ref": "pilot/debug-decision/pilot-repeat.json"
+      },
+      {
+        "target": "refactor-characterization",
+        "measurement": "inconclusive",
+        "status": "inconclusive",
+        "counts": {
+          "pass": 1,
+          "fail": 0,
+          "inconclusive": 1
+        },
+        "incomplete": [
+          {
+            "case": "refactor-heldout-ru",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "completed",
+            "mandatory-inconclusive": [
+              "checker-availability"
+            ]
+          }
+        ],
+        "limitations": [],
+        "report-ref": "pilot/refactor-characterization/pilot-repeat.json"
+      },
+      {
+        "target": "research-decision",
+        "measurement": "inconclusive",
+        "status": "fail",
+        "counts": {
+          "pass": 0,
+          "fail": 2,
+          "inconclusive": 0
+        },
+        "incomplete": [
+          {
+            "case": "research-decision-01",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "completed",
+            "mandatory-inconclusive": [
+              "observer-availability"
+            ]
+          },
+          {
+            "case": "research-decision-04",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "completed",
+            "mandatory-inconclusive": [
+              "observer-availability"
+            ]
+          }
+        ],
+        "limitations": [],
+        "report-ref": "pilot/research-decision/pilot-repeat.json"
+      },
+      {
+        "target": "scope-action",
+        "measurement": "inconclusive",
+        "status": "inconclusive",
+        "counts": {
+          "pass": 0,
+          "fail": 0,
+          "inconclusive": 2
+        },
+        "incomplete": [
+          {
+            "case": "scope-positive-en",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "not-run",
+            "mandatory-inconclusive": [
+              "native-tools-availability",
+              "observer-availability"
+            ]
+          },
+          {
+            "case": "scope-held-out-negative-ru",
+            "attempt": 1,
+            "measurement": "inconclusive",
+            "host-status": "not-run",
+            "mandatory-inconclusive": [
+              "native-tools-availability",
+              "observer-availability"
+            ]
+          }
+        ],
+        "limitations": [
+          {
+            "reason": "native-tools-preflight-unavailable"
+          }
+        ],
+        "report-ref": "pilot/scope-action/pilot-repeat.json"
+      },
+      {
+        "target": "security-flow",
+        "measurement": "complete",
+        "status": "fail",
+        "counts": {
+          "pass": 1,
+          "fail": 1,
+          "inconclusive": 0
+        },
+        "incomplete": [],
+        "limitations": [],
+        "report-ref": "pilot/security-flow/pilot-repeat.json"
+      }
+    ]
+  },
+  "directions": [
+    {
+      "target": "checkpoint-decision",
+      "decision": "defer",
+      "reason": "A mandatory baseline evidence gap already blocks the entire comparison; remaining trials stopped without replacement or selective retry.",
+      "planned-native-trials": 40,
+      "graded-native-trials": 11,
+      "counts": {
+        "pass": 7,
+        "fail": 3,
+        "inconclusive": 1
+      },
+      "mandatory-incomplete": [
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "attempt": 2,
+          "mandatory-inconclusive": [
+            "observer-availability"
+          ],
+          "measurement": "inconclusive",
+          "host-status": "host-failed"
+        }
+      ],
+      "unassessed": [
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-01",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "checkpoint-decision-02",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-03",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "checkpoint-decision-04",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-05",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 1
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 2
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 3
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 4
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "checkpoint-decision-06",
+          "variant": "baseline",
+          "attempt": 5
+        }
+      ],
+      "candidate-run": "not-run",
+      "budgets": "not-frozen",
+      "authoritative-baseline": "not-qualified",
+      "outcome-ref": "directions/checkpoint-decision/outcome.json"
+    },
+    {
+      "target": "debug-decision",
+      "decision": "defer",
+      "reason": "Full baseline has missing mandatory evidence. No candidate invocation or budget waiver.",
+      "planned-native-trials": 25,
+      "graded-native-trials": 25,
+      "counts": {
+        "pass": 0,
+        "fail": 25,
+        "inconclusive": 0
+      },
+      "mandatory-incomplete": [
+        {
+          "cohort": "cohort-1",
+          "case": "debug-decision-01",
+          "attempt": 2,
+          "mandatory-inconclusive": [
+            "observer-availability"
+          ],
+          "measurement": "inconclusive",
+          "host-status": "completed"
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "debug-decision-02",
+          "attempt": 2,
+          "mandatory-inconclusive": [
+            "observer-availability"
+          ],
+          "measurement": "inconclusive",
+          "host-status": "completed"
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "debug-decision-02",
+          "attempt": 5,
+          "mandatory-inconclusive": [
+            "observer-availability"
+          ],
+          "measurement": "inconclusive",
+          "host-status": "completed"
+        }
+      ],
+      "unassessed": [],
+      "candidate-run": "not-run",
+      "budgets": "not-frozen",
+      "authoritative-baseline": "not-qualified",
+      "outcome-ref": "directions/debug-decision/outcome.json"
+    },
+    {
+      "target": "security-flow",
+      "decision": "defer",
+      "reason": "A mandatory baseline evidence gap already blocks the entire comparison; remaining trials stopped without replacement or selective retry.",
+      "planned-native-trials": 60,
+      "graded-native-trials": 47,
+      "counts": {
+        "pass": 31,
+        "fail": 15,
+        "inconclusive": 1
+      },
+      "mandatory-incomplete": [
+        {
+          "cohort": "cohort-3",
+          "case": "security-guard-heldout-ru",
+          "attempt": 5,
+          "mandatory-inconclusive": [
+            "observer-availability"
+          ],
+          "measurement": "inconclusive",
+          "host-status": "host-failed"
+        }
+      ],
+      "unassessed": [
+        {
+          "cohort": "cohort-1",
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "cohort": "cohort-1",
+          "case": "security-owner-positive-ru",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 5
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 6
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 7
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "cohort": "cohort-2",
+          "case": "security-inert-negative-ru",
+          "variant": "baseline",
+          "attempt": 10
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 8
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 9
+        },
+        {
+          "cohort": "cohort-3",
+          "case": "security-guard-heldout-ru",
+          "variant": "baseline",
+          "attempt": 10
+        }
+      ],
+      "candidate-run": "not-run",
+      "budgets": "not-frozen",
+      "authoritative-baseline": "not-qualified",
+      "outcome-ref": "directions/security-flow/outcome.json"
+    }
+  ],
+  "files": {
+    "pilot/plan.json": "4794b0a4fd78bd408f3b4bcdc014aae46d345b8346435f06f94a47da894e8c66",
+    "pilot/repeat-plan.json": "5a3b67bff39476e3189c97ab67c851f9113eca4a9bd402f47ed8895904b8ea3b",
+    "pilot/summary-initial.json": "db4ee90954c739817693860d52d471eef41169200a0053bbb4bee87664ce736b",
+    "pilot/summary-repeat.json": "4a7af334ab7b78f74032625f6d01f332bc43314808e1fc35954c97fe9f0eafae",
+    "pilot/checkpoint-decision/suite.json": "69f7b3c88b10326ee0091276a389ca48c8d9e78d1a468f249935cefdf7b367d1",
+    "pilot/checkpoint-decision/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/checkpoint-decision/pilot-repeat.json": "680db8e720c914d9af24ee9b12a30c2578a044e7f8a36ee86c03a6449560f034",
+    "pilot/checkpoint-decision/pilot-repeat.json.runs.jsonl": "a3efef8b1f56cb1b7087218a499179835e02c786c9101f999b7a7fb29ff3a5cf",
+    "pilot/checkpoint-decision/route.json": "0604886221db35a6523706e30e06fd6780746870bdd48dfe05ef415a5025840e",
+    "pilot/consumer-evidence/suite.json": "8bab460ed8d878af6a9942b295cabc92444a0b7ea37c30e4566a164286ef2a60",
+    "pilot/consumer-evidence/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/consumer-evidence/pilot-initial.json": "c52aec2a79ded9957b21c63a56c3aa36458ba394e1537cd9633bba93af7be101",
+    "pilot/consumer-evidence/pilot-repeat.json": "a41df291aa5aced06e537d53208a4bac8091084fb85e3d4c04bf0f9f48885867",
+    "pilot/consumer-evidence/pilot-initial.json.runs.jsonl": "8a0364e4d815acc96d367344faa493b3b097ec794bb5b241094b79eb1712860f",
+    "pilot/consumer-evidence/pilot-repeat.json.runs.jsonl": "40988e85814adf7cefc39a293322882a2332bf26d7daed243ec1e50eadfca93d",
+    "pilot/consumer-evidence/route.json": "e799e38c36073c157de543f212101028f3362ae3794c4f21e5a10eae2fc6e3b6",
+    "pilot/debug-decision/suite.json": "64970fb092746ec9ed8fc7337134556f88d882b40ede5f0e554fcf7079518464",
+    "pilot/debug-decision/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/debug-decision/pilot-repeat.json": "4f2f1c595afcb8875cc0df2f981be8c6ccd854c8604b96aafb8efd4414b67a6f",
+    "pilot/debug-decision/pilot-repeat.json.runs.jsonl": "c7e635af24fe7f1f24a585dd46baad01ce2d5a5cedab5dde9baeb43aeb7515e7",
+    "pilot/debug-decision/route.json": "0604886221db35a6523706e30e06fd6780746870bdd48dfe05ef415a5025840e",
+    "pilot/refactor-characterization/suite.json": "4a70df479ae02bf8750e429f9ae17a3cabcae4f6d0d0f59d8b8ffa621e5edc94",
+    "pilot/refactor-characterization/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/refactor-characterization/pilot-initial.json": "2d3536e9478bd6502f5d75e99ad7a085e6ec43a904f330ee62085d7afebdfc04",
+    "pilot/refactor-characterization/pilot-repeat.json": "4e33e07685b5cd7a83f5dbe5c9dcefda972fd2848e39a8630058a02ea30a296b",
+    "pilot/refactor-characterization/pilot-initial.json.runs.jsonl": "075863338225197fe41f25b16cfd6947b5e8a4d1661742b248f8b4e0b3883aa3",
+    "pilot/refactor-characterization/pilot-repeat.json.runs.jsonl": "3b2325a248265720d817478c1c0905148e82993b73902cb382ffefb9c7a1598c",
+    "pilot/refactor-characterization/route.json": "e799e38c36073c157de543f212101028f3362ae3794c4f21e5a10eae2fc6e3b6",
+    "pilot/research-decision/suite.json": "4ef838fc6038df0413d076a3eeb3651227dde6b5128b26f79cd8eeedad6ed88b",
+    "pilot/research-decision/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/research-decision/pilot-repeat.json": "da63a77b485084437e006801b559ec56537ef2d26283c081079c7e7119fd41b5",
+    "pilot/research-decision/pilot-repeat.json.runs.jsonl": "63d15a570c928013a5a3788baa749870397ea8d7a27aac47276b557183d136dd",
+    "pilot/research-decision/route.json": "0018194880fa99f7757308df58ffde1c693818feac284aa43524c5c0ffbccf77",
+    "pilot/scope-action/suite.json": "b388e0d5f398639978d17151fff623db07fa68407e94c9a1b6cc13590b6f9c52",
+    "pilot/scope-action/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/scope-action/pilot-repeat.json": "1ae7287e80f7551f462fc916d02411fb4ca92a17c4e491d3bbd302342f7eaa2e",
+    "pilot/scope-action/pilot-repeat.json.runs.jsonl": "73f5cb1611805940b0d01e32f047c60ead21d7669b4aa123cc6fe4a0becda92d",
+    "pilot/scope-action/route.json": "d1fc13d0bdc6494d7ff7238f7596a12b60dd7a1faf3986258c04e006b1b50939",
+    "pilot/security-flow/suite.json": "9deee30a67cd292eda9fcbd1b86402727906df022a0f198d5110e0cdad896d53",
+    "pilot/security-flow/snapshot.json": "37e4aa5265d16c14b0903475d82b91f9653f1a1397b7e0793c1b9d20cb146401",
+    "pilot/security-flow/pilot-repeat.json": "e64150b685fb608f555acdac4705e374cde29d32e8e6280175a8dff206a98890",
+    "pilot/security-flow/pilot-repeat.json.runs.jsonl": "dfce46a80504c5a4b4fb700a7c356870b88e22b1ac7f0e0b1e4dd2e0cb57fdbc",
+    "pilot/security-flow/route.json": "d493f2e2fc4d2e0fd9ed3f6abaa8c8af63146dad964f6548ce5f609f2989822b",
+    "directions/checkpoint-decision/bounded-stop.json": "96a60586df456e9791fcb359277051809b656899ba335679e39ce42b02524a33",
+    "directions/checkpoint-decision/candidate-manifest.json": "6a9d61fc4f7820a9d9ea1e1d36df1d61db22a4da9abd2ebc35032d69a2db5fb6",
+    "directions/checkpoint-decision/cohort-1/baseline-report.json.runs.jsonl": "0911ca9039c724e69a3dff17985db8fa458e4f69f47f850daba53cfde92ecd96",
+    "directions/checkpoint-decision/cohort-1/candidate-manifest.json": "6a9d61fc4f7820a9d9ea1e1d36df1d61db22a4da9abd2ebc35032d69a2db5fb6",
+    "directions/checkpoint-decision/cohort-1/matched-suite.json": "d68fe1faaaab9fdaad8de69d62852559515e92c9454876b861deb8e3cb8c54df",
+    "directions/checkpoint-decision/cohort-1/snapshot.json": "9e38cdb762cc8269805c0ed5fb2dd7cb0981fe04bdbd2bf064615648573353f4",
+    "directions/checkpoint-decision/cohort-1/suite.json": "c711a76a6539222f08c1d73f689f6d28a3ab9364c3294c33194d55f7bb400e96",
+    "directions/checkpoint-decision/cohort-2/baseline-report.json.runs.jsonl": "198b7a1cd82ab01a5563a26f1b718ba8b02fa608b48710df0c97c52d3449e5ee",
+    "directions/checkpoint-decision/cohort-2/candidate-manifest.json": "6a9d61fc4f7820a9d9ea1e1d36df1d61db22a4da9abd2ebc35032d69a2db5fb6",
+    "directions/checkpoint-decision/cohort-2/matched-suite.json": "4609ca6fcf72e0252d02dbfa8a0044bcabf7499154c3b2bb263c22f21b4b838c",
+    "directions/checkpoint-decision/cohort-2/snapshot.json": "9e38cdb762cc8269805c0ed5fb2dd7cb0981fe04bdbd2bf064615648573353f4",
+    "directions/checkpoint-decision/cohort-2/suite.json": "dfcca59170e793349b9cbc84c3740677cc5b518b321f931891c7590b5483092f",
+    "directions/checkpoint-decision/cohort-3/baseline-report.json.runs.jsonl": "9d890af22d178fe8c92830593b4ef77f77fe00ce69759c5ae5920951b57f1235",
+    "directions/checkpoint-decision/cohort-3/candidate-manifest.json": "6a9d61fc4f7820a9d9ea1e1d36df1d61db22a4da9abd2ebc35032d69a2db5fb6",
+    "directions/checkpoint-decision/cohort-3/matched-suite.json": "94f278b731d20cc63e75731fd6cb5073bad837b9c690f4f3eabf9835f12f116e",
+    "directions/checkpoint-decision/cohort-3/snapshot.json": "9e38cdb762cc8269805c0ed5fb2dd7cb0981fe04bdbd2bf064615648573353f4",
+    "directions/checkpoint-decision/cohort-3/suite.json": "bfe25f768a7bbd4a86fd6228d9bee23cad7693e805b61c6d312e94b439c95508",
+    "directions/checkpoint-decision/outcome.json": "96a60586df456e9791fcb359277051809b656899ba335679e39ce42b02524a33",
+    "directions/checkpoint-decision/plan.json": "b6dbd030973c0b5bb7f8fc5a13395a0dd499ca8aadf5f6b877076bdf64c86fcc",
+    "directions/checkpoint-decision/snapshot.json": "9e38cdb762cc8269805c0ed5fb2dd7cb0981fe04bdbd2bf064615648573353f4",
+    "directions/checkpoint-decision/suite.json": "24868aa21786f9c3f832bfc3579a9bd195e444abaae02e784b95221cffd1d2f9",
+    "directions/debug-decision/baseline-controller-summary.json": "eb791dc94e387ba1921a88f10299157fd8aa300656860351eb4b3a339ebad256",
+    "directions/debug-decision/candidate-manifest.json": "9f99adc65e5af4ebfe599cf1b3fa421042157f9112750c35d66a880ef6ae92db",
+    "directions/debug-decision/cohort-1/baseline-report.json": "6caf2e07464ef19980952499839cd11a1c91cd19d58c7c54309581d9fd007ee9",
+    "directions/debug-decision/cohort-1/baseline-report.json.runs.jsonl": "791f1cf244d533594912f28e44cf1adeb446f3d06bf8bf179ae1c03e841226b7",
+    "directions/debug-decision/cohort-1/candidate-manifest.json": "9f99adc65e5af4ebfe599cf1b3fa421042157f9112750c35d66a880ef6ae92db",
+    "directions/debug-decision/cohort-1/matched-suite.json": "f56a7043d203974e8191234fc3c59c4f9a0c62efa3958c42e9e7755d10a7a80b",
+    "directions/debug-decision/cohort-1/snapshot.json": "ec45ca38e517329305bacde2990bb14a5b07a732bb80f469583a6b79881b42c9",
+    "directions/debug-decision/cohort-1/suite.json": "4fcf68bc53512c0b74200da865a4bcabba0d5f80c37cb03377076cf79ba009c6",
+    "directions/debug-decision/cohort-2/baseline-report.json": "ab1760b1a6c252e646a86a68d28e2ed2d443f170f8dc53a95e163d52d92723e0",
+    "directions/debug-decision/cohort-2/baseline-report.json.runs.jsonl": "ce6ba10edc8be5587439c3d9ea7c9cb5d7c74e0e81c4d644f6a3489cf0958033",
+    "directions/debug-decision/cohort-2/candidate-manifest.json": "9f99adc65e5af4ebfe599cf1b3fa421042157f9112750c35d66a880ef6ae92db",
+    "directions/debug-decision/cohort-2/matched-suite.json": "1731e63344f66c6eccd860cfaa257c67ad038c74504b0efe9d5d3a7bf97c8e6b",
+    "directions/debug-decision/cohort-2/snapshot.json": "ec45ca38e517329305bacde2990bb14a5b07a732bb80f469583a6b79881b42c9",
+    "directions/debug-decision/cohort-2/suite.json": "07c2b4c905003319a1625bb22d104ba53c09d198a984c06b8bbec9ade46c1b50",
+    "directions/debug-decision/cohort-3/baseline-report.json": "25d07a95a0cca824266f0781f151e5b399fc794b4329eeb936484486b49a5b90",
+    "directions/debug-decision/cohort-3/baseline-report.json.runs.jsonl": "6ab67320c01e621133ab145e4b29c29a28108a5d482cac534c91909b47333c6c",
+    "directions/debug-decision/cohort-3/candidate-manifest.json": "9f99adc65e5af4ebfe599cf1b3fa421042157f9112750c35d66a880ef6ae92db",
+    "directions/debug-decision/cohort-3/matched-suite.json": "099274800ebb7cc3ae7fc7b63e3e2997cc728e9d66f1eafc8471104d971c584b",
+    "directions/debug-decision/cohort-3/snapshot.json": "ec45ca38e517329305bacde2990bb14a5b07a732bb80f469583a6b79881b42c9",
+    "directions/debug-decision/cohort-3/suite.json": "72fdb884450c3faeb0221373c75ac5942364edc0d87b2b4190d4ed30430e5989",
+    "directions/debug-decision/outcome.json": "326649c5222cf1f13ca8b80d8c5e5701f72870222bfef3cd0a719b21a60835bd",
+    "directions/debug-decision/plan.json": "f7e92b27253163816819008118811cad7a825ec908d9610974911645dd448b47",
+    "directions/debug-decision/snapshot.json": "ec45ca38e517329305bacde2990bb14a5b07a732bb80f469583a6b79881b42c9",
+    "directions/debug-decision/suite.json": "82864b0984ea644d2abc38805e4b64624f576461b49c01703c3ccf0435252dcf",
+    "directions/security-flow/bounded-stop.json": "6853cbb27409765651a98040104b07a62094fc8a251a7ba48085ffb684d9d0cf",
+    "directions/security-flow/candidate-manifest.json": "0990d37fbb6e3cbb23f9b4a77ddcd15d709de35bdff9dbb217e1d02bd345dc38",
+    "directions/security-flow/cohort-1/baseline-report.json.runs.jsonl": "58bb09cb7d98f1ca023cb4443d5610851afdf05813c292e8d2e5e6206913e48f",
+    "directions/security-flow/cohort-1/candidate-manifest.json": "0990d37fbb6e3cbb23f9b4a77ddcd15d709de35bdff9dbb217e1d02bd345dc38",
+    "directions/security-flow/cohort-1/matched-suite.json": "57366dd1715a35f829a869a04440bd250456089e3f98a4d77b2950a152696de0",
+    "directions/security-flow/cohort-1/snapshot.json": "59dd4efe7918eb34b386e627eea71b1e763a80c98b7bd68e89d9358966fd95fa",
+    "directions/security-flow/cohort-1/suite.json": "bd0d440886d642ec89911e53b79197e41e9a49d7a4dbe0dfca0a7d038abf091f",
+    "directions/security-flow/cohort-2/baseline-report.json.runs.jsonl": "51d8560e56ec9f3f7ecefe783d7deffd61b883c26552eff0b08067c918b1dda5",
+    "directions/security-flow/cohort-2/candidate-manifest.json": "0990d37fbb6e3cbb23f9b4a77ddcd15d709de35bdff9dbb217e1d02bd345dc38",
+    "directions/security-flow/cohort-2/matched-suite.json": "58495e47c23ffcadb44a000489d6c307eaa7af636f4831dafb225a838d1069f3",
+    "directions/security-flow/cohort-2/snapshot.json": "59dd4efe7918eb34b386e627eea71b1e763a80c98b7bd68e89d9358966fd95fa",
+    "directions/security-flow/cohort-2/suite.json": "f2fff28340920240f942f33c455e702097ecb7cf487a1c01f6990b1e1c4d1009",
+    "directions/security-flow/cohort-3/baseline-report.json.runs.jsonl": "f917cafcdb9c02a81cfc8b9e006c23971677db125405d9afb76b7e6d7d6575fd",
+    "directions/security-flow/cohort-3/candidate-manifest.json": "0990d37fbb6e3cbb23f9b4a77ddcd15d709de35bdff9dbb217e1d02bd345dc38",
+    "directions/security-flow/cohort-3/matched-suite.json": "8a62d367709a93397faeaf7126a56f94b00781cc0551ee617abc831501e8ca1a",
+    "directions/security-flow/cohort-3/snapshot.json": "59dd4efe7918eb34b386e627eea71b1e763a80c98b7bd68e89d9358966fd95fa",
+    "directions/security-flow/cohort-3/suite.json": "6a279d4b08b552a262862f7a7fb4deabc01d6ad718fec342ca11cebb90a85347",
+    "directions/security-flow/outcome.json": "6853cbb27409765651a98040104b07a62094fc8a251a7ba48085ffb684d9d0cf",
+    "directions/security-flow/plan.json": "7782280b71443ae73065df4811f5620d3ec03ad0299018605146be0ddaf036f7",
+    "directions/security-flow/snapshot.json": "59dd4efe7918eb34b386e627eea71b1e763a80c98b7bd68e89d9358966fd95fa",
+    "directions/security-flow/suite.json": "87ace794321ca1cafb33b8d1c837ebfc7cf89d8e5f0d0f232c6479ab581e344f",
+    "response-controls.json": "baf5050e835aed96f965ec6588063420834b97569bcbe3abae30d1b57d5a0b01",
+    "security-v2-projections.json": "6671029bee6901bbb80add52504cb64de0fe9c9710fe1d3331542a8853cf8cec",
+    "foundation-review.json": "bf5ed51ab1afcffe928a6cbef4a5788a2266035db5e1f155216578ef0a015135",
+    "preparation-validation.json": "46921e044b11665fb62760e57f998e61ad4c82b40e030c7c613d839b21f8bdd4"
+  },
+  "early-stop": "Checkpoint and security baselines were stopped after a mandatory evidence gap already made qualification impossible. All planned runs remain listed; unfinished invocations are unassessed. No replacement runs or regrading.",
+  "canonical-core-mutated": false,
+  "native-candidate-invocations": 0,
+  "promotion-authorized": false,
+  "boundary": "Named synthetic profile only. Structural schemas do not cover every finite value or earlier message; static graders do not establish runtime behavior, actual internal activation, real external authority or other-host portability. Mandatory uncertainty never becomes pass.",
+  "preparation-validation-ref": "preparation-validation.json"
+}

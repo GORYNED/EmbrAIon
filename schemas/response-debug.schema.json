@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cause", "findings", "facts", "evidence", "questions", "procedures"],
+  "properties": {
+    "cause": {"enum": ["compute", "cache", "typo"]},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "facts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "compute-step", "cache-step", "cause", "leading", "attempt-count"],
+      "properties": {
+        "mode": {"enum": ["simple", "complex"]},
+        "compute-step": {"type": "integer", "enum": [1, 2]},
+        "cache-step": {"type": ["integer", "null"], "enum": [1, 2, null]},
+        "cause": {"enum": ["compute", "cache", "typo"]},
+        "leading": {"enum": ["compute", "cache", "none"]},
+        "attempt-count": {"type": "integer", "enum": [0, 2]}
+      }
+    },
+    "evidence": {"type": "array", "minItems": 3, "maxItems": 8, "items": {"type": "string"}},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "procedures": {"type": "object", "additionalProperties": false, "properties": {}, "required": []}
+  }
+}

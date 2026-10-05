@@ -1,0 +1,79 @@
+{
+  "evidence": "qualified-baseline-report.json",
+  "semantic-budgets": "All six non-cost category regressions have zero budget.",
+  "target-benefit": "A determinate failed-to-passed complete assessment, including guarded controls; no post-hoc cost-only promotion criterion.",
+  "cost-budgets": [
+    {
+      "case": "security-owner-positive-en",
+      "metric": "tokens",
+      "baseline-values": [
+        50139,
+        67916,
+        33306,
+        50064,
+        50685,
+        33444,
+        50266,
+        50374,
+        49825,
+        50306
+      ],
+      "allowed-pair-increase": 44650.5,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded security source assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "security-owner-positive-en",
+      "metric": "latency",
+      "baseline-values": [
+        21.599,
+        25.954,
+        17.87,
+        22.837,
+        20.132,
+        24.204,
+        18.025,
+        20.989,
+        19.677,
+        40.651
+      ],
+      "allowed-pair-increase": 27.039800000000003,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded security source assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "security-owner-positive-ru",
+      "metric": "tokens",
+      "baseline-values": [
+        50320,
+        51172,
+        51076,
+        68239,
+        70143,
+        51973,
+        50186,
+        51384,
+        68571,
+        50935
+      ],
+      "allowed-pair-increase": 30212.6,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded security source assessment; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "security-owner-positive-ru",
+      "metric": "latency",
+      "baseline-values": [
+        16.214,
+        17.166,
+        19.529,
+        22.693,
+        22.435,
+        17.47,
+        28.064,
+        36.236,
+        25.635,
+        25.154
+      ],
+      "allowed-pair-increase": 24.534799999999997,
+      "reason": "Observed ten-control spread plus 20 percent median for this bounded security source assessment; no quality/safety tradeoff and no universal confidence claim."
+    }
+  ]
+}

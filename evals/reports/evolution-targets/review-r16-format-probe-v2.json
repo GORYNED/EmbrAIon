@@ -1,0 +1,50 @@
+{
+  "plan": {
+    "kind": "format-diagnostic-only",
+    "planned": 1,
+    "target-case": "review-intent-positive-en",
+    "coverage": "Fixed structural booleans only; no raw output, semantic judgment, baseline replacement, or regrading.",
+    "runtime-archive": "16a0c7344311bac36156a862ad6daa1378040229234e932dfa4060306b635ac5",
+    "requested-model": "gpt-6-sol",
+    "requested-effort": "high",
+    "effective-backend": "unverified"
+  },
+  "host": {
+    "status": "completed",
+    "duration-seconds": 19.447,
+    "exit-code": 0,
+    "completed": true,
+    "failed": false,
+    "tool-calls": 6,
+    "tokens": {
+      "input_tokens": 48889,
+      "output_tokens": 713,
+      "cached_input_tokens": 39552
+    },
+    "usage-complete": true,
+    "observed-reads": [],
+    "observer": {
+      "status": "inconclusive",
+      "observer-id": "finite-stream-v1"
+    },
+    "configuration-evidence": "explicit-native-developer-instructions-argument",
+    "role-evidence": "reviewer-profile-explicit-argument",
+    "access-evidence": "read-only"
+  },
+  "format": {
+    "observer-status": "inconclusive",
+    "observer-reason": "finite-answer-unavailable",
+    "json-parsed": true,
+    "top-level-object": true,
+    "exact-fields": true,
+    "result-finite": true,
+    "findings-id-list": false,
+    "findings-object-list": true,
+    "questions-allowed": true,
+    "procedures-object": true,
+    "procedure-keys-allowed": true,
+    "procedure-bodies-finite": true,
+    "workspace-unchanged": true,
+    "environment-unchanged": true
+  }
+}

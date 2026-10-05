@@ -1,0 +1,81 @@
+{
+  "schema-version": 1,
+  "id": "goal-proof-r21-negative",
+  "baseline": "baseline",
+  "candidate": "goal-proof",
+  "suite-digest": "7948375250f69fe899cd1a2011ce92a689905547fcf720ef02a7975b8734edd8",
+  "change-ids": [
+    "goal-proof"
+  ],
+  "traceability": [
+    {
+      "change-id": "goal-proof",
+      "source-kind": "new-contract",
+      "observed-problem": "Passing isolated checks can conceal absent wiring, unused implementation, removed obligations, or an unsupported completion claim.",
+      "proposed-rule": "Connect each completion claim to the requested result and relevant consumer evidence.",
+      "capability-paths": [
+        "core/skills/verification/SKILL.md"
+      ],
+      "expected-result": "Detect substantive completion failures and preserve truthful limits without blocking unrelated simple tasks.",
+      "scenarios": [
+        "goal-clean-negative-en",
+        "goal-comment-negative-ru"
+      ]
+    }
+  ],
+  "required-cases": [
+    "goal-clean-negative-en",
+    "goal-comment-negative-ru"
+  ],
+  "target-cases": [
+    "goal-clean-negative-en",
+    "goal-comment-negative-ru"
+  ],
+  "cases": [
+    {
+      "case": "goal-clean-negative-en",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 33431.6,
+        "latency": 44.759699999999995
+      },
+      "baseline-manifest-digest": "4e68722f2783919242d3f6b0b10960642458d16b099c44bea2223f52abf641af",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "goal-clean-negative-en-r23-budget"
+    },
+    {
+      "case": "goal-comment-negative-ru",
+      "risk": "high",
+      "attempts": 10,
+      "limits": {
+        "quality-correctness": 0,
+        "authority-scope": 0,
+        "security-privacy": 0,
+        "false-positive-rate": 0,
+        "unnecessary-clarification": 0,
+        "unnecessary-capability-activation": 0,
+        "tokens": 31151.4,
+        "latency": 26.8619
+      },
+      "baseline-manifest-digest": "4e68722f2783919242d3f6b0b10960642458d16b099c44bea2223f52abf641af",
+      "baseline-report-id": "qualified-baseline",
+      "justification-id": "goal-comment-negative-ru-r23-budget"
+    }
+  ],
+  "baseline-reports": [
+    {
+      "id": "qualified-baseline",
+      "path": "qualified-baseline-report.json",
+      "digest": "a2567e532e9469ff2b53091f3b3e6ccf3c65dd822dd8e89c03bf834b6f173b9d",
+      "suite-path": "suite.json",
+      "suite-digest": "8c72784ec04355ec5228721bdf59a476c7cb59818456d694d54398d51c7092ae"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"schema-version": 1, "action": "move", "target": "ops/offset.py", "request": "Extract the integer normalization implementation into ops/offset.py; preserve callers, saved references and externally visible behavior. Keep this a local structure-only change."}

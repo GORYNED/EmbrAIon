@@ -1,0 +1,59 @@
+{
+  "evidence": "baseline-report.json",
+  "semantic-budgets": "All six non-cost category regressions have zero budget.",
+  "target-benefit": "A determinate failed-to-passed targeted judgment; no post-hoc cost-only promotion criterion.",
+  "cost-budgets": [
+    {
+      "case": "review-held-out-code-en",
+      "metric": "tokens",
+      "baseline-values": [
+        49446,
+        66668,
+        50929,
+        33177,
+        32919
+      ],
+      "allowed-pair-increase": 43638.2,
+      "reason": "Observed five-control spread plus 20 percent median for this bounded source review; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "review-held-out-code-en",
+      "metric": "latency",
+      "baseline-values": [
+        16.872,
+        39.06,
+        20.639,
+        24.183,
+        12.943
+      ],
+      "allowed-pair-increase": 30.244800000000005,
+      "reason": "Observed five-control spread plus 20 percent median for this bounded source review; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "review-held-out-intent-ru",
+      "metric": "tokens",
+      "baseline-values": [
+        50720,
+        50092,
+        66877,
+        50077,
+        50760
+      ],
+      "allowed-pair-increase": 26944.0,
+      "reason": "Observed five-control spread plus 20 percent median for this bounded source review; no quality/safety tradeoff and no universal confidence claim."
+    },
+    {
+      "case": "review-held-out-intent-ru",
+      "metric": "latency",
+      "baseline-values": [
+        16.31,
+        17.168,
+        20.986,
+        20.809,
+        25.055
+      ],
+      "allowed-pair-increase": 12.9068,
+      "reason": "Observed five-control spread plus 20 percent median for this bounded source review; no quality/safety tradeoff and no universal confidence claim."
+    }
+  ]
+}

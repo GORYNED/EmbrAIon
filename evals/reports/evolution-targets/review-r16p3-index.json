@@ -1,0 +1,71 @@
+{
+  "schema-version": 1,
+  "kind": "review-target-exploratory-index",
+  "core-source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "reports": [
+    {
+      "report": "review-r16p3-positive-exploratory.json",
+      "sha256": "39d200645e0ccf234fff13f0a8e7c96aff92a4b3b2e2e5b3cb8ae872d11875b5",
+      "runtime-archive-sha256": "82bb09b4257794a8db485d2245b58ca1cfd4b6a1428eee153b9d0789b5407eac",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "status": "pass",
+      "measurement-status": "complete",
+      "contamination": []
+    },
+    {
+      "report": "review-r16p3-negative-exploratory.json",
+      "sha256": "f702f82d32270e24e62511537d634644701b797571308d88be856ea5c174428f",
+      "runtime-archive-sha256": "82bb09b4257794a8db485d2245b58ca1cfd4b6a1428eee153b9d0789b5407eac",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "status": "pass",
+      "measurement-status": "complete",
+      "contamination": []
+    },
+    {
+      "report": "review-r16p3-held-out-exploratory.json",
+      "sha256": "03a0745f8125f53ddef4c81a86de9e601d3fc494f8130e69e1bb72e11081fb58",
+      "runtime-archive-sha256": "82bb09b4257794a8db485d2245b58ca1cfd4b6a1428eee153b9d0789b5407eac",
+      "protocol-version": 3,
+      "authoritative": false,
+      "phase": "exploratory",
+      "planned": 6,
+      "observed": 6,
+      "counts": {
+        "pass": 6,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "status": "pass",
+      "measurement-status": "complete",
+      "contamination": []
+    }
+  ],
+  "authoritative": false,
+  "promotion": "blocked-missing-authoritative-baseline-and-matched-comparison",
+  "counts": {
+    "pass": 18,
+    "fail": 0,
+    "inconclusive": 0
+  },
+  "coverage": "Six strict finite source-diff judgments, with three exploratory repeats each. Mandatory five-repeat baseline, measurement-time fixture provenance, matched candidate benefit, general runtime review and effective backend settings remain unproven.",
+  "comparison": "Only review protocol3 differs from validated R16 source; earlier protocol2 reports remain distinct diagnostics without regrading.",
+  "observed-benefit": "No candidate was run; passing original-Core trials are not candidate improvement."
+}

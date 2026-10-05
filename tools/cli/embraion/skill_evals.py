@@ -136,6 +136,7 @@ def _grade(root: Path, before: dict[str, str], checks: list[dict[str, Any]]) -> 
 def _events(path: Path, skill_ids: list[str]) -> dict[str, Any]:
     completed = False
     failed = False
+    usage_complete = True
     tool_calls = 0
     tokens: dict[str, int] = {}
     reads: set[str] = set()
@@ -149,11 +150,18 @@ def _events(path: Path, skill_ids: list[str]) -> dict[str, Any]:
             kind = event["type"]
             completed |= kind == "turn.completed"
             failed |= kind == "turn.failed"
-            if kind == "turn.completed" and isinstance(event.get("usage"), dict):
-                for key in ("input_tokens", "output_tokens", "cached_input_tokens"):
-                    value = event["usage"].get(key)
-                    if type(value) is int and value >= 0:
-                        tokens[key] = tokens.get(key, 0) + value
+            if kind == "turn.completed":
+                usage = event.get("usage")
+                if not isinstance(usage, dict) or any(
+                    type(usage.get(key)) is not int or usage[key] < 0
+                    for key in ("input_tokens", "output_tokens")
+                ):
+                    usage_complete = False
+                if isinstance(usage, dict):
+                    for key in ("input_tokens", "output_tokens", "cached_input_tokens"):
+                        value = usage.get(key)
+                        if type(value) is int and value >= 0:
+                            tokens[key] = tokens.get(key, 0) + value
             item = event.get("item")
             if isinstance(item, dict) and item.get("type") in {"command_execution", "mcp_tool_call", "web_search"}:
                 if kind == "item.started":
@@ -163,7 +171,8 @@ def _events(path: Path, skill_ids: list[str]) -> dict[str, Any]:
                     for skill_id in skill_ids:
                         if f".agents/skills/{skill_id}/SKILL.md" in command:
                             reads.add(skill_id)
-    return {"completed": completed, "failed": failed, "tool-calls": tool_calls, "tokens": tokens, "observed-reads": sorted(reads)}
+    return {"completed": completed, "failed": failed, "tool-calls": tool_calls, "tokens": tokens,
+            "usage-complete": completed and usage_complete, "observed-reads": sorted(reads)}
 
 
 def _terminate_host(process: subprocess.Popen[bytes], *, windows: bool) -> None:
@@ -176,12 +185,31 @@ def _terminate_host(process: subprocess.Popen[bytes], *, windows: bool) -> None:
             pass
 
 
-def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path) -> dict[str, Any]:
-    argv = [binary, "exec", "--ignore-user-config", "--ephemeral", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check", "--cd", str(root), "--output-last-message", str(scratch / "last-message.txt")]
+def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int, skill_ids: list[str], scratch: Path,
+                  *, developer_instructions: str | None = None, windows_sandbox: str | None = None,
+                  trusted_workspace: bool = False, sandbox: str = "workspace-write",
+                  output_schema: Path | None = None) -> dict[str, Any]:
+    if sandbox not in {"read-only", "workspace-write"}:
+        raise ValueError("unsupported native sandbox")
+    argv = [binary, "exec", "--ignore-user-config", "--ephemeral", "--json", "--sandbox", sandbox, "--skip-git-repo-check", "--cd", str(root), "--output-last-message", str(scratch / "last-message.txt")]
+    if output_schema is not None:
+        if (output_schema.is_symlink() or not output_schema.is_file()
+                or output_schema.resolve().parent != scratch.resolve()
+                or output_schema.stat().st_size > 100_000):
+            raise ValueError("invalid trusted output schema")
+        argv += ["--output-schema", str(output_schema)]
     if model:
         argv += ["--model", model]
     if effort:
         argv += ["--config", f'model_reasoning_effort="{effort}"']
+    if developer_instructions is not None:
+        argv += ["--config", "developer_instructions=" + json.dumps(developer_instructions)]
+    if windows_sandbox is not None:
+        if windows_sandbox not in {"elevated", "unelevated"}:
+            raise ValueError("unsupported Windows sandbox setting")
+        argv += ["--config", "windows.sandbox=" + json.dumps(windows_sandbox)]
+    if trusted_workspace:
+        argv += ["--config", "projects." + json.dumps(str(root.resolve())) + '.trust_level="trusted"']
     argv.append("-")
     start = time.monotonic()
     stdout = scratch / "events.jsonl"

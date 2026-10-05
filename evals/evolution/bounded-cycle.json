@@ -1,0 +1,196 @@
+{
+  "schema-version": 1,
+  "kind": "advisory-bounded-cycle-decision",
+  "updated-at": "2026-10-05T14:53:34.419295+00:00",
+  "scope": "EmbrAIon only; no consumer updates, merge or release",
+  "status": "bounded-experiments-closed",
+  "infrastructure-decision": "Foundation 2ed24b7 passed exact-head CI and verified native independent read-only review. Methodology candidate requires its own current-head CI/review before PR acceptance.",
+  "methodology": {
+    "corrections": 1,
+    "pilot-repeats": 1,
+    "response-control-cases": 39,
+    "controls": "all-pass",
+    "registered-response-shapes": 5,
+    "historical-results": "preserved-without-regrading",
+    "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+    "unexecuted-preparation-limit": "Three checkpoint matched-suite preparations have overlong IDs and fail schema validation; preserved unchanged, never executed, never eligible evidence.",
+    "preparation-validation-ref": "evals/reports/evolution-targets/r35-bounded-cycle/preparation-validation.json"
+  },
+  "decisions": [
+    {
+      "direction": "scope/orchestration",
+      "decision": "defer",
+      "target": "scope-action",
+      "reason": "Native tools preflight timed out in the sole repeat; both required observations unassessed.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/scope-action.json",
+      "change-id": "scope-action",
+      "capability-paths": [
+        "core/skills/orchestration/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "planning",
+      "decision": "defer",
+      "target": null,
+      "reason": "No isolated planning delta and registered scenario. Scope and verification results do not establish planning benefit.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": null
+    },
+    {
+      "direction": "dependency-upgrade",
+      "decision": "defer",
+      "target": null,
+      "reason": "Upgrade candidate has proposed scenarios only; no registered matched acceptance evidence. New grader development excluded by bounded cycle.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/upgrade-actions.json",
+      "change-id": "upgrade-actions",
+      "capability-paths": [
+        "core/skills/dependency-upgrade/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "validation",
+      "decision": "defer",
+      "target": null,
+      "reason": "No isolated validation delta and registered scenario. Historical verification is a different capability and is not substituted.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": null
+    },
+    {
+      "direction": "research",
+      "decision": "defer",
+      "target": "research-decision",
+      "reason": "Mandatory finite observer unavailable in both repeat observations; schemas alone do not close all value/progress grammar.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/repository-first.json",
+      "change-id": "repository-first",
+      "capability-paths": [
+        "core/skills/research/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "debugging",
+      "decision": "defer",
+      "target": "debug-decision",
+      "reason": "Full 25-observation baseline retains three mandatory evidence gaps; no budgets or candidate invocation.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/debugging-hypotheses.json",
+      "change-id": "debugging-hypotheses",
+      "capability-paths": [
+        "core/skills/debugging/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "consumer-testing",
+      "decision": "defer",
+      "target": "consumer-evidence",
+      "reason": "Mandatory response and static assertion-shape checks remain incomplete in the sole repeat; unsupported syntax is not a Core defect.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/consumer-oracles.json",
+      "change-id": "consumer-oracles",
+      "capability-paths": [
+        "core/skills/test-design/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "checkpoints/handoff",
+      "decision": "defer",
+      "target": "checkpoint-decision",
+      "reason": "Required native observation unavailable; partial baseline closed without replacing the unknown run.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/checkpoint-freshness.json",
+      "change-id": "checkpoint-freshness",
+      "capability-paths": [
+        "core/skills/planning/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "knowledge/documentation",
+      "decision": "defer",
+      "target": null,
+      "reason": "Knowledge candidate has proposed scenarios only; no registered independent acceptance evidence. No automatic README change is justified.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/knowledge-state.json",
+      "change-id": "knowledge-state",
+      "capability-paths": [
+        "core/skills/implementation/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "security-assessment-v2",
+      "decision": "defer",
+      "target": "security-flow",
+      "reason": "One revision prepared and all four projections checked, but high-risk baseline has a mandatory unknown result. Candidate comparison blocked.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/security-assessment-v2.json",
+      "change-id": "security-assessment-v2",
+      "capability-paths": [
+        "core/skills/security-assessment/SKILL.md",
+        "core/catalog.yaml"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "refactoring",
+      "decision": "defer",
+      "target": "refactor-characterization",
+      "reason": "Initial diagnostic passed; sole repeat has mandatory characterization evidence unavailable. Passing initial controls do not compensate for this unknown.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/refactoring.json",
+      "change-id": "refactoring",
+      "capability-paths": [
+        "core/skills/refactoring/SKILL.md",
+        "core/catalog.yaml"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately."
+    },
+    {
+      "direction": "review-axes",
+      "decision": "defer",
+      "target": null,
+      "reason": "Historical R17: 18 tied passing pairs, no observed standalone benefit. Candidate unchanged and not rerun.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/review-axes.json",
+      "change-id": "review-axes",
+      "capability-paths": [
+        "core/skills/review/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately.",
+      "historical-evidence": "evals/reports/evolution-targets/r17-review/index.json"
+    },
+    {
+      "direction": "verification/goal-proof",
+      "decision": "defer",
+      "target": null,
+      "reason": "Historical R23: 18 tied passing pairs, no observed independent benefit. Candidate unchanged and not rerun.",
+      "evidence-ref": "evals/reports/evolution-targets/r35-bounded-cycle/index.json",
+      "candidate-record": "evals/evolution/candidates/goal-proof.json",
+      "change-id": "goal-proof",
+      "capability-paths": [
+        "core/skills/verification/SKILL.md"
+      ],
+      "traceability": "Candidate record retains problem, rule, expected result and isolated Core delta; current evidence and defer reason are linked separately.",
+      "historical-evidence": "evals/reports/evolution-targets/r23-goal-matched/index.json"
+    }
+  ],
+  "historical-security-v1": "R21 rejection retained; no retrospective reclassification.",
+  "promote": [],
+  "composition": "Not applicable: no eligible standalone improvement.",
+  "confirmation": "Not run: no qualified new baseline and observed candidate benefit.",
+  "rollout": "Not triggered: no eligible Core package for human promotion approval.",
+  "canonical-core-mutated": false,
+  "roles": 8,
+  "new-core-skills": 0,
+  "promotion-authorized": false,
+  "completion-gates": "Exact-head PR CI and independent full cumulative review are required externally; do not embed a self-referential current commit SHA into this immutable decision record.",
+  "limitations": "Named synthetic profile only. Structural schemas do not cover every finite value or earlier message; static graders do not establish runtime behavior, actual internal activation, real external authority or other-host portability. Mandatory uncertainty never becomes pass.",
+  "reopening": "Requires a newly declared materially changed candidate or measurement condition and new comparable baseline. No further runs in this bounded cycle."
+}

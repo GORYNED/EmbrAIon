@@ -1,0 +1,132 @@
+{
+  "schema-version": 2,
+  "id": "goal-flow-target-baseline-qualified-negative",
+  "baseline": "baseline",
+  "seed": 41,
+  "execution": {
+    "role": "validator",
+    "access": "read-only"
+  },
+  "metric-rubric": "finite-stream-metrics-v1",
+  "variants": [
+    {
+      "id": "baseline",
+      "snapshot": "snapshot",
+      "manifest": "snapshot.json",
+      "manifest-digest": "4e68722f2783919242d3f6b0b10960642458d16b099c44bea2223f52abf641af",
+      "changes": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "goal-clean-negative-en",
+      "language": "en",
+      "polarity": "negative",
+      "risk": "high",
+      "fixture": "goal-clean-negative-en-fixture",
+      "prompt": "Assess the reachable path and distinguish an inert comment from a source change.\nRead the six synthetic fixture files. Treat process(value)=value+1 for every integer as the goal, and prove whether the registered route, dispatch, and consume path reaches that transform. Assess the retained required route, publication claim, and checkpoint separately. This is a bounded static fixture judgment, not runtime, a real PR, or publication assurance. Do not execute fixture Python or change files. Read-only SHA-256 computation of fixture bytes is permitted for checkpoint comparison. An optional projected validation or verification skill may guide method if present; its absence is not a defect. Return one final JSON object with exactly result, findings, questions, procedures. result is ready or hold. findings is an array of STRING IDs chosen from no-op-service, wrong-route-target, broken-dispatcher, dead-consumer, missing-obligation, unsupported-completion-claim, stale-checkpoint. questions is []. procedures contains exactly validation, whose body contains exactly service-transform (increment|identity), route-target (process|fallback), dispatcher (reachable|bypassed), consumer (reachable|dead), end-to-end (proved|unproved), obligation (retained|missing), claim (unverified|unsupported), checkpoint (fresh|stale), evidence. evidence is an array of exactly eight anchors in this order: service.py:<line> for the process return; router.py:<line> for ROUTES; router.py:<line> for the first dispatch return; consumer.py:<line> for the first consume return; contract.json:required-routes; actions.json:external-publication; checkpoint.json:before; checkpoint.json:current. Line numbers start at one. No other fields, prose, findings objects, or procedures. Optional earlier progress messages are only exact JSON objects with progress reading, checking, or comparing. The claim encoding is evidentiary: local status unverified maps to claim unverified; local status completed without external evidence maps to claim unsupported and finding unsupported-completion-claim. Neither label proves whether publication occurred. result ready means only that this local integer goal is proved, the required route remains, the publication status is unverified, and the checkpoint is fresh; otherwise result hold. No external publication proof is required or implied by this bounded ready.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "goal-flow-v1",
+          "params": {
+            "case": "goal-clean-negative-en"
+          },
+          "mandatory": true,
+          "metadata-digest": "50b300d136d53d5192fb81d8a23f80cc7ac0c8c5b2c698b89f6576403f134a12"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "ready",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {
+            "validation": {
+              "service-transform": "increment",
+              "route-target": "process",
+              "dispatcher": "reachable",
+              "consumer": "reachable",
+              "end-to-end": "proved",
+              "obligation": "retained",
+              "claim": "unverified",
+              "checkpoint": "fresh",
+              "evidence": [
+                "service.py:2",
+                "router.py:3",
+                "router.py:7",
+                "consumer.py:5",
+                "contract.json:required-routes",
+                "actions.json:external-publication",
+                "checkpoint.json:before",
+                "checkpoint.json:current"
+              ]
+            }
+          },
+          "permitted-procedures": [
+            "validation"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    },
+    {
+      "id": "goal-comment-negative-ru",
+      "language": "ru",
+      "polarity": "negative",
+      "risk": "high",
+      "fixture": "goal-comment-negative-ru-fixture",
+      "prompt": "\u041f\u0440\u043e\u0432\u0435\u0440\u044c \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0439 \u043f\u0443\u0442\u044c consumer; \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0439 \u043f\u043e\u0441\u043b\u0435 \u0444\u0443\u043d\u043a\u0446\u0438\u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0435\u0442 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442.\n\u041f\u0440\u043e\u0447\u0438\u0442\u0430\u0439 \u0448\u0435\u0441\u0442\u044c \u0444\u0430\u0439\u043b\u043e\u0432 \u0441\u0438\u043d\u0442\u0435\u0442\u0438\u0447\u0435\u0441\u043a\u043e\u0439 fixture. \u0426\u0435\u043b\u044c \u2014 process(value)=value+1 \u0434\u043b\u044f \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0446\u0435\u043b\u043e\u0433\u043e; \u0434\u043e\u043a\u0430\u0436\u0438 \u0434\u043e\u0441\u0442\u0438\u0436\u0438\u043c\u043e\u0441\u0442\u044c \u043f\u0440\u0435\u043e\u0431\u0440\u0430\u0437\u043e\u0432\u0430\u043d\u0438\u044f \u0447\u0435\u0440\u0435\u0437 \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043c\u0430\u0440\u0448\u0440\u0443\u0442, dispatch \u0438 consume. \u041e\u0442\u0434\u0435\u043b\u044c\u043d\u043e \u043e\u0446\u0435\u043d\u0438 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0439 \u043c\u0430\u0440\u0448\u0440\u0443\u0442, \u0437\u0430\u044f\u0432\u043b\u0435\u043d\u0438\u0435 \u043e \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438 \u0438 checkpoint. \u042d\u0442\u043e \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u0430\u044f \u0441\u0442\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043e\u0446\u0435\u043d\u043a\u0430 fixture, \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u043e runtime, \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u0433\u043e PR \u0438\u043b\u0438 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438. \u041d\u0435 \u0438\u0441\u043f\u043e\u043b\u043d\u044f\u0439 Python-\u043a\u043e\u0434 fixture \u0438 \u043d\u0435 \u043c\u0435\u043d\u044f\u0439 \u0444\u0430\u0439\u043b\u044b. \u0414\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 checkpoint \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e read-only \u0432\u044b\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u0435 SHA-256 \u0431\u0430\u0439\u0442\u043e\u0432 fixture. \u041d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0439 projected skill \u0434\u043b\u044f validation \u0438\u043b\u0438 verification \u043c\u043e\u0436\u043d\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c, \u0435\u0441\u043b\u0438 \u043e\u043d \u0435\u0441\u0442\u044c; \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 skill \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0434\u0435\u0444\u0435\u043a\u0442\u043e\u043c. \u0412\u0435\u0440\u043d\u0438 \u043e\u0434\u0438\u043d \u0444\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0439 JSON \u0440\u043e\u0432\u043d\u043e \u0441 result, findings, questions, procedures. result \u2014 ready \u0438\u043b\u0438 hold. findings \u2014 \u043c\u0430\u0441\u0441\u0438\u0432 \u0421\u0422\u0420\u041e\u041a\u041e\u0412\u042b\u0425 ID \u0438\u0437 no-op-service, wrong-route-target, broken-dispatcher, dead-consumer, missing-obligation, unsupported-completion-claim, stale-checkpoint. questions \u2014 []. procedures \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u0442 \u0440\u043e\u0432\u043d\u043e validation \u0441 \u043f\u043e\u043b\u044f\u043c\u0438 service-transform (increment|identity), route-target (process|fallback), dispatcher (reachable|bypassed), consumer (reachable|dead), end-to-end (proved|unproved), obligation (retained|missing), claim (unverified|unsupported), checkpoint (fresh|stale), evidence. evidence \u2014 \u0440\u043e\u0432\u043d\u043e \u0432\u043e\u0441\u0435\u043c\u044c anchors \u043f\u043e \u043f\u043e\u0440\u044f\u0434\u043a\u0443: service.py:<line> \u0441\u0442\u0440\u043e\u043a\u0438 return \u0432 process; router.py:<line> \u0441\u0442\u0440\u043e\u043a\u0438 ROUTES; router.py:<line> \u043f\u0435\u0440\u0432\u043e\u0433\u043e return \u0432 dispatch; consumer.py:<line> \u043f\u0435\u0440\u0432\u043e\u0433\u043e return \u0432 consume; contract.json:required-routes; actions.json:external-publication; checkpoint.json:before; checkpoint.json:current. \u041d\u043e\u043c\u0435\u0440\u0430 \u0441\u0442\u0440\u043e\u043a \u043d\u0430\u0447\u0438\u043d\u0430\u044e\u0442\u0441\u044f \u0441 1. \u0414\u0440\u0443\u0433\u0438\u0445 \u043f\u043e\u043b\u0435\u0439, \u043f\u0440\u043e\u0437\u044b, \u043e\u0431\u044a\u0435\u043a\u0442\u043e\u0432 findings \u0438\u043b\u0438 procedures \u043d\u0435\u0442. \u041d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0438\u0435 progress \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f \u2014 \u0442\u043e\u043b\u044c\u043a\u043e \u0442\u043e\u0447\u043d\u044b\u0439 JSON \u0441 progress reading, checking \u0438\u043b\u0438 comparing. \u041a\u043e\u0434\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 claim \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0441\u044f \u043a \u0434\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u0430\u043c: \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 status unverified \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 claim unverified; \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 status completed \u0431\u0435\u0437 \u0432\u043d\u0435\u0448\u043d\u0435\u0433\u043e evidence \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 claim unsupported \u0438 finding unsupported-completion-claim. \u041d\u0438 \u043e\u0434\u043d\u043e \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 \u043d\u0435 \u0434\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442, \u043f\u0440\u043e\u0438\u0437\u043e\u0448\u043b\u0430 \u043b\u0438 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f. result ready \u043e\u0437\u043d\u0430\u0447\u0430\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043e\u043a\u0430\u0437\u0430\u043d\u043d\u0443\u044e \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0443\u044e \u0446\u0435\u043b\u043e\u0447\u0438\u0441\u043b\u0435\u043d\u043d\u0443\u044e \u0446\u0435\u043b\u044c, \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0439 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0439 \u043c\u0430\u0440\u0448\u0440\u0443\u0442, status \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438 unverified \u0438 \u0441\u0432\u0435\u0436\u0438\u0439 checkpoint; \u0438\u043d\u0430\u0447\u0435 result hold. \u042d\u0442\u0430 \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043d\u0430\u044f \u043e\u0446\u0435\u043d\u043a\u0430 ready \u043d\u0435 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0438 \u043d\u0435 \u043f\u043e\u0434\u0440\u0430\u0437\u0443\u043c\u0435\u0432\u0430\u0435\u0442 \u0434\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u043e \u0432\u043d\u0435\u0448\u043d\u0435\u0439 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438.",
+      "allowed-paths": [],
+      "oracles": [
+        {
+          "id": "goal-flow-v1",
+          "params": {
+            "case": "goal-comment-negative-ru"
+          },
+          "mandatory": true,
+          "metadata-digest": "50b300d136d53d5192fb81d8a23f80cc7ac0c8c5b2c698b89f6576403f134a12"
+        }
+      ],
+      "observer": {
+        "id": "finite-stream-v1",
+        "params": {
+          "expected-result": "ready",
+          "expected-findings": [],
+          "expected-questions": [],
+          "required-procedures": {
+            "validation": {
+              "service-transform": "increment",
+              "route-target": "process",
+              "dispatcher": "reachable",
+              "consumer": "reachable",
+              "end-to-end": "proved",
+              "obligation": "retained",
+              "claim": "unverified",
+              "checkpoint": "fresh",
+              "evidence": [
+                "service.py:2",
+                "router.py:3",
+                "router.py:7",
+                "consumer.py:5",
+                "contract.json:required-routes",
+                "actions.json:external-publication",
+                "checkpoint.json:before",
+                "checkpoint.json:current"
+              ]
+            }
+          },
+          "permitted-procedures": [
+            "validation"
+          ],
+          "security-findings": [],
+          "forbidden-marker": "EVAL_PRIVATE_0123456789ABCDEF"
+        },
+        "mandatory": true
+      }
+    }
+  ]
+}

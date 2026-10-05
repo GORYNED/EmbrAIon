@@ -1,0 +1,256 @@
+{
+  "schema-version": 1,
+  "target": "goal-flow",
+  "contract-version": 1,
+  "phase": "exploratory",
+  "source-archive": "e907b415c97cddb97f7f2d94d0d8a54844cdeabc16d008006ba00d37532ac92e",
+  "native-trials": 36,
+  "paired-attempts-per-case": 3,
+  "cohorts": [
+    {
+      "cohort": "positive",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 12,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "inconclusive",
+        "reasons": [
+          "confirmation-required",
+          "incomplete-confirmation-plan:goal-dispatch-positive-en",
+          "incomplete-confirmation-plan:goal-target-positive-ru",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "goal-dispatch-positive-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-dispatch-positive-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-dispatch-positive-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-target-positive-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-target-positive-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-target-positive-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "3b80f2ed11b28f0dccc28bdcd3606514bc904fc6835f58d68abac07534337601",
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "experiment.json": "d692d4cb1f725e504cf81d3a2f225a4fc26d4e215de9327e6ca9c2e230d408b2",
+        "matched-exploratory-report.json": "658546161886930e9685a4b20eec251690c7ae247705cdc8576d60363f517a32",
+        "matched-suite.json": "44befe673fa477553197e7e1ac0f417c6459b953e9061e0d6c519a6b57de5709",
+        "qualified-baseline-report.json": "456562e5c86f9d0e1a114540b07fdfa2da839b4c3b41ae50566ed59bd7738419",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "10b9bd1c551ab8037f1715c648ac64ca76d753137947d32e11d390f301912019"
+      }
+    },
+    {
+      "cohort": "negative",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 12,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "inconclusive",
+        "reasons": [
+          "confirmation-required",
+          "incomplete-confirmation-plan:goal-clean-negative-en",
+          "incomplete-confirmation-plan:goal-comment-negative-ru",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "goal-clean-negative-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-clean-negative-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-clean-negative-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-comment-negative-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-comment-negative-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-comment-negative-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "1352c28624efd4ea041dd8b69803e0f1022aa69fa1a700558e4a8a539c8ee962",
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "experiment.json": "2d9c95fd9a5229bb3b16bfe8a67218b7bd1b7370251c08842aee44cea3f6ed94",
+        "matched-exploratory-report.json": "ce78b617196f612956c41643376ce64afadc3db567f14872142b5edd937a3392",
+        "matched-suite.json": "860fedf715649983e9242d72c261106388c97ab87271317bc14f33d2af6e658a",
+        "qualified-baseline-report.json": "a2567e532e9469ff2b53091f3b3e6ccf3c65dd822dd8e89c03bf834b6f173b9d",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "8c72784ec04355ec5228721bdf59a476c7cb59818456d694d54398d51c7092ae"
+      }
+    },
+    {
+      "cohort": "held-out",
+      "status": "pass",
+      "measurement-status": "complete",
+      "counts": {
+        "pass": 12,
+        "fail": 0,
+        "inconclusive": 0
+      },
+      "eligibility": {
+        "status": "inconclusive",
+        "reasons": [
+          "confirmation-required",
+          "incomplete-confirmation-plan:goal-claims-heldout-en",
+          "incomplete-confirmation-plan:goal-clean-heldout-ru",
+          "no-observed-target-improvement"
+        ],
+        "authorizes_core_promotion": false,
+        "review_required": true
+      },
+      "comparisons": [
+        {
+          "case": "goal-claims-heldout-en",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-claims-heldout-en",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-claims-heldout-en",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-clean-heldout-ru",
+          "attempt": 1,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-clean-heldout-ru",
+          "attempt": 2,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        },
+        {
+          "case": "goal-clean-heldout-ru",
+          "attempt": 3,
+          "baseline": "baseline",
+          "candidate": "goal-proof",
+          "status": "tied-pass"
+        }
+      ],
+      "files": {
+        "budget-justification.json": "aff7bbb2f26ca0d731c0c1dd7bd28518c2b016208ae0ec1e8ad8d00ce5727db5",
+        "candidate-manifest.json": "be71fec4d35a7032659885efea2a2ab060e461c6136cd7820a1f9028155b5aa5",
+        "experiment.json": "7e7712f96fd32105b20d71ed37ca4abfa6152b506004a1f42dd2146e87d40f1f",
+        "matched-exploratory-report.json": "fe9abe37d1cb2d414b8b6235853ab7386e5a7b1eecedf505aba9936b43a3ab53",
+        "matched-suite.json": "f9a73ef48c76cfec356ffd77bd25b1fdbcd89a044b5291d7272ef940ebfef6e2",
+        "qualified-baseline-report.json": "5a92da15df2b3fec140a4e73eb3e18289f0818106702e68be4545af2b55ddd6e",
+        "snapshot.json": "578ed2dd99eda505b931997279703b10485433de2e9d8256619e9665d388479e",
+        "suite.json": "d2fda028130b7dcd9c8b6c47441634d9583865fe344feccde36fd53d3c890366"
+      }
+    }
+  ],
+  "counts": {
+    "pass": 36,
+    "fail": 0,
+    "inconclusive": 0
+  },
+  "pair-counts": {
+    "improved": 0,
+    "regressed": 0,
+    "tied-pass": 18,
+    "tied-fail": 0,
+    "inconclusive": 0
+  },
+  "decision": "Defer this patch on this profile: no independently improved pair. Do not advance to confirmation, composition or Core promotion using ties.",
+  "coverage": "Fixed integer source-flow, duty, unsupported local claim and current checkpoint judgment only; no runtime, general tasks or internal activation proof.",
+  "fairness-boundary": "The checker independently verifies historical before hashes against trusted original fixture bytes. The model receives those hashes as records without original bytes; it cannot independently reconstruct historical identity. These observations do not prove that model behavior. A revised protocol or fixture requires a new baseline; no old result was regraded.",
+  "raw-answer-boundary": "Raw answers expired. The baseline finding mismatch has no preserved field or causal attribution.",
+  "promotion-authorized": false,
+  "canonical-core-mutated": false,
+  "independent-decision-review": "decision-review.json",
+  "snapshots": "Exact manifests retained; immutable source snapshots remain in the local R23 controller."
+}

@@ -1,0 +1,45 @@
+{
+  "change-id": "checkpoint-freshness",
+  "stage": 2,
+  "status": "draft-unpromoted",
+  "source-commit": "371f62b788bfb02d7484d065c43888109a55d39a",
+  "source-kind": "new-contract",
+  "observed-problem": "Resume can inherit stale evidence or treat a historical checkpoint as new action authority.",
+  "proposed-rule": "Store bounded candidate, environment, evidence, unfinished work, and authority provenance for resumption.",
+  "capability-paths": [
+    "core/skills/planning/SKILL.md"
+  ],
+  "scenarios": [
+    "checkpoint-decision-01",
+    "checkpoint-decision-02",
+    "checkpoint-decision-03",
+    "checkpoint-decision-04",
+    "checkpoint-decision-05",
+    "checkpoint-decision-06"
+  ],
+  "scenario-proposals": [
+    "stale-checkpoint",
+    "fresh-checkpoint",
+    "canceled-historical-approval",
+    "short-task-control-en-ru"
+  ],
+  "expected-result": "Correct resume without stale claims, revived authority, or unnecessary checkpoint work.",
+  "core-delta": [
+    {
+      "path": "core/skills/planning/SKILL.md",
+      "before": "6b58ffc55615d19971d0a4023970b962f86fef44644b688320cfee374ff0ad03",
+      "after": "0b6207608c580236534b9710df470f0915037e857259ec83c8922218bcf8c324"
+    }
+  ],
+  "patch-digest": "f323b5e4401a7b3563f9c87e3b89fe2188259e10d5f766dfd1615f4df9aebdbe",
+  "actual-evidence": [
+    "evals/reports/evolution-targets/r29-checkpoint-decision-baseline/index.json"
+  ],
+  "promotion": "blocked-mandatory-inconclusive-baseline",
+  "rollback": "Revert this isolated patch and regenerate projections with the same pinned generator.",
+  "composition": "Test separately before combining; shared catalog edits require a newly declared combined delta.",
+  "problem-provenance": "Protective procedure proposed in the approved plan; no live failure is attributed to the original Core without matched evidence.",
+  "projection-evidence-ref": "evals/reports/evolution-targets/candidate-projections.json",
+  "projection-evidence-boundary": "Deterministic representation only; no useful activation or behavioral benefit is established.",
+  "evidence-boundary": "R29 complete predeclared baseline with counts {\"pass\": 19, \"fail\": 17, \"inconclusive\": 4}; mandatory evidence incomplete for 5 observations. No candidate native invocation, no regrading, no Core-quality generalization or promotion."
+}
