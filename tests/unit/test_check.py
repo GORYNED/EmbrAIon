@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+import io
+import json
+import os
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+from unittest.mock import patch
+
+from embraion.check import planned_checks
+from embraion.cli import main
+from embraion.common import read_yaml, write_yaml
+from embraion.policy import check_source_classes, read_policy_config, source_data_classes
+from embraion.project import init_project
+
+
+class CheckTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name).resolve()
+        init_project(self.project, name="Check")
+        self.policy = self.project / ".embraion/policy.yaml"
+
+    def update_policy(self, **sections: object) -> None:
+        data = read_yaml(self.policy)
+        data.update(sections)
+        write_yaml(self.policy, data)
+
+    def ids(self, **options: object) -> list[str]:
+        return [item["id"] for item in planned_checks(self.project, **options)]
+
+    def test_default_project_runs_configuration_routing_and_security_checks(self) -> None:
+        self.assertEqual(["validate", "routes", "routing-authority", "security"], self.ids())
+        security = planned_checks(self.project)[-1]["argv"]
+        self.assertEqual(["security", "scan", "--path", ".", "--fail-on", "high"], security)
+
+    def test_declared_projections_organization_and_options_select_their_checks(self) -> None:
+        self.update_policy(projection={
+            "codex": {"components": ["config", "agents"], "config-mode": "merge", "strict-root": True},
+            "copilot": {"components": ["skills"]},
+            "claude-code": {"components": ["agents", "scoped-agents", "hooks"]},
+        })
+        (self.project / ".embraion/organization.yaml").write_text("{}\n", encoding="utf-8")
+        checks = {item["id"]: item["argv"] for item in
+                  planned_checks(self.project, base_ref="origin/main", fail_on="medium", all_files=True)}
+        self.assertEqual(
+            ["validate", "routes", "routing-authority", "projection-codex", "projection-copilot",
+             "projection-claude-code", "claude-native", "organization", "security"],
+            list(checks),
+        )
+        self.assertEqual(["projection", "verify", "--host", "codex", "--json", "--component", "config",
+                          "--component", "agents", "--config-mode", "merge"], checks["projection-codex"])
+        self.assertEqual(["claude-native", "status", "--require", "installed,hooks"], checks["claude-native"])
+        self.assertEqual(["organization", "check", "--require-config", "--path", ".", "--json",
+                          "--base-ref", "origin/main"], checks["organization"])
+        self.assertEqual(["security", "scan", "--path", ".", "--fail-on", "medium", "--all-files"],
+                         checks["security"])
+
+    def test_codex_config_defaults_to_replace_mode_and_hooks_alone_require_only_hooks(self) -> None:
+        self.update_policy(projection={"codex": {"components": ["config"]},
+                                       "claude-code": {"components": ["hooks"]}})
+        checks = {item["id"]: item["argv"] for item in planned_checks(self.project)}
+        self.assertEqual("replace", checks["projection-codex"][-1])
+        self.assertEqual(["claude-native", "status", "--require", "hooks"], checks["claude-native"])
+
+    def test_invalid_projection_declaration_fails_closed(self) -> None:
+        for projection in ({"copilot": {"components": ["config"]}},
+                           {"codex": {"config-mode": "append"}},
+                           {"portable": {"components": ["bundle"]}}):
+            with self.subTest(projection=projection):
+                self.update_policy(projection=projection)
+                with self.assertRaises(RuntimeError):
+                    read_policy_config(self.project)
+
+    def test_command_reports_every_check_and_fails_when_one_fails(self) -> None:
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        outcomes = {"routes": (2, "ERROR: broken routes\n")}
+
+        def fake_run(parser, argv):
+            check = {"validate": "validate", "route": "routes" if "--validate" in argv else "routing-authority",
+                     "security": "security"}[argv[0]]
+            return outcomes.get(check, (0, "ok\n"))
+
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", side_effect=fake_run), redirect_stdout(output):
+            self.assertEqual(1, main(["check", "--json"]))
+        report = json.loads(output.getvalue())
+        self.assertFalse(report["passed"])
+        self.assertEqual(["routes"], report["failed"])
+        self.assertEqual(4, len(report["checks"]))
+
+        outcomes.clear()
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", side_effect=fake_run), redirect_stdout(output):
+            self.assertEqual(0, main(["check"]))
+        self.assertIn("Check: passed", output.getvalue())
+
+
+class SourceClassTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name).resolve()
+        init_project(self.project, name="Sources")
+        self.policy = self.project / ".embraion/policy.yaml"
+
+    def declare(self, sources: object) -> None:
+        data = read_yaml(self.policy)
+        data["privacy"]["sources"] = sources
+        write_yaml(self.policy, data)
+
+    def test_undeclared_sources_keep_previous_behavior(self) -> None:
+        self.assertIsNone(source_data_classes(self.project))
+        check_source_classes("PUBLIC", ["Anything"], self.project)
+
+    def test_declared_sources_fail_closed_for_unknown_ids_and_lower_classes(self) -> None:
+        self.declare({"Docs": "PUBLIC", "App": "PRIVATE", "Vendor": "CONFIDENTIAL"})
+        self.assertEqual({"Docs": "PUBLIC", "App": "PRIVATE", "Vendor": "CONFIDENTIAL"},
+                         source_data_classes(self.project))
+        check_source_classes("PRIVATE", ["Docs", "App"], self.project)
+        check_source_classes("CONFIDENTIAL", ["Vendor", "App"], self.project)
+        with self.assertRaisesRegex(RuntimeError, "without a declared data class: Other"):
+            check_source_classes("CONFIDENTIAL", ["App", "Other"], self.project)
+        with self.assertRaisesRegex(RuntimeError, r"PRIVATE is below the declared class of: Vendor \(CONFIDENTIAL\)"):
+            check_source_classes("PRIVATE", ["App", "Vendor"], self.project)
+
+    def test_execution_requests_are_checked_against_declared_sources(self) -> None:
+        from embraion.execution import check_request_consistency
+
+        self.declare({"App": "PRIVATE", "Vendor": "CONFIDENTIAL"})
+        request = {"routeClass": "ordinary", "candidates": [], "dataClass": "PRIVATE", "sourceIds": ["App"]}
+        self.assertEqual(self.project, check_request_consistency(request, self.project))
+        with self.assertRaisesRegex(RuntimeError, "below the declared class"):
+            check_request_consistency({**request, "sourceIds": ["Vendor"]}, self.project)
+
+    def test_invalid_source_class_is_rejected(self) -> None:
+        for sources in ({"App": "SECRET"}, {"bad id": "PRIVATE"}, ["App"]):
+            with self.subTest(sources=sources):
+                self.declare(sources)
+                with self.assertRaises(RuntimeError):
+                    read_policy_config(self.project)
+
+
+if __name__ == "__main__":
+    unittest.main()

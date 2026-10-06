@@ -79,8 +79,9 @@ def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict
 def check_request_consistency(request: dict[str, Any], project: Path | None = None) -> Path:
     """Request checks shared by execution and preflight; returns the project root.
 
-    Covers critical justification, repeated deployments, and, for a project task
-    class, the effective route class and candidate order.
+    Covers critical justification, repeated deployments, declared source data
+    classes, and, for a project task class, the effective route class and
+    candidate order.
     """
     if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
@@ -91,6 +92,8 @@ def check_request_consistency(request: dict[str, Any], project: Path | None = No
     if len(identities) != len(set(identities)):
         raise RuntimeError("Execution candidate repeats a deployment.")
     root = project_root(project)
+    from .policy import check_source_classes
+    check_source_classes(request["dataClass"], list(request["sourceIds"]), root)
     if request.get("taskClass"):
         from .runtime import resolve_task_route
         resolved = resolve_task_route(

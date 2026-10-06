@@ -210,6 +210,37 @@ def merge_mode(project: Path | None = None) -> str:
     return str(configured["mode"])
 
 
+DATA_CLASS_ORDER = {"PUBLIC": 0, "PRIVATE": 1, "CONFIDENTIAL": 2}
+
+
+def source_data_classes(project: Path | None = None) -> dict[str, str] | None:
+    """Return the declared data class of each source ID, or None when the project declares none."""
+    root = project_root(project)
+    if not (root / ".embraion" / "policy.yaml").is_file():
+        return None
+    declared = (read_policy_config(root).get("privacy") or {}).get("sources")
+    return dict(declared) if declared is not None else None
+
+
+def check_source_classes(data_class: str, source_ids: list[str], project: Path | None = None) -> None:
+    """Fail closed when a request names an undeclared source or a class below its sources."""
+    declared = source_data_classes(project)
+    if declared is None:
+        return
+    unknown = sorted(set(source_ids) - set(declared))
+    if unknown:
+        raise RuntimeError(
+            "Execution names source IDs without a declared data class: " + ", ".join(unknown) + "."
+        )
+    above = sorted(source for source in source_ids
+                   if DATA_CLASS_ORDER[declared[source]] > DATA_CLASS_ORDER[data_class])
+    if above:
+        raise RuntimeError(
+            f"Execution data class {data_class} is below the declared class of: "
+            + ", ".join(f"{source} ({declared[source]})" for source in above) + "."
+        )
+
+
 def path_matches(path: str, patterns: list[str]) -> bool:
     normalized = normalize_project_path(path)
     prepared: list[tuple[str, list[int], list[str]]] = []

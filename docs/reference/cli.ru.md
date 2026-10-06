@@ -289,6 +289,18 @@ embraion validate --strict
 
 Предупреждения не меняют код выхода 0; `--strict` превращает их в ошибки. Без находок вывод остаётся `PASS: no validation issues.`. Полную проверку по схеме по-прежнему выполняют команды, которые загружают каждый файл; проверка policy ceilings остаётся ошибкой.
 
+### `embraion check`
+
+Запустить из корня проекта все проверки, которые выбирает конфигурация проекта, чтобы CI потребителя обходился одним шагом:
+
+```bash
+embraion check
+embraion check --base-ref origin/main --fail-on medium --all-files
+embraion check --json
+```
+
+Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on` и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, и `organization check --require-config`, когда есть `.embraion/organization.yaml`; `--base-ref` передаётся ему. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, и команда завершается с кодом 1, если упала хотя бы одна. См. [Policy](../configuration/policy.md#projection-root-checks).
+
 ### `embraion validation`
 
 Показать или выполнить project validation profiles из `.embraion/validation.yaml`:
