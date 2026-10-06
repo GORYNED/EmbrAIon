@@ -157,52 +157,65 @@ def check_policy_ceilings(project: Path | None = None) -> list[dict[str, str]]:
             if ceiling is not None:
                 check_task_class(ceiling, task_class, f"routing.task-classes.{task_class}",
                                  str(definition.get("provider")))
-    def selected(selection: dict[str, Any]) -> Iterable[tuple[str, str, dict[str, Any]]]:
+    def selected(selection: dict[str, Any]) -> Iterable[tuple[str, str, dict[str, Any], dict[str, Any]]]:
         for item in [selection, *(selection.get("fallbacks") or [])]:
             definition = enabled.get(item.get("deployment") or "") or {}
             ceiling = provider_ceilings.get(definition.get("provider") or "")
             if ceiling is not None:
-                yield item["deployment"], str(definition.get("provider")), ceiling
+                yield item["deployment"], str(definition.get("provider")), ceiling, definition
 
-    def check_role(ceiling: dict[str, Any], role: str, deployment: str, provider: str, location: str) -> None:
+    def capability_bounded(ceiling: dict[str, Any], definition: dict[str, Any], dimension: str) -> bool:
+        # Routing always refuses a data class that a deployment's capabilities do not list,
+        # so data-class capabilities within the ceiling bound every request an override matches.
+        # Roles do not qualify: a request without a role skips the role capability check.
+        values = (definition.get("capabilities") or {}).get(dimension)
+        return bool(values) and within(ceiling, dimension, values)
+
+    def check_role(ceiling: dict[str, Any], definition: dict[str, Any], role: str, deployment: str,
+                   provider: str, location: str) -> None:
         if "roles" in ceiling and role not in ceiling["roles"]:
             findings.append(_finding(
                 "ceiling-role", location,
                 f"Role '{role}' selects '{deployment}', outside the {provider} ceiling.",
             ))
-        if "data-classes" in ceiling:
+        if "data-classes" in ceiling and not capability_bounded(ceiling, definition, "data-classes"):
             findings.append(_finding(
                 "ceiling-unbounded", location,
-                f"Role '{role}' selects '{deployment}' for every data class, but the {provider} ceiling "
-                "limits data-classes; use a task-class override.",
+                f"Role '{role}' selects '{deployment}', whose capabilities do not keep data classes "
+                f"within the {provider} ceiling; restrict its data-classes or use a task-class override.",
             ))
 
     # Host overrides select deployments for every request that matches their key,
     # so each key must be narrow enough that every request it matches stays
-    # within the ceiling: a route class matches every role and data class, a
-    # role or route-role every data class, and a task class one of each.
+    # within the ceiling: a route class matches every role (including requests
+    # without one) and data class, a role or route-role every data class, and a
+    # task class one of each. Deployment capabilities within the ceiling bound
+    # the data class, because routing refuses a data class they do not list.
     for host, overrides in sorted((routing.get("overrides") or {}).items()):
         base = f"routing.overrides.{host}"
         for route, selection in sorted((overrides.get("routes") or {}).items()):
-            for deployment, provider, ceiling in selected(selection):
-                bounded = [dimension for dimension in ("roles", "data-classes") if dimension in ceiling]
-                if bounded:
-                    narrower = "task-class" if "data-classes" in bounded else "role, route-role, or task-class"
+            for deployment, provider, ceiling, definition in selected(selection):
+                unbounded = [dimension for dimension in ("roles", "data-classes") if dimension in ceiling
+                             and (dimension == "roles"
+                                  or not capability_bounded(ceiling, definition, dimension))]
+                if unbounded:
+                    narrower = "task-class" if "data-classes" in unbounded else "role, route-role, or task-class"
                     findings.append(_finding(
                         "ceiling-unbounded", f"{base}.routes.{route}",
                         f"Route class '{route}' selects '{deployment}' for every role and data class, "
-                        f"but the {provider} ceiling limits {' and '.join(bounded)}; "
+                        f"but the {provider} ceiling limits {' and '.join(unbounded)}; "
                         f"use a {narrower} override.",
                     ))
         for role, selection in sorted((overrides.get("roles") or {}).items()):
-            for deployment, provider, ceiling in selected(selection):
-                check_role(ceiling, role, deployment, provider, f"{base}.roles.{role}")
+            for deployment, provider, ceiling, definition in selected(selection):
+                check_role(ceiling, definition, role, deployment, provider, f"{base}.roles.{role}")
         for route, roles in sorted((overrides.get("route-roles") or {}).items()):
             for role, selection in sorted((roles or {}).items()):
-                for deployment, provider, ceiling in selected(selection):
-                    check_role(ceiling, role, deployment, provider, f"{base}.route-roles.{route}.{role}")
+                for deployment, provider, ceiling, definition in selected(selection):
+                    check_role(ceiling, definition, role, deployment, provider,
+                               f"{base}.route-roles.{route}.{role}")
         for task_class, selection in sorted((overrides.get("task-classes") or {}).items()):
-            for _deployment, provider, ceiling in selected(selection):
+            for _deployment, provider, ceiling, _definition in selected(selection):
                 check_task_class(ceiling, task_class, f"{base}.task-classes.{task_class}", provider)
 
     for data_class, rule in sorted((ceilings.get("data-classes") or {}).items()):
