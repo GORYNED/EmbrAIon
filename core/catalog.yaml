@@ -1,5 +1,5 @@
 schema-version: 1
-catalog-version: 8
+catalog-version: 9
 
 capabilities:
   - { id: lead, type: agent, path: agents/lead.yaml, load: conditional, triggers: [orchestration, substantial-work, protected-decision] }
@@ -21,6 +21,7 @@ capabilities:
   - { id: review, type: skill, path: skills/review, load: conditional, triggers: [review, substantial-change] }
   - { id: validation, type: skill, path: skills/validation, load: conditional, triggers: [validation, test, regression] }
   - { id: debugging, type: skill, path: skills/debugging, load: conditional, triggers: [bug, failure, unexpected-behavior] }
+  - { id: handling-review-findings, type: skill, path: skills/handling-review-findings, load: conditional, triggers: [review-findings, review-feedback, review-remediation] }
   - { id: verification, type: skill, path: skills/verification, load: conditional, triggers: [completion, release, handoff] }
   - { id: skill-authoring, type: skill, path: skills/skill-authoring, load: conditional, triggers: [skill-create, skill-change, skill-eval] }
   - { id: compatibility-migration, type: skill, path: skills/compatibility-migration, load: conditional, triggers: [compatibility, persistence, migration, stable-identity] }
@@ -38,6 +39,9 @@ capabilities:
   - { id: integration-safety, type: rule, path: rules/integrations.md, load: conditional, triggers: [external-tool, mcp, server, integration] }
   - { id: artifact-authority, type: rule, path: rules/artifact-authority.md, load: conditional, triggers: [generated-artifact, host-projection, tool-required, external-format, naming-contract] }
   - { id: security, type: rule, path: rules/security.md, load: conditional, triggers: [security, credential, permission, external-tool, provider] }
+  - { id: authorization, type: rule, path: rules/authorization.md, load: conditional, triggers: [destructive-action, publish, force-push, release, permission-prompt, shared-settings] }
+  - { id: owner-interaction, type: rule, path: rules/owner-interaction.md, load: conditional, triggers: [owner-question, decision, blocked-task] }
+  - { id: reporting, type: rule, path: rules/reporting.md, load: conditional, triggers: [multi-step-work, progress-update, final-report, completion] }
   - { id: learning-gate, type: rule, path: rules/learning.md, load: conditional, triggers: [learning, promotion, repeated-pattern] }
 
   - { id: access, type: routing, path: routing/access.yaml, load: always }

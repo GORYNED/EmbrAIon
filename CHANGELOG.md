@@ -4,6 +4,7 @@
 
 ### Added
 
+- Core agent-behavior rules moved from project handbooks: `authorization`, `owner-interaction`, and `reporting` rules, honest-check reporting in the `evidence` rule, a `handling-review-findings` skill, and an optional external second opinion step in the review workflow. Catalog version 9.
 - Read-only `embraion update --check [--json]` compares the launcher and project pin with the latest stable GitHub Release, validates that release's expected wheel and SHA-256 digest metadata, and lists the next upgrade steps without writing project files.
 
 ### Fixed

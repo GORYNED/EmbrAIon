@@ -13,6 +13,7 @@ skills/
 ├── review/SKILL.md
 ├── validation/SKILL.md
 ├── debugging/SKILL.md
+├── handling-review-findings/SKILL.md
 ├── verification/SKILL.md
 └── routing-configuration/SKILL.md
 ```
@@ -21,4 +22,4 @@ A skill describes **how** to perform a class of work. It does not own agent iden
 
 The `routing-configuration` skill directs every installed AI host to keep all manually maintained concrete routing, deployment capability, billing, pricing/SKU, and execution-binding facts in `.embraion/**` when a Product Owner requests routing changes in ordinary language.
 
-<sub>Last updated: 2026-10-03 20:53 UTC</sub>
+<sub>Last updated: 2026-10-06 02:15 UTC</sub>
