@@ -20,6 +20,7 @@ Current foundation schemas include:
 - `worktree.schema.json`
 - `security.schema.json`
 - `telemetry.schema.json`
+- `report.schema.json`
 
 Schemas should describe executable or validated contracts rather than speculative future structure.
 

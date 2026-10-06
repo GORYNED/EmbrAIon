@@ -94,6 +94,12 @@ embraion projection verify --host copilot --component agents --component skills
 
 `projection verify` завершается с кодом 0 только когда каждый selected projection file уже canonical и нет create/update/conflict/obsolete managed output. При partial Codex config ownership передавайте `--config-mode merge` и в `projection diff`, и в `projection verify`.
 
+Merge mode сохраняет пользовательское содержимое вне managed-блоков, поэтому verify дополнительно сообщает `root-findings` об этом содержимом: ключи верхнего уровня, которые переопределяют модель или effort пользователя либо routed-выбор субагентов (`model`, `model_reasoning_effort`, `agents.default_subagent_*`), ключи вне необязательного списка `allowed-root-keys` и текст корневых `developer_instructions` вне managed orchestration block. По умолчанию это предупреждения. `--strict-root` или `projection.codex.strict-root: true` в [policy](../configuration/policy.ru.md#projection-root-checks) делают их ошибкой проверки:
+
+```bash
+embraion projection verify --host codex --component config --config-mode merge --strict-root --json
+```
+
 ### `embraion policy`
 
 Посмотреть normalized source, validation, review и privacy policy:
@@ -102,6 +108,25 @@ embraion projection verify --host copilot --component agents --component skills
 embraion policy show
 embraion policy show --json
 ```
+
+Завершиться с ошибкой, если deployments, execution bindings или routing расширяют [policy ceilings](../configuration/policy.ru.md#policy-ceilings) проекта. `embraion validate` внутри проекта выполняет ту же проверку:
+
+```bash
+embraion policy check
+embraion policy check --json
+```
+
+### `embraion report`
+
+Вывести или проверить контракт итогового отчёта проекта, объявленный в `.embraion/report.yaml` (см. [Completion report](../configuration/report.ru.md)):
+
+```bash
+embraion report template
+embraion report validate report.md --pull-request
+embraion report validate update.md --kind intermediate
+```
+
+`report validate` завершается с ошибкой и перечнем findings с номерами строк, если отчёт нарушает контракт. `-` читает отчёт из stdin.
 
 ### `embraion update`
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import tempfile
 import hashlib
 import shutil
@@ -9,9 +11,10 @@ from pathlib import Path
 
 from embraion.codex_config import (
     AGENTS_BEGIN, AGENTS_END, ORCHESTRATION_BEGIN, ORCHESTRATION_END,
-    merge_codex_config, orchestration_block,
+    codex_root_findings, merge_codex_config, orchestration_block,
 )
-from embraion.common import framework_root, read_json, write_json
+from embraion.cli import build_parser
+from embraion.common import framework_root, read_json, read_yaml, write_json, write_yaml
 from embraion.project import generate_host, init_project, install, projection_is_verified, projection_plan
 
 
@@ -208,6 +211,62 @@ name = "one"
             self.assertEqual(first, entry.read_bytes())
             self.assertTrue(projection_is_verified(projection_plan("codex", project, components=["skills"])))
 
+
+    def test_root_findings_report_overrides_unreviewed_keys_and_unmanaged_text(self) -> None:
+        managed = 'developer_instructions = ' + __import__("json").dumps(orchestration_block("Lead")) + '\n'
+        clean = managed + '[agents]\nenabled = true\n[mcp_servers.tool]\ncommand = "x"\n'
+        self.assertEqual([], codex_root_findings(clean))
+        overridden = 'model = "gpt-x"\nmodel_reasoning_effort = "high"\n' + clean.replace("enabled = true", 'enabled = true\ndefault_subagent_model = "child"')
+        self.assertEqual(
+            ["model", "model_reasoning_effort", "agents.default_subagent_model"],
+            [item["path"] for item in codex_root_findings(overridden) if item["code"] == "root-key-override"],
+        )
+        extended = codex_root_findings('[profiles.fast]\nmodel = "x"\n' + clean,
+                                       forbidden_keys=("model", "profiles.*.model"),
+                                       allowed_root_keys=["mcp_servers"])
+        self.assertEqual({("root-key-override", "profiles.fast.model"), ("root-key-unreviewed", "profiles")},
+                         {(item["code"], item["path"]) for item in extended})
+        for text in ("User text\n" + orchestration_block("Lead"), orchestration_block("Lead") + "\nUser suffix", "Only user text"):
+            with self.subTest(text=text):
+                findings = codex_root_findings('developer_instructions = ' + __import__("json").dumps(text) + '\n')
+                self.assertEqual(["root-instructions-unmanaged-text"], [item["code"] for item in findings])
+
+    def test_merge_verify_reports_root_findings_and_fails_only_when_strict(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="StrictRoot")
+            options = {"components": ["config"], "config_mode": "merge"}
+            install("codex", project, **options)
+            config = project / ".codex/config.toml"
+            clean = projection_plan("codex", project, **options)
+            self.assertEqual([], clean["root-findings"])
+            self.assertTrue(projection_is_verified(clean, strict_root=True))
+            config.write_text('model = "gpt-x"\n' + config.read_text(encoding="utf-8"), encoding="utf-8")
+            plan = projection_plan("codex", project, **options)
+            self.assertEqual([], plan["update"] + plan["conflict"])
+            self.assertEqual(["model"], [item["path"] for item in plan["root-findings"]])
+            self.assertTrue(projection_is_verified(plan))
+            self.assertFalse(projection_is_verified(plan, strict_root=True))
+            arguments = ["projection", "verify", "--host", "codex", "--component", "config",
+                         "--config-mode", "merge", "--destination", str(project), "--json"]
+            def verify(values: list[str]) -> int:
+                parsed = build_parser().parse_args(values)
+                return parsed.func(parsed)
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, verify(arguments))
+                self.assertEqual(1, verify(arguments + ["--strict-root"]))
+            policy_path = project / ".embraion/policy.yaml"
+            policy = read_yaml(policy_path)
+            policy["projection"] = {"codex": {"strict-root": True, "forbidden-root-keys": ["model"]}}
+            write_yaml(policy_path, policy)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(1, verify(arguments))
+            self.assertFalse(__import__("json").loads(output.getvalue())["verified"])
+            with self.assertRaisesRegex(RuntimeError, "strict-root applies only"):
+                verify(["projection", "verify", "--host", "codex", "--component", "config",
+                        "--destination", str(project), "--strict-root"])
 
 if __name__ == "__main__":
     unittest.main()

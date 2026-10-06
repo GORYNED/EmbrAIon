@@ -389,6 +389,9 @@ def route(
     """Resolve an explicitly selected host route and enforce critical justification."""
     if route_class == "critical" and not (justification or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
+    if route_class == "critical":
+        from .ceilings import enforce_critical_justification
+        enforce_critical_justification(justification, project)
     selected = _resolve_route(host, route_class, data_class, role=role, access=access,
                               project=project, task_class=task_class)
     if route_class == "critical":
@@ -526,6 +529,10 @@ def resolve_task_route(
     selected = escalations[escalation] if escalation else candidates[0]
     if selected["route"] == "critical" and not (justification or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
+    if selected["route"] == "critical" and _emit_event:
+        # Configuration validation resolves routes without a real reason.
+        from .ceilings import enforce_critical_justification
+        enforce_critical_justification(justification, root)
     if selected["route"] == "critical":
         selected["justification"] = justification
     if _emit_event:
