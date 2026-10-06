@@ -112,6 +112,15 @@ embraion update
 embraion update --framework-version <published-version>
 ```
 
+Проверить наличие новой опубликованной release, не меняя файлы:
+
+```bash
+embraion update --check
+embraion update --check --json
+```
+
+`--check` читает последнюю stable GitHub Release, проверяет её tag и digest ожидаемого wheel и сообщает статус launcher и project pin (`current`, `outdated`, `ahead` или `not-comparable`), наличие artifact lock в проекте и следующие шаги. Код выхода `0` независимо от наличия обновления; ответ содержится в поле `update-available` JSON-отчёта. Недоступные или некорректные release metadata дают ненулевой код выхода. `--check` нельзя сочетать с `--framework-version`.
+
 Безопасная нормализация конфигурации ориентируется только на установленную версию EmbrAIon launcher. Чтобы перевести проект на другую опубликованную версию, сначала установите или обновите/понизьте launcher до этой версии, затем запустите `embraion update`.
 
 До изменения pin EmbrAIon разрешает canonical GitHub Release и требует ровно один ожидаемый wheel с именем `embraion-<version>-py3-none-any.whl` и валидным server-side GitHub digest формата `sha256:`. Команда проверяет release tag, identity asset, URL, формат digest и всю candidate canonical-конфигурацию `.embraion/`.

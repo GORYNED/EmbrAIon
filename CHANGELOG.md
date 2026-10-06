@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Read-only `embraion update --check [--json]` compares the launcher and project pin with the latest stable GitHub Release, validates that release's expected wheel and SHA-256 digest metadata, and lists the next upgrade steps without writing project files.
+
 ### Fixed
 
 - Experiment tree inventories skip a local `.venv`, so the virtual environment recommended in CONTRIBUTING no longer fails experiment tests on its internal symlinks.
