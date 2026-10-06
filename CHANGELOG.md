@@ -10,6 +10,10 @@
 
 - The release workflow proposes the self-host pin, artifact lock and Codex, Copilot, Claude Code and Portable projection upgrade as a `chore/self-host-vX.Y.Z` pull request after the GitHub Release is published, and dispatches `validate` and `docs` for it. Merging remains a human decision.
 
+### Fixed
+
+- Experiment tree inventories skip a local `.venv`, so the virtual environment recommended in CONTRIBUTING no longer fails experiment tests on its internal symlinks.
+
 ## 0.23.0 - 2026-10-05
 
 ### Added
