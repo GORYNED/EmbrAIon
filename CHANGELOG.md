@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.25.0 - 2026-10-06
+
+Includes the 0.24.0 changes below: the 0.24.0 release run was cancelled before it was tagged, so 0.24.0 was not published.
+
 ### Added
 
 - `eval skills run` supports `--host claude-code` (Claude Code CLI with project skills under `.claude/skills`) and `--host portable` (any agent CLI given with `--host-command`, skills under `--skill-dir`), in addition to `codex`. The report's `evidence-kind` names the host.
