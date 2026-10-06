@@ -15,6 +15,6 @@ description: Turn review findings from a person or tool into verified fixes, rea
 
 ## Guardrails
 
-- A role other than Lead posts answers, escalations, and pull request summaries only when its assignment grants that authority; otherwise it returns them to Lead under the [authorization rule](../../rules/authorization.md).
+- A role other than Lead posts answers, escalations, and pull request summaries only when its assignment grants that authority; otherwise it returns them to Lead under the Core authorization rule.
 - Do not apply a suggested change blindly; it may be wrong for this codebase or break a contract.
 - Do not weaken a check, or claim a fix passed, to close a finding; follow the evidence rule.
