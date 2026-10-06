@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from .common import atomic_write_bytes, project_root
+from .common import project_root
 from .project import _projection_target
 
 
@@ -68,42 +69,83 @@ def hook_project(payload: Any, project: Path | None = None) -> Path:
     return root
 
 
+def managed_hooks() -> dict[str, list[dict[str, Any]]]:
+    """Return the exact hook entries owned by the claude-code hooks component."""
+    return {event: [deepcopy(entry)] for event, entry in HOOKS.items()}
+
+
+def settings_bytes(settings: dict[str, Any]) -> bytes:
+    return (json.dumps(settings, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def merge_hook_settings(
+    existing: str | None,
+    previous: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], bool]:
+    """Merge only EmbrAIon's entries into Claude settings; never replace other keys or hooks.
+
+    ``previous`` holds the entries recorded in the projection ledger. An unchanged
+    recorded entry that is no longer managed is replaced; any other entry that
+    runs an EmbrAIon hook command is a conflict.
+    """
+    try:
+        settings = json.loads(existing) if existing is not None else {}
+    except ValueError as error:
+        raise RuntimeError("Cannot read Claude settings JSON; existing settings were preserved.") from error
+    if not isinstance(settings, dict):
+        raise RuntimeError("Claude settings must be a JSON object.")
+    original = deepcopy(settings)
+    hooks = settings.setdefault("hooks", {})
+    if not isinstance(hooks, dict):
+        raise RuntimeError("Claude settings hooks must be an object.")
+    expected = managed_hooks()
+    recorded = previous or {}
+    for event in dict.fromkeys([*expected, *recorded]):
+        present = event in hooks
+        entries = hooks.get(event, [])
+        if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
+            raise RuntimeError("Existing Claude hook entries are malformed; settings were preserved.")
+        wanted = expected.get(event, [])
+        retired = [entry for entry in recorded.get(event, []) if entry not in wanted]
+        kept: list[dict[str, Any]] = []
+        for entry in entries:
+            commands = entry.get("hooks", [])
+            if not isinstance(commands, list) or any(not isinstance(command, dict) for command in commands):
+                raise RuntimeError("Existing Claude hook commands are malformed; settings were preserved.")
+            if entry in retired:
+                continue
+            if entry not in wanted and any(command.get("command") in {COMMAND, GUARD_COMMAND}
+                                           for command in commands):
+                raise RuntimeError("An existing EmbrAIon observer hook differs; review it before installation.")
+            kept.append(entry)
+        kept += [entry for entry in wanted if entry not in kept]
+        if kept or present:
+            hooks[event] = kept
+    return settings, settings != original
+
+
 def install_observer_hooks(project: Path | None = None, *, dry_run: bool = False) -> dict[str, Any]:
-    """Merge only our exact hook entries; never replace other host settings."""
+    """Install the claude-code hooks projection component and report added events."""
     from .claude_native import observer_status
+    from .project import CLAUDE_SETTINGS, _load_projection_state, _managed_hooks_record, install
 
     root = project_root(project)
     status = observer_status(root)
     if status.get("installation") != "verified":
         raise RuntimeError("Install and verify the configured scoped-agents projection before installing observer hooks.")
-    path = _projection_target(root, ".claude/settings.json")
+    path = _projection_target(root, CLAUDE_SETTINGS)
     try:
-        settings = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    except (OSError, ValueError) as error:
+        current = path.read_text(encoding="utf-8") if path.exists() else None
+    except (OSError, UnicodeError) as error:
         raise RuntimeError("Cannot read Claude settings JSON; existing settings were preserved.") from error
-    if not isinstance(settings, dict):
-        raise RuntimeError("Claude settings must be a JSON object.")
-    hooks = settings.setdefault("hooks", {})
-    if not isinstance(hooks, dict):
-        raise RuntimeError("Claude settings hooks must be an object.")
-    added: list[str] = []
-    for event, expected in HOOKS.items():
-        entries = hooks.setdefault(event, [])
-        if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
-            raise RuntimeError("Existing Claude hook entries are malformed; settings were preserved.")
-        for entry in entries:
-            commands = entry.get("hooks", [])
-            if not isinstance(commands, list) or any(not isinstance(command, dict) for command in commands):
-                raise RuntimeError("Existing Claude hook commands are malformed; settings were preserved.")
-            if entry != expected and any(command.get("command") in {COMMAND, GUARD_COMMAND} for command in commands):
-                raise RuntimeError("An existing EmbrAIon observer hook differs; review it before installation.")
-        if expected in entries:
-            continue
-        entries.append(expected)
-        added.append(event)
-    if added and not dry_run:
-        atomic_write_bytes(path, (json.dumps(settings, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
-    return {"path": ".claude/settings.json", "added": added, "dry-run": dry_run,
+    previous = _managed_hooks_record(_load_projection_state(root, "claude-code", root))
+    # Raise the precise conflict before the projection reports it generically.
+    merge_hook_settings(current, previous)
+    existing = (json.loads(current) if current is not None else {}).get("hooks") or {}
+    added = [event for event, entry in HOOKS.items() if entry not in existing.get(event, [])]
+    if not dry_run:
+        install("claude-code", root, components=["hooks"])
+    return {"path": CLAUDE_SETTINGS, "added": added, "dry-run": dry_run,
             "instructions-loaded": "unverified", "execution": "unverified"}
 
 

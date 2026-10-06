@@ -226,6 +226,15 @@ def _cmd_validate(args: argparse.Namespace) -> int:
              "message": f"{item['code']}: {item['message']}"}
             for item in findings
         ]
+    if project is not None:
+        from .project import ignored_projection_outputs
+
+        ignored = ignored_projection_outputs(project) or []
+        if ignored:
+            shown = ", ".join(ignored[:5]) + (f" (+{len(ignored) - 5} more)" if len(ignored) > 5 else "")
+            issues.append({"severity": "warning", "code": "projection-ignored", "path": ignored[0],
+                           "message": f"{len(ignored)} projection output(s) are ignored by git, so new "
+                                      f"projected files stay untracked: {shown}", "paths": ignored})
 
     if args.json:
         _print_json({"issues": issues, "count": len(issues)})
@@ -376,9 +385,12 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
                 f"Validation {name}: {len(spec['commands'])} command(s), "
                 f"{len(spec.get('parameters') or {})} parameter(s)"
             )
+        derived = len(policy["derived-sources"]["generated"])
         for category, patterns in policy["sources"].items():
-            print(f"Sources {category}: {len(patterns)} pattern(s)")
+            note = f" ({derived} from projection ledgers)" if category == "generated" and derived else ""
+            print(f"Sources {category}: {len(patterns)} pattern(s){note}")
         print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
+        print(f"Merge mode: {policy['merge']['mode']}")
     return 0
 
 
@@ -1787,10 +1799,10 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Install only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     install_parser.add_argument(
@@ -1832,10 +1844,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_diff.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Diff only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     projection_diff.add_argument(
@@ -1864,10 +1876,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_verify.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Verify only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     projection_verify.add_argument(

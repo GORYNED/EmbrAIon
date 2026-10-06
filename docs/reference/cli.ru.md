@@ -63,7 +63,7 @@ embraion install --host codex --destination . --component skills
 embraion install --host codex --destination . --component agents --component skills
 ```
 
-Поддерживаемые components host-specific: Codex поддерживает `config`, `agents` и `skills`; GitHub Copilot — `agents` и `skills`; Claude Code — `agents`, `skills` и необязательный `scoped-agents`; Portable использует `bundle`. Невыбранные components остаются user-owned и исключаются из obsolete-file handling.
+Поддерживаемые components host-specific: Codex поддерживает `config`, `agents` и `skills`; GitHub Copilot — `agents` и `skills`; Claude Code — `agents`, `skills` и необязательные `scoped-agents` и `hooks`; Portable использует `bundle`. Невыбранные components остаются user-owned и исключаются из obsolete-file handling.
 
 Для зрелого Codex repo, который уже владеет `.codex/config.toml`, используйте merge ownership только для required `[agents]` keys EmbrAIon:
 
@@ -100,9 +100,11 @@ Merge mode сохраняет пользовательское содержим�
 embraion projection verify --host codex --component config --config-mode merge --strict-root --json
 ```
 
+Компонент Claude Code `hooks` всегда работает в режиме слияния: он управляет только записями hooks EmbrAIon в `.claude/settings.json` и записывает их в журнал projection. `projection verify --host claude-code --component hooks` завершается с ошибкой, если управляемая запись отсутствует (update) или изменена (conflict); остальные настройки и hooks расхождением не считаются.
+
 ### `embraion policy`
 
-Посмотреть normalized source, validation, review и privacy policy:
+Посмотреть normalized source, validation, review, privacy и merge policy:
 
 ```bash
 embraion policy show
@@ -265,6 +267,8 @@ embraion status --json
 embraion validate
 embraion validate --json
 ```
+
+Внутри проекта `validate` также предупреждает (`projection-ignored`), если Git игнорирует файл из журнала projection в `.embraion/state/projections`: новый файл projection по такому пути останется неотслеживаемым. Предупреждение не делает проверку неуспешной.
 
 ### `embraion validation`
 
@@ -571,11 +575,12 @@ Commands используют non-zero exit codes при failed deterministic ch
 embraion install --host claude-code --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
+embraion projection verify --host claude-code --component hooks
 embraion claude-native status
 ```
 
 Компонент `scoped-agents` требует `.embraion/claude-native.yaml`; обычная установка Claude по-прежнему включает только `agents` и `skills`. Определения выводятся из проектной маршрутизации. Начните новый Thread после установки и вызывайте точное имя определения, полученное от dispatch. См. [Claude Code](../hosts/claude-code.md).
 
-`install-hooks` сохраняет остальные настройки и hooks в `.claude/settings.json`. `guard` читает JSON события PreToolUse из stdin: проверяет выбранные определения, запрещает подмену настроек и, при включённом read-policy, ограничивает чтение выбранных агентов. Он не ограничивает родительскую сессию, произвольных агентов или Bash. `observe` принимает PostToolUse/SubagentStop и сохраняет только идентификаторы и сообщённый effort в игнорируемом локальном состоянии. Эти две команды предназначены для hooks.
+`install-hooks` устанавливает компонент projection Claude Code `hooks` (то же делает `embraion install --host claude-code --component hooks`) после проверки projection `scoped-agents`. Команда сохраняет остальные настройки и hooks в `.claude/settings.json` и записывает управляемые записи в журнал projection. `guard` читает JSON события PreToolUse из stdin: проверяет выбранные определения, запрещает подмену настроек и, при включённом read-policy, ограничивает чтение выбранных агентов. Он не ограничивает родительскую сессию, произвольных агентов или Bash. `observe` принимает PostToolUse/SubagentStop и сохраняет только идентификаторы и сообщённый effort в игнорируемом локальном состоянии. Эти две команды предназначены для hooks.
 
 `status` различает установку файлов, записанные события и справочное сравнение `reported-effort`. Источник ввода помечен `evidence-origin: unverified-command-input`; `execution`, фактические `effort` и `model` остаются `unverified`; `callbacks: recorded` означает принятую запись. Тесты с искусственным JSON и локальные записи не доказывают передачу поля приложением, загрузку инструкций, завершение запуска или применение настроек.

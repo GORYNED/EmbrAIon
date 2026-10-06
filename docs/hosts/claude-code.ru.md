@@ -94,6 +94,7 @@ embraion install --host claude-code --component scoped-agents
 embraion projection verify --host claude-code --component agents --component skills --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
+embraion projection verify --host claude-code --component hooks
 embraion claude-native status
 ```
 
@@ -103,7 +104,7 @@ embraion claude-native status
 
 ## Нативные hooks и подтверждение настроек
 
-`install-hooks` явно добавляет только записи EmbrAIon в `.claude/settings.json`, сохраняя остальные настройки и hooks. Повреждённые настройки и изменённую конфликтующую запись команда не заменяет. В каждом режиме приложения нужно проверить разрешение hooks, поддержку хоста и доступность команды `embraion`.
+`install-hooks` явно добавляет только записи EmbrAIon в `.claude/settings.json`, сохраняя остальные настройки и hooks. Повреждённые настройки и изменённую конфликтующую запись команда не заменяет, даже с `--force`. `install-hooks` устанавливает компонент projection `hooks` (`embraion install --host claude-code --component hooks`), который записывает управляемые записи в журнал projection, поэтому `projection verify --host claude-code --component hooks` сообщает об отсутствующей или изменённой записи как о расхождении. Неизменённая управляемая запись из предыдущей версии заменяется при следующей установке. В каждом режиме приложения нужно проверить разрешение hooks, поддержку хоста и доступность команды `embraion`.
 
 Проверка перед инструментом запрещает запуск настроенной роли через обычный профиль, устаревшее имя подготовленного агента и переопределение модели при вызове. Если задан `read-policy`, чтение и поиск подготовленного агента ограничиваются текущим проектом и исключают защищённые пути или поиск, который может их затронуть. Используются текущие правила проекта; классификация данных не меняется. Проверка не изолирует инструменты родителя, произвольных агентов и shell. Родитель должен отдельно соблюдать правила источников и передавать допустимый ограниченный контекст.
 

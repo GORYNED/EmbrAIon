@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fnmatch import fnmatchcase
+from glob import escape as escape_pattern
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,7 @@ DEFAULT_POLICY: dict[str, Any] = {
         "require-review": False,
     },
     "routing": {"overrides": {}},
+    "merge": {"mode": "human-only"},
 }
 
 
@@ -160,6 +162,10 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
     validation = read_validation_config(project)
 
     sources = DEFAULT_POLICY["sources"] | (project_policy.get("sources") or {})
+    # Projection ledgers name the files EmbrAIon generated; explicit entries remain.
+    derived = projection_generated_patterns(project)
+    explicit = list(sources.get("generated") or [])
+    sources["generated"] = explicit + [item for item in derived if item not in explicit]
     default_profiles = DEFAULT_POLICY["validation"]["profiles"]
     profiles = default_profiles | (validation.get("profiles") or {})
 
@@ -173,7 +179,35 @@ def effective_policy(project: Path | None = None) -> dict[str, Any]:
             | (project_policy.get("enforcement") or {})
         ),
         "routing": DEFAULT_POLICY["routing"] | routing,
+        "merge": DEFAULT_POLICY["merge"] | (project_policy.get("merge") or {}),
+        "derived-sources": {"generated": derived},
     }
+
+
+def projection_generated_patterns(project: Path | None = None) -> list[str]:
+    """Return escaped path patterns for every output recorded in projection ledgers."""
+    from .project import projection_ledger_outputs
+
+    return [escape_pattern(path) for path in projection_ledger_outputs(project_root(project))]
+
+
+def merge_mode(project: Path | None = None) -> str:
+    """Return the project's declared merge mode; a missing policy keeps the Core default."""
+    root = project_root(project)
+    path = root / ".embraion" / "policy.yaml"
+    if not path.is_file():
+        return DEFAULT_POLICY["merge"]["mode"]
+    # Validate only this key: projection keeps working for older policies that
+    # 'embraion update' normalizes later, but an unknown merge mode fails closed.
+    data = read_yaml(path)
+    configured = data.get("merge") if isinstance(data, dict) else None
+    if configured is None:
+        return DEFAULT_POLICY["merge"]["mode"]
+    schema = read_json(framework_root() / "schemas" / "policy.schema.json")["properties"]["merge"]
+    errors = [error.message for error in Draft202012Validator(schema).iter_errors(configured)]
+    if errors:
+        raise RuntimeError("Invalid .embraion/policy.yaml: merge: " + "; ".join(errors))
+    return str(configured["mode"])
 
 
 def path_matches(path: str, patterns: list[str]) -> bool:

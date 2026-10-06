@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Added
+
+- Optional `merge.mode` in `.embraion/policy.yaml`: `human-only` (the default, as before) or `owner-permission`, under which an agent may merge a pull request only with the owner's explicit permission for it, after required checks pass on its final head and the independent reviewer confirms that head. Auto-merge is never enabled; any other value fails validation and projection. The projected Core rules state the selected mode in one line for Claude Code, Copilot, and the managed Codex block, and `embraion policy show` prints it.
+- Claude Code `hooks` projection component (`embraion install --host claude-code --component hooks`, opt-in): merges EmbrAIon's guard and observer hook entries into `.claude/settings.json`, preserves every other setting and hook, records the managed entries in the projection ledger, and makes `projection verify --host claude-code --component hooks` report a missing entry (update) or a changed one (conflict). An unchanged entry recorded by an earlier installation is replaced. `embraion claude-native install-hooks` now installs this component.
+- `embraion validate` warns (`projection-ignored`) when Git ignores a file recorded in a projection ledger, because new projected files at such paths would stay untracked.
+
+### Changed
+
+- Files recorded in projection ledgers under `.embraion/state/projections` count as `sources.generated` wherever EmbrAIon reads it, including bootstrap knowledge binding and `embraion policy show` (`derived-sources.generated` in JSON). Explicit entries stay supported; merged files (`.claude/settings.json`, `.codex/config.toml` in merge mode) are not added.
+- The `human-merge` Core rule and the delivery workflow describe both merge modes.
+
 ## 0.26.0 - 2026-10-06
 
 ### Added
