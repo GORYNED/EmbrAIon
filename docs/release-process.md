@@ -23,6 +23,8 @@ A release commit uses the exact message:
 release: vX.Y.Z
 ```
 
+The squash commit has no body: clear the default description, including any `Co-authored-by` lines, before merging. Otherwise the release workflow stops before the tag is created and nothing is published.
+
 Before the tag is created, CI validates:
 
 - Linux, Windows, and macOS compatibility;
