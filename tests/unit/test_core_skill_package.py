@@ -21,7 +21,7 @@ PACKAGE = ROOT / "evals/evolution/candidates/core-skills-package.json"
 # (and restores the package-era catalog version) so the frozen package is still
 # verified byte for byte; any other catalog drift keeps failing the replay.
 LATER_CATALOG_VERSION = ("catalog-version: 9", "catalog-version: 8")
-LATER_CATALOG_ENTRIES = ("handling-review-findings", "authorization", "owner-interaction")
+LATER_CATALOG_ENTRIES = ("handling-review-findings", "authorization", "owner-interaction", "architecture-decision")
 
 
 def restore_package_era_catalog(path: Path) -> None:

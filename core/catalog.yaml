@@ -28,6 +28,7 @@ capabilities:
   - { id: test-design, type: skill, path: skills/test-design, load: conditional, triggers: [test-design, regression, acceptance] }
   - { id: performance-investigation, type: skill, path: skills/performance-investigation, load: conditional, triggers: [performance, profiling, benchmark] }
   - { id: dependency-upgrade, type: skill, path: skills/dependency-upgrade, load: conditional, triggers: [dependency-upgrade, package-update, version-upgrade] }
+  - { id: architecture-decision, type: skill, path: skills/architecture-decision, load: conditional, triggers: [architecture-decision, decision-record, superseded-decision] }
   - { id: routing-configuration, type: skill, path: skills/routing-configuration, load: conditional, triggers: [routing, model-selection, model-override, provider, deployment, effort, fallback, billing, pricing, execution-binding, host-configuration] }
 
   - { id: engineering, type: workflow, path: workflows/engineering.md, load: conditional, triggers: [substantial-work] }

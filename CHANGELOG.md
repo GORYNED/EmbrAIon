@@ -5,6 +5,7 @@
 ### Added
 
 - `eval skills run` supports `--host claude-code` (Claude Code CLI with project skills under `.claude/skills`) and `--host portable` (any agent CLI given with `--host-command`, skills under `--skill-dir`), in addition to `codex`. The report's `evidence-kind` names the host.
+- Optional `architecture-decision` skill: records a durable architecture decision in the project's own decision-record location, template and numbering, supersedes instead of rewriting accepted records, and updates the index in the same change. Live suite `evals/skills/architecture-decision.json`.
 - Core agent-behavior rules moved from project handbooks: `authorization` and `owner-interaction` rules, honest-check reporting in the `evidence` rule, and a `handling-review-findings` skill. Catalog version 9.
 - The `authorization` rule limits roles other than Lead: they change external or shared state or act on the owner's behalf only when the assignment explicitly grants it, and owner-facing communication goes through Lead.
 - The `instructions` rule states that each fact has one canonical owner that other documents link to instead of restating.
