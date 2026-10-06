@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -7,7 +8,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .common import SKIP_PARTS, iter_text_files, read_json, read_yaml, state_root, write_json
+from .common import SKIP_PARTS, framework_root, iter_text_files, read_json, read_yaml, state_root, write_json
 
 SEVERITY_ORDER = {
     "info": 0,
@@ -194,6 +195,7 @@ def collect_findings(root: Path, all_files: bool = False) -> list[dict[str, str]
         for path, text in _other_text_files(root, seen):
             findings.extend(_pattern_findings(str(path.relative_to(root)), text, PRECISE_CATEGORIES))
 
+    findings.extend(integration_findings(root))
     return findings
 
 
@@ -221,8 +223,9 @@ def _redacted_server(
     }
 
 
-def collect_mcp_inventory(project: Path) -> dict[str, Any]:
-    servers: list[dict[str, Any]] = []
+def _mcp_server_configs(project: Path) -> list[tuple[str, str, dict[str, Any], str]]:
+    """Return ``(host, id, raw configuration, source)`` for each project MCP server."""
+    servers: list[tuple[str, str, dict[str, Any], str]] = []
 
     def parse_json_config(path: Path, host: str) -> None:
         if not path.exists():
@@ -234,14 +237,7 @@ def collect_mcp_inventory(project: Path) -> dict[str, Any]:
         if isinstance(mapping, dict):
             for server_id, config in mapping.items():
                 if isinstance(config, dict):
-                    servers.append(
-                        _redacted_server(
-                            host,
-                            str(server_id),
-                            config,
-                            str(path.relative_to(project)),
-                        )
-                    )
+                    servers.append((host, str(server_id), config, str(path.relative_to(project))))
 
     parse_json_config(project / ".mcp.json", "generic")
     parse_json_config(project / ".vscode" / "mcp.json", "vscode")
@@ -258,19 +254,146 @@ def collect_mcp_inventory(project: Path) -> dict[str, Any]:
         if isinstance(mapping, dict):
             for server_id, config in mapping.items():
                 if isinstance(config, dict):
-                    servers.append(
-                        _redacted_server(
-                            "codex",
-                            str(server_id),
-                            config,
-                            str(codex.relative_to(project)),
-                        )
-                    )
+                    servers.append(("codex", str(server_id), config, str(codex.relative_to(project))))
 
+    return servers
+
+
+def collect_mcp_inventory(project: Path) -> dict[str, Any]:
     return {
         "schema-version": 1,
-        "servers": servers,
+        "servers": [
+            _redacted_server(host, server_id, config, source)
+            for host, server_id, config, source in _mcp_server_configs(project)
+        ],
     }
+
+
+INTEGRATIONS_CONFIG = Path(".embraion") / "integrations.yaml"
+# A drive, UNC, or root-anchored path at the start of a value or after `=`, whitespace, or a comma.
+_ABSOLUTE_PATH = re.compile(r"(?:^|[=\s,])(?:/|[A-Za-z]:[\\/]|\\\\)")
+
+
+def _integration_finding(kind: str, host: str, server_id: str, message: str, path: str) -> dict[str, str]:
+    return {
+        "schema-version": 1,
+        "id": f"integration-{kind}:{host}:{server_id}",
+        "severity": "high",
+        "category": "integration-drift",
+        "message": message,
+        "path": path,
+    }
+
+
+def _observed_shape(config: dict[str, Any]) -> dict[str, Any]:
+    command = config.get("command")
+    args = config.get("args")
+    environment = config.get("env") or config.get("environment") or {}
+    transport = config.get("type") or config.get("transport")
+    if not isinstance(transport, str):
+        # Hosts default a command server to stdio and a URL server to HTTP.
+        transport = "stdio" if isinstance(command, str) else "http" if config.get("url") else None
+    return {
+        "command": command if isinstance(command, str) else None,
+        "args": [str(item) for item in args] if isinstance(args, list) else [],
+        "transport": transport,
+        "env-vars": sorted(str(key) for key in environment) if isinstance(environment, dict) else [],
+    }
+
+
+def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "command": entry.get("command"),
+        "args": list(entry.get("args") or []),
+        "transport": entry["transport"],
+        "env-vars": sorted(entry["env-vars"]),
+    }
+
+
+def _difference(field: str, expected: Any, actual: Any) -> str:
+    if field == "args":
+        # Argument values can carry credentials in any form, so only their shape is reported.
+        position = next((index for index, pair in enumerate(zip(expected, actual), start=1) if pair[0] != pair[1]),
+                        min(len(expected), len(actual)) + 1)
+        return (f"args: expected {len(expected)} value(s), observed {len(actual)} value(s), "
+                f"first difference at position {position}")
+    return f"{field}: expected {redact_text(json.dumps(expected))}, observed {redact_text(json.dumps(actual))}"
+
+
+def integration_findings(project: Path) -> list[dict[str, str]]:
+    """Compare declared MCP integrations with observed project configuration.
+
+    No declaration file means no expectations and no findings. Once a project declares
+    integrations, missing, unexpected, and mismatched servers, an invalid declaration, and
+    unreadable host configuration are high-severity findings, so the scan fails closed.
+    """
+    path = project / INTEGRATIONS_CONFIG
+    relative = INTEGRATIONS_CONFIG.as_posix()
+    if not path.is_file() and not path.is_symlink():
+        return []
+
+    def invalid(message: str) -> list[dict[str, str]]:
+        return [_integration_finding("declaration", "project", "integrations", message, relative)]
+
+    if path.is_symlink():
+        return invalid("Integration declarations must not be a symbolic link")
+    try:
+        data = read_yaml(path)
+    except Exception:
+        return invalid("Integration declarations are not valid YAML")
+    from jsonschema import Draft202012Validator
+
+    validator = Draft202012Validator(read_json(framework_root() / "schemas" / "integrations.schema.json"))
+    # Schema messages can echo declared values, so only the locations are reported.
+    locations = sorted({".".join(str(part) for part in error.absolute_path) or "<root>"
+                        for error in validator.iter_errors(data)})
+    if locations:
+        return invalid("Invalid integration declarations at: " + ", ".join(locations))
+
+    declared: dict[tuple[str, str], dict[str, Any]] = {}
+    findings: list[dict[str, str]] = []
+    for entry in data["servers"]:
+        key = (entry["host"], entry["id"])
+        if key in declared:
+            findings.extend(invalid(f"Integration {key[1]} is declared twice for host {key[0]}"))
+        declared[key] = entry
+        if entry.get("portable", True) and any(
+            _ABSOLUTE_PATH.search(value) for value in [entry.get("command") or "", *(entry.get("args") or [])]
+        ):
+            findings.append(_integration_finding(
+                "non-portable", key[0], key[1],
+                "Portable integration declares a machine-absolute path in its command or arguments", relative,
+            ))
+
+    try:
+        observed = _mcp_server_configs(project)
+    except Exception:
+        return findings + invalid("Observed MCP configuration could not be read; integration state is unknown")
+
+    seen: set[tuple[str, str]] = set()
+    for host, server_id, config, source in observed:
+        key = (host, server_id)
+        seen.add(key)
+        entry = declared.get(key)
+        if entry is None:
+            findings.append(_integration_finding(
+                "unexpected", host, server_id, f"Undeclared MCP server {server_id} for host {host}", source,
+            ))
+            continue
+        expected, actual = _declared_shape(entry), _observed_shape(config)
+        fields = [field for field in ("command", "args", "transport", "env-vars") if expected[field] != actual[field]]
+        if fields:
+            details = "; ".join(_difference(field, expected[field], actual[field]) for field in fields)
+            findings.append(_integration_finding(
+                "mismatch", host, server_id, f"MCP server {server_id} for host {host} differs from its declaration: {details}",
+                source,
+            ))
+
+    for host, server_id in sorted(set(declared) - seen):
+        findings.append(_integration_finding(
+            "missing", host, server_id, f"Declared MCP server {server_id} for host {host} is not configured", relative,
+        ))
+    return findings
 
 
 def save_mcp_inventory(project: Path, output: Path | None = None) -> dict[str, Any]:

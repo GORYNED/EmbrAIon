@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Optional `.embraion/integrations.yaml` declares expected MCP servers per host (`id`, `host`, `command`, `args`, `transport`, `access`, environment-variable names in `env-vars`, and `portable`). When it exists, `embraion security scan` and `doctor` report missing, unexpected, and mismatched servers (command, arguments, transport, environment-variable names), non-portable declarations with machine-absolute paths, invalid declarations, and unreadable host configuration as high-severity `integration-drift` findings. Without the file nothing is compared.
+- Validation profiles accept an optional `timeout-seconds`: one value for every command or a list with one value per command. `--timeout` overrides it.
+- `embraion validation run` writes each command's full redacted output to `.embraion/state/validation/<evidence-id>/command-<index>.log` and records the log path and effective timeout per command. With `--run-id`, commands receive the run ID as `EMBRAION_RUN_ID`.
+- Core rules: preserve observable runtime behavior unless the task authorizes a change and default new options to the previous behavior; unverified compatibility impact is treated as breaking; report reusable upstream candidates, landing the upstream pull request before the consumer pin update; remove a duplicated instruction only after its canonical replacement reaches every host the project uses.
+- `deferred-tasks` project contract slot for the project's list of deferred tasks; the owner-interaction rule reads the configured slot.
+
+### Changed
+
+- `embraion validation run` starts each command in its own process group (new session on POSIX, `CREATE_NEW_PROCESS_GROUP` on Windows) and terminates the whole process tree on a timeout or interrupt instead of only the direct child.
+
 ## 0.26.0 - 2026-10-06
 
 ### Added

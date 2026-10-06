@@ -248,6 +248,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         "pricing.yaml": root / "schemas/pricing-config.schema.json",
         "pricing.snapshot.json": root / "schemas/pricing-snapshot.schema.json",
         "external-capabilities.yaml": root / "schemas/external-capabilities.schema.json",
+        "integrations.yaml": root / "schemas/integrations.schema.json",
         "organization.yaml": root / "schemas/organization.schema.json",
         "knowledge-maintenance.yaml": root / "schemas/knowledge-audit.schema.json",
     }
@@ -326,9 +327,10 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                         optional_data = (read_json(optional_manifest) if optional_name.endswith(".json")
                                          else read_yaml(optional_manifest))
                         messages = _schema_errors(optional_data, optional_schema)
-                        if optional_name == "external-capabilities.yaml" and messages:
+                        if optional_name in {"external-capabilities.yaml", "integrations.yaml"} and messages:
                             # Schema messages may contain user-supplied credential values.
-                            add("project-schema", optional_relative, "Invalid external capability metadata")
+                            add("project-schema", optional_relative, "Invalid external capability metadata"
+                                if optional_name == "external-capabilities.yaml" else "Invalid integration declarations")
                         else:
                             for message in messages:
                                 add("project-schema", optional_relative, message)

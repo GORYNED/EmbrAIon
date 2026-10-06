@@ -23,7 +23,7 @@ Existing project decisions remain authoritative. Bootstrap preserves valid entri
 | Routing | Preserve host-default or existing choices; tune only when explicitly requested |
 | Host projections | Inspect consistency and regenerate through official install/update mechanisms when justified |
 
-Knowledge slots are `constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, and `specification`. YAML references documents rather than copying their content. Optional slots without an authoritative source remain null or unbound.
+Knowledge slots are `constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, `specification`, and `deferred-tasks`. YAML references documents rather than copying their content. Optional slots without an authoritative source remain null or unbound.
 
 Bootstrap may create a missing canonical document only when the concern actually exists, repository evidence is sufficient, and the document materially improves future engineering. It derives facts from verified code, structure, CI, and contracts. Insufficient evidence means an unbound slot and a reported limitation, not invented architecture, lifecycle, compatibility, or persistence facts.
 

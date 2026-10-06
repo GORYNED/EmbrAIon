@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import locale
 import os
 import re
 import shlex
+import signal
 import subprocess
+import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
@@ -15,10 +18,12 @@ from .evidence import attach_validation_evidence, read_run
 from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
-from .security import redact_child_output, redact_value
+from .security import redact_child_output, redact_text, redact_value
 
 
 MAX_CAPTURE_CHARS = 8000
+RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
+TERMINATION_GRACE_SECONDS = 2.0
 
 
 def _normalize_validation_profile(
@@ -29,18 +34,41 @@ def _normalize_validation_profile(
         return {
             "commands": [str(command) for command in value],
             "parameters": {},
+            "timeouts": [None] * len(value),
         }
     if not isinstance(value, dict):
         raise RuntimeError(
             f"Invalid validation profile '{name}': expected a command list or mapping."
         )
+    commands = [str(command) for command in (value.get("commands") or [])]
     return {
-        "commands": [str(command) for command in (value.get("commands") or [])],
+        "commands": commands,
         "parameters": {
             str(parameter): dict(definition or {})
             for parameter, definition in (value.get("parameters") or {}).items()
         },
+        "timeouts": _configured_timeouts(name, value.get("timeout-seconds"), len(commands)),
     }
+
+
+def _configured_timeouts(name: str, value: Any, count: int) -> list[float | None]:
+    """Return one configured timeout per command; ``None`` keeps the command unbounded."""
+    if value is None:
+        return [None] * count
+    values = value if isinstance(value, list) else [value] * count
+    if len(values) != count:
+        raise RuntimeError(
+            f"Invalid validation profile '{name}': timeout-seconds lists {len(values)} "
+            f"value(s) for {count} command(s)."
+        )
+    timeouts: list[float | None] = []
+    for item in values:
+        if item is not None and (isinstance(item, bool) or not isinstance(item, (int, float)) or item <= 0):
+            raise RuntimeError(
+                f"Invalid validation profile '{name}': timeout-seconds must be positive numbers."
+            )
+        timeouts.append(None if item is None else float(item))
+    return timeouts
 
 
 def validation_profile_specs(
@@ -174,6 +202,98 @@ def _prepare_validation_command(
     return prepared, environment
 
 
+def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
+    """Start a shell command as the leader of its own process group."""
+    options: dict[str, Any] = {}
+    if os.name == "nt":
+        options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        options["start_new_session"] = True
+    return subprocess.Popen(
+        command,
+        cwd=str(cwd),
+        env=environment,
+        shell=True,
+        stdout=stdout,
+        stderr=stderr,
+        **options,
+    )
+
+
+def _wait_for(process: subprocess.Popen, timeout: float | None) -> int:
+    return process.wait(timeout=timeout)
+
+
+def _terminate_tree(process: subprocess.Popen) -> None:
+    """Terminate the command and every descendant that stayed in its process group."""
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if process.poll() is None:
+            process.kill()
+        process.wait()
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        pass
+    try:
+        process.wait(timeout=TERMINATION_GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        pass
+    # Descendants that ignore SIGTERM or outlive the leader are killed as well.
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    process.wait()
+
+
+def _run_contained(
+    command: str,
+    cwd: Path,
+    environment: dict[str, str],
+    timeout: float | None,
+) -> tuple[int | None, str, str]:
+    """Run one command; return its exit code (``None`` after a timeout) and full output."""
+    # Anonymous temporary files keep raw output out of the project state and do
+    # not block when a descendant keeps an inherited output handle open.
+    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        process = _spawn_contained(command, cwd, environment, stdout, stderr)
+        try:
+            returncode: int | None = _wait_for(process, timeout)
+        except subprocess.TimeoutExpired:
+            _terminate_tree(process)
+            returncode = None
+        except BaseException:
+            _terminate_tree(process)
+            raise
+        # Text-mode subprocess output used the locale encoding; keep that decoding.
+        encoding = locale.getpreferredencoding(False)
+        texts = []
+        for handle in (stdout, stderr):
+            handle.seek(0)
+            texts.append(handle.read().decode(encoding, errors="replace"))
+    return returncode, texts[0], texts[1]
+
+
+def _log_path(project: Path, evidence_id: str, index: int) -> Path:
+    return state_root(project) / "validation" / evidence_id / f"command-{index}.log"
+
+
+def _write_command_log(path: Path, command: str, stdout: str, stderr: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = f"$ {redact_text(command)}\n--- stdout ---\n{stdout}"
+    if stdout and not stdout.endswith("\n"):
+        text += "\n"
+    text += f"--- stderr ---\n{stderr}"
+    path.write_text(text, encoding="utf-8")
+
+
 def _captured_tail(value: str, limit: int = MAX_CAPTURE_CHARS) -> str:
     if len(value) <= limit:
         return value
@@ -243,69 +363,39 @@ def run_validation_profile(
             resolved_parameters,
             parameter_definitions,
         )
+        # Commands see only this invocation's run; an inherited value is not theirs.
+        command_environment.pop(RUN_ID_ENVIRONMENT, None)
+        if run_id:
+            command_environment[RUN_ID_ENVIRONMENT] = run_id
+        command_timeout = timeout if timeout is not None else spec["timeouts"][index - 1]
         began = time.monotonic()
-        try:
-            result = subprocess.run(
-                prepared_command,
-                cwd=str(root),
-                env=command_environment,
-                shell=True,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=timeout,
-                check=False,
-            )
-            duration_ms = int((time.monotonic() - began) * 1000)
-            output = redact_child_output(result.stdout, result.stderr)
-            status = "passed" if result.returncode == 0 else "failed"
-            row = {
-                "index": index,
-                "command": command,
-                "status": status,
-                "exit-code": result.returncode,
-                "duration-ms": duration_ms,
-                "stdout": _captured_tail(
-                    _redact_validation_parameter_values(
-                        output["stdout"],
-                        resolved_parameters,
-                    )
-                ),
-                "stderr": _captured_tail(
-                    _redact_validation_parameter_values(
-                        output["stderr"],
-                        resolved_parameters,
-                    )
-                ),
-            }
-        except subprocess.TimeoutExpired as error:
-            duration_ms = int((time.monotonic() - began) * 1000)
-            stdout = error.stdout
-            stderr = error.stderr
-            if isinstance(stdout, bytes):
-                stdout = stdout.decode(errors="replace")
-            if isinstance(stderr, bytes):
-                stderr = stderr.decode(errors="replace")
-            output = redact_child_output(stdout, stderr)
-            row = {
-                "index": index,
-                "command": command,
-                "status": "timed-out",
-                "exit-code": None,
-                "duration-ms": duration_ms,
-                "stdout": _captured_tail(
-                    _redact_validation_parameter_values(
-                        output["stdout"],
-                        resolved_parameters,
-                    )
-                ),
-                "stderr": _captured_tail(
-                    _redact_validation_parameter_values(
-                        output["stderr"],
-                        resolved_parameters,
-                    )
-                ),
-            }
+        exit_code, raw_stdout, raw_stderr = _run_contained(
+            prepared_command,
+            root,
+            command_environment,
+            command_timeout,
+        )
+        duration_ms = int((time.monotonic() - began) * 1000)
+        output = redact_child_output(raw_stdout, raw_stderr)
+        stdout = _redact_validation_parameter_values(output["stdout"], resolved_parameters)
+        stderr = _redact_validation_parameter_values(output["stderr"], resolved_parameters)
+        log_path = _log_path(root, evidence_id, index)
+        _write_command_log(log_path, command, stdout, stderr)
+        if exit_code is None:
+            status = "timed-out"
+        else:
+            status = "passed" if exit_code == 0 else "failed"
+        row = {
+            "index": index,
+            "command": command,
+            "status": status,
+            "exit-code": exit_code,
+            "duration-ms": duration_ms,
+            "timeout-seconds": command_timeout,
+            "log-path": log_path.relative_to(root).as_posix(),
+            "stdout": _captured_tail(stdout),
+            "stderr": _captured_tail(stderr),
+        }
 
         command_results.append(row)
         if fail_fast and row["status"] != "passed":

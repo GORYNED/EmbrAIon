@@ -91,6 +91,22 @@ PROJECT_CONTRACT_SLOTS: dict[str, dict[str, Any]] = {
             "planning",
         ],
     },
+    "deferred-tasks": {
+        "description": "Project list of deferred tasks and follow-ups to recall when a task touches their area.",
+        "triggers": [
+            "deferred",
+            "follow-up",
+            "backlog",
+            "todo",
+            "plan",
+            "planning",
+            "implement",
+            "implementation",
+            "feature",
+            "fix",
+            "refactor",
+        ],
+    },
 }
 
 

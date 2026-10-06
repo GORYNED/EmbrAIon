@@ -5,3 +5,5 @@ Stable identifiers, serialized shapes, persisted formats, public contracts, coor
 A breaking change requires explicit migration, compatibility impact, and validation evidence.
 
 Compatibility impact is unresolved until it is verified. Report source and API compatibility separately from persisted-data compatibility, and for each one state what was verified and how.
+
+Compatibility classification fails closed: impact that has not been verified is treated as breaking.

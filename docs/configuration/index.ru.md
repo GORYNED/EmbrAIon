@@ -23,6 +23,7 @@ Lead использует канонический Core skill [Project Bootstrap
 | Используется ли provider-neutral execution? | опциональный `execution.yaml` |
 | Нужны ли проверенные pricing sources? | опциональный `pricing.yaml` |
 | Какие внешние программы или возможности хоста объявлены? | опциональный `external-capabilities.yaml` |
+| Какие MCP servers должна содержать host configuration проекта? | опциональный `integrations.yaml` |
 | Какие изменения источников требуют проверки документа? | опциональный `knowledge-maintenance.yaml` |
 | Какие ограничения структуры кода проверяются постепенно? | опциональный `organization.yaml` |
 

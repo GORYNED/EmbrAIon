@@ -288,7 +288,7 @@ embraion validation run affected   --param base-ref=origin/main   --param head-r
 
 Unknown parameters и missing required parameters fail-closed. Parameters могут проецироваться в command-line argument или environment child validation process согласно `.embraion/validation.yaml`.
 
-`--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно.
+`--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в собственной process group; timeout или прерывание завершают всё дерево. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
 ### `embraion cache`
 
@@ -479,7 +479,7 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths; см. [Security](../security.ru.md).
+`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths; см. [Security](../security.ru.md). Если существует `.embraion/integrations.yaml`, scan также сравнивает объявленные MCP servers с наблюдаемой host configuration и сообщает о drift как о high-severity findings `integration-drift`; см. [Объявленные integrations](../security.ru.md#integrations).
 
 Redact likely credentials из diagnostic text:
 

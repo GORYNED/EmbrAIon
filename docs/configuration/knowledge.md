@@ -30,7 +30,7 @@ Reusable engineering procedures and universal EmbrAIon safety rules belong in Co
 
 ## Project Contract Slots
 
-EmbrAIon provides seven canonical semantic slots for project-specific truth:
+EmbrAIon provides eight canonical semantic slots for project-specific truth:
 
 | Slot | Project-owned meaning |
 | --- | --- |
@@ -41,6 +41,7 @@ EmbrAIon provides seven canonical semantic slots for project-specific truth:
 | `persistence` | persisted identities, serialization, storage, and recovery semantics |
 | `engineering-workflow` | project-specific execution gates and delivery workflow |
 | `specification` | requirements/specification system and artifact lifecycle |
+| `deferred-tasks` | list of deferred tasks and follow-ups; the [owner interaction rule](https://github.com/GORYNED/EmbrAIon/blob/main/core/rules/owner-interaction.md) reads it at the start of a task |
 
 The slots are built into EmbrAIon; the project supplies only its own file references.
 
@@ -55,6 +56,7 @@ slots:
   persistence: docs/persistence.md
   engineering-workflow: .agents/skills/engineering-workflow/SKILL.md
   specification: .specify/integration.md
+  deferred-tasks: docs/engineering/follow-ups.md
 ```
 
 Unconfigured slots remain `null`. Projects do not need to invent placeholder documents just to fill every slot.

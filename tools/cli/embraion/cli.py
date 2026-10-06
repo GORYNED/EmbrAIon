@@ -1030,6 +1030,7 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 f"exit={exit_code} {item['duration-ms']}ms"
             )
             print(f"  {item['command']}")
+            print(f"  log: {item['log-path']}")
             if item["stdout"]:
                 print(item["stdout"].rstrip())
             if item["stderr"]:
@@ -1917,9 +1918,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     validation_run.add_argument("profile")
-    validation_run.add_argument("--run-id")
+    validation_run.add_argument("--run-id", help="Attach evidence to an active run and expose it to commands as EMBRAION_RUN_ID")
     validation_run.add_argument("--fail-fast", action="store_true")
-    validation_run.add_argument("--timeout", type=float)
+    validation_run.add_argument("--timeout", type=float, help="Per-command timeout in seconds; overrides the profile's timeout-seconds")
     validation_run.add_argument(
         "--param",
         action="append",

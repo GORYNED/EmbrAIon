@@ -294,7 +294,7 @@ embraion validation run affected \
 
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
-`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually.
+`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
 ### `embraion cache`
 
@@ -519,7 +519,7 @@ Scan for likely secrets and policy drift.
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` also checks source and other text files for private keys, access tokens, and machine paths; see [Security](../security.md#scan-findings).
+`--all-files` also checks source and other text files for private keys, access tokens, and machine paths; see [Security](../security.md#scan-findings). When `.embraion/integrations.yaml` exists, the scan also compares the declared MCP servers with the observed host configuration and reports drift as high-severity `integration-drift` findings; see [Declared integrations](../security.md#declared-integrations).
 
 Redact likely credentials from diagnostic text:
 

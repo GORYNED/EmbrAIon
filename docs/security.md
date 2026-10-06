@@ -39,6 +39,26 @@ embraion mcp inventory
 
 to inspect deterministic security and integration surfaces.
 
+### Declared integrations
+
+A project can declare the MCP servers it expects in the optional, schema-checked `.embraion/integrations.yaml` ([schema](https://github.com/GORYNED/EmbrAIon/blob/main/schemas/integrations.schema.json)). Without the file nothing is compared and the scan behaves as before.
+
+```yaml
+schema-version: 1
+servers:
+  - id: docs
+    host: generic
+    command: npx
+    args: ["-y", "docs-server"]
+    transport: stdio
+    access: read-only
+    env-vars: [DOCS_TOKEN]
+```
+
+Each entry names the server `id` and the `host` whose configuration holds it: `generic` (`.mcp.json`), `vscode` (`.vscode/mcp.json`), `claude-code` (`.claude/settings.json` and `.claude/settings.local.json`), or `codex` (`.codex/config.toml`). It also records `command`, `args`, `transport`, `access` (`read-only`, `workspace-write`, or `external-execution`), and environment-variable **names** in `env-vars`; never store values. Omit `command` for a URL server. A host without an explicit type runs a command server over `stdio` and a URL server over `http`. Entries are portable by default: a machine-absolute path in `command` or `args` is a finding. Set `portable: false` only for a deliberately machine-local server.
+
+When the file exists, `embraion security scan` and `embraion doctor` compare it with the observed configuration and report each difference as a high-severity `integration-drift` finding: a declared server that is not configured (`integration-missing`), a configured server that is not declared (`integration-unexpected`), a server whose command, arguments, transport, or environment-variable names differ (`integration-mismatch`), a non-portable declaration, an invalid declaration file, or host configuration that cannot be read. The scan therefore fails closed at the default `--fail-on high`. Findings never print argument values, redact credential-like command values, and report schema errors by location only. `access` is declared metadata; host configuration does not expose it, so it is not compared.
+
 ## Scan findings
 
 `embraion security scan` reads the project's text files and reports each finding with a category and severity:
@@ -50,6 +70,7 @@ to inspect deterministic security and integration surfaces.
 | `access-token` | high | a provider-prefixed token without a key in front of it: GitHub classic and fine-grained (`ghp_…`, `github_pat_…`), cloud access key IDs (`AKIA…`), model-provider keys (`sk-…`), Google API keys (`AIza…`), and Slack tokens (`xox…`) |
 | `machine-path` | medium | a home-directory path such as `/Users/<name>/`, `/home/<name>/`, or `C:\Users\<name>\` (also with forward slashes or JSON-escaped backslashes) |
 | `policy-drift` | medium | a legacy data-class name that no execution alias declares |
+| `integration-drift` | high | a difference between declared and observed MCP servers; only when `.embraion/integrations.yaml` exists, see [Declared integrations](#declared-integrations) |
 
 A token body must contain a digit, so identifiers and documentation placeholders with these prefixes are not reported. CI runner and shared homes and placeholder names such as `user`, `example`, or `<name>` are not machine paths. A `machine-path` finding stays below the default `--fail-on high`; pass `--fail-on medium` to make it fail. `embraion security redact` and evidence redaction replace a bare prefixed token with `<REDACTED:access-token>`.
 

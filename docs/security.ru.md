@@ -35,6 +35,26 @@ embraion security scan --path . --fail-on high
 embraion mcp inventory
 ```
 
+### Объявленные integrations
+
+Проект может объявить ожидаемые MCP servers в опциональном `.embraion/integrations.yaml`, который проверяется по [schema](https://github.com/GORYNED/EmbrAIon/blob/main/schemas/integrations.schema.json). Без этого файла ничего не сравнивается, и scan работает как раньше.
+
+```yaml
+schema-version: 1
+servers:
+  - id: docs
+    host: generic
+    command: npx
+    args: ["-y", "docs-server"]
+    transport: stdio
+    access: read-only
+    env-vars: [DOCS_TOKEN]
+```
+
+Каждая запись указывает `id` server и `host`, в чьей configuration он находится: `generic` (`.mcp.json`), `vscode` (`.vscode/mcp.json`), `claude-code` (`.claude/settings.json` и `.claude/settings.local.json`) или `codex` (`.codex/config.toml`). Также она хранит `command`, `args`, `transport`, `access` (`read-only`, `workspace-write` или `external-execution`) и **имена** environment variables в `env-vars`; значения не хранятся никогда. Для URL server `command` не указывается. Host без явного type запускает command server через `stdio`, а URL server через `http`. По умолчанию записи переносимы: machine-absolute path в `command` или `args` считается finding. `portable: false` ставьте только для намеренно machine-local server.
+
+Если файл существует, `embraion security scan` и `embraion doctor` сравнивают его с наблюдаемой configuration и сообщают каждое расхождение как high-severity finding `integration-drift`: объявленный, но не настроенный server (`integration-missing`), настроенный, но не объявленный server (`integration-unexpected`), server с другими command, arguments, transport или именами environment variables (`integration-mismatch`), непереносимая запись, невалидный файл объявлений или нечитаемая host configuration. Поэтому scan fails closed при `--fail-on high` по умолчанию. Findings никогда не выводят значения arguments, скрывают похожие на credentials значения command, а ошибки schema сообщают только местоположение. `access` — объявленная metadata; host configuration её не содержит, поэтому она не сравнивается.
+
 ## Findings сканирования
 
 `embraion security scan` читает текстовые файлы проекта и сообщает каждый finding с категорией и severity:
@@ -46,6 +66,7 @@ embraion mcp inventory
 | `access-token` | high | token с префиксом provider без ключа перед ним: GitHub classic и fine-grained (`ghp_…`, `github_pat_…`), cloud access key IDs (`AKIA…`), ключи model providers (`sk-…`), Google API keys (`AIza…`) и Slack tokens (`xox…`) |
 | `machine-path` | medium | путь к домашнему каталогу, например `/Users/<name>/`, `/home/<name>/` или `C:\Users\<name>\` (также с прямыми слешами или экранированными в JSON обратными) |
 | `policy-drift` | medium | устаревшее имя data class, которое не объявлено execution alias |
+| `integration-drift` | high | расхождение объявленных и наблюдаемых MCP servers; только при наличии `.embraion/integrations.yaml`, см. [Объявленные integrations](#integrations) |
 
 Тело token должно содержать цифру, поэтому идентификаторы и заполнители в документации с этими префиксами не считаются tokens. Домашние каталоги CI runner, общие каталоги и имена-заполнители вроде `user`, `example` или `<name>` не считаются machine paths. Finding `machine-path` ниже порога по умолчанию `--fail-on high`; чтобы он приводил к ошибке, передайте `--fail-on medium`. `embraion security redact` и redaction evidence заменяют отдельный token с префиксом на `<REDACTED:access-token>`.
 
