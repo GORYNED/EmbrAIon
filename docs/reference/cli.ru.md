@@ -479,6 +479,8 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 embraion security scan --path . --fail-on high
 ```
 
+`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths; см. [Security](../security.ru.md).
+
 Redact likely credentials из diagnostic text:
 
 ```bash

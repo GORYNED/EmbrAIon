@@ -404,6 +404,64 @@ class CoreTests(unittest.TestCase):
         redacted = redact_text("token " + tokens["github"] + " and " + tokens["cloud"])
         self.assertEqual("token <REDACTED:access-token> and <REDACTED:access-token>", redacted)
 
+    def test_security_scanner_all_files_checks_source_for_precise_patterns_only(self) -> None:
+        token = "gh" + "p_" + "A1b2" * 9
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "src").mkdir()
+            (root / "src" / "Client.cs").write_text(f'var t = "{token}";', encoding="utf-8")
+            (root / "src" / "Bridge.mm").write_text('NSString *p = @"/Users/' + 'owner/tmp/";', encoding="utf-8")
+            (root / "src" / "Key.uxml").write_text("-----BEGIN " + "PRIVATE KEY-----", encoding="utf-8")
+            # Ordinary code assignments must not trip the keyword heuristic.
+            (root / "src" / "Session.cs").write_text(
+                "to" + "ken = cancellationTokenSource.Token;", encoding="utf-8"
+            )
+            (root / "src" / "Image.bin").write_bytes(b"\x00" + token.encode())
+            (root / "src" / "Large.asset").write_text(token + "x" * (2 * 1024 * 1024), encoding="utf-8")
+            (root / "Library").mkdir()
+            (root / "Library" / "Cache.cs").write_text(token, encoding="utf-8")
+            (root / "notes.md").write_text("api_key=" + "b" * 24, encoding="utf-8")
+
+            default = {(item["path"], item["category"]) for item in collect_findings(root)}
+            everything = {
+                (item["path"].replace("\\", "/"), item["category"])
+                for item in collect_findings(root, all_files=True)
+            }
+        self.assertEqual({("notes.md", "api-key")}, default)
+        self.assertEqual(
+            {
+                ("notes.md", "api-key"),
+                ("src/Client.cs", "access-token"),
+                ("src/Bridge.mm", "machine-path"),
+                ("src/Key.uxml", "private-key"),
+            },
+            everything,
+        )
+
+    def test_security_scanner_all_files_skips_git_ignored_files(self) -> None:
+        import os
+        import shutil
+        import subprocess
+
+        if shutil.which("git") is None:
+            self.skipTest("git is not available")
+        token = "gh" + "p_" + "A1b2" * 9
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+            subprocess.run(["git", "init", "-q", str(root)], check=True, capture_output=True, env=environment)
+            (root / ".gitignore").write_text("Temp/\n", encoding="utf-8")
+            (root / "Temp").mkdir()
+            (root / "Temp" / "Build.cs").write_text(token, encoding="utf-8")
+            (root / "Tracked.cs").write_text(token, encoding="utf-8")
+            # Inside Git, .gitignore decides; tool folder names only apply without Git.
+            (root / "build").mkdir()
+            (root / "build" / "Step.cs").write_text(token, encoding="utf-8")
+            findings = {
+                item["path"].replace("\\", "/") for item in collect_findings(root, all_files=True)
+            }
+        self.assertEqual({"Tracked.cs", "build/Step.cs"}, findings)
+
     def test_security_scanner_ignores_public_key_token_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

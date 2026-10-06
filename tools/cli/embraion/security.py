@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .common import iter_text_files, read_json, read_yaml, state_root, write_json
+from .common import SKIP_PARTS, iter_text_files, read_json, read_yaml, state_root, write_json
 
 SEVERITY_ORDER = {
     "info": 0,
@@ -53,6 +56,62 @@ SECRET_PATTERNS = [
 ]
 
 
+# Patterns precise enough for source code; the keyword-based `api-key` heuristic would flag
+# ordinary assignments there, so it stays on configuration and documentation files.
+PRECISE_CATEGORIES = frozenset({"private-key", "access-token", "machine-path"})
+ALL_FILES_MAX_BYTES = 2 * 1024 * 1024
+
+
+# Only variables that relocate the repository are cleared; configuration such as safe.directory
+# passed through the environment still applies.
+_GIT_LOCATION_VARIABLES = frozenset({
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE", "GIT_PREFIX",
+})
+
+
+def _inventory(root: Path) -> list[str]:
+    """Return tracked and unignored untracked files, or every file outside tool folders without Git."""
+    environment = {key: value for key, value in os.environ.items() if key not in _GIT_LOCATION_VARIABLES}
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=environment, check=False,
+        )
+    except OSError:
+        result = None
+    if result is not None and result.returncode == 0:
+        return [name for name in result.stdout.decode("utf-8", "surrogateescape").split("\x00") if name]
+    names: list[str] = []
+    for directory, dirs, files in os.walk(root, followlinks=False):
+        dirs[:] = [name for name in dirs if name not in SKIP_PARTS]
+        names.extend((Path(directory) / name).relative_to(root).as_posix() for name in files)
+    return names
+
+
+def _path_key(relative: str) -> str:
+    # Git may report composed Unicode where the file system returns decomposed names, and
+    # Windows paths compare case-insensitively.
+    key = unicodedata.normalize("NFC", relative.replace("\\", "/"))
+    return key.casefold() if os.name == "nt" else key
+
+
+def _other_text_files(root: Path, seen: set[str]) -> Iterable[tuple[Path, str]]:
+    for name in sorted(_inventory(root)):
+        if _path_key(name) in seen or Path(name).parts[:2] == (".embraion", "state"):
+            continue
+        path = root / name
+        try:
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > ALL_FILES_MAX_BYTES:
+                continue
+            data = path.read_bytes()
+        except OSError:
+            continue
+        if b"\x00" in data:
+            continue
+        yield path, data.decode("utf-8", errors="ignore")
+
+
 def _declared_confidential_aliases(root: Path) -> set[str]:
     path = root / ".embraion" / "execution.yaml"
     if not path.is_file():
@@ -85,27 +144,39 @@ def _declared_confidential_aliases(root: Path) -> set[str]:
     return aliases
 
 
-def collect_findings(root: Path) -> list[dict[str, str]]:
+def _pattern_findings(relative: str, text: str, categories: frozenset[str] | None) -> list[dict[str, str]]:
+    return [
+        {
+            "schema-version": 1,
+            "id": f"{category}:{relative}",
+            "severity": severity,
+            "category": category,
+            "message": f"Possible {category} material found",
+            "path": relative,
+        }
+        for category, severity, pattern in SECRET_PATTERNS
+        if (categories is None or category in categories) and pattern.search(text)
+    ]
+
+
+def collect_findings(root: Path, all_files: bool = False) -> list[dict[str, str]]:
+    """Scan configuration and documentation files; with ``all_files`` also every other text file.
+
+    Other text files are the tracked and unignored untracked files (every file outside tool folders
+    without Git) of at most ``ALL_FILES_MAX_BYTES`` without a NUL byte. They are checked only for
+    ``PRECISE_CATEGORIES``.
+    """
     findings: list[dict[str, str]] = []
     legacy_data_class = "COMPANY" + "_SECRET"
     declared_aliases = _declared_confidential_aliases(root)
+    seen: set[str] = set()
 
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
+        seen.add(_path_key(relative))
         text = path.read_text(encoding="utf-8", errors="ignore")
 
-        for category, severity, pattern in SECRET_PATTERNS:
-            if pattern.search(text):
-                findings.append(
-                    {
-                        "schema-version": 1,
-                        "id": f"{category}:{relative}",
-                        "severity": severity,
-                        "category": category,
-                        "message": f"Possible {category} material found",
-                        "path": relative,
-                    }
-                )
+        findings.extend(_pattern_findings(relative, text, None))
 
         if legacy_data_class in text and legacy_data_class not in declared_aliases:
             findings.append(
@@ -118,6 +189,10 @@ def collect_findings(root: Path) -> list[dict[str, str]]:
                     "path": relative,
                 }
             )
+
+    if all_files:
+        for path, text in _other_text_files(root, seen):
+            findings.extend(_pattern_findings(str(path.relative_to(root)), text, PRECISE_CATEGORIES))
 
     return findings
 
