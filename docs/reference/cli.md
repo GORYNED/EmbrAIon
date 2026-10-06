@@ -542,7 +542,7 @@ Scan for likely secrets and policy drift.
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` also checks source and other text files for private keys, access tokens, and machine paths. It skips paths the project's `.embraion/policy.yaml` marks as `external` or `generated`, never `canonical` or `protected` ones, and reports the skipped count (`skipped-files` with `--json`); see [Security](../security.md#scan-findings). When `.embraion/integrations.yaml` exists, the scan also compares the declared MCP servers with the observed host configuration and reports drift as high-severity `integration-drift` findings; see [Declared integrations](../security.md#declared-integrations).
+`--all-files` also checks source and other text files for private keys, access tokens, and machine paths. For paths the project's `.embraion/policy.yaml` marks as `external` or `generated` (never `canonical` or `protected` ones) it waives only the machine-path check and reports how many files that affected (`machine-path-waived-files` with `--json`); secrets are still reported there; see [Security](../security.md#scan-findings). When `.embraion/integrations.yaml` exists, the scan also compares the declared MCP servers with the observed host configuration and reports drift as high-severity `integration-drift` findings; see [Declared integrations](../security.md#declared-integrations).
 
 Redact likely credentials from diagnostic text:
 

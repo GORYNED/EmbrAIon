@@ -1390,10 +1390,10 @@ def projection_ledger_outputs(project: Path) -> list[str]:
     Only intact ownership records for destinations inside the project count;
     recovery evidence, damaged records and merged files are skipped.
     """
-    root = _canonical_projection_destination(project)
     try:
+        root = _canonical_projection_destination(project)
         state = _projection_target(root, ".embraion/state/projections")
-    except RuntimeError:
+    except (OSError, RuntimeError):
         return []
     if not state.is_dir():
         return []

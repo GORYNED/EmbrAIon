@@ -20,6 +20,17 @@ class BootstrapTests(unittest.TestCase):
         apply_bootstrap(self.root, plan_bootstrap(self.root))
         self.assertEqual(before, self.snapshot())
 
+    def test_environment_variable_options_in_integrations_are_not_credentials(self):
+        write_yaml(self.root / ".embraion/integrations.yaml", {"schema-version": 1, "servers": [{
+            "id": "docs", "host": "generic", "command": "docs-server", "args": ["--api-key-env", "DOCS_KEY"],
+            "transport": "stdio", "access": "read-only", "env-vars": ["DOCS_KEY"]}]})
+        plan_bootstrap(self.root)
+        write_yaml(self.root / ".embraion/integrations.yaml", {"schema-version": 1, "servers": [{
+            "id": "docs", "host": "generic", "command": "docs-server", "args": ["--api-key", "inline"],
+            "transport": "stdio", "access": "read-only", "env-vars": []}]})
+        with self.assertRaises(RuntimeError):
+            plan_bootstrap(self.root)
+
     def test_credential_candidates_and_schema_errors_do_not_expose_values(self):
         import json
         value = "synthetic" + "-credential"

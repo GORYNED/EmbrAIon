@@ -46,7 +46,7 @@ Protected-path checks cover modifications, additions where relevant, deletions, 
 
 Build output or other derived files that should not be mistaken for canonical authored source.
 
-Files that `embraion install` recorded in a projection ledger under `.embraion/state/projections` also count as generated, so installed host projections need no hand-maintained entries. Explicit entries stay supported and come first. Files that a projection merges into user-owned content, `.claude/settings.json` and `.codex/config.toml` in merge mode, are not added. The ledgers are local state: a fresh checkout without them uses only the explicit entries. `embraion policy show --json` lists the derived entries under `derived-sources.generated`, and `embraion validate` warns when Git ignores a ledger file.
+Files that `embraion install` recorded in a projection ledger under `.embraion/state/projections` also count as generated, so installed host projections need no hand-maintained entries. Explicit entries stay supported and come first. Files that a projection merges into user-owned content, `.claude/settings.json` and `.codex/config.toml` in merge mode, are not added. The ledgers are local state: a fresh checkout without them uses only the explicit entries, and `security scan --all-files` always uses only the explicit entries. `embraion policy show --json` lists the derived entries under `derived-sources.generated`, and `embraion validate` warns when Git ignores a ledger file.
 
 ### `external`
 

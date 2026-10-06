@@ -125,6 +125,16 @@ class DeclaredIntegrationTests(unittest.TestCase):
         self._declare(_declaration(args=["./server", "https://docs.example/x"]))
         self.assertEqual([], integration_findings(self.root))
 
+    def test_machine_local_declarations_are_not_missing_where_unconfigured(self) -> None:
+        self._observe({})
+        self._declare(_declaration(command="/opt/local/docs", portable=False))
+        self.assertEqual([], integration_findings(self.root))
+        self._observe({"docs": {"command": "/opt/other/docs", "args": [], "env": {"DOCS_TOKEN": "x"}}})
+        self.assertEqual({("integration-mismatch", "high")}, self._kinds())
+        self._declare(_declaration(command="npx"))
+        self._observe({})
+        self.assertEqual({("integration-missing", "high")}, self._kinds())
+
     def test_security_scan_fails_on_drift_and_passes_when_aligned(self) -> None:
         self._observe({"docs": {"command": "npx", "args": ["-y", "docs-server"], "env": {"DOCS_TOKEN": "x"}}})
         self._declare(_declaration())

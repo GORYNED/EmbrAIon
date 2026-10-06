@@ -44,8 +44,13 @@ _SENSITIVE_OPTION = re.compile(r"(?i)(?:^|[-_])(?:api[-_]?key|apikey|key|token|p
 _CREDENTIAL_VALUE = re.compile(r"(?i)\b(?:api[_-]?key|secret|token|password|credentials?)\s*[:=]\s*(?!\$|env:|<|REDACTED|CHANGEME)[^\s]+")
 
 
+_ENVIRONMENT_OPTION = re.compile(r"(?i)[-_]env(?:[-_]var(?:iable)?)?$")
+
+
 def _credential_bearing(text: str) -> bool:
-    return (any(_SENSITIVE_OPTION.search(match.group(1)) for match in _OPTION_NAME.finditer(text))
+    # An option such as --api-key-env names an environment variable, not a credential value.
+    return (any(_SENSITIVE_OPTION.search(match.group(1)) and not _ENVIRONMENT_OPTION.search(match.group(1))
+                for match in _OPTION_NAME.finditer(text))
             or bool(_CREDENTIAL_VALUE.search(text)) or redact_text(text) != text)
 
 

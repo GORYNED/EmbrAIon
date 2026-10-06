@@ -55,7 +55,7 @@ servers:
     env-vars: [DOCS_TOKEN]
 ```
 
-Each entry names the server `id` and the `host` whose configuration holds it: `generic` (`.mcp.json`), `vscode` (`.vscode/mcp.json`), `claude-code` (`.claude/settings.json` and `.claude/settings.local.json`), or `codex` (`.codex/config.toml`). It also records `command`, `args`, `transport`, `access` (`read-only`, `workspace-write`, or `external-execution`), and environment-variable **names** in `env-vars`; never store values. Omit `command` for a URL server. A host without an explicit type runs a command server over `stdio` and a URL server over `http`. Entries are portable by default: a machine-absolute path in `command` or `args` is a finding. Set `portable: false` only for a deliberately machine-local server.
+Each entry names the server `id` and the `host` whose configuration holds it: `generic` (`.mcp.json`), `vscode` (`.vscode/mcp.json`), `claude-code` (`.claude/settings.json` and `.claude/settings.local.json`), or `codex` (`.codex/config.toml`). It also records `command`, `args`, `transport`, `access` (`read-only`, `workspace-write`, or `external-execution`), and environment-variable **names** in `env-vars`; never store values. Omit `command` for a URL server. A host without an explicit type runs a command server over `stdio` and a URL server over `http`. Entries are portable by default: a machine-absolute path in `command` or `args` is a finding. Set `portable: false` only for a deliberately machine-local server, such as one in an ignored `.claude/settings.local.json`: it may use machine-absolute paths and is not reported as missing where it is not configured, but a configured copy is still compared with its declaration.
 
 When the file exists, `embraion security scan` and `embraion doctor` compare it with the observed configuration and report each difference as a high-severity `integration-drift` finding: a declared server that is not configured (`integration-missing`), a configured server that is not declared (`integration-unexpected`), a server whose command, arguments, transport, or environment-variable names differ (`integration-mismatch`), a non-portable declaration, an invalid declaration file, or host configuration that cannot be read. The scan therefore fails closed at the default `--fail-on high`. Findings never print argument values, redact credential-like command values, and report schema errors by location only. `access` is declared metadata; host configuration does not expose it, so it is not compared.
 
@@ -76,13 +76,13 @@ A token body must contain a digit, so identifiers and documentation placeholders
 
 By default the scan reads Markdown, YAML, JSON, TOML, plain-text, Python, PowerShell, and shell files plus `.gitignore` and `.editorconfig`, outside tool folders such as `.git`, `.venv`, `node_modules`, and `Library`. `--all-files` also reads every other tracked or unignored untracked file of at most 2 MiB that contains no NUL byte, such as C#, native, or Unity asset sources; outside Git it reads every other file outside the tool folders. Those files are checked only for `private-key`, `access-token`, and `machine-path`; the keyword-based `api-key` check would flag ordinary code assignments there. `--all-files` adds no files from Git submodules.
 
-With `--all-files`, the scan reads `sources` from the project's `.embraion/policy.yaml` and skips content the project cannot edit, using the same glob matching as policy elsewhere (`fnmatch` plus `**` for zero or more folders):
+With `--all-files`, the scan reads `sources` from the project's `.embraion/policy.yaml` and waives only the `machine-path` check for content the project cannot edit, using the same glob matching as policy elsewhere (`fnmatch` plus `**` for zero or more folders):
 
-- other text files under `external` or `generated` are skipped;
-- configuration and documentation files under `external` are skipped, because they are vendor-owned; those under `generated` stay scanned, because generated configuration is what tools load and is fixed by regenerating it from its source;
-- EmbrAIon configuration under `.embraion/` and a path that also matches `canonical` or `protected` are always scanned.
+- other text files under `external` or `generated` are still checked for private keys and access tokens;
+- configuration and documentation files under `external` keep every check except `machine-path`, because they are vendor-owned; those under `generated` keep every check, because generated configuration is what tools load and is fixed by regenerating it from its source;
+- EmbrAIon configuration under `.embraion/` and a path that also matches `canonical` or `protected` keep every check.
 
-The output reports how many files were skipped (`skipped-files` with `--json`). A missing, unreadable, or malformed policy skips nothing. Without `--all-files` the policy is not consulted, so the default scan is unchanged and still reports configuration and documentation under `external`.
+Secrets are therefore never skipped. The output reports how many files had the machine-path check waived (`machine-path-waived-files` with `--json`). A missing, unreadable, or malformed policy waives nothing. The scan reads only the explicit `sources` lists, not the entries derived from local projection ledgers, so its result does not depend on local state. Without `--all-files` the policy is not consulted, so the default scan is unchanged.
 
 ## Canonical data classes and compatibility aliases
 

@@ -46,7 +46,7 @@ Protected-path checks учитывают modifications, additions где при�
 
 Build output и другие derived files, которые не должны восприниматься как canonical authored source.
 
-Файлы, которые `embraion install` записал в журнал projection в `.embraion/state/projections`, тоже считаются generated, поэтому для установленных projection хостов не нужны записи, которые ведутся вручную. Явные записи по-прежнему поддерживаются и идут первыми. Файлы, которые projection сливает с пользовательским содержимым, `.claude/settings.json` и `.codex/config.toml` в merge mode, не добавляются. Журналы являются локальным состоянием: в новом checkout без них действуют только явные записи. `embraion policy show --json` показывает выведенные записи в `derived-sources.generated`, а `embraion validate` предупреждает, если Git игнорирует файл из журнала.
+Файлы, которые `embraion install` записал в журнал projection в `.embraion/state/projections`, тоже считаются generated, поэтому для установленных projection хостов не нужны записи, которые ведутся вручную. Явные записи по-прежнему поддерживаются и идут первыми. Файлы, которые projection сливает с пользовательским содержимым, `.claude/settings.json` и `.codex/config.toml` в merge mode, не добавляются. Журналы являются локальным состоянием: в новом checkout без них действуют только явные записи, а `security scan --all-files` всегда использует только явные записи. `embraion policy show --json` показывает выведенные записи в `derived-sources.generated`, а `embraion validate` предупреждает, если Git игнорирует файл из журнала.
 
 ### `external`
 

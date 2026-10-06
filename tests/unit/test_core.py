@@ -462,7 +462,7 @@ class CoreTests(unittest.TestCase):
             }
         self.assertEqual({"Tracked.cs", "build/Step.cs"}, findings)
 
-    def test_security_scanner_all_files_skips_policy_external_and_generated_paths(self) -> None:
+    def test_security_scanner_all_files_waives_machine_paths_only_for_external_and_generated(self) -> None:
         token = "gh" + "p_" + "A1b2" * 9
         home = "/Users/" + "owner/tmp/"
         with tempfile.TemporaryDirectory() as temporary:
@@ -477,6 +477,9 @@ class CoreTests(unittest.TestCase):
                 "Vendor/Keep.cs": token,
                 "Generated/Out.cs": home,
                 "Generated/config.json": home,
+                "Generated/Leak.cs": token,
+                "Vendor/Secret.cs": token,
+                "Vendor/SECRETS.md": token,
                 "src/App.cs": token,
             }
             for name, text in files.items():
@@ -502,15 +505,17 @@ class CoreTests(unittest.TestCase):
 
         self.assertEqual({".embraion/notes.md"}, catch_all)
         # Without --all-files the policy is not consulted and nothing changes.
-        self.assertEqual({"Vendor/README.md", "Generated/config.json"}, default)
+        self.assertEqual({"Vendor/README.md", "Vendor/SECRETS.md", "Generated/config.json"}, default)
         self.assertEqual([], default_skipped)
-        self.assertEqual({"Vendor/Owned/Patch.cs", "Vendor/Keep.cs", "Generated/config.json", "src/App.cs"},
-                         everything)
-        self.assertEqual(["Generated/Out.cs", "Vendor/Lib.cs", "Vendor/README.md"], skipped)
+        # Secrets are still found under external and generated paths; only machine paths are waived.
+        self.assertEqual({"Vendor/Owned/Patch.cs", "Vendor/Keep.cs", "Generated/config.json", "Generated/Leak.cs",
+                          "Vendor/Secret.cs", "Vendor/SECRETS.md", "src/App.cs"}, everything)
+        self.assertEqual(["Generated/Leak.cs", "Generated/Out.cs", "Vendor/Lib.cs", "Vendor/README.md",
+                          "Vendor/SECRETS.md", "Vendor/Secret.cs"], skipped)
         self.assertEqual(set(files), unusable)
         self.assertEqual([], unusable_skipped)
 
-    def test_security_scan_cli_reports_skipped_file_count(self) -> None:
+    def test_security_scan_cli_reports_waived_machine_path_count(self) -> None:
         import io
         import json
         from unittest.mock import patch
@@ -530,9 +535,9 @@ class CoreTests(unittest.TestCase):
                         patch("sys.stdout", stdout):
                     code = main(["security", "scan", "--path", str(root), "--fail-on", "medium", *arguments])
                 outputs.append((code, stdout.getvalue()))
-        self.assertEqual((0, {"findings": [], "skipped-files": 1}), (outputs[0][0], json.loads(outputs[0][1])))
+        self.assertEqual((0, {"findings": [], "machine-path-waived-files": 1}), (outputs[0][0], json.loads(outputs[0][1])))
         self.assertIn("PASS: no security findings.", outputs[1][1])
-        self.assertIn("Skipped 1 file(s)", outputs[1][1])
+        self.assertIn("Machine-path check waived for 1 file(s)", outputs[1][1])
         self.assertEqual({"findings": []}, json.loads(outputs[2][1]))
         self.assertEqual("PASS: no security findings.\n", outputs[3][1])
 

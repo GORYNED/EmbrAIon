@@ -61,6 +61,7 @@ SECRET_PATTERNS = [
 # Patterns precise enough for source code; the keyword-based `api-key` heuristic would flag
 # ordinary assignments there, so it stays on configuration and documentation files.
 PRECISE_CATEGORIES = frozenset({"private-key", "access-token", "machine-path"})
+_CATEGORIES_WITHOUT_MACHINE_PATH = frozenset(category for category, _, _ in SECRET_PATTERNS) - {"machine-path"}
 ALL_FILES_MAX_BYTES = 2 * 1024 * 1024
 
 
@@ -131,14 +132,9 @@ def _policy_skips(relative: str, sources: dict[str, list[str]] | None, categorie
     return any(path_matches(relative, sources[category]) for category in categories)
 
 
-def _other_text_files(root: Path, seen: set[str], sources: dict[str, list[str]] | None = None,
-                      skipped: list[str] | None = None) -> Iterable[tuple[Path, str]]:
+def _other_text_files(root: Path, seen: set[str]) -> Iterable[tuple[Path, str]]:
     for name in sorted(_inventory(root)):
         if _path_key(name) in seen or Path(name).parts[:2] == (".embraion", "state"):
-            continue
-        if _policy_skips(name, sources, ("external", "generated")):
-            if skipped is not None:
-                skipped.append(name)
             continue
         path = root / name
         try:
@@ -207,10 +203,11 @@ def collect_findings(root: Path, all_files: bool = False,
     without Git) of at most ``ALL_FILES_MAX_BYTES`` without a NUL byte. They are checked only for
     ``PRECISE_CATEGORIES``.
 
-    With ``all_files`` the project's ``.embraion/policy.yaml`` excludes content the project cannot
-    edit: other text files under ``sources.external`` or ``sources.generated``, and configuration and
-    documentation files under ``sources.external``. Canonical and protected paths are always
-    scanned. Skipped relative paths are appended to ``skipped``.
+    With ``all_files`` the project's ``.embraion/policy.yaml`` waives only the ``machine-path`` check
+    for content the project cannot edit: other text files under ``sources.external`` or
+    ``sources.generated``, and configuration and documentation files under ``sources.external``.
+    Every secret check still runs on those files, and canonical and protected paths keep every
+    check. Relative paths whose machine-path check was waived are appended to ``skipped``.
     """
     findings: list[dict[str, str]] = []
     legacy_data_class = "COMPANY" + "_SECRET"
@@ -221,13 +218,14 @@ def collect_findings(root: Path, all_files: bool = False,
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
         seen.add(_path_key(relative))
-        if _policy_skips(relative, sources, ("external",)):
-            if skipped is not None:
-                skipped.append(relative)
-            continue
         text = path.read_text(encoding="utf-8", errors="ignore")
 
-        findings.extend(_pattern_findings(relative, text, None))
+        categories = None
+        if _policy_skips(relative, sources, ("external",)):
+            categories = _CATEGORIES_WITHOUT_MACHINE_PATH
+            if skipped is not None:
+                skipped.append(relative)
+        findings.extend(_pattern_findings(relative, text, categories))
 
         if legacy_data_class in text and legacy_data_class not in declared_aliases:
             findings.append(
@@ -242,8 +240,14 @@ def collect_findings(root: Path, all_files: bool = False,
             )
 
     if all_files:
-        for path, text in _other_text_files(root, seen, sources, skipped):
-            findings.extend(_pattern_findings(str(path.relative_to(root)), text, PRECISE_CATEGORIES))
+        for path, text in _other_text_files(root, seen):
+            relative = str(path.relative_to(root))
+            categories = PRECISE_CATEGORIES
+            if _policy_skips(relative, sources, ("external", "generated")):
+                categories = PRECISE_CATEGORIES - {"machine-path"}
+                if skipped is not None:
+                    skipped.append(relative)
+            findings.extend(_pattern_findings(relative, text, categories))
 
     findings.extend(integration_findings(root))
     return findings
@@ -440,6 +444,10 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
             ))
 
     for host, server_id in sorted(set(declared) - seen):
+        # A machine-local server exists only where it is set up, such as an ignored local settings
+        # file; its absence elsewhere (a clean clone, CI) is expected, but any copy found is compared.
+        if not declared[(host, server_id)].get("portable", True):
+            continue
         findings.append(_integration_finding(
             "missing", host, server_id, f"Declared MCP server {server_id} for host {host} is not configured", relative,
         ))

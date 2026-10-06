@@ -317,7 +317,13 @@ def read_framework_pin(manifest: Path) -> dict[str, str | None]:
             "framework.version must be an exact stable release such as 1.2.3; "
             "ranges, tags such as latest, and other text are refused."
         )
-    lock = artifact_lock_from_framework(framework, required=False)
+    try:
+        lock = artifact_lock_from_framework(framework, required=False)
+    except RuntimeError as error:
+        raise RuntimeError(
+            "framework.artifact in .embraion/project.yaml is malformed or a mismatch for "
+            "framework.version; regenerate it with embraion update."
+        ) from error
     return {"version": version, "digest": lock.digest if lock is not None else None}
 
 

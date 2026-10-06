@@ -1153,7 +1153,7 @@ def _cmd_security_scan(args: argparse.Namespace) -> int:
     findings = collect_findings(root, all_files=args.all_files, skipped=skipped)
 
     if args.json:
-        _print_json({"findings": findings, **({"skipped-files": len(skipped)} if args.all_files else {})})
+        _print_json({"findings": findings, **({"machine-path-waived-files": len(skipped)} if args.all_files else {})})
     elif findings:
         for finding in findings:
             print(
@@ -1164,7 +1164,8 @@ def _cmd_security_scan(args: argparse.Namespace) -> int:
     else:
         print("PASS: no security findings.")
     if args.all_files and not args.json:
-        print(f"Skipped {len(skipped)} file(s) under .embraion/policy.yaml sources.external or sources.generated.")
+        print(f"Machine-path check waived for {len(skipped)} file(s) under .embraion/policy.yaml "
+              "sources.external or sources.generated.")
 
     threshold = SEVERITY_ORDER[args.fail_on]
     return (

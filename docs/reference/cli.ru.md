@@ -502,7 +502,7 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths. Пути, которые `.embraion/policy.yaml` проекта относит к `external` или `generated`, пропускаются (пути `canonical` и `protected` не пропускаются никогда), а число пропущенных файлов выводится (`skipped-files` с `--json`); см. [Security](../security.ru.md). Если существует `.embraion/integrations.yaml`, scan также сравнивает объявленные MCP servers с наблюдаемой host configuration и сообщает о drift как о high-severity findings `integration-drift`; см. [Объявленные integrations](../security.ru.md#integrations).
+`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths. Для путей, которые `.embraion/policy.yaml` проекта относит к `external` или `generated` (но никогда не `canonical` и `protected`), отключается только проверка machine-path, а число таких файлов выводится (`machine-path-waived-files` с `--json`); секреты там по-прежнему находятся; см. [Security](../security.ru.md). Если существует `.embraion/integrations.yaml`, scan также сравнивает объявленные MCP servers с наблюдаемой host configuration и сообщает о drift как о high-severity findings `integration-drift`; см. [Объявленные integrations](../security.ru.md#integrations).
 
 Redact likely credentials из diagnostic text:
 

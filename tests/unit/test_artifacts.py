@@ -261,6 +261,14 @@ class ArtifactLockTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "mismatch"):
                 read_framework_pin(Path(temporary) / ".embraion" / "project.yaml")
 
+    def test_framework_pin_lock_errors_never_echo_lock_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest = self._manifest(Path(temporary), asset='"x.whl\\n::warning::injected"')
+            with self.assertRaisesRegex(RuntimeError, "framework.artifact") as error:
+                read_framework_pin(manifest)
+            self.assertNotIn("::warning", str(error.exception))
+            self.assertNotIn("x.whl", str(error.exception))
+
     def test_framework_pin_command_prints_key_value_lines(self) -> None:
         from embraion.cli import main
 
