@@ -86,6 +86,9 @@ def execute(
     _validate(request, "execution-request.schema.json")
     if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
+    if request["routeClass"] == "critical":
+        from .ceilings import enforce_critical_justification
+        enforce_critical_justification(request.get("justification"), project)
     identities = [item["deployment"] for item in request["candidates"]]
     if len(identities) != len(set(identities)):
         raise RuntimeError("Execution candidate repeats a deployment.")

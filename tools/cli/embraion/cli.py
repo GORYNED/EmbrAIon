@@ -106,7 +106,8 @@ def _print_main_help(file: object | None = None) -> None:
         "  bootstrap  Plan or apply evidence-bound project contract configuration",
         "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
         "  projection Preview ownership-aware projection changes",
-        "  policy     Inspect the effective project policy overlay",
+        "  policy     Inspect the effective project policy overlay or check its ceilings",
+        "  report     Render or validate the project completion report contract",
         "  update     Sync the project pin with a verified release artifact lock",
         "  framework  Install or verify the project-pinned framework artifact",
         "  sync       Generate disposable host projections without installing them",
@@ -212,6 +213,18 @@ def _cmd_help(args: argparse.Namespace) -> int:
 def _cmd_validate(args: argparse.Namespace) -> int:
     root = framework_root(Path(args.root) if args.root else None)
     issues = collect_issues(root)
+    project = find_project_root()
+    if project is not None and (project / ".embraion" / "policy.yaml").is_file():
+        from .ceilings import check_policy_ceilings
+        try:
+            findings = check_policy_ceilings(project)
+        except RuntimeError as error:
+            findings = [{"code": "policy-invalid", "path": ".embraion", "message": str(error)}]
+        issues += [
+            {"severity": "error", "code": "policy-ceiling", "path": item["path"],
+             "message": f"{item['code']}: {item['message']}"}
+            for item in findings
+        ]
 
     if args.json:
         _print_json({"issues": issues, "count": len(issues)})
@@ -279,6 +292,12 @@ def _print_projection_plan(plan: dict[str, object]) -> None:
         print(f"{key}: {len(values)}")
         for value in values:
             print(f"  {value}")
+    findings = list(plan.get("root-findings", []) or [])
+    if "root-findings" in plan:
+        label = "error" if plan.get("strict-root") else "warning"
+        print(f"root-findings: {len(findings)} ({label})")
+        for finding in findings:
+            print(f"  {finding['code']} {finding['path']}: {finding['message']}")
 
 
 def _cmd_install(args: argparse.Namespace) -> int:
@@ -325,6 +344,10 @@ def _cmd_projection_verify(args: argparse.Namespace) -> int:
         components=args.component,
         config_mode=args.config_mode,
     )
+    if args.strict_root:
+        if "root-findings" not in plan:
+            raise RuntimeError("--strict-root applies only to the Codex config component in merge mode.")
+        plan["strict-root"] = True
     verified = projection_is_verified(plan)
     if args.json:
         _print_json({**plan, "verified": verified})
@@ -356,6 +379,52 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             print(f"Sources {category}: {len(patterns)} pattern(s)")
         print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
     return 0
+
+
+def _cmd_policy_check(args: argparse.Namespace) -> int:
+    from .ceilings import check_policy_ceilings, read_ceilings
+
+    project = project_root(Path(args.path) if args.path else None)
+    declared = bool(read_ceilings(project))
+    findings = check_policy_ceilings(project)
+    if args.json:
+        _print_json({"ceilings-declared": declared, "valid": not findings, "findings": findings})
+    elif not declared:
+        print("No policy ceilings declared in .embraion/policy.yaml.")
+    elif findings:
+        for item in findings:
+            print(f"ERROR   {item['code']:28} {item['path']}: {item['message']}")
+    else:
+        print("PASS: deployments, execution bindings, and routing stay within policy ceilings.")
+    return 1 if findings else 0
+
+
+def _cmd_report_template(args: argparse.Namespace) -> int:
+    from .report import read_report_contract, render_report_template
+
+    contract = read_report_contract(path=Path(args.contract) if args.contract else None)
+    sys.stdout.write(render_report_template(contract))
+    return 0
+
+
+def _cmd_report_validate(args: argparse.Namespace) -> int:
+    from .report import read_report_contract, validate_report
+
+    contract = read_report_contract(path=Path(args.contract) if args.contract else None)
+    try:
+        text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise RuntimeError(f"Cannot read report: {error}") from error
+    issues = validate_report(text, contract, kind=args.kind, pull_request=args.pull_request)
+    if args.json:
+        _print_json({"kind": args.kind, "valid": not issues, "issues": issues})
+    elif issues:
+        for issue in issues:
+            location = f"line {issue['line']}" if issue["line"] else "report"
+            print(f"ERROR   {issue['code']:28} {location}: {issue['message']}")
+    else:
+        print(f"PASS: {args.kind} report satisfies the completion report contract.")
+    return 1 if issues else 0
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -1704,6 +1773,15 @@ def build_parser() -> argparse.ArgumentParser:
         default="replace",
         help="Use the selected Codex config ownership mode while verifying.",
     )
+    projection_verify.add_argument(
+        "--strict-root",
+        action="store_true",
+        help=(
+            "In Codex merge mode, fail on root findings: forbidden model/effort "
+            "keys, keys outside allowed-root-keys, or root instructions outside "
+            "the managed block. Also enabled by policy projection.codex.strict-root."
+        ),
+    )
     projection_verify.add_argument("--json", action="store_true")
     projection_verify.set_defaults(func=_cmd_projection_verify)
 
@@ -1760,6 +1838,40 @@ def build_parser() -> argparse.ArgumentParser:
     policy_show = policy_sub.add_parser("show", help="Show effective project policy")
     policy_show.add_argument("--json", action="store_true")
     policy_show.set_defaults(func=_cmd_policy_show)
+    policy_check = policy_sub.add_parser(
+        "check",
+        help="Fail when configuration widens policy ceilings",
+        description=(
+            "Check that deployments, execution bindings, and routing stay within "
+            "the ceilings declared in .embraion/policy.yaml. 'embraion validate' "
+            "runs the same check inside a project."
+        ),
+    )
+    policy_check.add_argument("--path", help="Project path (default: current directory)")
+    policy_check.add_argument("--json", action="store_true")
+    policy_check.set_defaults(func=_cmd_policy_check)
+
+    report = sub.add_parser(
+        "report",
+        help="Render or check the completion report contract",
+        description="Render the project completion report template from .embraion/report.yaml or validate a report text against it.",
+    )
+    report_sub = report.add_subparsers(dest="report-command", required=True)
+    report_template = report_sub.add_parser("template", help="Print the report template")
+    report_template.add_argument("--contract", help="Contract path (default: .embraion/report.yaml)")
+    report_template.set_defaults(func=_cmd_report_template)
+    report_validate = report_sub.add_parser(
+        "validate",
+        help="Validate a final report or an intermediate update",
+        description="Check sections, Workers table, Task status, table hygiene, and the pull request link.",
+    )
+    report_validate.add_argument("file", help="Report file, or '-' for stdin")
+    report_validate.add_argument("--kind", choices=["final", "intermediate"], default="final")
+    report_validate.add_argument("--pull-request", action="store_true",
+                                 help="A pull request was created; require its full URL.")
+    report_validate.add_argument("--contract", help="Contract path (default: .embraion/report.yaml)")
+    report_validate.add_argument("--json", action="store_true")
+    report_validate.set_defaults(func=_cmd_report_validate)
 
     update = sub.add_parser(
         "update",
