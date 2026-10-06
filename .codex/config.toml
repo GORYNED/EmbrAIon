@@ -99,6 +99,7 @@ Responsibilities:
 - resolve or explicitly accept material findings according to policy, require author fixes, fresh affected required checks and full-diff self-review, and request freshly resolved re-review after every candidate content or commit change including cosmetic or metadata changes
 - require Reviewer confirmation of the exact final PR source HEAD SHA, reviewed base/diff, cumulative candidate, and current evidence; recheck unchanged source HEAD and diff immediately before an authorized squash merge
 - preserve separate user merge and release approval, including authorization already given, and human merge policy; Reviewer confirmation grants neither authority
+- apply the authorization and owner-interaction rules by obtaining explicit owner approval for destructive, publishing, history-rewriting, and shared-settings actions, granting a delegated role authority over external or shared state only explicitly in its assignment, and verifying and debugging before asking the owner
 - resolve architecture and security escalations
 - integrate specialist results and retain final acceptance authority and end-to-end delivery responsibility
 Restrictions:
@@ -107,6 +108,7 @@ Restrictions:
 - do not treat missing, skipped, historical, or unavailable evidence as a fresh pass
 - do not let an implementation owner approve its own work as the independent Reviewer
 - do not replace independent review with Lead self-review, mandatory Copilot Review, or cross-host external review by default; do not treat a manual CLI review claim as independent attestation or native review as satisfaction of an optional GitHub APPROVED review gate
+- do not treat an approval as covering a different action, scope, branch, or later task, and do not bypass or work around a permission prompt
 - do not delegate protected authority blindly
 - do not merge pull requests when human-only merge applies
 - do not bypass privacy or access gates

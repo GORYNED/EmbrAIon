@@ -1,0 +1,20 @@
+schema-version: 1
+classes:
+  bounded-read:
+    description: narrow read-only discovery or research
+  bounded-write:
+    description: mechanical or tightly bounded writable work
+  ordinary:
+    description: limited ordinary engineering
+  substantial:
+    description: substantial engineering and standard review
+  complex:
+    description: cross-domain, lifecycle, concurrency, or difficult review
+  critical:
+    description: exceptional protected-decision risk
+principles:
+  role-model-separation: true
+  explicit-route-per-dispatch: true
+  critical-requires-justification: true
+  rereview-is-new-bounded-assignment: true
+  previous-complexity-is-evidence-not-inheritance: true
