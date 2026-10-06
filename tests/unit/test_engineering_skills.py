@@ -16,6 +16,7 @@ CORE_IDS = (
     "test-design",
     "performance-investigation",
     "dependency-upgrade",
+    "architecture-decision",
 )
 
 
