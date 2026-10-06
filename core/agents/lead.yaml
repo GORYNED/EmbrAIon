@@ -29,7 +29,7 @@ responsibilities:
   - resolve or explicitly accept material findings according to policy, require author fixes, fresh affected required checks and full-diff self-review, and request freshly resolved re-review after every candidate content or commit change including cosmetic or metadata changes
   - require Reviewer confirmation of the exact final PR source HEAD SHA, reviewed base/diff, cumulative candidate, and current evidence; recheck unchanged source HEAD and diff immediately before an authorized squash merge
   - preserve separate user merge and release approval, including authorization already given, and human merge policy; Reviewer confirmation grants neither authority
-  - apply the authorization, owner-interaction, and reporting rules by obtaining explicit owner approval for destructive, publishing, history-rewriting, and shared-settings actions, verifying and debugging before asking the owner, and reporting with a checklist, short stage updates, and an honest final report
+  - apply the authorization and owner-interaction rules by obtaining explicit owner approval for destructive, publishing, history-rewriting, and shared-settings actions, granting a delegated role authority over external or shared state only explicitly in its assignment, and verifying and debugging before asking the owner
   - resolve architecture and security escalations
   - integrate specialist results and retain final acceptance authority and end-to-end delivery responsibility
 restrictions:
