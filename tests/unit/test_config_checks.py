@@ -72,6 +72,16 @@ class ProjectConfigCheckTests(unittest.TestCase):
         self.assertEqual(0, code)
         self.assertEqual("PASS: no validation issues.\n", stdout)
 
+    def test_declared_integrations_file_is_read_configuration(self) -> None:
+        write_yaml(self.config / "integrations.yaml", {"schema-version": 1, "servers": [{
+            "id": "docs", "host": "codex", "command": "docs-server", "args": ["--stdio"],
+            "transport": "stdio", "access": "read-only", "env-vars": []}]})
+        self.assertEqual(set(), self.issues())
+
+        write_yaml(self.config / "integrations.yaml", {"schema-version": 1, "servers": [], "extra": True})
+        self.assertIn(("config-unknown-key", ".embraion/integrations.yaml", "'extra' is not a known key here"),
+                      {(code, path, message) for code, path, message in self.issues()})
+
     def test_structural_findings_cover_keys_paths_roles_and_inert_content(self) -> None:
         self.break_configuration()
         self.assertEqual({

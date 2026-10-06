@@ -641,6 +641,7 @@ PROJECT_CONFIG_SCHEMAS = {
     "knowledge-maintenance.yaml": "knowledge-audit",
     "claude-native.yaml": "claude-native",
     "report.yaml": "report",
+    "integrations.yaml": "integrations",
 }
 _ORGANIZATION_ROOT_SECTIONS = ("assemblies", "unity_meta", "filenames")
 
