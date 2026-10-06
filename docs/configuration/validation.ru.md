@@ -66,6 +66,21 @@ Unknown parameters, missing required values, invalid command indexes, unsafe Win
 
 Structured validation evidence сохраняет имена использованных parameters, но не raw values и не expanded command с ними. Runtime parameter values также redacted из stdout/stderr. Не используйте validation parameters вместо secret manager.
 
+## Timeouts
+
+Structured profile может ограничить время каждой command опциональным ключом `timeout-seconds`. Число действует для каждой command в profile; список задаёт по одному значению на command по порядку, а `null` оставляет command без ограничения:
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+      - python tools/package.py
+    timeout-seconds: [1800, null]
+```
+
+Без ключа commands выполняются без timeout, как раньше. `--timeout SECONDS` в командной строке заменяет настроенное значение для каждой command этого запуска. Список, длина которого не совпадает с числом commands, или значение, не являющееся положительным числом, fail-closed.
+
 ## Выбор profiles
 
 Полезная конвенция:
@@ -94,7 +109,7 @@ embraion validation run affected --timeout 120
 embraion validation run full --run-id task-001
 ```
 
-Каждый запуск сохраняет redacted structured evidence в `.embraion/state/validation/`.
+Каждый запуск сохраняет redacted structured evidence в `.embraion/state/validation/` и по одному полному redacted log на command в `.embraion/state/validation/<evidence-id>/`. См. [Валидация и evidence](../validation.ru.md#evidence).
 
 ## Безопасность
 

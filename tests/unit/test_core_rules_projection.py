@@ -24,6 +24,14 @@ class CoreRulesProjectionTests(unittest.TestCase):
         self.assertIn("](#authorization)", text)
         self.assertIn("persisted-data compatibility", text)
         self.assertIn("deferred tasks", text)
+        for statement in (
+            "Preserve observable runtime behavior unless the task explicitly authorizes a change",
+            "impact that has not been verified is treated as breaking",
+            "The upstream change lands first in its own pull request",
+            "Remove a duplicated instruction only after delivery of its canonical replacement",
+            "the configured `deferred-tasks` project contract slot",
+        ):
+            self.assertIn(statement, text)
 
     def test_rules_document_rewrites_anchored_links_and_rejects_bad_sets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

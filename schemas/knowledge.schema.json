@@ -90,6 +90,9 @@
         },
         "specification": {
           "$ref": "#/$defs/slot-binding"
+        },
+        "deferred-tasks": {
+          "$ref": "#/$defs/slot-binding"
         }
       },
       "additionalProperties": false

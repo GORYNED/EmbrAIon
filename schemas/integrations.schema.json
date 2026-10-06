@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/integrations.schema.json",
+  "title": "EmbrAIon Declared MCP Integrations",
+  "type": "object",
+  "required": ["schema-version", "servers"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "servers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/server"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "server": {
+      "type": "object",
+      "required": ["id", "host", "transport", "access", "env-vars"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$", "maxLength": 128},
+        "host": {"enum": ["generic", "vscode", "claude-code", "codex"]},
+        "command": {"type": "string", "minLength": 1, "maxLength": 512},
+        "args": {
+          "type": "array",
+          "items": {"type": "string", "maxLength": 1024}
+        },
+        "transport": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$", "maxLength": 40},
+        "access": {"enum": ["read-only", "workspace-write", "external-execution"]},
+        "env-vars": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "maxLength": 128}
+        },
+        "portable": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

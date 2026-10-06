@@ -1185,6 +1185,32 @@ class ProjectionPolicyTests(unittest.TestCase):
             self.assertEqual(2, report["configured"])
             self.assertEqual(1, report["available"])
 
+    def test_deferred_tasks_slot_binds_the_list_named_by_the_owner_interaction_rule(self) -> None:
+        rule = (framework_root() / "core/rules/owner-interaction.md").read_text(encoding="utf-8")
+        self.assertIn("`deferred-tasks` project contract slot", rule)
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            init_project(project, name="Consumer")
+            knowledge_path = project / ".embraion" / "knowledge.yaml"
+            self.assertIn("deferred-tasks", read_yaml(knowledge_path)["slots"])
+            (project / "docs").mkdir()
+            (project / "docs" / "follow-ups.md").write_text("- deferred item", encoding="utf-8")
+            knowledge = read_yaml(knowledge_path)
+            knowledge["slots"]["deferred-tasks"] = "docs/follow-ups.md"
+            write_yaml(knowledge_path, knowledge)
+
+            report = project_contract_status(read_knowledge_config(project), project)
+            by_id = {item["id"]: item for item in report["slots"]}
+            self.assertTrue(by_id["deferred-tasks"]["exists"])
+            automatic = build_context(
+                "Implement the export feature",
+                "lead",
+                "PRIVATE",
+                project=project,
+                persist=False,
+            )
+            self.assertIn("slot:deferred-tasks", [item["id"] for item in automatic["selected"]])
+
 
 if __name__ == "__main__":
     unittest.main()

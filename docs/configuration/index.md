@@ -23,6 +23,7 @@ For explicit model tuning, use the full request on the Bootstrap page. Manual ed
 | Does this project use provider-neutral executable bindings? | optional `execution.yaml` |
 | Does this project maintain reviewed provider pricing sources? | optional `pricing.yaml` |
 | Which external software or host features are declared? | optional `external-capabilities.yaml` |
+| Which MCP servers should the project's host configuration contain? | optional `integrations.yaml` |
 | Which files should trigger knowledge review when changed? | optional `knowledge-maintenance.yaml` |
 | Which incremental code structure limits apply? | optional `organization.yaml` |
 

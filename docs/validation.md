@@ -46,7 +46,8 @@ Commands execute sequentially from the project root. Each result records:
 - command identity;
 - exit code;
 - duration;
-- redacted stdout/stderr tails;
+- redacted stdout/stderr tails of at most 8000 characters each;
+- the effective timeout and the path of the command's full log;
 - optional attached execution run;
 - evidence ID/path.
 
@@ -56,7 +57,11 @@ Evidence is stored under:
 .embraion/state/validation/
 ```
 
-That is local runtime state and is ignored by the project-local `.gitignore`.
+That is local runtime state and is ignored by the project-local `.gitignore`. Each command also writes its complete redacted stdout and stderr to `.embraion/state/validation/<evidence-id>/command-<index>.log`, so a long failure stays inspectable beyond the tail in the record.
+
+Each command starts in its own process group (a new session on POSIX, a new process group on Windows). When a command times out, or the run is interrupted, EmbrAIon terminates the whole tree, including processes the command started: on POSIX it signals the group with `SIGTERM` and then `SIGKILL`; on Windows it ends the tree with `taskkill /T /F`. An interrupted run stops and records no evidence. Timeouts come from `--timeout` or the profile's [`timeout-seconds`](configuration/validation.md#timeouts).
+
+With `--run-id`, every command receives the run ID in the `EMBRAION_RUN_ID` environment variable, so tools it starts can label their own artifacts. Without `--run-id`, the variable is removed from the command environment.
 
 An empty profile reports `skipped`. A failed or timed-out command makes the profile fail. Use `--fail-fast` only when later commands are not useful after the first failure.
 

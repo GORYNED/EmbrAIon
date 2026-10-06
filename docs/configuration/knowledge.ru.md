@@ -30,7 +30,7 @@ Reusable engineering procedures и универсальные safety rules EmbrA
 
 ## Project Contract Slots
 
-EmbrAIon предоставляет семь канонических semantic slots для project-specific truth:
+EmbrAIon предоставляет восемь канонических semantic slots для project-specific truth:
 
 | Slot | Значение, которым владеет проект |
 | --- | --- |
@@ -41,6 +41,7 @@ EmbrAIon предоставляет семь канонических semantic s
 | `persistence` | persisted identities, serialization, storage и recovery semantics |
 | `engineering-workflow` | project-specific execution gates и delivery workflow |
 | `specification` | requirements/specification system и artifact lifecycle |
+| `deferred-tasks` | список отложенных задач и follow-ups; [правило owner interaction](https://github.com/GORYNED/EmbrAIon/blob/main/core/rules/owner-interaction.md) читает его в начале задачи |
 
 Slots встроены в EmbrAIon; проект предоставляет только ссылки на свои файлы.
 
@@ -55,6 +56,7 @@ slots:
   persistence: docs/persistence.md
   engineering-workflow: .agents/skills/engineering-workflow/SKILL.md
   specification: .specify/integration.md
+  deferred-tasks: docs/engineering/follow-ups.md
 ```
 
 Ненастроенные slots остаются `null`. Не нужно создавать пустые документы только ради заполнения списка.

@@ -59,6 +59,7 @@ slots:
   persistence:
   engineering-workflow:
   specification:
+  deferred-tasks:
 ```
 
 A project binds only the slots it actually owns:
@@ -375,6 +376,10 @@ See [Pricing & cost](pricing.md) for refresh, snapshot, staleness, usage-semanti
 This strict, versioned inventory declares independently installed host-managed capabilities. The file is absent by default. Include only version/digest, source, license, host requirements, access, data class, and environment-variable **names**. A declaration is not an installation, authorization, or proof of host loading. `embraion capabilities --path . --host codex --json` reports what local evidence can establish; later host stages remain unverified without trusted live observation. See [External capabilities](capabilities.md).
 
 Schema v1 can read legacy `builtin:unity` declarations for diagnostics, but the bundle is no longer shipped. Remove such an entry explicitly before installing for its selected host or updating; install the desired replacement independently through the host first. See [External capabilities](capabilities.md).
+
+## Optional `.embraion/integrations.yaml`
+
+This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`. The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
 
 ## Optional `.embraion/knowledge-maintenance.yaml`
 

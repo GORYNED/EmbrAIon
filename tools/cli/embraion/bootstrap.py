@@ -34,6 +34,7 @@ _DOCS = {
     "persistence": ("docs/persistence.md",),
     "engineering-workflow": ("CONTRIBUTING.md", "docs/engineering-workflow.md"),
     "specification": ("SPECIFICATION.md", "docs/specification.md"),
+    "deferred-tasks": ("docs/follow-ups.md", "docs/deferred-tasks.md"),
 }
 _SKIP = {".git", ".venv", "node_modules", "__pycache__", ".embraion", "build", "dist", "site"}
 _OPTION_NAME = re.compile(r"--([A-Za-z0-9_-]+)")

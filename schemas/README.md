@@ -17,6 +17,7 @@ Current foundation schemas include:
 - `learning.schema.json`
 - `session.schema.json`
 - `mcp.schema.json`
+- `integrations.schema.json`
 - `worktree.schema.json`
 - `security.schema.json`
 - `telemetry.schema.json`
@@ -24,4 +25,4 @@ Current foundation schemas include:
 
 Schemas should describe executable or validated contracts rather than speculative future structure.
 
-<sub>Last updated: 2026-09-24 16:10 UTC</sub>
+<sub>Last updated: 2026-10-06 17:48 UTC</sub>

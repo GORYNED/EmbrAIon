@@ -67,6 +67,21 @@ Values passed as command-line arguments are shell-quoted for the current platfor
 
 Structured validation evidence records which parameter names were used, but never persists their raw values or the expanded command containing them. Known runtime parameter values are also scrubbed from captured child stdout/stderr in addition to normal EmbrAIon redaction. Do not use validation parameters as a substitute for a secret manager.
 
+## Timeouts
+
+A structured profile can bound each command with the optional `timeout-seconds` key. A number applies to every command of the profile; a list gives one value per command, in order, and `null` leaves that command unbounded:
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+      - python tools/package.py
+    timeout-seconds: [1800, null]
+```
+
+Without the key, commands run without a timeout, as before. `--timeout SECONDS` on the command line overrides the configured value for every command of that run. A list whose length differs from the command count, or a value that is not a positive number, fails closed.
+
 ## Choosing profiles
 
 A useful convention:
@@ -95,7 +110,7 @@ embraion validation run affected --timeout 120
 embraion validation run full --run-id task-001
 ```
 
-Each execution persists redacted structured evidence under `.embraion/state/validation/`.
+Each execution persists redacted structured evidence under `.embraion/state/validation/`, plus one full redacted log per command under `.embraion/state/validation/<evidence-id>/`. See [Validation & Evidence](../validation.md#evidence-behavior).
 
 ## Safety
 
