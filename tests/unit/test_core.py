@@ -503,7 +503,9 @@ class CoreTests(unittest.TestCase):
             (root / ".embraion" / "notes.md").write_text(home, encoding="utf-8")
             catch_all, _ = scan(True)
 
-        self.assertEqual({".embraion/notes.md"}, catch_all)
+        # A catch-all external glob waives machine paths everywhere except EmbrAIon configuration; secrets stay.
+        self.assertEqual({".embraion/notes.md", "Vendor/Owned/Patch.cs", "Vendor/Keep.cs", "Generated/Leak.cs",
+                          "Vendor/Secret.cs", "Vendor/SECRETS.md", "src/App.cs"}, catch_all)
         # Without --all-files the policy is not consulted and nothing changes.
         self.assertEqual({"Vendor/README.md", "Vendor/SECRETS.md", "Generated/config.json"}, default)
         self.assertEqual([], default_skipped)
