@@ -9,6 +9,7 @@ EmbrAIon's Core includes short, conditional procedures for recurring engineering
 | `test-design` | A behavior, persistence, integration, or regression test strategy | Trivial reversible edits without behavior risk |
 | `performance-investigation` | A measurable performance concern or target | Ordinary code changes without a performance question |
 | `dependency-upgrade` | A requested or necessary exact-version upgrade | Unrelated feature work |
+| `architecture-decision` | A durable decision on dependency direction, ownership, persisted format, platform, or a foundational dependency, recorded in the project's own decision-record format | Local implementation choices, renames, and documentation fixes |
 
 Each procedure yields traceable outputs: the affected contract or risk, evidence sources, actions, fresh checks, and remaining limits. Load adjacent skills only when their separate concerns apply. For example, a dependency upgrade that changes a persisted format may also need `compatibility-migration`; an optimization needs a correctness check as well as comparable measurements. The [capability model](../capability-model.md) keeps skills distinct from agents, rules, and workflows.
 

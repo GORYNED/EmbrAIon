@@ -1,0 +1,125 @@
+{
+ "schema-version": 1,
+ "id": "architecture-decision",
+ "skills": [
+  {
+   "id": "architecture-decision",
+   "candidate": "core/skills/architecture-decision"
+  }
+ ],
+ "cases": [
+  {
+   "id": "supersede-settings-storage-en",
+   "polarity": "positive",
+   "fixture": "fixtures/decision-records",
+   "prompt": "We have decided to store settings in SQLite instead of JSON, because concurrent writes from the sync worker corrupted settings.json twice last month. Record this architecture decision with the title 'Store settings in SQLite'. Do not change the code yet.",
+   "checks": [
+    {
+     "type": "file-exists",
+     "path": "docs/decisions/0002-store-settings-in-sqlite.md"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/0002-store-settings-in-sqlite.md",
+     "text": "0001"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/0002-store-settings-in-sqlite.md",
+     "text": "## Alternatives considered"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/0001-store-settings-in-json.md",
+     "text": "Settings are stored as JSON in `settings.json` next to the executable"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/0001-store-settings-in-json.md",
+     "text": "0002"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/README.md",
+     "text": "0002"
+    },
+    {
+     "type": "changed-paths-within",
+     "paths": [
+      "docs"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "network-ui-dependency-ru",
+   "polarity": "positive",
+   "fixture": "fixtures/decision-records",
+   "prompt": "Мы решили, что пакет network больше не должен импортировать ui: ошибки сети будут передаваться событием, а диалоги показывает ui. Оформи это архитектурное решение с заголовком 'Network does not depend on UI'. Код пока не трогай.",
+   "checks": [
+    {
+     "type": "file-exists",
+     "path": "docs/decisions/0002-network-does-not-depend-on-ui.md"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/0002-network-does-not-depend-on-ui.md",
+     "text": "## Alternatives considered"
+    },
+    {
+     "type": "file-contains",
+     "path": "docs/decisions/README.md",
+     "text": "0002"
+    },
+    {
+     "type": "unchanged-path",
+     "path": "docs/decisions/0001-store-settings-in-json.md"
+    },
+    {
+     "type": "changed-paths-within",
+     "paths": [
+      "docs"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "local-rename-no-record-en",
+   "polarity": "negative",
+   "fixture": "fixtures/decision-records",
+   "prompt": "In src/inventory/settings.py rename the local variable cfg to config in load(). Make no other changes.",
+   "checks": [
+    {
+     "type": "file-contains",
+     "path": "src/inventory/settings.py",
+     "text": "config = json.loads"
+    },
+    {
+     "type": "changed-paths-within",
+     "paths": [
+      "src/inventory/settings.py"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "readme-typo-no-record-ru",
+   "polarity": "negative",
+   "fixture": "fixtures/decision-records",
+   "prompt": "В README.md исправь опечатку 'Inventroy' на 'Inventory'. Другие файлы не меняй.",
+   "checks": [
+    {
+     "type": "file-contains",
+     "path": "README.md",
+     "text": "# Inventory service"
+    },
+    {
+     "type": "changed-paths-within",
+     "paths": [
+      "README.md"
+     ]
+    }
+   ]
+  }
+ ]
+}
