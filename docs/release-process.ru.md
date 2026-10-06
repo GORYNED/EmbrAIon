@@ -41,6 +41,12 @@ release: vX.Y.Z
 
 Tagged build снова проверяет version/tag contract, строит distributions/release archives, создаёт GitHub Release и публикует Python distributions в PyPI.
 
+## Обновление self-host
+
+После того как GitHub Release проходит consumer artifact lock smoke, workflow предлагает обновление self-host: на `main` он запускает `embraion update`, затем `embraion install` для хостов Codex (`--config-mode merge`), Copilot, Claude Code и Portable выпущенным launcher и открывает pull request `chore/self-host-vX.Y.Z`. Если pin уже равен релизу или новее, pull request не создаётся. Pull requests, открытые workflow token, не запускают `pull_request` workflows, поэтому job запускает `validate` и `docs` для ветки через dispatch. Pull request проходит обычные review и merge gates и никогда не сливается автоматически.
+
+Для создания pull request нужна настройка репозитория, разрешающая GitHub Actions создавать pull requests. Без неё job завершается ошибкой после push ветки. После включения настройки перезапустите job: он откроет pull request из существующей ветки, если она содержит ровно результат запуска, а иначе завершится ошибкой, чтобы ветку проверил человек.
+
 Assignment-routing eval fixtures проверяют grading и regression behavior, но не подтверждают live native execution. Evidence различает prepared arguments, capability limitations, handoffs и действительно применённые settings.
 
 ## Совместимость pre-1.0

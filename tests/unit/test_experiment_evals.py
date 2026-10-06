@@ -14,7 +14,7 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 
 from embraion.common import framework_root
-from embraion.experiment_evals import _artifact_changes, _scratch_root, capture_snapshot, identity, load_baseline_reports, run_experiment
+from embraion.experiment_evals import _artifact_changes, _files, _scratch_root, capture_snapshot, identity, load_baseline_reports, run_experiment
 
 
 ROOT = framework_root()
@@ -41,6 +41,21 @@ class ArtifactChangeEvidence(unittest.TestCase):
                 scratch.symlink_to(injected, target_is_directory=True)
                 with self.assertRaisesRegex(ValueError, "contains a link"):
                     _scratch_root()
+
+    def test_selected_inventory_skips_local_virtualenv_with_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve(strict=True)
+            (root / "AGENTS.md").write_text("rules\n", encoding="utf-8")
+            (root / ".venv" / "lib").mkdir(parents=True)
+            try:
+                (root / ".venv" / "lib64").symlink_to(root / ".venv" / "lib", target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlink unavailable")
+            self.assertEqual(["AGENTS.md"], list(_files(root, selected=True)))
+            linked = root / "core-link"
+            linked.symlink_to(root / ".venv" / "lib", target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "contains a link"):
+                _files(root, selected=True)
 
     def test_created_names_are_opaque_and_owned_count_is_preserved(self):
         secret_name = "EVAL_PRIVATE_ABCDEFGHIJKLMNOP.pyc"

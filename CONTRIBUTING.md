@@ -36,7 +36,7 @@ python tools/source.py sync --host all --output build/generated --force
 
 The CI matrix also validates supported behavior on Linux, Windows, and macOS.
 
-Use a local `.venv` for development dependencies when the system Python is shared. The source runner selects that environment when present. `embraion validation run fast`, `affected`, and `full` use the same source entry point, even when the project runtime remains pinned to the previous stable release. Advance the self-host project pin and artifact lock only after the new release is published.
+Use a local `.venv` for development dependencies when the system Python is shared. The source runner selects that environment when present. `embraion validation run fast`, `affected`, and `full` use the same source entry point, even when the project runtime remains pinned to the previous stable release. Advance the self-host project pin and artifact lock only after the new release is published; the release workflow proposes that upgrade as a pull request (see the [release process](docs/release-process.md#self-host-upgrade)).
 
 ## Change expectations
 
