@@ -4,7 +4,7 @@
 
 ### Added
 
-- Core agent-behavior rules moved from project handbooks: `authorization`, `owner-interaction`, and `reporting` rules, honest-check reporting in the `evidence` rule, a `handling-review-findings` skill, and an optional external second opinion step in the review workflow. Catalog version 9.
+- Core agent-behavior rules moved from project handbooks: `authorization`, `owner-interaction`, and `reporting` rules, honest-check reporting in the `evidence` rule, and a `handling-review-findings` skill. Catalog version 9.
 
 ## 0.24.0 - 2026-10-06
 

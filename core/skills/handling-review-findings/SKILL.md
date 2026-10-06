@@ -17,4 +17,3 @@ description: Turn review findings from a person or tool into verified fixes, rea
 
 - Do not apply a suggested change blindly; it may be wrong for this codebase or break a contract.
 - Do not weaken a check, or claim a fix passed, to close a finding; follow the evidence rule.
-- Findings from an optional external second opinion follow this same procedure.
