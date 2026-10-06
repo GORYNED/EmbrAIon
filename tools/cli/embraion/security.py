@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -61,9 +62,17 @@ PRECISE_CATEGORIES = frozenset({"private-key", "access-token", "machine-path"})
 ALL_FILES_MAX_BYTES = 2 * 1024 * 1024
 
 
+# Only variables that relocate the repository are cleared; configuration such as safe.directory
+# passed through the environment still applies.
+_GIT_LOCATION_VARIABLES = frozenset({
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE", "GIT_PREFIX", "GIT_CEILING_DIRECTORIES",
+})
+
+
 def _inventory(root: Path) -> list[str]:
-    """Return tracked and unignored untracked files, or every file outside tool trees without Git."""
-    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    """Return tracked and unignored untracked files, or every file outside tool folders without Git."""
+    environment = {key: value for key, value in os.environ.items() if key not in _GIT_LOCATION_VARIABLES}
     try:
         result = subprocess.run(
             ["git", "-C", str(root), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
@@ -80,13 +89,18 @@ def _inventory(root: Path) -> list[str]:
     return names
 
 
-def _other_text_files(root: Path, seen: set[Path]) -> Iterable[tuple[Path, str]]:
+def _path_key(relative: str) -> str:
+    # Git may report composed Unicode where the file system returns decomposed names, and
+    # Windows paths compare case-insensitively.
+    key = unicodedata.normalize("NFC", relative.replace("\\", "/"))
+    return key.casefold() if os.name == "nt" else key
+
+
+def _other_text_files(root: Path, seen: set[str]) -> Iterable[tuple[Path, str]]:
     for name in sorted(_inventory(root)):
+        if _path_key(name) in seen or Path(name).parts[:2] == (".embraion", "state"):
+            continue
         path = root / name
-        if path in seen or any(part in SKIP_PARTS for part in Path(name).parts):
-            continue
-        if Path(name).parts[:2] == (".embraion", "state"):
-            continue
         try:
             if path.is_symlink() or not path.is_file() or path.stat().st_size > ALL_FILES_MAX_BYTES:
                 continue
@@ -148,18 +162,18 @@ def _pattern_findings(relative: str, text: str, categories: frozenset[str] | Non
 def collect_findings(root: Path, all_files: bool = False) -> list[dict[str, str]]:
     """Scan configuration and documentation files; with ``all_files`` also every other text file.
 
-    Other text files are the tracked and unignored untracked files (every file outside tool trees
+    Other text files are the tracked and unignored untracked files (every file outside tool folders
     without Git) of at most ``ALL_FILES_MAX_BYTES`` without a NUL byte. They are checked only for
     ``PRECISE_CATEGORIES``.
     """
     findings: list[dict[str, str]] = []
     legacy_data_class = "COMPANY" + "_SECRET"
     declared_aliases = _declared_confidential_aliases(root)
-    seen: set[Path] = set()
+    seen: set[str] = set()
 
     for path in iter_text_files(root):
-        seen.add(path)
         relative = str(path.relative_to(root))
+        seen.add(_path_key(relative))
         text = path.read_text(encoding="utf-8", errors="ignore")
 
         findings.extend(_pattern_findings(relative, text, None))

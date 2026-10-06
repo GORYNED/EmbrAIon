@@ -439,6 +439,7 @@ class CoreTests(unittest.TestCase):
         )
 
     def test_security_scanner_all_files_skips_git_ignored_files(self) -> None:
+        import os
         import shutil
         import subprocess
 
@@ -447,13 +448,19 @@ class CoreTests(unittest.TestCase):
         token = "gh" + "p_" + "A1b2" * 9
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+            subprocess.run(["git", "init", "-q", str(root)], check=True, capture_output=True, env=environment)
             (root / ".gitignore").write_text("Temp/\n", encoding="utf-8")
             (root / "Temp").mkdir()
             (root / "Temp" / "Build.cs").write_text(token, encoding="utf-8")
             (root / "Tracked.cs").write_text(token, encoding="utf-8")
-            findings = {item["path"] for item in collect_findings(root, all_files=True)}
-        self.assertEqual({"Tracked.cs"}, findings)
+            # Inside Git, .gitignore decides; tool folder names only apply without Git.
+            (root / "build").mkdir()
+            (root / "build" / "Step.cs").write_text(token, encoding="utf-8")
+            findings = {
+                item["path"].replace("\\", "/") for item in collect_findings(root, all_files=True)
+            }
+        self.assertEqual({"Tracked.cs", "build/Step.cs"}, findings)
 
     def test_security_scanner_ignores_public_key_token_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
