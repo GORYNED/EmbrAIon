@@ -105,7 +105,8 @@ def _print_main_help(file: object | None = None) -> None:
         "  bootstrap  Plan or apply evidence-bound project contract configuration",
         "  install    Install a host projection (Codex, Copilot, Claude Code, Portable)",
         "  projection Preview ownership-aware projection changes",
-        "  policy     Inspect the effective project policy overlay",
+        "  policy     Inspect the effective project policy overlay or check its ceilings",
+        "  report     Render or validate the project completion report contract",
         "  update     Sync the project pin with a verified release artifact lock",
         "  framework  Install or verify the project-pinned framework artifact",
         "  sync       Generate disposable host projections without installing them",
@@ -395,6 +396,34 @@ def _cmd_policy_check(args: argparse.Namespace) -> int:
     else:
         print("PASS: deployments, execution bindings, and routing stay within policy ceilings.")
     return 1 if findings else 0
+
+
+def _cmd_report_template(args: argparse.Namespace) -> int:
+    from .report import read_report_contract, render_report_template
+
+    contract = read_report_contract(path=Path(args.contract) if args.contract else None)
+    sys.stdout.write(render_report_template(contract))
+    return 0
+
+
+def _cmd_report_validate(args: argparse.Namespace) -> int:
+    from .report import read_report_contract, validate_report
+
+    contract = read_report_contract(path=Path(args.contract) if args.contract else None)
+    try:
+        text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise RuntimeError(f"Cannot read report: {error}") from error
+    issues = validate_report(text, contract, kind=args.kind, pull_request=args.pull_request)
+    if args.json:
+        _print_json({"kind": args.kind, "valid": not issues, "issues": issues})
+    elif issues:
+        for issue in issues:
+            location = f"line {issue['line']}" if issue["line"] else "report"
+            print(f"ERROR   {issue['code']:28} {location}: {issue['message']}")
+    else:
+        print(f"PASS: {args.kind} report satisfies the completion report contract.")
+    return 1 if issues else 0
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -1785,6 +1814,28 @@ def build_parser() -> argparse.ArgumentParser:
     policy_check.add_argument("--path", help="Project path (default: current directory)")
     policy_check.add_argument("--json", action="store_true")
     policy_check.set_defaults(func=_cmd_policy_check)
+
+    report = sub.add_parser(
+        "report",
+        help="Render or check the completion report contract",
+        description="Render the project completion report template from .embraion/report.yaml or validate a report text against it.",
+    )
+    report_sub = report.add_subparsers(dest="report-command", required=True)
+    report_template = report_sub.add_parser("template", help="Print the report template")
+    report_template.add_argument("--contract", help="Contract path (default: .embraion/report.yaml)")
+    report_template.set_defaults(func=_cmd_report_template)
+    report_validate = report_sub.add_parser(
+        "validate",
+        help="Validate a final report or an intermediate update",
+        description="Check sections, Workers table, Task status, table hygiene, and the pull request link.",
+    )
+    report_validate.add_argument("file", help="Report file, or '-' for stdin")
+    report_validate.add_argument("--kind", choices=["final", "intermediate"], default="final")
+    report_validate.add_argument("--pull-request", action="store_true",
+                                 help="A pull request was created; require its full URL.")
+    report_validate.add_argument("--contract", help="Contract path (default: .embraion/report.yaml)")
+    report_validate.add_argument("--json", action="store_true")
+    report_validate.set_defaults(func=_cmd_report_validate)
 
     update = sub.add_parser(
         "update",

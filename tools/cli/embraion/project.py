@@ -786,7 +786,12 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
     entry = target / "orchestration/SKILL.md"
     guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
-    entry.write_text(content + "\n" + guidance + "\n", encoding="utf-8", newline="\n")
+    content += "\n" + guidance + "\n"
+    if project is not None and (project / ".embraion" / "report.yaml").is_file():
+        from .report import read_report_contract, render_report_guidance
+
+        content += "\n" + render_report_guidance(read_report_contract(project)) + "\n"
+    entry.write_text(content, encoding="utf-8", newline="\n")
     if host == "claude-code":
         # A skill description is conditional discovery, not a startup contract.
         # Keep this small entry point owned alongside the skill it activates.

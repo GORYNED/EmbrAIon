@@ -116,6 +116,18 @@ embraion policy check
 embraion policy check --json
 ```
 
+### `embraion report`
+
+Вывести или проверить контракт итогового отчёта проекта, объявленный в `.embraion/report.yaml` (см. [Completion report](../configuration/report.ru.md)):
+
+```bash
+embraion report template
+embraion report validate report.md --pull-request
+embraion report validate update.md --kind intermediate
+```
+
+`report validate` завершается с ошибкой и перечнем findings с номерами строк, если отчёт нарушает контракт. `-` читает отчёт из stdin.
+
 ### `embraion update`
 
 Безопасно нормализует project configuration и атомарно синхронизирует framework pin с точным lock опубликованного release artifact.

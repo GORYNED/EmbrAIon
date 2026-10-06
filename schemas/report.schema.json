@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/report.schema.json",
+  "title": "EmbrAIon Completion Report Contract",
+  "type": "object",
+  "required": [
+    "schema-version",
+    "sections"
+  ],
+  "properties": {
+    "schema-version": {
+      "const": 1
+    },
+    "sections": {
+      "description": "Top-level final report sections, in their required order.",
+      "$ref": "#/$defs/names",
+      "minItems": 1
+    },
+    "workers": {
+      "type": "object",
+      "required": [
+        "section",
+        "columns"
+      ],
+      "properties": {
+        "section": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task-status": {
+          "$ref": "#/$defs/names",
+          "minItems": 1
+        },
+        "columns": {
+          "$ref": "#/$defs/names",
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "pull-request": {
+      "type": "object",
+      "required": [
+        "section"
+      ],
+      "properties": {
+        "section": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "guidance": {
+      "description": "Additional project rules rendered verbatim into the generated template.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "names": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^|\\n]+$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

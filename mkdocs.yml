@@ -74,6 +74,7 @@ plugins:
             Basics: Основы
             Project knowledge: Знания проекта
             Policy & protected paths: Политика и защищённые пути
+            Completion report: Итоговый отчёт
             Validation configuration: Настройка валидации
             Project agents: Агенты проекта
             External capabilities: Внешние возможности
@@ -164,6 +165,7 @@ nav:
       - Basics:
           - Project knowledge: configuration/knowledge.md
           - Policy & protected paths: configuration/policy.md
+          - Completion report: configuration/report.md
           - Validation configuration: configuration/validation.md
           - Project agents: configuration/agents.md
           - External capabilities: configuration/capabilities.md
