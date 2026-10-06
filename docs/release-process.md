@@ -41,6 +41,12 @@ Only after those checks pass does the workflow create the immutable release tag 
 
 The tagged build validates the version/tag contract again, builds distributions and release archives, creates the GitHub Release, and publishes Python distributions to PyPI.
 
+## Self-host upgrade
+
+After the GitHub Release passes the consumer artifact lock smoke, the workflow proposes the self-host upgrade: on `main` it runs `embraion update` and then `embraion install` for the Codex (`--config-mode merge`), Copilot, Claude Code and Portable hosts with the released launcher and opens a `chore/self-host-vX.Y.Z` pull request. A pin that is already at or above the release produces no pull request. Pull requests opened with the workflow token do not start `pull_request` workflows, so the job dispatches `validate` and `docs` for the branch. The pull request follows the ordinary review and merge gates and is never merged automatically.
+
+Creating the pull request requires the repository setting that allows GitHub Actions to create pull requests. Without it the job fails after pushing the branch. After enabling the setting, re-run the job: it opens the pull request from the existing branch when the branch holds exactly the result of the run, and otherwise fails so that someone reviews the branch.
+
 Assignment-routing eval fixtures verify grading and regression behavior. They do not claim live native host execution. Native selection evidence must distinguish prepared arguments, capability limitations, handoffs, and applied settings.
 
 ## Pre-1.0 compatibility

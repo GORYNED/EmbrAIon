@@ -6,6 +6,10 @@
 
 - Read-only `embraion update --check [--json]` compares the launcher and project pin with the latest stable GitHub Release, validates that release's expected wheel and SHA-256 digest metadata, and lists the next upgrade steps without writing project files.
 
+### Changed
+
+- The release workflow proposes the self-host pin, artifact lock and Codex, Copilot, Claude Code and Portable projection upgrade as a `chore/self-host-vX.Y.Z` pull request after the GitHub Release is published, and dispatches `validate` and `docs` for it. Merging remains a human decision.
+
 ### Fixed
 
 - Experiment tree inventories skip a local `.venv`, so the virtual environment recommended in CONTRIBUTING no longer fails experiment tests on its internal symlinks.
