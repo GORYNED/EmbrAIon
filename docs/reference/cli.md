@@ -127,10 +127,11 @@ Render or check the project's completion report contract, declared in `.embraion
 ```bash
 embraion report template
 embraion report validate report.md --pull-request
+embraion report validate report.md --pull-request-not-created
 embraion report validate update.md --kind intermediate
 ```
 
-`report validate` exits non-zero with line-numbered findings when the report breaks the contract. Use `-` to read from stdin.
+`report validate` exits non-zero with line-numbered findings when the report breaks the contract. Use `-` to read from stdin. `--pull-request` requires the full pull request URL; `--pull-request-not-created` requires a compare URL instead. The two flags are mutually exclusive.
 
 ### `embraion update`
 
@@ -435,9 +436,10 @@ Check changed files against incremental code-organization rules:
 ```bash
 embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json
 embraion organization check --path . --config .embraion/organization.yaml --json
+embraion organization check --path . --require-config --json
 ```
 
-The base reference identifies existing debt; it is not a waiver for violations added by the change. See [Code organization](../configuration/organization.md).
+The base reference identifies existing debt; it is not a waiver for violations added by the change. Without a configuration the check is `skipped`; `--require-config` makes it fail. See [Code organization](../configuration/organization.md).
 
 ### `embraion checkpoint`
 

@@ -43,6 +43,8 @@ The canonical route classes are:
 | `complex` | Cross-domain, lifecycle, concurrency, or difficult review |
 | `critical` | Exceptional protected-decision risk |
 
+`critical` needs a concrete exceptional risk: irreversible migration or deletion of persisted user data, a data-loss or recovery-failure path, credential, permission, or other systemic security exposure, or a breaking public contract that needs a versioned migration. Size, breadth, or an unavailable cheaper deployment alone never make work critical.
+
 These classes are stable framework vocabulary. They do not imply that a particular model is permanently “the complex model” or “the critical model”.
 
 Routing is evaluated together with independent dimensions such as:

@@ -123,10 +123,11 @@ embraion policy check --json
 ```bash
 embraion report template
 embraion report validate report.md --pull-request
+embraion report validate report.md --pull-request-not-created
 embraion report validate update.md --kind intermediate
 ```
 
-`report validate` завершается с ошибкой и перечнем findings с номерами строк, если отчёт нарушает контракт. `-` читает отчёт из stdin.
+`report validate` завершается с ошибкой и перечнем findings с номерами строк, если отчёт нарушает контракт. `-` читает отчёт из stdin. `--pull-request` требует полный URL pull request, а `--pull-request-not-created` вместо него требует compare URL. Эти флаги взаимоисключающие.
 
 ### `embraion update`
 
@@ -398,9 +399,10 @@ embraion capabilities --path . --host codex --observation host-observation.json 
 ```bash
 embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json
 embraion organization check --path . --config .embraion/organization.yaml --json
+embraion organization check --path . --require-config --json
 ```
 
-Базовая ссылка отделяет старый долг и не освобождает новый код от правил. См. [Организация кода](../configuration/organization.md).
+Базовая ссылка отделяет старый долг и не освобождает новый код от правил. Без конфигурации проверка возвращает `skipped`; с `--require-config` она завершается ошибкой. См. [Организация кода](../configuration/organization.md).
 
 ### `embraion checkpoint`
 

@@ -21,6 +21,21 @@ GUID = re.compile(r"(?m)^guid:\s*([0-9a-fA-F]{32})\s*$")
 NAMESPACE_TOKENS = re.compile(r"\bnamespace\s+([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\s*([;{])|[{}]")
 LFS = b"version https://git-lfs.github.com/spec/v1"
 BOUNDARY = {"Runtime": {"Runtime"}, "Editor": {"Runtime", "Editor"}, "Tests": {"Runtime", "Editor", "Tests"}}
+FILENAME_STEM = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*(?:-\d+(?:\.\d+)+)?$")
+# Basenames whose spelling an ecosystem, a package manager, Unity, or an agent host dictates.
+CANONICAL_BASENAMES = frozenset({
+    "README.md", "CHANGELOG.md", "LICENSE", "LICENSE.md", "SECURITY.md", "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md", "SUPPORT.md", "GOVERNANCE.md", "CODEOWNERS", "AGENTS.md", "CLAUDE.md", "SKILL.md",
+    "package.json", "package-lock.json", "packages-lock.json", "manifest.json", "link.xml",
+    "ProjectVersion.txt",
+})
+# Host-native suffixes are meaningful only directly inside their host directory; the identifier
+# before the suffix still follows the filename style.
+HOST_SUFFIXES = ((".github/agents", ".agent.md"), (".github/instructions", ".instructions.md"),
+                 (".github/prompts", ".prompt.md"))
+# EmbrAIon's generated scoped Claude profiles use a reserved double-hyphen namespace.
+# The grammar matches the scoped-agent name check in the projection generator.
+SCOPED_PROFILE = re.compile(r"^\.claude/agents/embraion--[a-z0-9][a-z0-9-]*[a-z0-9]\.md$")
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -40,6 +55,10 @@ def _safe(path: str) -> bool:
 def _under(path: str, prefix: str) -> bool:
     prefix = prefix.rstrip("/")
     return path == prefix or path.startswith(prefix + "/")
+
+
+def _in_roots(path: str, roots: list[str]) -> bool:
+    return any(root.rstrip("/") in ("", ".") or _under(path, root) for root in roots)
 
 
 def _excluded(path: str, config: dict[str, Any]) -> bool:
@@ -109,7 +128,8 @@ def _read_config(root: Path, path: Path) -> dict[str, Any] | None:
                  "rules", "path", "namespace", "require_declaration", "exceptions",
                  "allow_missing", "roots", "path_rules", "layer", "allowed_edges",
                  "from", "to", "enforce_platforms", "require_for_extensions",
-                 "check_move_identity"}
+                 "check_move_identity", "require_for_all", "check_orphans", "filenames",
+                 "extensions", "allow", "suffixes", "suffix", "case_collisions"}
         at = ".".join(str(part) if isinstance(part, int) or part in known else "<key>"
                       for part in error.absolute_path) or "<root>"
         raise RuntimeError(f"Invalid .embraion/organization.yaml at {at}")
@@ -189,6 +209,96 @@ def _snapshot_worktree(root: Path, config: dict[str, Any]) -> tuple[dict[str, by
                 continue
             files[rel] = path.read_bytes()
     return files, issues
+
+
+def _needs_names(config: dict[str, Any]) -> bool:
+    meta = config.get("unity_meta") or {}
+    names = config.get("filenames") or {}
+    return bool((meta and meta.get("enabled", True) and (meta.get("require_for_all") or meta.get("check_orphans")))
+                or (names and names.get("enabled", True)))
+
+
+def _names_tree(root: Path, commit: str) -> set[str]:
+    raw = _git(root, "ls-tree", "-rz", "--name-only", "--full-tree", commit)
+    return {path for path in raw.decode("utf-8", "surrogateescape").split("\x00") if _safe(path)}
+
+
+def _names_worktree(root: Path) -> set[str]:
+    """Return tracked and unignored untracked files that exist in the working tree."""
+    try:
+        raw = _git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard")
+    except (RuntimeError, OSError):
+        # Outside Git there is no ignore information; skip the same tool trees as the source scan.
+        names: set[str] = set()
+        for directory, dirs, files in os.walk(root, followlinks=False):
+            dirs[:] = [name for name in dirs if name not in {".git", ".venv", "node_modules", "Library", "Temp"}]
+            names.update((Path(directory) / name).relative_to(root).as_posix() for name in files)
+            if len(names) > MAX_FILES:
+                raise RuntimeError(f"Organization scan exceeds {MAX_FILES} files")
+        return {path for path in names if _safe(path)}
+    return {path for path in raw.decode("utf-8", "surrogateescape").split("\x00")
+            if _safe(path) and os.path.lexists(root / path)}
+
+
+def _unity_ignored(path: str) -> bool:
+    # Unity does not import dot-prefixed or `~`-suffixed files and folders, so they carry no .meta.
+    return any(part.startswith(".") or part.endswith("~") for part in path.split("/"))
+
+
+def _meta_inventory(names: set[str], config: dict[str, Any], issues: list[dict[str, str]]) -> None:
+    meta = config.get("unity_meta") or {}
+    if not meta or not meta.get("enabled", True):
+        return
+    roots = meta["roots"]
+    if meta.get("require_for_all"):
+        for path in sorted(names):
+            if (path.endswith(".meta") or not _in_roots(path, roots) or _excluded(path, config)
+                    or _unity_ignored(path) or path + ".meta" in names):
+                continue
+            issues.append(_finding("meta_missing", path, "Unity asset has no adjacent .meta file"))
+    if meta.get("check_orphans"):
+        folders = {str(parent) for path in names for parent in PurePosixPath(path).parents if str(parent) != "."}
+        for path in sorted(names):
+            target = path[:-5]
+            if (not path.endswith(".meta") or _excluded(path, config) or _unity_ignored(path)
+                    or not (_in_roots(path, roots) or path in {root.rstrip("/") + ".meta" for root in roots})):
+                continue
+            if target not in names and target not in folders:
+                issues.append(_finding("meta_orphan", path, "Unity .meta file has no asset or folder"))
+
+
+def _filenames(names: set[str], config: dict[str, Any], issues: list[dict[str, str]]) -> None:
+    spec = config.get("filenames") or {}
+    if not spec or not spec.get("enabled", True):
+        return
+    if spec.get("case_collisions", True):
+        seen: dict[str, str] = {}
+        for path in sorted(names):
+            other = seen.setdefault(path.lower(), path)
+            if other != path:
+                issues.append(_finding("filename_collision", path, f"Path differs only by case from {other}", target=other))
+    allowed = CANONICAL_BASENAMES | set(spec.get("allow", []))
+    extensions = set(spec["extensions"])
+    suffixes = list(HOST_SUFFIXES) + [(item["path"].rstrip("/"), item["suffix"]) for item in spec.get("suffixes", [])]
+    for path in sorted(names):
+        if not _in_roots(path, spec["roots"]) or _excluded(path, config):
+            continue
+        name = PurePosixPath(path).name
+        parent = str(PurePosixPath(path).parent)
+        if name in allowed or name.startswith(".") or SCOPED_PROFILE.match(path):
+            continue
+        extension = PurePosixPath(name).suffix
+        if extension.lower() not in extensions:
+            continue
+        suffix = next((s for folder, s in suffixes if parent == folder and name.endswith(s)), None)
+        if suffix is not None:
+            if not FILENAME_STEM.match(name[:-len(suffix)]):
+                issues.append(_finding("filename_style", path, f"Identifier before {suffix} is not lowercase kebab-case"))
+            continue
+        if extension != extension.lower():
+            issues.append(_finding("filename_extension_case", path, "Filename extension is not lowercase"))
+        elif not FILENAME_STEM.match(PurePosixPath(name).stem):
+            issues.append(_finding("filename_style", path, "Filename is not lowercase kebab-case"))
 
 
 def _finding(code: str, path: str, message: str, **details: str) -> dict[str, str]:
@@ -408,8 +518,12 @@ def _assemblies(files: dict[str, bytes], config: dict[str, Any], issues: list[di
             visit(node)
 
 
-def _checks(files: dict[str, bytes], config: dict[str, Any], seed: list[dict[str, str]]) -> list[dict[str, str]]:
+def _checks(files: dict[str, bytes], config: dict[str, Any], seed: list[dict[str, str]],
+            names: set[str] | None = None) -> list[dict[str, str]]:
     issues = list(seed)
+    if names is not None:
+        _filenames(names, config, issues)
+        _meta_inventory(names, config, issues)
     _namespaces(files, config, issues)
     meta = config.get("unity_meta", {})
     roots = list(set(meta.get("roots", []) + config.get("assemblies", {}).get("roots", [])))
@@ -417,8 +531,12 @@ def _checks(files: dict[str, bytes], config: dict[str, Any], seed: list[dict[str
     _assemblies(files, config, issues, identities)
     if meta and meta.get("enabled", True):
         extensions = set(meta.get("require_for_extensions", []))
+        # The inventory omits ignored files that the source scan may still contain.
+        inventory = set(files) | names if names is not None else files
         for path in files:
-            if any(_under(path, root) for root in meta["roots"]) and PurePosixPath(path).suffix in extensions and path + ".meta" not in files:
+            if meta.get("require_for_all") and names is not None:
+                break
+            if any(_under(path, root) for root in meta["roots"]) and PurePosixPath(path).suffix in extensions and path + ".meta" not in inventory:
                 issues.append(_finding("meta_missing", path, "Unity asset has no adjacent .meta file"))
     return issues
 
@@ -480,7 +598,7 @@ def _moves(root: Path, base: str, head: str, current: dict[str, bytes], base_fil
 
 def check_organization(project: Path | None = None, *, base_ref: str | None = None,
                        head_ref: str = "HEAD", include_worktree: bool = False,
-                       config_path: Path | None = None) -> dict[str, Any]:
+                       config_path: Path | None = None, require_config: bool = False) -> dict[str, Any]:
     """Check configured rules; incremental mode fails only for new findings.
 
     A requested Git ref that cannot resolve is an error. No files are modified.
@@ -498,18 +616,28 @@ def check_organization(project: Path | None = None, *, base_ref: str | None = No
         raise RuntimeError("Organization configuration path escapes project root")
     config = _read_config(root, path)
     if config is None:
+        if require_config:
+            missing = path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)
+            return {"status": "failed", "passed": False, "reason": f"No {missing}",
+                    "findings": [], "counts": {"new": 0, "preexisting": 0}}
         return {"status": "skipped", "passed": True, "reason": "No .embraion/organization.yaml", "findings": [], "counts": {"new": 0, "preexisting": 0}}
     if base_ref is None:
         files, seed = _snapshot_worktree(root, config)
-        findings = [{**item, "status": "new"} for item in _checks(files, config, seed)]
+        names = _names_worktree(root) if _needs_names(config) else None
+        findings = [{**item, "status": "new"} for item in _checks(files, config, seed, names)]
         return {"status": "failed" if findings else "passed", "passed": not findings,
                 "mode": "full", "base_commit": None, "head_commit": None,
                 "findings": findings, "counts": {"new": len(findings), "preexisting": 0}}
     assert base is not None and head is not None
     base_files, base_seed = _snapshot_tree(root, base, config)
     current, seed = _snapshot_worktree(root, config) if include_worktree else _snapshot_tree(root, head, config)
-    before = _checks(base_files, config, base_seed)
-    after = _checks(current, config, seed)
+    wants_names = _needs_names(config)
+    base_names = _names_tree(root, base) if wants_names else None
+    current_names = None
+    if wants_names:
+        current_names = _names_worktree(root) if include_worktree else _names_tree(root, head)
+    before = _checks(base_files, config, base_seed, base_names)
+    after = _checks(current, config, seed, current_names)
     _moves(root, base, head, current, base_files, config, after, include_worktree)
     def key(item: dict[str, str]) -> tuple[str, str, str, str]:
         return (item["code"], item["path"], item.get("actual", ""), item.get("target", ""))

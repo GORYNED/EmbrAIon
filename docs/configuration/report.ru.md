@@ -9,6 +9,7 @@ workers:
   section: Workers
   task-status: [completed, cancelled, incomplete]
   columns: [Status, Worker, Role, Billing, Access, Data, Runs, Cost, Routing, Validation]
+  summary: true
 pull-request:
   section: Changed
 guidance:
@@ -16,8 +17,8 @@ guidance:
 ```
 
 - `sections` — секции верхнего уровня итогового отчёта в обязательном порядке. Каждая встречается ровно один раз как Markdown-заголовок или строка только из жирного текста.
-- `workers` (необязательно) требует одну таблицу с точно такими колонками внутри `workers.section`, перед которой стоит строка `Task status: <значение>` из `task-status`. Ячейки не должны содержать абсолютные пути машины, значения, похожие на учётные данные, блоки кода и диффы.
-- `pull-request` (необязательно) заставляет `--pull-request` требовать полный URL pull request в этой секции.
+- `workers` (необязательно) требует одну таблицу с точно такими колонками внутри `workers.section`, перед которой стоит строка `Task status: <значение>` из `task-status`. Ячейки не должны содержать абсолютные пути машины, значения, похожие на учётные данные, блоки кода и диффы. С `summary: true` после таблицы обязательна короткая строка-сводка вне таблицы (`workers-summary`).
+- `pull-request` (необязательно) заставляет `--pull-request` требовать полный URL pull request в этой секции (`pull-request-link`). Если pull request был нужен, но не создан, `--pull-request-not-created` вместо этого требует там compare URL (`https://<host>/<owner>/<repository>/compare/<target>...<branch>`) (`pull-request-compare-link`). Эти флаги взаимоисключающие. Без `pull-request` оба флага проверяют первую секцию.
 - Строки `guidance` дословно попадают в шаблон и skill. Они не проверяются.
 
 ## Шаблон и проверка
@@ -25,6 +26,7 @@ guidance:
 ```bash
 embraion report template
 embraion report validate report.md --pull-request
+embraion report validate report.md --pull-request-not-created
 embraion report validate update.md --kind intermediate
 ```
 
@@ -36,4 +38,4 @@ embraion report validate update.md --kind intermediate
 
 Если `.embraion/report.yaml` существует, `embraion install --component skills` добавляет раздел *Project completion report contract* в проецируемый skill `orchestration` для каждого host. После изменения контракта `embraion projection verify` покажет устаревшую projection.
 
-<sub>Last updated: 2026-10-06 01:40 UTC</sub>
+<sub>Last updated: 2026-10-06 13:20 UTC</sub>

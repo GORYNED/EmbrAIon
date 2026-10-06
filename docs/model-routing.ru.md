@@ -43,6 +43,8 @@ Role != Route != Model. Каждое новое или повторно испо
 | `complex` | Cross-domain, lifecycle, concurrency или сложный review |
 | `critical` | Исключительный protected-decision risk |
 
+`critical` требует конкретного исключительного риска: необратимой миграции или удаления сохранённых пользовательских данных, пути к потере данных или сбою восстановления, системного раскрытия credentials, прав или другой угрозы безопасности, либо breaking public contract с versioned migration. Размер, широта или недоступность более дешёвого deployment сами по себе не делают работу critical.
+
 Это стабильный framework vocabulary. Класс не означает, что одна конкретная модель навсегда является «complex model» или «critical model».
 
 Routing оценивается вместе с независимыми dimensions:

@@ -39,7 +39,22 @@
         "enabled": {"type": "boolean"},
         "roots": {"type": "array", "items": {"$ref": "#/$defs/path"}, "minItems": 1},
         "require_for_extensions": {"type": "array", "items": {"type": "string", "pattern": "^\\.[A-Za-z0-9]+$"}, "uniqueItems": true},
+        "require_for_all": {"type": "boolean"},
+        "check_orphans": {"type": "boolean"},
         "check_move_identity": {"type": "boolean"}
+      }, "additionalProperties": false
+    },
+    "filenames": {
+      "type": "object", "required": ["roots", "extensions"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "roots": {"type": "array", "items": {"$ref": "#/$defs/path"}, "minItems": 1, "uniqueItems": true},
+        "extensions": {"type": "array", "items": {"type": "string", "pattern": "^\\.[a-z0-9]+$"}, "minItems": 1, "uniqueItems": true},
+        "allow": {"type": "array", "items": {"type": "string", "pattern": "^[^/\\\\\\r\\n]+$", "minLength": 1, "maxLength": 120}, "uniqueItems": true},
+        "suffixes": {"type": "array", "items": {"type": "object", "required": ["path", "suffix"], "properties": {
+          "path": {"$ref": "#/$defs/path"}, "suffix": {"type": "string", "pattern": "^(\\.[a-z0-9]+)+$"}
+        }, "additionalProperties": false}},
+        "case_collisions": {"type": "boolean"}
       }, "additionalProperties": false
     }
   }, "additionalProperties": false,

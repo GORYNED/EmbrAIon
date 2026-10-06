@@ -23,6 +23,7 @@ _FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 _SEPARATOR_CELL = re.compile(r"^:?-{3,}:?$")
 _TASK_STATUS = re.compile(r"^[\s>*_`-]*Task status[*_`]*\s*:\s*[*_`]*([^\s*_`]+)", re.IGNORECASE)
 _PULL_REQUEST = re.compile(r"https?://[^\s<>()\[\]]+/(?:pull|pulls|merge_requests)/\d+")
+_COMPARE = re.compile(r"https?://[^\s<>()\[\]]+/compare/[^\s<>()\[\]]+?\.\.\.[^\s<>()\[\]]+")
 _ABSOLUTE_PATH = re.compile(
     r"(?<![\w.])(?:[A-Za-z]:[\\/]|\\\\[\w.-]+\\|/(?:Users|home|root|tmp|var|etc|opt|mnt|private|Volumes)/)"
 )
@@ -105,9 +106,12 @@ def validate_report(
     *,
     kind: str = "final",
     pull_request: bool = False,
+    missing_pull_request: bool = False,
 ) -> list[dict[str, Any]]:
     if kind not in REPORT_KINDS:
         raise RuntimeError(f"Unknown report kind '{kind}'. Expected one of: {', '.join(REPORT_KINDS)}.")
+    if pull_request and missing_pull_request:
+        raise RuntimeError("A report cannot both have and lack a pull request.")
     headings, tables, lines = _parse(text)
     sections: list[str] = contract["sections"]
     workers = contract.get("workers") or {}
@@ -192,6 +196,15 @@ def validate_report(
                 if inside and number > inside[0]["line"]:
                     issues.append(_issue("workers-task-status", number,
                                          "The Task status line must precede the Workers table."))
+        if workers.get("summary"):
+            for table in workers_tables:
+                last = table["line"] + 1 + len(table["rows"])
+                after = {number: line for number, line in body(workers_section) if number > last}
+                # Text directly under a table without a blank line renders as another row.
+                if after.get(last + 1, "").strip() or not any(
+                        line.strip() and _table_cells(line) is None for line in after.values()):
+                    issues.append(_issue("workers-summary", table["line"],
+                                         "A compact summary must follow the Workers table."))
         for table in workers_tables:
             for offset, row in enumerate(table["rows"], start=2):
                 for cell in row:
@@ -206,12 +219,15 @@ def validate_report(
                         issues.append(_issue("workers-raw-content", line,
                                              "Workers table must not contain code, diffs, or raw output."))
 
-    if pull_request:
+    if pull_request or missing_pull_request:
         target = (contract.get("pull-request") or {}).get("section") or sections[0]
         content = "\n".join(line for _, line in body(target))
-        if not _PULL_REQUEST.search(content):
+        if pull_request and not _PULL_REQUEST.search(content):
             issues.append(_issue("pull-request-link", spans.get(target, (None,))[0],
                                  f"'{target}' must contain the full pull request URL."))
+        if missing_pull_request and not _COMPARE.search(content):
+            issues.append(_issue("pull-request-compare-link", spans.get(target, (None,))[0],
+                                 f"'{target}' must say no pull request was created and give the compare URL."))
     return issues
 
 
@@ -223,13 +239,15 @@ def render_report_skeleton(contract: dict[str, Any]) -> str:
     for name in sections:
         lines += [f"## {name}", ""]
         if name == pull_request:
-            lines += ["PR: <full pull request URL, when a pull request was created>", ""]
+            lines += ["PR: <full pull request URL, or the compare URL when none could be created>", ""]
         if name == workers.get("section") and workers.get("columns"):
             if workers.get("task-status"):
                 lines += ["Task status: " + "|".join(workers["task-status"]), ""]
             columns = workers["columns"]
             lines.append("| " + " | ".join(columns) + " |")
             lines += ["| " + " | ".join("---" for _ in columns) + " |", ""]
+            if workers.get("summary"):
+                lines += ["<compact summary of models, runs, and outcomes>", ""]
         else:
             lines += [f"<{name}>", ""]
     return "\n".join(lines).rstrip() + "\n"
@@ -250,11 +268,16 @@ def report_rules(contract: dict[str, Any]) -> list[str]:
             "Table cells never contain prompts, source code, diffs, raw reasoning, credentials, "
             "absolute machine paths, or CONFIDENTIAL details."
         )
+    if workers.get("summary"):
+        rules.append(f"A compact summary of models, runs, and outcomes follows the `{workers['section']}` table.")
     if pull_request:
-        rules.append(f"When a pull request was created, `{pull_request}` contains its full URL.")
+        rules.append(f"When a pull request was created, `{pull_request}` contains its full URL. When one was "
+                     "needed but could not be created, it says so and gives the compare URL "
+                     "(`https://<host>/<owner>/<repository>/compare/<target>...<branch>`).")
     rules.extend(contract.get("guidance") or [])
     rules.append("Check a report with `embraion report validate <file>`; add `--kind intermediate` "
-                 "for progress updates and `--pull-request` when a pull request was created.")
+                 "for progress updates, `--pull-request` when a pull request was created, and "
+                 "`--pull-request-not-created` when one was needed but not created.")
     return rules
 
 

@@ -48,7 +48,7 @@ Instruction delivery and deterministic enforcement are different mechanisms.
 | `ordinary` | limited ordinary engineering |
 | `substantial` | substantial engineering + standard review |
 | `complex` | cross-domain, lifecycle, concurrency, or difficult review |
-| `critical` | exceptional protected-decision risk |
+| `critical` | exceptional protected-decision risk such as persisted-data loss, recovery failure, systemic security exposure, or a breaking contract migration; size alone is not critical |
 
 Route classes describe work and risk, not permanent model tiers.
 

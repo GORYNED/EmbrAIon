@@ -77,25 +77,25 @@ class ClaudeGuardTests(unittest.TestCase):
         policy_path = self.project / ".embraion/policy.yaml"
         policy = read_yaml(policy_path)
         policy["sources"]["protected"] = [
-            "Assets/Project/Wireless/SDK/**/*.cs",
-            "Assets/Project/Wired/MeasureX/**/*.dll",
-            "Assets/StreamingAssets/Sensors/**/*.mxd",
+            "Assets/Project/Vendor/SDK/**/*.cs",
+            "Assets/Project/Vendor/Driver/**/*.dll",
+            "Assets/StreamingAssets/Profiles/**/*.bin",
         ]
         write_yaml(policy_path, policy)
         for file_path in (
-            "Assets/Project/Wireless/SDK/Adapter.cs",
-            "Assets/Project/Wireless/SDK/nested/Adapter.cs",
-            "Assets/Project/Wired/MeasureX/driver.dll",
-            "Assets/StreamingAssets/Sensors/device.mxd",
+            "Assets/Project/Vendor/SDK/Adapter.cs",
+            "Assets/Project/Vendor/SDK/nested/Adapter.cs",
+            "Assets/Project/Vendor/Driver/driver.dll",
+            "Assets/StreamingAssets/Profiles/device.bin",
         ):
             with self.subTest(file_path=file_path):
                 self.assert_denied(self.payload("Read", {"file_path": file_path}))
         self.assertEqual({}, guard(self.payload("Read", {"file_path":
-                                                      "Assets/Project/Wireless/SDK/sibling.txt"}),
+                                                      "Assets/Project/Vendor/SDK/sibling.txt"}),
                                     self.project))
         with patch("embraion.claude_guard._case_insensitive_paths", return_value=True):
             self.assert_denied(self.payload("Read", {"file_path":
-                                                    "assets/project/wireless/sdk/ADAPTER.CS"}))
+                                                    "assets/project/vendor/sdk/ADAPTER.CS"}))
 
     def test_overcomplex_protected_pattern_denies_scoped_read_and_search(self) -> None:
         policy_path = self.project / ".embraion/policy.yaml"
