@@ -415,7 +415,7 @@ jobs:
         shell: bash
         run: python -m pip install "$RUNNER_TEMP"/dist/*.whl
 
-      - name: Upgrade self-host pin and Codex projection
+      - name: Upgrade self-host pin and host projections
         id: upgrade
         env:
           EMBRAION_CACHE_HOME: ${{ runner.temp }}/embraion-cache
@@ -452,6 +452,9 @@ jobs:
 
           embraion update --framework-version "$VERSION"
           embraion install --host codex --destination . --config-mode merge
+          for HOST in copilot claude-code portable; do
+            embraion install --host "$HOST" --destination .
+          done
 
           if [ -z "$(git status --porcelain)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -469,7 +472,7 @@ jobs:
         run: |
           BRANCH="chore/self-host-v$VERSION"
           TITLE="chore: upgrade self-host EmbrAIon to $VERSION"
-          BODY="Moves the self-host project pin, artifact lock and Codex projection to the published $GITHUB_REF_NAME release, using \`embraion update\` and \`embraion install --host codex --config-mode merge\` from that release. Review the projection diff before merging."
+          BODY="Moves the self-host project pin, artifact lock and the Codex, Copilot, Claude Code and Portable projections to the published $GITHUB_REF_NAME release, using \`embraion update\` and \`embraion install\` from that release. Review the projection diff before merging."
 
           if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
             OPEN="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"

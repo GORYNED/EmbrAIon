@@ -47,6 +47,8 @@ class SelfHostUpgradeWorkflowTests(unittest.TestCase):
             "embraion install --host codex --destination . --config-mode merge",
             upgrade,
         )
+        self.assertIn("for HOST in copilot claude-code portable; do", upgrade)
+        self.assertIn('embraion install --host "$HOST" --destination .', upgrade)
         self.assertNotIn("--force", upgrade)
         self.assertIn("pinned < target", upgrade)
 
@@ -92,7 +94,7 @@ class SelfHostVersionGateTests(unittest.TestCase):
 
     def run_step(self, pinned: str, target: str) -> tuple[int, str, list[str]]:
         script = _step(
-            _workflow("release.yml"), "self-host-upgrade", "Upgrade self-host pin and Codex projection"
+            _workflow("release.yml"), "self-host-upgrade", "Upgrade self-host pin and host projections"
         )["run"]
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -143,7 +145,10 @@ class SelfHostVersionGateTests(unittest.TestCase):
         self.assertIn("changed=true", output)
         self.assertEqual(
             ["update --framework-version 0.1.10",
-             "install --host codex --destination . --config-mode merge"],
+             "install --host codex --destination . --config-mode merge",
+             "install --host copilot --destination .",
+             "install --host claude-code --destination .",
+             "install --host portable --destination ."],
             calls,
         )
 
