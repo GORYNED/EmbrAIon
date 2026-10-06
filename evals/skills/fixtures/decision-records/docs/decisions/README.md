@@ -6,3 +6,5 @@ the index. Accepted records are not rewritten; a new record supersedes them.
 | Record | Status | Decision |
 | --- | --- | --- |
 | [0001](0001-store-settings-in-json.md) | Accepted | Store settings in a JSON file |
+
+<sub>Last updated: 2026-10-06 04:40 UTC</sub>
