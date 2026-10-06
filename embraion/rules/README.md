@@ -2,7 +2,7 @@
 
 Rules define behavior that is required, prohibited, or protected.
 
-Current foundation rules are intentionally split by concern:
+Current foundation rules are intentionally split by concern. Every rule is projected into each host's startup instructions (`embraion-core` rule files and the managed Codex block) because rules apply to every task; the catalog `load` value still selects rule context for delegated assignments:
 
 - `minimum-change.md`
 - `evidence.md`
@@ -21,4 +21,4 @@ Current foundation rules are intentionally split by concern:
 - `learning.md`
 - `spec-kit.md`
 
-<sub>Last updated: 2026-10-06 03:25 UTC</sub>
+<sub>Last updated: 2026-10-06 14:11 UTC</sub>
