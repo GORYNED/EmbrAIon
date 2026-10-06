@@ -85,36 +85,20 @@ Restrictions:
 - do not merge pull requests when human-only merge applies
 - do not bypass privacy or access gates
 
-# Codex Lead projection
-
-You are the EmbrAIon Lead orchestrator for ordinary-language engineering requests. Apply Core Lead responsibilities without requiring the user to name roles or request delegation.
+# copilot native orchestration
 
 Apply the assignment routing contract in the [canonical orchestration skill](#assignment-routing-contract). This adapter supplies native mechanisms and capability limits; Core owns classification, resolution, reuse, evidence, and handoff rules. Keep generated specialist profiles model-neutral and concrete deployment choices in `.embraion/`.
 
 ## Native assignment settings
 
-Before independent writable task work, apply the [Core worktree workflow](../../core/workflows/worktree.md)
-with `embraion worktree prepare --task-id <stable-task-id> --host codex`.
-Native task startup interception is not assumed: Lead invokes the CLI when no verified
-startup mechanism exists. Review, subtasks and plan/read-only work do not trigger deletion.
+CLI native preparation translates project `options.modelPolicy` only as `required`; `preferred` cannot weaken mandatory project selection. For VS Code, `--verified-native-field reasoning-effort` enables definition translation only with retained installed-version/schema evidence. Unknown native option keys remain limitations rather than being discarded.
 
-For a known native creation, capture `--branch <branch> --path <absolute-path>` before
-creation, retain the receipt, then invoke `worktree register --task-id <id> --host codex
---receipt-id <receipt> --path <path>`. Opaque already-created resources without a receipt
-remain unmanaged. Use supported host snapshot/archive operations for native-managed
-worktrees; the portable CLI cannot substitute raw Git removal for unavailable host activity
-or archive capability.
+Identify the surface and inspect its installed schema; Copilot CLI, VS Code, and cloud agents have different controls.
 
-Native preparation translates a project `fork_turns` option only for `'none'` or a bounded positive string; a full-history option cannot replace explicit routing. Other options need a verified translation.
+- **CLI:** custom-agent definitions support `model`, ordered `models`, `modelPolicy`, and `reasoningEffort`; `models` takes precedence over `model`. Verified `task` or `session.startSubagent` schemas may expose per-call model/effort settings. Precedence is call overrides, `settings.subagents`, agent definition, then parent. Use `modelPolicy: required` when supported for a mandatory model; `preferred` permits inheritance when the selection is incompatible. Auto mode can force parent inheritance, so verify its behavior before dispatch.
+- **VS Code:** subagent invocation can select a model; custom-agent definitions accept a model string or ordered array. A higher-cost model tier than the parent may be refused. Development-source customization documents `reasoning-effort`, but support must be proven by the installed version/schema; do not assume the CLI's `reasoningEffort` field works here. Without that proof an explicit effort is a capability limitation.
+- **Cloud/general custom agents:** the published configuration supports `model`; CLI-only effort, policy, and ordered-model fields are not established for this surface. Unknown controls require capability proof or a supported handoff.
 
-Inspect the active tool schema before invocation: a desktop tool namespace or fork field is not a contract for every Codex surface. Where `collaboration.spawn_agent` exposes these fields, pass resolved role as `agent_type`, non-null model as `model`, and non-null effort as `reasoning_effort`, independently. Explicit model or effort requires `fork_turns='none'` or a bounded positive integer string; a full-history fork (`'all'` or omitted) cannot accept overrides. Supply bounded assignment context in the message.
+Prepare assignment-specific definition/settings overrides when the verified surface requires them; do not persist a route choice into a reusable static role profile. Confirm precedence and the effective choice: mandatory route settings cannot silently inherit, substitute another candidate, or be capped. An ordered native model list is usable only when it agrees with the resolved project selection/fallback policy. Scope settings to the assignment instead of changing unrelated session or project defaults.
 
-`followup_task` and `send_message` cannot change model or effort. If Core's reuse check requires different settings, use a fresh spawn or supported handoff. Unknown options or absent native fields are capability limitations, not permission to inherit.
-
-Native precedence matters: explicit spawn settings precede `[agents]` defaults and parent inheritance, while a custom role configuration file can override spawn settings through its `model` and `model_reasoning_effort`. Inspect the selected definition and effective settings before relying on the route; model-neutral generated profiles avoid this conflict. Apply required options only through fields verified in the active schema. Static TOML does not resolve assignment routes.
-
-Checked 2026-09-29 against the official [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents) and [config reference](https://learn.chatgpt.com/docs/config-file/config-reference). Runtime tool/schema and effective-setting evidence are still required; documentation alone does not prove dispatch applied the selection.
-
-Use the available Core and project specialist roles according to their responsibilities. An empty project `agents: []` adds no specialists and does not disable Core roles or Lead orchestration. Keep non-Lead assignments bounded without recursive delegation. Native host limits, project trust, permissions and higher-priority instructions continue to apply. These instructions guide host behavior; they do not deterministically enforce delegation or replace executable validation/review gates.
-
-Delegate system-level reasoning based on the original nature and ownership of the problem, not the expected or final diff size. Before writable implementation on architecture, ownership-boundary, dependency-direction, or cross-package work, dispatch the matching available Core specialist. Have Architect analyze architectural and ownership decisions before implementation; for cross-package work, map affected owners and give each relevant Worker or project specialist a bounded assignment. Lead may frame the question and integrate specialist results, but must not perform the specialist-owned analysis or implementation as the sole agent when the specialist is available. A small final diff does not retroactively reduce the original scope or complexity. Lead retains final acceptance authority. If native limits or policy prevent a required dispatch, state that limitation and resolve it rather than treating patch size as justification to proceed alone.
+Checked 2026-09-29 against official [CLI reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference), [VS Code subagents](https://code.visualstudio.com/docs/agents/run/subagents), [VS Code development customization source](https://github.com/microsoft/vscode/blob/main/extensions/copilot/assets/prompts/skills/agent-customization/references/agents.md), and [custom-agent configuration](https://docs.github.com/en/copilot/reference/custom-agents-configuration). Runtime schema and effective-setting evidence qualify these capabilities.

@@ -85,36 +85,37 @@ Restrictions:
 - do not merge pull requests when human-only merge applies
 - do not bypass privacy or access gates
 
-# Codex Lead projection
-
-You are the EmbrAIon Lead orchestrator for ordinary-language engineering requests. Apply Core Lead responsibilities without requiring the user to name roles or request delegation.
+# claude-code native orchestration
 
 Apply the assignment routing contract in the [canonical orchestration skill](#assignment-routing-contract). This adapter supplies native mechanisms and capability limits; Core owns classification, resolution, reuse, evidence, and handoff rules. Keep generated specialist profiles model-neutral and concrete deployment choices in `.embraion/`.
 
 ## Native assignment settings
 
-Before independent writable task work, apply the [Core worktree workflow](../../core/workflows/worktree.md)
-with `embraion worktree prepare --task-id <stable-task-id> --host codex`.
-Native task startup interception is not assumed: Lead invokes the CLI when no verified
-startup mechanism exists. Review, subtasks and plan/read-only work do not trigger deletion.
+Before independent writable work, apply the [Core worktree workflow](../../core/workflows/worktree.md)
+with `embraion worktree prepare --task-id <stable-task-id> --host claude-code`.
+Native startup interception requires verified capability; otherwise Lead invokes the preflight.
+Review, subtasks and plan/read-only work do not trigger deletion. Observer hooks remain observers.
 
-For a known native creation, capture `--branch <branch> --path <absolute-path>` before
-creation, retain the receipt, then invoke `worktree register --task-id <id> --host codex
---receipt-id <receipt> --path <path>`. Opaque already-created resources without a receipt
-remain unmanaged. Use supported host snapshot/archive operations for native-managed
-worktrees; the portable CLI cannot substitute raw Git removal for unavailable host activity
-or archive capability.
+Capture `--branch <branch> --path <absolute-path>` before known native creation and use
+the returned receipt with `worktree register --task-id <id> --host claude-code
+--receipt-id <receipt> --path <path>` afterwards. A `.claude/worktrees` path alone does not
+prove ownership or inactivity. Preserve opaque pre-created or native-managed resources when
+creation evidence, host activity, or supported archive capability is unavailable.
 
-Native preparation translates a project `fork_turns` option only for `'none'` or a bounded positive string; a full-history option cannot replace explicit routing. Other options need a verified translation.
+Inspect the installed `Agent` tool schema (older installations may expose `Task`). Its per-call `model` field may accept only a fixed alias enum; do not pass a full model ID merely because definitions accept it, and do not guess an equivalent alias. Current subagent definitions in `.claude/agents/*.md` or the `--agents` JSON configuration support `model` and `effort`; definition model selectors may be host aliases, full IDs, or `inherit`. A mandatory explicit selection must not become inheritance through an alias or fork behavior.
 
-Inspect the active tool schema before invocation: a desktop tool namespace or fork field is not a contract for every Codex surface. Where `collaboration.spawn_agent` exposes these fields, pass resolved role as `agent_type`, non-null model as `model`, and non-null effort as `reasoning_effort`, independently. Explicit model or effort requires `fork_turns='none'` or a bounded positive integer string; a full-history fork (`'all'` or omitted) cannot accept overrides. Supply bounded assignment context in the message.
+A per-call `effort` argument on `Agent` is not established by the published contract. Apply explicit model and/or effort through a complete assignment-specific native definition containing the role description, prompt, permitted tools, and selected settings. Load and select that definition, or use a supported session/handoff mechanism with verified effective settings. Do not invent an `Agent` effort field or modify a reusable role definition to carry one assignment's route. A prepared definition still requires native loading and invocation evidence.
 
-`followup_task` and `send_message` cannot change model or effort. If Core's reuse check requires different settings, use a fresh spawn or supported handoff. Unknown options or absent native fields are capability limitations, not permission to inherit.
+`dispatch --native-surface claude-agent` returns a `scoped-definition` and the required `subagent_type`, with `handoff-required` and `executed: false` for explicit settings. To use a supported `--agents` loader, form a JSON object keyed by the definition's `name`, whose value contains `description`, `prompt`, `tools`, and any selected `model`/`effort`; do not pass the whole plan as the loader configuration. Supply the bounded task as the separate invocation prompt. A project routing role such as `independent-review` is not automatically a native profile: use `--native-agent reviewer` while retaining the original `--role independent-review`. This binding never changes route eligibility or widens the specialist's tools.
 
-Native precedence matters: explicit spawn settings precede `[agents]` defaults and parent inheritance, while a custom role configuration file can override spawn settings through its `model` and `model_reasoning_effort`. Inspect the selected definition and effective settings before relying on the route; model-neutral generated profiles avoid this conflict. Apply required options only through fields verified in the active schema. Static TOML does not resolve assignment routes.
+Prefer the opt-in startup projection when `.embraion/claude-native.yaml` configures this assignment. Its `bindings` map routing roles to native specialist IDs; its explicit `assignments` list declares route class, data class and access without duplicating model or effort choices. Install `scoped-agents` before starting a new Thread. These separate hash-named profiles carry the resolver's settings while reusable role profiles stay model-neutral. Dispatch also discovers the configured binding. Its `projection.state: current` proves exact file content, not loading into the active Thread. Confirm that the returned `arguments.subagent_type` is in this Thread's loaded agent registry, then invoke that exact type without a per-call model override. A missing, stale or unloaded profile requires projection refresh and a new Thread or a supported native loader. Do not launch an unconfigured reviewer, restart a CLI requiring separate authentication, or perform the independent review yourself to make the check appear complete.
 
-Checked 2026-09-29 against the official [subagent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents) and [config reference](https://learn.chatgpt.com/docs/config-file/config-reference). Runtime tool/schema and effective-setting evidence are still required; documentation alone does not prove dispatch applied the selection.
+`embraion claude-native install-hooks` explicitly preserves and merges native hook entries into `.claude/settings.json`. The guard refuses stale scoped Agent types, base profiles for configured explicit assignments, and invocation model overrides. A project's opt-in `read-policy` can further confine scoped read/search calls to the current project and refuse protected source patterns; it does not sandbox the parent, arbitrary profiles, or shell access. Tool-list restrictions and route data eligibility alone are not filesystem privacy enforcement. Preserve project source classification and context boundaries independently.
 
-Use the available Core and project specialist roles according to their responsibilities. An empty project `agents: []` adds no specialists and does not disable Core roles or Lead orchestration. Keep non-Lead assignments bounded without recursive delegation. Native host limits, project trust, permissions and higher-priority instructions continue to apply. These instructions guide host behavior; they do not deterministically enforce delegation or replace executable validation/review gates.
+`embraion claude-native status` separates canonical installation from recorded callback metadata. Claude Code 2.1.277 early-access hook declarations permit optional tool-context `effort.level`, but that does not prove delivery by the installed desktop or cloud build. If input supplies it, `reported-effort` compares it with the definition as advisory data. `evidence-origin` remains `unverified-command-input`: the public observer accepts arbitrary JSON, so its records do not prove host origin, effective effort, or assignment completion. `execution`, effective `effort` and `model` remain `unverified`; `callbacks: recorded` means only accepted metadata; real native invocation and trusted host-specific evidence are required. Session init null effort and an agent's own statements are not evidence. A command-line price estimate is not confirmed subscription spending. Hooks store only bounded identity/effort metadata, never prompt, result, transcript or private tool inputs.
 
-Delegate system-level reasoning based on the original nature and ownership of the problem, not the expected or final diff size. Before writable implementation on architecture, ownership-boundary, dependency-direction, or cross-package work, dispatch the matching available Core specialist. Have Architect analyze architectural and ownership decisions before implementation; for cross-package work, map affected owners and give each relevant Worker or project specialist a bounded assignment. Lead may frame the question and integrate specialist results, but must not perform the specialist-owned analysis or implementation as the sole agent when the specialist is available. A small final diff does not retroactively reduce the original scope or complexity. Lead retains final acceptance authority. If native limits or policy prevent a required dispatch, state that limitation and resolve it rather than treating patch size as justification to proceed alone.
+The generated `.claude/rules/embraion.md` activates the orchestration skill and scoped project instructions. Confirm it was read in each local, cloud, or resumed Thread. Project overview messages, installed files, and another Thread's route are not evidence of loading or applied settings. `harness audit` checks installation only.
+
+Normal model precedence is invocation override, agent definition, `CLAUDE_CODE_SUBAGENT_MODEL`, then parent; force-mode environment configuration can supersede normal overrides. Model allowlists can substitute choices, and fork modes can inherit the parent. Verify all these controls without recording secret environment values. Effort is model-specific, and `CLAUDE_CODE_EFFORT_LEVEL` or host caps can override the requested effort. A mandatory route cannot silently accept inheritance, substitution, or capping; report a capability limitation and follow Core's supported handoff rules when the effective selection cannot be proven.
+
+Checked 2026-09-29 against official [subagent documentation](https://code.claude.com/docs/en/sub-agents) and [model configuration](https://code.claude.com/docs/en/model-config). Installed tool/schema, loaded-definition, and effective-setting evidence are required.
