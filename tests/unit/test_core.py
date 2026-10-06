@@ -462,6 +462,87 @@ class CoreTests(unittest.TestCase):
             }
         self.assertEqual({"Tracked.cs", "build/Step.cs"}, findings)
 
+    def test_security_scanner_all_files_waives_machine_paths_only_for_external_and_generated(self) -> None:
+        token = "gh" + "p_" + "A1b2" * 9
+        home = "/Users/" + "owner/tmp/"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_yaml(root / ".embraion" / "policy.yaml", {"sources": {
+                "canonical": ["Vendor/Owned/**"], "protected": ["Vendor/Keep.cs"],
+                "generated": ["Generated/**"], "external": ["Vendor/**"]}})
+            files = {
+                "Vendor/Lib.cs": home,
+                "Vendor/README.md": home,
+                "Vendor/Owned/Patch.cs": token,
+                "Vendor/Keep.cs": token,
+                "Generated/Out.cs": home,
+                "Generated/config.json": home,
+                "Generated/Leak.cs": token,
+                "Vendor/Secret.cs": token,
+                "Vendor/SECRETS.md": token,
+                "src/App.cs": token,
+            }
+            for name, text in files.items():
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_text(text, encoding="utf-8")
+
+            def scan(all_files: bool) -> tuple[set[str], list[str]]:
+                skipped: list[str] = []
+                found = {item["path"].replace("\\", "/")
+                         for item in collect_findings(root, all_files=all_files, skipped=skipped)}
+                return found, sorted(item.replace("\\", "/") for item in skipped)
+
+            default, default_skipped = scan(False)
+            everything, skipped = scan(True)
+            # Policy that cannot be read safely skips nothing.
+            (root / ".embraion" / "policy.yaml").write_text("sources: [broken\n", encoding="utf-8")
+            unusable, unusable_skipped = scan(True)
+            # A catch-all external glob never hides EmbrAIon's own configuration.
+            write_yaml(root / ".embraion" / "policy.yaml", {"sources": {
+                "canonical": [], "protected": [], "generated": [], "external": ["**"]}})
+            (root / ".embraion" / "notes.md").write_text(home, encoding="utf-8")
+            catch_all, _ = scan(True)
+
+        # A catch-all external glob waives machine paths everywhere except EmbrAIon configuration; secrets stay.
+        self.assertEqual({".embraion/notes.md", "Vendor/Owned/Patch.cs", "Vendor/Keep.cs", "Generated/Leak.cs",
+                          "Vendor/Secret.cs", "Vendor/SECRETS.md", "src/App.cs"}, catch_all)
+        # Without --all-files the policy is not consulted and nothing changes.
+        self.assertEqual({"Vendor/README.md", "Vendor/SECRETS.md", "Generated/config.json"}, default)
+        self.assertEqual([], default_skipped)
+        # Secrets are still found under external and generated paths; only machine paths are waived.
+        self.assertEqual({"Vendor/Owned/Patch.cs", "Vendor/Keep.cs", "Generated/config.json", "Generated/Leak.cs",
+                          "Vendor/Secret.cs", "Vendor/SECRETS.md", "src/App.cs"}, everything)
+        self.assertEqual(["Generated/Leak.cs", "Generated/Out.cs", "Vendor/Lib.cs", "Vendor/README.md",
+                          "Vendor/SECRETS.md", "Vendor/Secret.cs"], skipped)
+        self.assertEqual(set(files), unusable)
+        self.assertEqual([], unusable_skipped)
+
+    def test_security_scan_cli_reports_waived_machine_path_count(self) -> None:
+        import io
+        import json
+        from unittest.mock import patch
+
+        from embraion.cli import main
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write_yaml(root / ".embraion" / "policy.yaml", {"sources": {
+                "canonical": [], "protected": [], "generated": [], "external": ["Vendor/**"]}})
+            (root / "Vendor").mkdir()
+            (root / "Vendor" / "Lib.cs").write_text("/Users/" + "owner/tmp/", encoding="utf-8")
+            outputs = []
+            for arguments in (["--all-files", "--json"], ["--all-files"], ["--json"], []):
+                stdout = io.StringIO()
+                with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                        patch("sys.stdout", stdout):
+                    code = main(["security", "scan", "--path", str(root), "--fail-on", "medium", *arguments])
+                outputs.append((code, stdout.getvalue()))
+        self.assertEqual((0, {"findings": [], "machine-path-waived-files": 1}), (outputs[0][0], json.loads(outputs[0][1])))
+        self.assertIn("PASS: no security findings.", outputs[1][1])
+        self.assertIn("Machine-path check waived for 1 file(s)", outputs[1][1])
+        self.assertEqual({"findings": []}, json.loads(outputs[2][1]))
+        self.assertEqual("PASS: no security findings.\n", outputs[3][1])
+
     def test_security_scanner_ignores_public_key_token_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

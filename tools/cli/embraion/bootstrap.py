@@ -6,6 +6,7 @@ the Core skill. This helper never runs repository commands or installs tooling.
 from __future__ import annotations
 
 import copy
+import glob
 import hashlib
 import os
 import re
@@ -17,6 +18,7 @@ from jsonschema import Draft202012Validator
 
 from .common import framework_root, read_json, read_yaml, write_yaml
 from .policy import path_matches
+from .project import projection_ledger_outputs
 from .security import redact_text
 
 _WRITABLE = ("knowledge", "policy", "validation")
@@ -34,6 +36,7 @@ _DOCS = {
     "persistence": ("docs/persistence.md",),
     "engineering-workflow": ("CONTRIBUTING.md", "docs/engineering-workflow.md"),
     "specification": ("SPECIFICATION.md", "docs/specification.md"),
+    "deferred-tasks": ("docs/follow-ups.md", "docs/deferred-tasks.md"),
 }
 _SKIP = {".git", ".venv", "node_modules", "__pycache__", ".embraion", "build", "dist", "site"}
 _OPTION_NAME = re.compile(r"--([A-Za-z0-9_-]+)")
@@ -41,8 +44,13 @@ _SENSITIVE_OPTION = re.compile(r"(?i)(?:^|[-_])(?:api[-_]?key|apikey|key|token|p
 _CREDENTIAL_VALUE = re.compile(r"(?i)\b(?:api[_-]?key|secret|token|password|credentials?)\s*[:=]\s*(?!\$|env:|<|REDACTED|CHANGEME)[^\s]+")
 
 
+_ENVIRONMENT_OPTION = re.compile(r"(?i)[-_]env(?:[-_]var(?:iable)?)?$")
+
+
 def _credential_bearing(text: str) -> bool:
-    return (any(_SENSITIVE_OPTION.search(match.group(1)) for match in _OPTION_NAME.finditer(text))
+    # An option such as --api-key-env names an environment variable, not a credential value.
+    return (any(_SENSITIVE_OPTION.search(match.group(1)) and not _ENVIRONMENT_OPTION.search(match.group(1))
+                for match in _OPTION_NAME.finditer(text))
             or bool(_CREDENTIAL_VALUE.search(text)) or redact_text(text) != text)
 
 
@@ -176,11 +184,15 @@ def plan_bootstrap(project: Path) -> dict[str, Any]:
 
     knowledge = copy.deepcopy(configs["knowledge"])
     slots = knowledge.setdefault("slots", {})
+    # Projection ledger outputs are generated even when policy does not list them.
+    unbindable = (list(configs["policy"]["sources"]["generated"])
+                  + [glob.escape(path) for path in projection_ledger_outputs(root)]
+                  + list(configs["policy"]["sources"]["external"]))
     for slot, names in _DOCS.items():
         matches = [name for name in names if name in inventory]
         for name in matches:
             record(name, "contract-candidate", slot=slot)
-        excluded = [name for name in matches if any(path_matches(name, configs["policy"]["sources"][category]) for category in ("generated", "external"))]
+        excluded = [name for name in matches if path_matches(name, unbindable)]
         if excluded:
             limitations.append(f"{slot} source ownership requires review; generated/external candidates are not bound.")
             continue

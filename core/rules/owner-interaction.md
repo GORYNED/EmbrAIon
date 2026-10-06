@@ -17,7 +17,7 @@ The owner sets the goal, decides, and gives final acceptance. The agent plans, i
 
 - Keep a visible checklist of the plan in the host's status or planning tool, or as a short text checklist, and update it after each substantial stage.
 - Give a short plain-language update per stage. Do not narrate individual reads, searches, or routine edits.
-- When the project keeps a list of deferred tasks, read it at the start of a task and remind the owner once, in one line, of the items that touch the task's area. Do not start a deferred item without the owner's word.
+- When the project keeps a list of deferred tasks (the configured `deferred-tasks` project contract slot), read it at the start of a task and remind the owner once, in one line, of the items that touch the task's area. Do not start a deferred item without the owner's word.
 
 ## Stay in scope
 

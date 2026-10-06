@@ -63,7 +63,7 @@ embraion install --host codex --destination . --component skills
 embraion install --host codex --destination . --component agents --component skills
 ```
 
-Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot supports `agents` and `skills`; Claude Code supports `agents`, `skills`, and optional `scoped-agents`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
+Supported components are host-specific: Codex supports `config`, `agents`, and `skills`; GitHub Copilot supports `agents` and `skills`; Claude Code supports `agents`, `skills`, and optional `scoped-agents` and `hooks`; Portable uses `bundle`. Unselected components remain user-owned and are excluded from obsolete-file handling.
 
 
 For a mature Codex repository that already owns `.codex/config.toml`, use merge ownership for only the EmbrAIon-required `[agents]` keys:
@@ -96,7 +96,7 @@ embraion projection verify --host codex --destination .
 embraion projection verify --host copilot --component agents --component skills
 ```
 
-`projection verify` exits zero only when every selected projection file is already canonical and there is no create, update, conflict, or obsolete managed output. With partial Codex config ownership, pass `--config-mode merge` to both `projection diff` and `projection verify`.
+`projection verify` exits zero only when every selected projection file is already canonical and there is no create, update, conflict, or obsolete managed output. Files under a reserved projection prefix (Claude Code `scoped-agents`: `.claude/agents/embraion--*.md`) that the current projection would not produce are reported as `obsolete-modified` even without an ownership ledger. With partial Codex config ownership, pass `--config-mode merge` to both `projection diff` and `projection verify`.
 
 Merge mode preserves user content outside the managed blocks, so verify also reports `root-findings` for that content: root keys that override the user's model or effort or the routed subagent selection (`model`, `model_reasoning_effort`, `agents.default_subagent_*`), keys outside an optional `allowed-root-keys` list, and root `developer_instructions` text outside the managed orchestration block. Findings are warnings by default. `--strict-root`, or `projection.codex.strict-root: true` in [policy](../configuration/policy.md#projection-root-checks), makes them fail verification:
 
@@ -104,9 +104,11 @@ Merge mode preserves user content outside the managed blocks, so verify also rep
 embraion projection verify --host codex --component config --config-mode merge --strict-root --json
 ```
 
+The Claude Code `hooks` component always merges: it manages only EmbrAIon's hook entries in `.claude/settings.json` and records them in the projection ledger. `projection verify --host claude-code --component hooks` fails when a managed entry is missing (update) or changed (conflict); other settings and hooks are not drift.
+
 ### `embraion policy`
 
-Inspect normalized source, validation, review, and privacy policy:
+Inspect normalized source, validation, review, privacy, and merge policy:
 
 ```bash
 embraion policy show
@@ -181,6 +183,15 @@ embraion framework install --json
 ```
 
 Both commands read `.embraion/project.yaml`, require a valid artifact lock, download the exact canonical GitHub Release asset, and verify its SHA-256 before success. `framework install` verifies before invoking pip and records the lock identity in the runtime cache marker. Cached runtimes with a different artifact identity or digest are rejected.
+
+Print the exact pin for scripts and CI without network access:
+
+```bash
+embraion framework pin
+embraion framework pin --json
+```
+
+The output is `version=<x.y.z>` and, when the pin is locked, `digest=sha256:<hex>`, one per line, so it can be appended to `$GITHUB_OUTPUT`. The command fails on a missing `framework.version`, on anything other than an exact `MAJOR.MINOR.PATCH` release (for example `latest`, `>=1`, `1.2` or extra text), on another `framework.repository`, and on a malformed or mismatched artifact lock. Error messages never repeat the rejected value. The [setup action](runtime-version-resolution.md#consumer-ci) uses the same reader.
 
 ### `embraion sync`
 
@@ -268,7 +279,19 @@ Validate framework schemas, catalogs, references, localization, and other determ
 ```bash
 embraion validate
 embraion validate --json
+embraion validate --strict
 ```
+
+Inside a project, `validate` also warns (`projection-ignored`) when Git ignores a file recorded in a projection ledger under `.embraion/state/projections`, because a new projected file at such a path would stay untracked. The warning does not fail validation.
+
+Inside a project, `validate` also checks the project's `.embraion/*.yaml` structure and reports warnings for:
+
+- keys a schema in `schemas/` does not declare, at the top level and one section down (`config-unknown-key`);
+- knowledge slots or entries whose path is missing or leaves the project, and organization `roots` that do not exist (`config-path`);
+- knowledge `roles` that match no Core role or agent declared in `.embraion/agents.yaml` (`config-role`);
+- empty files, empty sections that expect a value, and `.embraion` YAML files EmbrAIon does not read (`config-inert`), plus unreadable YAML (`config-parse`).
+
+Warnings keep the exit code at 0; `--strict` reports them as errors. Without findings the output stays `PASS: no validation issues.`. Full schema conformance remains with the commands that load each file, and the policy-ceiling check stays an error.
 
 ### `embraion validation`
 
@@ -294,7 +317,7 @@ embraion validation run affected \
 
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
-`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually.
+`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
 ### `embraion cache`
 
@@ -509,7 +532,7 @@ embraion enforcement install \
   --require-review
 ```
 
-No enforcement workflow or native hook is installed by `init`, `install`, or `harness audit`. The generated workflow exits non-zero for policy/validation/review failures. To make that check a mandatory merge gate, configure **EmbrAIon enforcement** as a required status check in the repository branch rules/ruleset.
+No enforcement workflow or native hook is installed by `init`, `install`, or `harness audit`. The generated workflow installs EmbrAIon through the reusable `GORYNED/EmbrAIon/actions/setup` action at the generating release, which reads the project pin at run time, so later pin updates need no workflow edit; see [Consumer CI](runtime-version-resolution.md#consumer-ci). `install` refuses an inexact pin before writing. The generated workflow exits non-zero for policy/validation/review failures. To make that check a mandatory merge gate, configure **EmbrAIon enforcement** as a required status check in the repository branch rules/ruleset.
 
 ### `embraion security`
 
@@ -519,7 +542,7 @@ Scan for likely secrets and policy drift.
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` also checks source and other text files for private keys, access tokens, and machine paths; see [Security](../security.md#scan-findings).
+`--all-files` also checks source and other text files for private keys, access tokens, and machine paths. For paths the project's `.embraion/policy.yaml` marks as `external` or `generated` (never `canonical` or `protected` ones) it waives only the machine-path check and reports how many files that affected (`machine-path-waived-files` with `--json`); secrets are still reported there; see [Security](../security.md#scan-findings). When `.embraion/integrations.yaml` exists, the scan also compares the declared MCP servers with the observed host configuration and reports drift as high-severity `integration-drift` findings; see [Declared integrations](../security.md#declared-integrations).
 
 Redact likely credentials from diagnostic text:
 
@@ -621,11 +644,15 @@ Install native guard/observer hooks and inspect advisory Claude Code callback me
 embraion install --host claude-code --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
+embraion projection verify --host claude-code --component hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
 
 The explicit `scoped-agents` component requires `.embraion/claude-native.yaml`; the default Claude installation still includes only `agents` and `skills`. Definitions derive from project routing. Start a new Thread after installation and invoke the exact definition type returned by dispatch. See [Claude Code](../hosts/claude-code.md).
 
-`install-hooks` preserves unrelated settings and hooks in `.claude/settings.json`. `guard` reads a PreToolUse JSON event from stdin: it checks configured definitions, refuses invocation overrides and, with read-policy enabled, bounds configured scoped-agent reads. It does not restrict parent sessions, arbitrary agents or Bash. `observe` receives PostToolUse/SubagentStop events and stores only identity and reported effort in ignored local state. These two commands are hook entry points.
+`install-hooks` installs the Claude Code `hooks` projection component (`embraion install --host claude-code --component hooks` is equivalent) after checking the scoped-agents projection. It preserves unrelated settings and hooks in `.claude/settings.json` and records the managed entries in the projection ledger. `guard` reads a PreToolUse JSON event from stdin: it checks configured definitions, refuses invocation overrides and, with read-policy enabled, bounds configured scoped-agent reads. It does not restrict parent sessions, arbitrary agents or Bash. `observe` receives PostToolUse/SubagentStop events and stores only identity and reported effort in ignored local state. These two commands are hook entry points.
 
 `status` separates file installation from recorded callback metadata and advisory `reported-effort` comparisons. Observer input has `evidence-origin: unverified-command-input`; `execution`, effective `effort` and `model` remain `unverified`; `callbacks: recorded` denotes accepted metadata. Synthetic parser tests and local records do not prove host delivery, instruction loading, invocation completion or applied settings.
+
+Without `--require`, `status` exits 0 whatever the installation state. For CI, `--require installed,hooks` (comma-separated or repeated) adds a `gate` object and exits 1 unless each listed fact holds: `installed` requires `installation: verified`, so a missing or stale projection fails; `hooks` requires every guard and observer hook entry in `.claude/settings.json`. Only these file facts can gate, because `status` verifies them itself. Model, effort, execution and callbacks come from host behavior or unverified hook input, so `--require` refuses them with exit 2 rather than turning advisory data into a pass.

@@ -59,6 +59,7 @@ slots:
   persistence:
   engineering-workflow:
   specification:
+  deferred-tasks:
 ```
 
 A project binds only the slots it actually owns:
@@ -316,6 +317,8 @@ GitHub Copilot .github/agents/<id>.agent.md
 Claude Code    .claude/agents/<id>.md
 ```
 
+Each project agent profile lists its merged `triggers` and `outputs`. When at least one project agent is declared, the projected `orchestration` skill also gets a compact `Project specialists` section with each specialist's ID, inherited Core role, purpose, and the triggers and outputs the project declares, so Lead knows when to delegate. Core role profiles are unchanged, and no section is written without project agents.
+
 Framework-only `embraion sync` remains deterministic and generates Core agents only; project agents belong to a consuming repository and are resolved during project projection.
 
 ## Optional `.embraion/execution.yaml`
@@ -374,6 +377,10 @@ This strict, versioned inventory declares independently installed host-managed c
 
 Schema v1 can read legacy `builtin:unity` declarations for diagnostics, but the bundle is no longer shipped. Remove such an entry explicitly before installing for its selected host or updating; install the desired replacement independently through the host first. See [External capabilities](capabilities.md).
 
+## Optional `.embraion/integrations.yaml`
+
+This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`. The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
+
 ## Optional `.embraion/knowledge-maintenance.yaml`
 
 Declare which project document depends on which source files, then explicitly run `embraion knowledge snapshot --path .` after reviewing the relationships. `embraion knowledge audit --path .` compares local hashes and reports changed or missing sources for review. It does not rewrite documentation or infer external version drift without observed metadata. See [Knowledge maintenance](../guides/knowledge-maintenance.md).
@@ -381,6 +388,19 @@ Declare which project document depends on which source files, then explicitly ru
 ## Optional `.embraion/organization.yaml`
 
 Project-owned code organization limits can supplement the Core procedure. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` checks changed files incrementally. Existing debt does not waive a new violation. See [Code organization](organization.md).
+
+## Optional `.embraion/skills/`
+
+Project-owned skills use the Core skill layout: one directory per skill with `SKILL.md` as the entry point.
+
+```text
+.embraion/skills/<name>/SKILL.md
+.embraion/skills/<name>/references/...   # optional supporting files
+```
+
+The `skills` component projects each skill next to the Core skills for Codex (`.agents/skills/`), GitHub Copilot (`.github/skills/`), and Claude Code (`.claude/skills/`). Projected files are recorded in the projection ownership ledger, so `projection diff` and `projection verify` report edited copies as conflicts and removed skills as obsolete; `install --prune` removes unchanged obsolete copies. Portable bundles remain Core-only.
+
+Projection fails before writing when an entry is not a skill directory, the name is not lowercase kebab-case (at most 64 characters), the name matches a Core skill, `SKILL.md` is missing, its front matter lacks a matching `name` or a non-empty `description`, or the skill contains a symbolic link.
 
 ## Project settings should not reimplement Core
 
@@ -430,6 +450,8 @@ Examples:
 ```
 
 When you want to change project policy, knowledge, validation, or routing, prefer the canonical `.embraion/` file rather than editing a generated host projection to represent the same intent.
+
+Projected host guidance links to Core files that do not exist in a consuming project, such as the worktree workflow, through the EmbrAIon release tag of the projected framework version.
 
 See [AI host examples](ai-hosts.md) for concrete workflows.
 

@@ -39,6 +39,26 @@ embraion mcp inventory
 
 to inspect deterministic security and integration surfaces.
 
+### Declared integrations
+
+A project can declare the MCP servers it expects in the optional, schema-checked `.embraion/integrations.yaml` ([schema](https://github.com/GORYNED/EmbrAIon/blob/main/schemas/integrations.schema.json)). Without the file nothing is compared and the scan behaves as before.
+
+```yaml
+schema-version: 1
+servers:
+  - id: docs
+    host: generic
+    command: npx
+    args: ["-y", "docs-server"]
+    transport: stdio
+    access: read-only
+    env-vars: [DOCS_TOKEN]
+```
+
+Each entry names the server `id` and the `host` whose configuration holds it: `generic` (`.mcp.json`), `vscode` (`.vscode/mcp.json`), `claude-code` (`.claude/settings.json` and `.claude/settings.local.json`), or `codex` (`.codex/config.toml`). It also records `command`, `args`, `transport`, `access` (`read-only`, `workspace-write`, or `external-execution`), and environment-variable **names** in `env-vars`; never store values. Omit `command` for a URL server. A host without an explicit type runs a command server over `stdio` and a URL server over `http`. Entries are portable by default: a machine-absolute path in `command` or `args` is a finding. Set `portable: false` only for a deliberately machine-local server, such as one in an ignored `.claude/settings.local.json`: it may use machine-absolute paths and is not reported as missing where it is not configured, but a configured copy is still compared with its declaration.
+
+When the file exists, `embraion security scan` and `embraion doctor` compare it with the observed configuration and report each difference as a high-severity `integration-drift` finding: a declared server that is not configured (`integration-missing`), a configured server that is not declared (`integration-unexpected`), a server whose command, arguments, transport, or environment-variable names differ (`integration-mismatch`), a non-portable declaration, an invalid declaration file, or host configuration that cannot be read. The scan therefore fails closed at the default `--fail-on high`. Findings never print argument values, redact credential-like command values, and report schema errors by location only. `access` is declared metadata; host configuration does not expose it, so it is not compared.
+
 ## Scan findings
 
 `embraion security scan` reads the project's text files and reports each finding with a category and severity:
@@ -50,10 +70,19 @@ to inspect deterministic security and integration surfaces.
 | `access-token` | high | a provider-prefixed token without a key in front of it: GitHub classic and fine-grained (`ghp_…`, `github_pat_…`), cloud access key IDs (`AKIA…`), model-provider keys (`sk-…`), Google API keys (`AIza…`), and Slack tokens (`xox…`) |
 | `machine-path` | medium | a home-directory path such as `/Users/<name>/`, `/home/<name>/`, or `C:\Users\<name>\` (also with forward slashes or JSON-escaped backslashes) |
 | `policy-drift` | medium | a legacy data-class name that no execution alias declares |
+| `integration-drift` | high | a difference between declared and observed MCP servers; only when `.embraion/integrations.yaml` exists, see [Declared integrations](#declared-integrations) |
 
 A token body must contain a digit, so identifiers and documentation placeholders with these prefixes are not reported. CI runner and shared homes and placeholder names such as `user`, `example`, or `<name>` are not machine paths. A `machine-path` finding stays below the default `--fail-on high`; pass `--fail-on medium` to make it fail. `embraion security redact` and evidence redaction replace a bare prefixed token with `<REDACTED:access-token>`.
 
 By default the scan reads Markdown, YAML, JSON, TOML, plain-text, Python, PowerShell, and shell files plus `.gitignore` and `.editorconfig`, outside tool folders such as `.git`, `.venv`, `node_modules`, and `Library`. `--all-files` also reads every other tracked or unignored untracked file of at most 2 MiB that contains no NUL byte, such as C#, native, or Unity asset sources; outside Git it reads every other file outside the tool folders. Those files are checked only for `private-key`, `access-token`, and `machine-path`; the keyword-based `api-key` check would flag ordinary code assignments there. `--all-files` adds no files from Git submodules.
+
+With `--all-files`, the scan reads `sources` from the project's `.embraion/policy.yaml` and waives only the `machine-path` check for content the project cannot edit, using the same glob matching as policy elsewhere (`fnmatch` plus `**` for zero or more folders):
+
+- other text files under `external` or `generated` are still checked for private keys and access tokens;
+- configuration and documentation files under `external` keep every check except `machine-path`, because they are vendor-owned; those under `generated` keep every check, because generated configuration is what tools load and is fixed by regenerating it from its source;
+- EmbrAIon configuration under `.embraion/` and a path that also matches `canonical` or `protected` keep every check.
+
+Secrets are therefore never skipped. The output reports how many files had the machine-path check waived (`machine-path-waived-files` with `--json`). A missing, unreadable, or malformed policy waives nothing. The scan reads only the explicit `sources` lists, not the entries derived from local projection ledgers, so its result does not depend on local state. Without `--all-files` the policy is not consulted, so the default scan is unchanged.
 
 ## Canonical data classes and compatibility aliases
 

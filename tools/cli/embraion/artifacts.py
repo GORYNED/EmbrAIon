@@ -17,6 +17,8 @@ ARTIFACT_SOURCE = "github-release"
 
 _STABLE_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
 _SHA256_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
+# ASCII digits only: `\d` would also accept other Unicode digits.
+_EXACT_PIN_PATTERN = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+")
 
 
 @dataclass(frozen=True)
@@ -291,6 +293,52 @@ def read_project_artifact_lock(
     if not isinstance(data, dict):
         raise RuntimeError(f"Malformed EmbrAIon project manifest: {manifest}")
     return artifact_lock_from_framework(data.get("framework"), required=required)
+
+
+def read_framework_pin(manifest: Path) -> dict[str, str | None]:
+    """Return the exact pin and lock digest for CI bootstrap; refuse ranges, tags and other text.
+
+    Messages never echo the rejected value, because CI logs interpret some printed text.
+    """
+    try:
+        data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, yaml.YAMLError) as error:
+        raise RuntimeError(f"Could not read EmbrAIon project manifest {manifest}.") from error
+    framework = data.get("framework") if isinstance(data, dict) else None
+    if not isinstance(framework, dict):
+        raise RuntimeError("Missing framework pin in .embraion/project.yaml.")
+    if framework.get("repository") != CANONICAL_REPOSITORY:
+        raise RuntimeError(f"framework.repository must be {CANONICAL_REPOSITORY}.")
+    version = framework.get("version")
+    if version is None or version == "":
+        raise RuntimeError("Missing framework.version in .embraion/project.yaml.")
+    if not isinstance(version, str) or not _EXACT_PIN_PATTERN.fullmatch(version):
+        raise RuntimeError(
+            "framework.version must be an exact stable release such as 1.2.3; "
+            "ranges, tags such as latest, and other text are refused."
+        )
+    try:
+        lock = artifact_lock_from_framework(framework, required=False)
+    except RuntimeError as error:
+        raise RuntimeError(
+            "framework.artifact in .embraion/project.yaml is malformed or a mismatch for "
+            "framework.version; regenerate it with embraion update."
+        ) from error
+    return {"version": version, "digest": lock.digest if lock is not None else None}
+
+
+def prepare_pinned_install(manifest: Path, directory: Path) -> dict[str, str]:
+    """Resolve the CI install target: a digest-verified locked wheel, or the exact version.
+
+    Used by the reusable setup action before any EmbrAIon release is installed.
+    """
+    pin = read_framework_pin(manifest)
+    wheel = ""
+    if pin["digest"]:
+        lock = read_project_artifact_lock(manifest, required=True)
+        assert lock is not None
+        wheel = download_locked_artifact(lock, directory / lock.asset)["path"]
+    return {"version": str(pin["version"]), "digest": pin["digest"] or "", "wheel": wheel}
 
 
 def download_locked_artifact(

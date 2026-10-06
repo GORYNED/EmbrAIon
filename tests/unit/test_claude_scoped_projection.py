@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
 from embraion.common import read_json, read_yaml, write_yaml
-from embraion.project import generate_host, init_project, install, projection_plan
+from embraion.project import generate_host, init_project, install, projection_is_verified, projection_plan
 
 
 class ClaudeScopedProjectionTests(unittest.TestCase):
@@ -209,6 +210,53 @@ class ClaudeScopedProjectionTests(unittest.TestCase):
             content = (project / ".claude/agents" / f"{assignment['name']}.md").read_text(encoding="utf-8")
             self.assertNotIn('"Bash"', content)
             self.assertNotIn('"Write"', content)
+
+    def test_stale_reserved_profiles_are_obsolete_drift_without_a_ledger(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._project(Path(temporary))
+            install("claude-code", project, components=["agents", "skills", "scoped-agents"])
+            old_name = self._metadata(project)["assignments"][0]["name"]
+            self._set_model(project, "claude-sonnet-4-6")
+            install("claude-code", project, components=["scoped-agents"])
+            new_name = self._metadata(project)["assignments"][0]["name"]
+            stray = project / ".claude/agents/embraion--stray-0123456789ab.md"
+            stray.write_text("stale\n", encoding="utf-8")
+            # A clean clone or CI checkout has no local ownership ledger.
+            shutil.rmtree(project / ".embraion/state")
+
+            plan = projection_plan("claude-code", project, components=["scoped-agents"])
+            self.assertEqual(
+                sorted([f".claude/agents/{old_name}.md", ".claude/agents/embraion--stray-0123456789ab.md"]),
+                plan["obsolete-modified"],
+            )
+            self.assertIn(f".claude/agents/{new_name}.md", plan["unchanged"])
+            self.assertFalse(projection_is_verified(plan))
+
+            # Without ownership evidence the files are reported, never pruned.
+            install("claude-code", project, components=["scoped-agents"], prune=True)
+            self.assertTrue(stray.is_file())
+            self.assertTrue((project / ".claude/agents" / f"{old_name}.md").is_file())
+
+            # Unselected components and unreserved names stay user-owned.
+            agents = projection_plan("claude-code", project, components=["agents"])
+            self.assertEqual([], agents["obsolete-owned"] + agents["obsolete-modified"])
+
+            stray.unlink()
+            (project / ".claude/agents" / f"{old_name}.md").unlink()
+            (project / ".claude/agents/embraion-helper.md").write_text("user owned\n", encoding="utf-8")
+            self.assertTrue(projection_is_verified(
+                projection_plan("claude-code", project, components=["scoped-agents"])
+            ))
+
+    def test_ledgered_stale_reserved_profile_is_reported_once(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._project(Path(temporary))
+            install("claude-code", project, components=["scoped-agents"])
+            old_name = self._metadata(project)["assignments"][0]["name"]
+            self._set_model(project, "claude-sonnet-4-6")
+            plan = projection_plan("claude-code", project, components=["scoped-agents"])
+            self.assertEqual([f".claude/agents/{old_name}.md"], plan["obsolete-owned"])
+            self.assertEqual([], plan["obsolete-modified"])
 
 
 if __name__ == "__main__":

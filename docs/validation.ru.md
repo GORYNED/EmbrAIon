@@ -14,6 +14,8 @@ embraion validate
 
 Используйте при проверке установки EmbrAIon или разработке framework.
 
+Внутри проекта команда также проверяет policy ceilings и предупреждает о структурных ошибках в `.embraion/*.yaml`: неизвестных ключах, отсутствующих путях knowledge и roots в organization, неизвестных ролях knowledge, пустых и непрочитанных файлах. `embraion validate --strict` превращает эти предупреждения в ошибки; см. [справочник CLI](reference/cli.ru.md#embraion-validate).
+
 ## Project validation profiles
 
 Consuming repositories определяют executable commands в `.embraion/validation.yaml` и запускают:
@@ -46,7 +48,8 @@ Commands выполняются последовательно из project root
 - command identity;
 - exit code;
 - duration;
-- redacted stdout/stderr tails;
+- redacted stdout/stderr tails длиной не больше 8000 символов каждый;
+- действующий timeout и путь к полному log command;
 - optional attached execution run;
 - evidence ID/path.
 
@@ -56,7 +59,11 @@ Evidence хранится в:
 .embraion/state/validation/
 ```
 
-Это local runtime state, игнорируемый project-local `.gitignore`.
+Это local runtime state, игнорируемый project-local `.gitignore`. Каждая command также записывает полный redacted stdout и stderr в `.embraion/state/validation/<evidence-id>/command-<index>.log`, поэтому длинный failure можно изучить и за пределами tail в record.
+
+Каждая command запускается в собственной process group (новая session на POSIX, новая process group в Windows). При timeout command или прерывании запуска EmbrAIon завершает всё дерево, включая процессы, запущенные command: на POSIX группа получает `SIGTERM`, затем `SIGKILL`; в Windows дерево завершается через `taskkill /T /F`. Прерванный запуск останавливается и не записывает evidence. Timeouts задаются `--timeout` или ключом profile [`timeout-seconds`](configuration/validation.ru.md#timeouts).
+
+С `--run-id` каждая command получает ID run в environment variable `EMBRAION_RUN_ID`, чтобы запущенные ею tools могли помечать свои artifacts. Без `--run-id` эта variable удаляется из environment command.
 
 Empty profile возвращает `skipped`. Failed/timed-out command делает profile failed. `--fail-fast` используйте только когда дальнейшие commands бессмысленны.
 

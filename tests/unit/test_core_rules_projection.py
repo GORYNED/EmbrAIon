@@ -24,6 +24,14 @@ class CoreRulesProjectionTests(unittest.TestCase):
         self.assertIn("](#authorization)", text)
         self.assertIn("persisted-data compatibility", text)
         self.assertIn("deferred tasks", text)
+        for statement in (
+            "Preserve observable runtime behavior unless the task explicitly authorizes a change",
+            "impact that has not been verified is treated as breaking",
+            "The upstream change lands first in its own pull request",
+            "Remove a duplicated instruction only after delivery of its canonical replacement",
+            "the configured `deferred-tasks` project contract slot",
+        ):
+            self.assertIn(statement, text)
 
     def test_rules_document_rewrites_anchored_links_and_rejects_bad_sets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -48,7 +56,7 @@ class CoreRulesProjectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="CoreRules")
-            expected = core_rules_text(framework_root())
+            expected = core_rules_text(framework_root(), "human-only")
             install("claude-code", project, components=["skills"])
             self.assertEqual(expected, (project / CLAUDE_CORE_RULES).read_text(encoding="utf-8"))
             install("copilot", project, components=["skills"])

@@ -23,7 +23,7 @@ Bootstrap сначала изучает репозиторий и существ
 | Routing | Сохранить host-default или существующий выбор; tuning выполнять только по явному запросу |
 | Host projections | Проверить согласованность и при необходимости регенерировать через официальные install/update механизмы |
 
-Knowledge slots: `constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, `specification`. YAML ссылается на документы, а не копирует содержимое. Необязательный slot без авторитетного источника остаётся null или unbound.
+Knowledge slots: `constitution`, `architecture`, `source-authority`, `compatibility`, `persistence`, `engineering-workflow`, `specification`, `deferred-tasks`. YAML ссылается на документы, а не копирует содержимое. Необязательный slot без авторитетного источника остаётся null или unbound.
 
 Bootstrap может создать отсутствующий канонический документ только если concern реально существует, доказательств достаточно и документ существенно улучшает будущую разработку. Факты выводятся из проверенных кода, структуры, CI и contracts. Недостаточно evidence — значит unbound slot и явно указанное ограничение, а не выдуманная архитектура, lifecycle, compatibility или persistence.
 

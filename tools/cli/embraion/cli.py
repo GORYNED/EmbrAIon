@@ -13,7 +13,7 @@ from .checkpoints import create_checkpoint, resume_checkpoint
 from .knowledge_audit import audit_knowledge, snapshot_knowledge
 from .organization import check_organization
 from .skill_evals import run_suite
-from .artifacts import read_project_artifact_lock, verify_project_artifact
+from .artifacts import read_framework_pin, read_project_artifact_lock, verify_project_artifact
 from .bootstrap import _safe_path as bootstrap_safe_path, apply_bootstrap, plan_bootstrap
 from .common import find_project_root, framework_root, project_root
 from .context import build_context, read_context
@@ -226,6 +226,19 @@ def _cmd_validate(args: argparse.Namespace) -> int:
              "message": f"{item['code']}: {item['message']}"}
             for item in findings
         ]
+    if project is not None:
+        from .project import ignored_projection_outputs
+
+        ignored = ignored_projection_outputs(project) or []
+        if ignored:
+            shown = ", ".join(ignored[:5]) + (f" (+{len(ignored) - 5} more)" if len(ignored) > 5 else "")
+            issues.append({"severity": "warning", "code": "projection-ignored", "path": ignored[0],
+                           "message": f"{len(ignored)} projection output(s) are ignored by git, so new "
+                                      f"projected files stay untracked: {shown}", "paths": ignored})
+    if project is not None and (project / ".embraion" / "project.yaml").is_file():
+        from .validation import collect_project_config_issues
+        severity = "error" if args.strict else "warning"
+        issues += [{**item, "severity": severity} for item in collect_project_config_issues(project, root)]
 
     if args.json:
         _print_json({"issues": issues, "count": len(issues)})
@@ -376,9 +389,12 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
                 f"Validation {name}: {len(spec['commands'])} command(s), "
                 f"{len(spec.get('parameters') or {})} parameter(s)"
             )
+        derived = len(policy["derived-sources"]["generated"])
         for category, patterns in policy["sources"].items():
-            print(f"Sources {category}: {len(patterns)} pattern(s)")
+            note = f" ({derived} from projection ledgers)" if category == "generated" and derived else ""
+            print(f"Sources {category}: {len(patterns)} pattern(s){note}")
         print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
+        print(f"Merge mode: {policy['merge']['mode']}")
     return 0
 
 
@@ -530,6 +546,21 @@ def _cmd_framework_verify(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_framework_pin(args: argparse.Namespace) -> int:
+    manifest = find_project_manifest(Path(args.path or "."))
+    if manifest is None:
+        raise RuntimeError("No .embraion/project.yaml found.")
+    pin = read_framework_pin(manifest)
+    if args.json:
+        _print_json(pin)
+    else:
+        # key=value lines suit both people and $GITHUB_OUTPUT.
+        print(f"version={pin['version']}")
+        if pin["digest"]:
+            print(f"digest={pin['digest']}")
+    return 0
+
+
 def _cmd_sync(args: argparse.Namespace) -> int:
     root = framework_root()
     output = Path(args.output or (root / "build/generated")).resolve()
@@ -649,12 +680,27 @@ def _cmd_pricing_refresh(args: argparse.Namespace) -> int:
     return 0
 
 
+def _native_requirements(value: str) -> list[str]:
+    from .claude_native import parse_requirements
+    try:
+        return parse_requirements(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from None
+
+
 def _cmd_claude_native(args: argparse.Namespace) -> int:
     from .claude_native import observe, observer_status
 
     if args.native_command == "status":
-        _print_json(observer_status())
-        return 0
+        status = observer_status()
+        if not args.require:
+            _print_json(status)
+            return 0
+        from .claude_native import gate_status
+        required = [name for value in args.require for name in value]
+        status["gate"] = gate_status(status, list(dict.fromkeys(required)))
+        _print_json(status)
+        return 1 if status["gate"]["failed"] else 0
     if args.native_command == "install-hooks":
         from .claude_hooks import install_observer_hooks
         _print_json(install_observer_hooks(dry_run=args.dry_run))
@@ -1030,6 +1076,7 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 f"exit={exit_code} {item['duration-ms']}ms"
             )
             print(f"  {item['command']}")
+            print(f"  log: {item['log-path']}")
             if item["stdout"]:
                 print(item["stdout"].rstrip())
             if item["stderr"]:
@@ -1102,10 +1149,11 @@ def _cmd_enforcement_install(args: argparse.Namespace) -> int:
 
 def _cmd_security_scan(args: argparse.Namespace) -> int:
     root = Path(args.path or ".").resolve()
-    findings = collect_findings(root, all_files=args.all_files)
+    skipped: list[str] = []
+    findings = collect_findings(root, all_files=args.all_files, skipped=skipped)
 
     if args.json:
-        _print_json({"findings": findings})
+        _print_json({"findings": findings, **({"machine-path-waived-files": len(skipped)} if args.all_files else {})})
     elif findings:
         for finding in findings:
             print(
@@ -1115,6 +1163,9 @@ def _cmd_security_scan(args: argparse.Namespace) -> int:
             )
     else:
         print("PASS: no security findings.")
+    if args.all_files and not args.json:
+        print(f"Machine-path check waived for {len(skipped)} file(s) under .embraion/policy.yaml "
+              "sources.external or sources.generated.")
 
     threshold = SEVERITY_ORDER[args.fail_on]
     return (
@@ -1758,6 +1809,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate.add_argument("--root")
     validate.add_argument("--json", action="store_true")
+    validate.add_argument("--strict", action="store_true",
+                          help="Report project .embraion configuration warnings as errors")
     validate.set_defaults(func=_cmd_validate)
 
     init = sub.add_parser("init", help="Add EmbrAIon to a project", description="Create a project-local .embraion/project.yaml overlay.")
@@ -1787,10 +1840,10 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Install only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     install_parser.add_argument(
@@ -1832,10 +1885,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_diff.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Diff only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     projection_diff.add_argument(
@@ -1864,10 +1917,10 @@ def build_parser() -> argparse.ArgumentParser:
     projection_verify.add_argument(
         "--component",
         action="append",
-        choices=["config", "agents", "skills", "scoped-agents", "bundle"],
+        choices=["config", "agents", "skills", "scoped-agents", "hooks", "bundle"],
         help=(
             "Verify only this projection component; repeat to select multiple. "
-            "Omit for standard components; scoped-agents requires explicit opt-in."
+            "Omit for standard components; scoped-agents and hooks require explicit opt-in."
         ),
     )
     projection_verify.add_argument(
@@ -1917,9 +1970,9 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     validation_run.add_argument("profile")
-    validation_run.add_argument("--run-id")
+    validation_run.add_argument("--run-id", help="Attach evidence to an active run and expose it to commands as EMBRAION_RUN_ID")
     validation_run.add_argument("--fail-fast", action="store_true")
-    validation_run.add_argument("--timeout", type=float)
+    validation_run.add_argument("--timeout", type=float, help="Per-command timeout in seconds; overrides the profile's timeout-seconds")
     validation_run.add_argument(
         "--param",
         action="append",
@@ -2032,6 +2085,16 @@ def build_parser() -> argparse.ArgumentParser:
     framework_verify.add_argument("path", nargs="?")
     framework_verify.add_argument("--json", action="store_true")
     framework_verify.set_defaults(func=_cmd_framework_verify)
+
+    framework_pin = framework_sub.add_parser(
+        "pin",
+        help="Print the exact pinned version and artifact lock digest",
+        description="Print framework.version and, when locked, the artifact digest; "
+        "fail on a missing or inexact pin. Reads only the local manifest.",
+    )
+    framework_pin.add_argument("path", nargs="?")
+    framework_pin.add_argument("--json", action="store_true")
+    framework_pin.set_defaults(func=_cmd_framework_pin)
 
     sync_parser = sub.add_parser("sync", help="Generate disposable host projections", description="Generate one or all supported host projections into an output directory.")
     sync_parser.add_argument(
@@ -2409,7 +2472,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--all-files",
         action="store_true",
         help="Also check every other tracked or unignored text file up to 2 MiB, such as source code, "
-        "for private keys, access tokens and machine paths",
+        "for private keys, access tokens and machine paths; skips policy external and generated paths",
     )
     scan.add_argument("--json", action="store_true")
     scan.set_defaults(func=_cmd_security_scan)
@@ -2438,7 +2501,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     native = sub.add_parser("claude-native", help="Inspect startup scoped agents and advisory callback metadata")
     native_sub = native.add_subparsers(dest="native_command", required=True)
-    native_sub.add_parser("status", help="Inspect installed scoped definitions and reported hook evidence").set_defaults(func=_cmd_claude_native)
+    native_status = native_sub.add_parser("status", help="Inspect installed scoped definitions and reported hook evidence")
+    native_status.add_argument("--require", action="append", type=_native_requirements, metavar="installed,hooks",
+                               help="Exit 1 unless these verifiable facts hold; model and effort cannot gate")
+    native_status.set_defaults(func=_cmd_claude_native)
     native_sub.add_parser("observe", help="Read a native hook event from stdin; store metadata only").set_defaults(func=_cmd_claude_native)
     native_sub.add_parser("guard", help="Validate a scoped native call or read boundary from hook stdin").set_defaults(func=_cmd_claude_native)
     native_hooks = native_sub.add_parser("install-hooks", help="Explicitly merge guard and metadata observer hooks into Claude settings")

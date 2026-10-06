@@ -46,6 +46,8 @@ Protected-path checks cover modifications, additions where relevant, deletions, 
 
 Build output or other derived files that should not be mistaken for canonical authored source.
 
+Files that `embraion install` recorded in a projection ledger under `.embraion/state/projections` also count as generated, so installed host projections need no hand-maintained entries. Explicit entries stay supported and come first. Files that a projection merges into user-owned content, `.claude/settings.json` and `.codex/config.toml` in merge mode, are not added. The ledgers are local state: a fresh checkout without them uses only the explicit entries, and `security scan --all-files` always uses only the explicit entries. `embraion policy show --json` lists the derived entries under `derived-sources.generated`, and `embraion validate` warns when Git ignores a ledger file.
+
 ### `external`
 
 Material sourced from outside the project and governed separately from project-owned source.
@@ -90,6 +92,20 @@ embraion enforcement install \
 ```
 
 See [Enforcement](../guides/enforcement.md) for the complete workflow.
+
+## Merge mode
+
+```yaml
+merge:
+  mode: human-only
+```
+
+The optional `merge.mode` selects who may merge a pull request under the [human merge rule](https://github.com/GORYNED/EmbrAIon/blob/main/core/rules/human-merge.md):
+
+- `human-only` (the default when `merge` is omitted): agents stop at a reviewable pull request and a human merges.
+- `owner-permission`: an agent may merge a pull request only with the owner's explicit permission for that pull request, after the required checks pass on its final head and the independent reviewer confirms that exact head.
+
+Auto-merge is never enabled in either mode. Any other value fails validation and projection. Host installation states the selected mode in one line of the projected Core rules (`.claude/rules/embraion-core.md`, `.github/instructions/embraion-core.instructions.md`, and the managed Codex block); run `embraion install` again after changing it, and `projection verify` reports the stale line until then.
 
 ## Policy ceilings
 

@@ -94,16 +94,20 @@ embraion install --host claude-code --component scoped-agents
 embraion projection verify --host claude-code --component agents --component skills --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
+embraion projection verify --host claude-code --component hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
 
-Installation adds separate hash-named `.claude/agents/embraion--*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions.
+`--require` makes the status usable as a CI gate: it exits 1 when the projection is missing or stale or required hooks are absent. Model and effort cannot be required, because no file or hook payload proves them; see the [CLI reference](../reference/cli.md#embraion-claude-native).
+
+Installation adds separate hash-named `.claude/agents/embraion--*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions. The `embraion--` prefix is reserved for this projection: with `scoped-agents` selected, `projection diff` and `projection verify` report any `.claude/agents/embraion--*.md` file the current projection would not produce as `obsolete-modified`, even without a local ownership ledger (for example in a clean clone or CI). Such files lack ownership evidence, so `--prune` keeps them; delete them after review.
 
 Start a **new working Thread** attached to this checkout after setup. Each local/cloud checkout needs its own version and projection verification. An old worktree retains its old framework pin; a global launcher update does not migrate it. Resolve each assignment through the project resolver. Dispatch discovers the configured native binding. Invoke the returned hash-named type in the active registry without a model override. File presence is not registry loading. An absent or stale type remains a handoff limitation; separate CLI authentication is not a prerequisite for a correctly loaded native Agent.
 
 ## Native hooks and evidence
 
-Hook installation is explicit and merges only EmbrAIon's exact entries into `.claude/settings.json`, preserving unrelated settings and hooks. It refuses malformed settings or a changed conflicting entry. Host trust, hook support and a working `embraion` command still need verification in each surface.
+Hook installation is explicit and merges only EmbrAIon's exact entries into `.claude/settings.json`, preserving unrelated settings and hooks. It refuses malformed settings or a changed conflicting entry, even with `--force`. `install-hooks` installs the `hooks` projection component (`embraion install --host claude-code --component hooks`), which records the managed entries in the projection ledger, so `projection verify --host claude-code --component hooks` reports a missing or changed entry as drift. A managed entry from an earlier release that is still unchanged is replaced on the next installation. Host trust, hook support and a working `embraion` command still need verification in each surface.
 
 The PreToolUse guard refuses configured base-agent calls, stale scoped types, invocation model overrides, and explicit isolation/resume settings whose definition propagation or reuse is unverified. It verifies definition identity and bytes; it does not prove fresh task classification or critical justification, which still require canonical dispatch before invocation. With `read-policy`, it also confines scoped read/search tools to the project and rejects protected source paths or searches that can traverse them. This uses the project's current policy patterns; it does not change source classification or make unclassified data safe. It does not sandbox parent tools, arbitrary agents or shell access. The parent must still follow source-authority instructions and pass eligible bounded context.
 

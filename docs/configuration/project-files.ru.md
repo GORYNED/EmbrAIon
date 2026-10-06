@@ -59,6 +59,7 @@ slots:
   persistence:
   engineering-workflow:
   specification:
+  deferred-tasks:
 ```
 
 Проект связывает только те slots, которыми реально владеет:
@@ -242,6 +243,8 @@ GitHub Copilot .github/agents/<id>.agent.md
 Claude Code    .claude/agents/<id>.md
 ```
 
+Профиль каждого project agent содержит объединённые `triggers` и `outputs`. Если объявлен хотя бы один project agent, projected skill `orchestration` получает компактный раздел `Project specialists`: ID, наследуемая роль Core, purpose, а также triggers и outputs, объявленные проектом, чтобы Lead знал, когда делегировать. Профили ролей Core не меняются; без project agents раздел не создаётся.
+
 ## Опциональный `.embraion/execution.yaml`
 
 Проекты с `embraion execute` могут объявить reviewed executable bindings. Они связывают deployments с adapter и ограничивают selector/provider, credential references, source IDs, trust levels, aliases, timeout/options ceilings и observed model/provider evidence.
@@ -271,6 +274,10 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 
 Схема v1 может читать устаревшие декларации `builtin:unity` для диагностики, но пакет больше не поставляется. Явно удалите такую запись перед установкой для выбранного хоста или обновлением; нужную замену сначала установите независимо через хост. См. [Внешние возможности](capabilities.ru.md).
 
+## Опциональный `.embraion/integrations.yaml`
+
+Строгий версионированный файл объявляет MCP servers, которые должна содержать host configuration проекта: `id`, `host`, `command`, `args`, `transport`, `access`, **имена** environment variables и опциональный `portable`. По умолчанию файла нет, и сравнение integrations не выполняется. Если файл есть, `embraion security scan` сообщает об отсутствующих, неожиданных, расходящихся и непереносимых servers как о high-severity findings `integration-drift`. См. [Объявленные integrations](../security.ru.md#integrations).
+
 ## Опциональный `.embraion/knowledge-maintenance.yaml`
 
 Задайте связи документов и исходных файлов, затем после проверки явно запустите `embraion knowledge snapshot --path .`. `embraion knowledge audit --path .` сравнивает локальные хеши и показывает изменённые или отсутствующие источники для проверки. Команда не переписывает документы и не выводит изменение внешней версии без наблюдаемых metadata. См. [Поддержка знаний](../guides/knowledge-maintenance.md).
@@ -278,6 +285,19 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 ## Опциональный `.embraion/organization.yaml`
 
 Проект может задать ограничения на организацию кода. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` проверяет изменения постепенно. Старые нарушения не освобождают новый код от правил. См. [Организация кода](organization.md).
+
+## Опциональный `.embraion/skills/`
+
+Собственные skills проекта используют layout Core: один каталог на skill с entry point `SKILL.md`.
+
+```text
+.embraion/skills/<name>/SKILL.md
+.embraion/skills/<name>/references/...   # необязательные вспомогательные файлы
+```
+
+Component `skills` проецирует их рядом со skills Core для Codex (`.agents/skills/`), GitHub Copilot (`.github/skills/`) и Claude Code (`.claude/skills/`). Файлы записываются в projection ownership ledger, поэтому `projection diff` и `projection verify` показывают изменённые копии как conflicts, а удалённые skills как obsolete; `install --prune` удаляет неизменённые obsolete-копии. Portable bundle остаётся только Core.
+
+Projection завершается ошибкой до записи, если запись не является каталогом skill, имя не в lowercase kebab-case (не длиннее 64 символов), имя совпадает со skill Core, нет `SKILL.md`, в его front matter нет совпадающего `name` или непустого `description`, либо skill содержит символическую ссылку.
 
 ## Project settings не должны переопределять Core
 
@@ -321,6 +341,8 @@ Projection ownership ledgers также находятся в `.embraion/state/p
 ```
 
 Для изменения policy, knowledge, validation или routing редактируйте канонический `.embraion/` file, а не generated projection.
+
+Projected host guidance ссылается на файлы Core, которых нет в consuming project (например, worktree workflow), через release tag EmbrAIon для projected framework version.
 
 См. [Разговорную настройку](ai-hosts.md).
 

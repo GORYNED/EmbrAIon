@@ -144,5 +144,76 @@ class ClaudeHookInstallationTests(unittest.TestCase):
                 hook_project(payload)
 
 
+class ClaudeNativeStatusGateTests(unittest.TestCase):
+    def setUp(self):
+        import os
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name)
+        init_project(self.project, name="StatusGate")
+        write_yaml(self.project / ".embraion/routing.yaml", {
+            "overrides": {"claude-code": {"routes": {
+                "complex": {"model": "claude-opus-5-5", "effort": "high"}}}}})
+        write_yaml(self.project / ".embraion/claude-native.yaml", {
+            "bindings": {"reviewer": "reviewer"}, "assignments": [
+                {"role": "reviewer", "route-class": "complex", "data-class": "PRIVATE", "access": "review"}]})
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+
+    def run_status(self, *arguments):
+        import io
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+             patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+            try:
+                code = main(["claude-native", "status", *arguments])
+            except SystemExit as error:
+                code = error.code
+        return code, stdout.getvalue(), stderr.getvalue()
+
+    def test_default_status_is_unchanged_and_never_gates(self):
+        code, stdout, _ = self.run_status()
+        self.assertEqual(0, code)
+        report = json.loads(stdout)
+        self.assertEqual("missing", report["installation"])
+        self.assertNotIn("gate", report)
+
+    def test_required_installation_and_hooks_gate_the_exit_code(self):
+        code, stdout, _ = self.run_status("--require", "installed,hooks")
+        self.assertEqual(1, code)
+        self.assertEqual({"required": ["installed", "hooks"], "failed": ["installed", "hooks"],
+                          "status": "failed"}, json.loads(stdout)["gate"])
+        install("claude-code", self.project, components=["scoped-agents"])
+        code, stdout, _ = self.run_status("--require", "installed")
+        self.assertEqual(0, code)
+        self.assertEqual("passed", json.loads(stdout)["gate"]["status"])
+        code, stdout, _ = self.run_status("--require", "installed", "--require", "hooks")
+        self.assertEqual(1, code)
+        self.assertEqual(["hooks"], json.loads(stdout)["gate"]["failed"])
+        install_observer_hooks(self.project)
+        code, stdout, _ = self.run_status("--require", "installed,hooks")
+        self.assertEqual(0, code)
+        report = json.loads(stdout)
+        self.assertEqual([], report["gate"]["failed"])
+        # Passing the gate never upgrades unverifiable facts.
+        self.assertEqual("unverified", report["model"])
+        self.assertEqual("unverified", report["effort"])
+        (self.project / ".claude/embraion-native.json").write_text("{}", encoding="utf-8")
+        code, stdout, _ = self.run_status("--require", "installed,hooks")
+        self.assertEqual(1, code)
+        self.assertEqual("stale", json.loads(stdout)["installation"])
+        self.assertEqual(["installed"], json.loads(stdout)["gate"]["failed"])
+
+    def test_unverifiable_or_unknown_requirements_are_refused(self):
+        for value in ("model", "effort", "installed,execution", "callbacks", "loaded", "", "installed,"):
+            with self.subTest(value=value):
+                code, stdout, stderr = self.run_status("--require", value)
+                self.assertEqual(2, code)
+                self.assertEqual("", stdout)
+        _, _, stderr = self.run_status("--require", "model")
+        self.assertIn("cannot verify", stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

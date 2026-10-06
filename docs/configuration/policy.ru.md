@@ -46,6 +46,8 @@ Protected-path checks учитывают modifications, additions где при�
 
 Build output и другие derived files, которые не должны восприниматься как canonical authored source.
 
+Файлы, которые `embraion install` записал в журнал projection в `.embraion/state/projections`, тоже считаются generated, поэтому для установленных projection хостов не нужны записи, которые ведутся вручную. Явные записи по-прежнему поддерживаются и идут первыми. Файлы, которые projection сливает с пользовательским содержимым, `.claude/settings.json` и `.codex/config.toml` в merge mode, не добавляются. Журналы являются локальным состоянием: в новом checkout без них действуют только явные записи, а `security scan --all-files` всегда использует только явные записи. `embraion policy show --json` показывает выведенные записи в `derived-sources.generated`, а `embraion validate` предупреждает, если Git игнорирует файл из журнала.
+
 ### `external`
 
 Материалы из внешнего источника, управляемые отдельно от project-owned source.
@@ -88,6 +90,20 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 ```
 
 Полный процесс — в [Enforcement](../guides/enforcement.md).
+
+## Режим merge
+
+```yaml
+merge:
+  mode: human-only
+```
+
+Необязательный `merge.mode` определяет, кто может выполнить merge pull request по [правилу human merge](https://github.com/GORYNED/EmbrAIon/blob/main/core/rules/human-merge.md):
+
+- `human-only` (по умолчанию, если `merge` не задан): агенты останавливаются на pull request, готовом к review, а merge выполняет человек.
+- `owner-permission`: агент может выполнить merge pull request только с явного разрешения владельца для этого pull request, после того как required checks прошли на его финальном head и независимый reviewer подтвердил именно этот head.
+
+Auto-merge не включается ни в одном режиме. Любое другое значение не проходит validation и projection. Установка хоста указывает выбранный режим одной строкой в projected Core rules (`.claude/rules/embraion-core.md`, `.github/instructions/embraion-core.instructions.md` и managed-блок Codex); после изменения снова выполните `embraion install`, до этого `projection verify` сообщает об устаревшей строке.
 
 ## Policy ceilings
 

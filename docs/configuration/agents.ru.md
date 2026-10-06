@@ -60,6 +60,8 @@ GitHub Copilot .github/agents/<id>.agent.md
 Claude Code    .claude/agents/<id>.md
 ```
 
+Профиль каждого project specialist содержит его `triggers` и `outputs`, а projected skill `orchestration` перечисляет project specialists в компактном разделе `Project specialists`, чтобы Lead знал, когда делегировать. Без объявленных specialists ничего не добавляется.
+
 `embraion sync` без consuming project остаётся Core-only и не придумывает project specialists.
 
 В Codex component `config` также проецирует Lead orchestration в корневой `developer_instructions`, а `agents` предоставляет specialist files. Generated Codex role files не содержат model/effort, чтобы native spawn применял resolved assignment choice. Host-default задания используют Codex defaults или inheritance. Trust, permissions, инструкции более высокого приоритета и host capabilities определяют исполнение guidance; static files не гарантируют delegation и не заменяют исполняемые evidence gates. Merge ownership и host limits описаны в [Codex](../hosts/codex.md).

@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from embraion import __version__
 from embraion.common import read_yaml, write_yaml
 from embraion.enforcement import (
     GITHUB_ACTIONS_PATH,
@@ -252,6 +253,10 @@ class EnforcementTests(unittest.TestCase):
             )
             self.assertIn("persist-credentials: false", workflow_text)
             self.assertIn(".commit_id == $head", workflow_text)
+            # The reusable setup action reads and installs the pin; no literal package pin.
+            self.assertIn(f"uses: GORYNED/EmbrAIon/actions/setup@v{__version__}", workflow_text)
+            self.assertNotIn("embraion==", workflow_text)
+            self.assertNotIn("pip install", workflow_text)
 
             status = enforcement_status(project)
             self.assertTrue(
@@ -265,6 +270,21 @@ class EnforcementTests(unittest.TestCase):
                     surface="github-actions",
                     project=project,
                 )
+
+    def test_github_actions_surface_refuses_inexact_pin_before_writing(self) -> None:
+        for version in ("latest", ">=1", "1.2", "1.2.3; curl", ""):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as temporary:
+                project = Path(temporary)
+                init_project(project, name="Consumer")
+                manifest = read_yaml(project / ".embraion/project.yaml")
+                manifest["framework"]["version"] = version
+                manifest["framework"].pop("artifact", None)
+                write_yaml(project / ".embraion/project.yaml", manifest)
+                policy = (project / ".embraion/policy.yaml").read_bytes()
+                with self.assertRaisesRegex(RuntimeError, "framework.version"):
+                    install_enforcement_surface(surface="github-actions", project=project)
+                self.assertFalse((project / GITHUB_ACTIONS_PATH).exists())
+                self.assertEqual(policy, (project / ".embraion/policy.yaml").read_bytes())
 
 
 if __name__ == "__main__":

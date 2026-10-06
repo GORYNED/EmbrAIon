@@ -248,6 +248,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         "pricing.yaml": root / "schemas/pricing-config.schema.json",
         "pricing.snapshot.json": root / "schemas/pricing-snapshot.schema.json",
         "external-capabilities.yaml": root / "schemas/external-capabilities.schema.json",
+        "integrations.yaml": root / "schemas/integrations.schema.json",
         "organization.yaml": root / "schemas/organization.schema.json",
         "knowledge-maintenance.yaml": root / "schemas/knowledge-audit.schema.json",
     }
@@ -326,9 +327,10 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                         optional_data = (read_json(optional_manifest) if optional_name.endswith(".json")
                                          else read_yaml(optional_manifest))
                         messages = _schema_errors(optional_data, optional_schema)
-                        if optional_name == "external-capabilities.yaml" and messages:
+                        if optional_name in {"external-capabilities.yaml", "integrations.yaml"} and messages:
                             # Schema messages may contain user-supplied credential values.
-                            add("project-schema", optional_relative, "Invalid external capability metadata")
+                            add("project-schema", optional_relative, "Invalid external capability metadata"
+                                if optional_name == "external-capabilities.yaml" else "Invalid integration declarations")
                         else:
                             for message in messages:
                                 add("project-schema", optional_relative, message)
@@ -620,4 +622,188 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     f"{message}; legacy token is still present",
                 )
 
+    return issues
+
+
+# Consumer `.embraion/*.yaml` files EmbrAIon reads, with the schema that governs each one.
+PROJECT_CONFIG_SCHEMAS = {
+    "project.yaml": "project",
+    "routing.yaml": "routing",
+    "deployments.yaml": "deployments",
+    "policy.yaml": "policy",
+    "knowledge.yaml": "knowledge",
+    "validation.yaml": "validation",
+    "agents.yaml": "agents",
+    "execution.yaml": "execution-config",
+    "pricing.yaml": "pricing-config",
+    "external-capabilities.yaml": "external-capabilities",
+    "organization.yaml": "organization",
+    "knowledge-maintenance.yaml": "knowledge-audit",
+    "claude-native.yaml": "claude-native",
+    "report.yaml": "report",
+    "integrations.yaml": "integrations",
+}
+_ORGANIZATION_ROOT_SECTIONS = ("assemblies", "unity_meta", "filenames")
+
+
+def _resolve_schema(schema: Any, document: dict[str, Any]) -> Any:
+    """Follow local `$ref`s, keeping sibling keywords next to a reference."""
+    for _ in range(16):
+        if not isinstance(schema, dict) or not str(schema.get("$ref", "")).startswith("#/"):
+            return schema
+        target: Any = document
+        for part in schema["$ref"][2:].split("/"):
+            target = target.get(part) if isinstance(target, dict) else None
+        if not isinstance(target, dict):
+            return {}
+        schema = {**target, **{key: value for key, value in schema.items() if key != "$ref"}}
+    return {}
+
+
+def _allows_null(schema: Any) -> bool:
+    if not isinstance(schema, dict):
+        return schema is True
+    kind = schema.get("type")
+    if kind == "null" or (isinstance(kind, list) and "null" in kind):
+        return True
+    return any(_allows_null(branch) for key in ("oneOf", "anyOf")
+               for branch in schema.get(key) or [])
+
+
+def _key_findings(value: Any, schema: Any, document: dict[str, Any], location: str,
+                  depth: int = 0) -> list[tuple[str, str]]:
+    """Report unknown keys and null sections at the top level and one section level down.
+
+    Only levels that declare ``properties`` are checked. Where ``additionalProperties`` is a schema,
+    other keys are user-named entries, not unknown keys.
+    """
+    schema = _resolve_schema(schema, document)
+    if not isinstance(value, dict) or not isinstance(schema, dict):
+        return []
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return []
+    entries = schema.get("additionalProperties")
+    patterns = [str(pattern) for pattern in schema.get("patternProperties") or {}]
+    findings: list[tuple[str, str]] = []
+    for key, child in value.items():
+        name = f"{location}{key}"
+        declared = properties.get(key) if isinstance(key, str) else None
+        if declared is None and isinstance(entries, dict):
+            if child is None and not _allows_null(_resolve_schema(entries, document)):
+                findings.append(("config-inert", f"'{name}' is empty and has no effect"))
+            continue
+        if declared is None or declared is False:
+            if not any(re.search(pattern, str(key)) for pattern in patterns):
+                findings.append(("config-unknown-key", f"'{name}' is not a known key here"))
+            continue
+        declared = _resolve_schema(declared, document)
+        if child is None and not _allows_null(declared):
+            findings.append(("config-inert", f"'{name}' is empty and has no effect"))
+        elif depth == 0:
+            findings.extend(_key_findings(child, declared, document, f"{name}.", depth + 1))
+    return findings
+
+
+def _knowledge_findings(project: Path, data: dict[str, Any], known_roles: set[str]) -> list[tuple[str, str]]:
+    slots = data.get("slots")
+    entries = [(f"slots.{slot}", value) for slot, value in slots.items()
+               if value is not None] if isinstance(slots, dict) else []
+    entries += [(str(key), value) for key, value in data.items() if key != "slots"]
+    findings: list[tuple[str, str]] = []
+    for name, value in entries:
+        roles = value.get("roles") if isinstance(value, dict) else None
+        for role in roles if isinstance(roles, list) else []:
+            if isinstance(role, str) and role not in known_roles:
+                findings.append(("config-role", f"knowledge '{name}' role '{role}' matches no Core role "
+                                                "or declared agent"))
+        relative = value.get("path") if isinstance(value, dict) else value
+        if not isinstance(relative, str) or not relative:
+            continue
+        target = (project / relative).resolve()
+        try:
+            target.relative_to(project.resolve())
+        except ValueError:
+            findings.append(("config-path", f"knowledge '{name}' points outside the project"))
+            continue
+        if not target.is_file():
+            findings.append(("config-path", f"knowledge '{name}' points to a missing file: {relative}"))
+    return findings
+
+
+def _organization_findings(project: Path, data: dict[str, Any]) -> list[tuple[str, str]]:
+    findings: list[tuple[str, str]] = []
+    for section in _ORGANIZATION_ROOT_SECTIONS:
+        config = data.get(section)
+        roots = config.get("roots") if isinstance(config, dict) else None
+        for root in roots if isinstance(roots, list) else []:
+            # Organization roots are path prefixes; wildcard text cannot be resolved here.
+            if not isinstance(root, str) or root.rstrip("/") in ("", ".") or any(c in root for c in "*?"):
+                continue
+            if not (project / root).is_dir():
+                findings.append(("config-path", f"{section}.roots entry '{root}' does not exist"))
+    return findings
+
+
+def _known_roles(root: Path, project: Path) -> set[str]:
+    roles: set[str] = set()
+    for path in sorted((root / "core/agents").glob("*.yaml")):
+        try:
+            data = read_yaml(path)
+        except Exception:
+            continue
+        if isinstance(data, dict) and isinstance(data.get("id"), str):
+            roles.add(data["id"])
+    try:
+        agents = (read_yaml(project / ".embraion" / "agents.yaml") or {}).get("agents") or []
+    except Exception:
+        agents = []
+    if isinstance(agents, list):
+        roles.update(item["id"] for item in agents
+                     if isinstance(item, dict) and isinstance(item.get("id"), str))
+    return roles
+
+
+def collect_project_config_issues(project: Path, root: Path) -> list[dict[str, str]]:
+    """Structural findings for a consumer's `.embraion/*.yaml`, reported as warnings.
+
+    Full schema conformance stays with the commands that load each file; these checks report
+    keys, paths, roles and empty content that a schema accepts or a loader silently ignores.
+    """
+    issues: list[dict[str, str]] = []
+    directory = project / ".embraion"
+
+    def add(code: str, name: str, message: str) -> None:
+        issues.append({"severity": "warning", "code": code, "path": f".embraion/{name}", "message": message})
+
+    known_roles = _known_roles(root, project)
+    for path in sorted(directory.iterdir()) if directory.is_dir() else []:
+        name = path.name
+        if path.suffix not in {".yaml", ".yml"} or not path.is_file():
+            continue
+        if name not in PROJECT_CONFIG_SCHEMAS:
+            add("config-inert", name, "EmbrAIon does not read this file")
+            continue
+        try:
+            data = read_yaml(path)
+        except Exception:
+            add("config-parse", name, "File is not valid YAML")
+            continue
+        if data is None or data == {}:
+            add("config-inert", name, "File is empty and has no effect")
+            continue
+        if not isinstance(data, dict):
+            add("config-parse", name, "Expected a mapping at the top level")
+            continue
+        findings: list[tuple[str, str]] = []
+        schema_path = root / "schemas" / f"{PROJECT_CONFIG_SCHEMAS[name]}.schema.json"
+        if schema_path.is_file():
+            schema = read_json(schema_path)
+            findings += _key_findings(data, schema, schema, "")
+        if name == "knowledge.yaml":
+            findings += _knowledge_findings(project, data, known_roles)
+        elif name == "organization.yaml":
+            findings += _organization_findings(project, data)
+        for code, message in findings:
+            add(code, name, message)
     return issues

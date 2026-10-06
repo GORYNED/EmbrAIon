@@ -58,6 +58,8 @@ embraion enforcement install \
 
 и включает соответствующий блок policy проекта.
 
+Workflow устанавливает EmbrAIon через переиспользуемый action `GORYNED/EmbrAIon/actions/setup` версии, которая его создала. Во время запуска action читает project pin и устанавливает ровно эту release, проверяя digest артефакта, если pin закреплён lock, поэтому после `embraion update` workflow править не нужно. Если pin отсутствует или неточен, установка отказывает до записи файлов. См. [Consumer CI](../reference/runtime-version-resolution.ru.md#consumer-ci).
+
 Существующий workflow с другим содержимым не заменяется молча; намеренная замена требует `--force`.
 
 ## Что проверяет gate
