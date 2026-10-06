@@ -42,6 +42,8 @@ Host всё ещё может глобально отключить repository i
 
 Generated `tools` — allowlist инструментов, доступных на активной Copilot surface. EmbrAIon может запрашивать aliases `read`, `search`, `edit`, `execute`, но не обещает, что host реально предоставляет каждый alias в каждом custom-subagent context.
 
+Component `skills` также записывает `.github/instructions/embraion-core.instructions.md` с `applyTo: "**"`, поэтому все правила Core прикладываются к каждому запросу как repository instruction file.
+
 Skills в `.github/skills/` проецируются как root/session procedural capabilities. Adapter не обещает автоматическое inheritance этих skills каждым custom subagent, пока GitHub не предоставляет такой contract и EmbrAIon явно его не конфигурирует.
 
 ## Routing

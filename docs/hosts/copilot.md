@@ -40,6 +40,8 @@ Generated Copilot agent profiles opt into repository instructions with `include-
 
 The generated `tools` field is an allowlist over tools available on the active Copilot surface. EmbrAIon can request aliases such as `read`, `search`, `edit`, and `execute`, but does not treat every requested alias as a guarantee that the host exposes a corresponding effective tool in every custom-subagent context.
 
+The `skills` component also writes `.github/instructions/embraion-core.instructions.md` with `applyTo: "**"`, so every Core rule is attached to each request as a repository instruction file.
+
 Skills under `.github/skills/` are projected as root/session procedural capabilities. The Copilot adapter does not promise automatic skill inheritance by every custom subagent unless GitHub exposes and EmbrAIon explicitly configures such a delivery contract.
 
 ## Routing

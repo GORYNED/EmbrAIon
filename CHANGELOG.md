@@ -4,6 +4,8 @@
 
 ### Added
 
+- Core rules reach every host at startup: `.claude/rules/embraion-core.md` for Claude Code, `.github/instructions/embraion-core.instructions.md` with `applyTo: "**"` for Copilot (both owned by the `skills` component), and the managed Codex `developer_instructions` block. Previously only the portable bundle carried the rule texts.
+- Core rules for progress checklists and stage updates, reminders of a project's deferred tasks, compatibility that stays unresolved until verified with source and persisted-data compatibility reported separately, and no real user, customer, or device data in pull requests, issues, commits, chat, or reports.
 - Organization `filenames` checks: files under `roots` (`.` for the whole repository) with a listed extension need lowercase kebab-case stems with an optional numeric version (`filename_style`, `filename_extension_case`), and case-only path collisions are reported (`filename_collision`). Ecosystem and host basenames, host-native suffixes in their folders, reserved scoped Claude profiles, and dot-prefixed names are exempt; `allow` and `suffixes` extend them.
 - Organization `unity_meta.require_for_all` requires an adjacent `.meta` for every file under its roots, and `unity_meta.check_orphans` reports `.meta` files without an asset file or folder (`meta_orphan`). `embraion organization check --require-config` fails instead of skipping when the configuration is missing.
 - `embraion security scan` reports provider-prefixed access tokens as `access-token` (high) and home-directory machine paths as `machine-path` (medium); `security redact` and evidence redaction replace bare prefixed tokens with `<REDACTED:access-token>`.

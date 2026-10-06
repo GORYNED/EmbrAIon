@@ -45,7 +45,7 @@ Lead handles trivial work directly and proactively selects the smallest useful r
 
 Codex must load and trust the project configuration for this guidance to apply. Host capabilities, permissions, native limits, and higher-priority instructions still govern execution. Generated instructions guide orchestration; static TOML cannot guarantee delegation or enforce validation and review by itself.
 
-The `skills` component also includes the canonical `orchestration` skill with the generated Core Lead contract. Copilot and Claude Code skill projections include the Core contract and their own native guidance; Portable includes only the canonical contract. The host selects skill loading. Codex's root `developer_instructions` additionally supplies guidance without relying on skill selection.
+The `skills` component also includes the canonical `orchestration` skill with the generated Core Lead contract. Copilot and Claude Code skill projections include the Core contract and their own native guidance; Portable includes only the canonical contract. The host selects skill loading. Codex's root `developer_instructions` additionally supplies guidance and every Core rule without relying on skill selection.
 
 ## Config ownership
 
