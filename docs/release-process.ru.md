@@ -23,6 +23,8 @@ Release commit использует точное сообщение:
 release: vX.Y.Z
 ```
 
+У squash-коммита нет тела: перед слиянием очистите описание по умолчанию, включая строки `Co-authored-by`. Иначе release workflow остановится до создания tag, и ничего не будет опубликовано.
+
 До создания tag CI проверяет:
 
 - Linux, Windows и macOS compatibility;
