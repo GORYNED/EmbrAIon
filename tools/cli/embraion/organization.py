@@ -34,7 +34,8 @@ CANONICAL_BASENAMES = frozenset({
 HOST_SUFFIXES = ((".github/agents", ".agent.md"), (".github/instructions", ".instructions.md"),
                  (".github/prompts", ".prompt.md"))
 # EmbrAIon's generated scoped Claude profiles use a reserved double-hyphen namespace.
-SCOPED_PROFILE = re.compile(r"^\.claude/agents/embraion--[a-z0-9]+(?:-[a-z0-9]+)*-[0-9a-f]{12}\.md$")
+# The grammar matches the scoped-agent name check in the projection generator.
+SCOPED_PROFILE = re.compile(r"^\.claude/agents/embraion--[a-z0-9][a-z0-9-]*[a-z0-9]\.md$")
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -226,11 +227,14 @@ def _names_worktree(root: Path) -> set[str]:
     """Return tracked and unignored untracked files that exist in the working tree."""
     try:
         raw = _git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard")
-    except RuntimeError:
-        names = set()
+    except (RuntimeError, OSError):
+        # Outside Git there is no ignore information; skip the same tool trees as the source scan.
+        names: set[str] = set()
         for directory, dirs, files in os.walk(root, followlinks=False):
-            dirs[:] = [name for name in dirs if name != ".git"]
+            dirs[:] = [name for name in dirs if name not in {".git", ".venv", "node_modules", "Library", "Temp"}]
             names.update((Path(directory) / name).relative_to(root).as_posix() for name in files)
+            if len(names) > MAX_FILES:
+                raise RuntimeError(f"Organization scan exceeds {MAX_FILES} files")
         return {path for path in names if _safe(path)}
     return {path for path in raw.decode("utf-8", "surrogateescape").split("\x00")
             if _safe(path) and os.path.lexists(root / path)}
@@ -283,13 +287,13 @@ def _filenames(names: set[str], config: dict[str, Any], issues: list[dict[str, s
         parent = str(PurePosixPath(path).parent)
         if name in allowed or name.startswith(".") or SCOPED_PROFILE.match(path):
             continue
+        extension = PurePosixPath(name).suffix
+        if extension.lower() not in extensions:
+            continue
         suffix = next((s for folder, s in suffixes if parent == folder and name.endswith(s)), None)
         if suffix is not None:
             if not FILENAME_STEM.match(name[:-len(suffix)]):
                 issues.append(_finding("filename_style", path, f"Identifier before {suffix} is not lowercase kebab-case"))
-            continue
-        extension = PurePosixPath(name).suffix
-        if extension.lower() not in extensions:
             continue
         if extension != extension.lower():
             issues.append(_finding("filename_extension_case", path, "Filename extension is not lowercase"))
@@ -527,7 +531,8 @@ def _checks(files: dict[str, bytes], config: dict[str, Any], seed: list[dict[str
     _assemblies(files, config, issues, identities)
     if meta and meta.get("enabled", True):
         extensions = set(meta.get("require_for_extensions", []))
-        inventory = names if names is not None else files
+        # The inventory omits ignored files that the source scan may still contain.
+        inventory = set(files) | names if names is not None else files
         for path in files:
             if meta.get("require_for_all") and names is not None:
                 break
@@ -612,7 +617,8 @@ def check_organization(project: Path | None = None, *, base_ref: str | None = No
     config = _read_config(root, path)
     if config is None:
         if require_config:
-            return {"status": "failed", "passed": False, "reason": "No .embraion/organization.yaml",
+            missing = path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)
+            return {"status": "failed", "passed": False, "reason": f"No {missing}",
                     "findings": [], "counts": {"new": 0, "preexisting": 0}}
         return {"status": "skipped", "passed": True, "reason": "No .embraion/organization.yaml", "findings": [], "counts": {"new": 0, "preexisting": 0}}
     if base_ref is None:

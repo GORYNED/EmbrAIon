@@ -44,10 +44,10 @@ embraion mcp inventory
 | `private-key` | critical | заголовок PEM private key |
 | `api-key` | high | key, secret, token или password с литеральным значением |
 | `access-token` | high | token с префиксом provider без ключа перед ним: GitHub classic и fine-grained (`ghp_…`, `github_pat_…`), cloud access key IDs (`AKIA…`), ключи model providers (`sk-…`), Google API keys (`AIza…`) и Slack tokens (`xox…`) |
-| `machine-path` | medium | путь к домашнему каталогу, например `/Users/<name>/`, `/home/<name>/` или `C:\Users\<name>\` |
+| `machine-path` | medium | путь к домашнему каталогу, например `/Users/<name>/`, `/home/<name>/` или `C:\Users\<name>\` (также с прямыми слешами или экранированными в JSON обратными) |
 | `policy-drift` | medium | устаревшее имя data class, которое не объявлено execution alias |
 
-Домашние каталоги CI runner и имена-заполнители вроде `user`, `example` или `<name>` не считаются machine paths. Finding `machine-path` ниже порога по умолчанию `--fail-on high`; чтобы он приводил к ошибке, передайте `--fail-on medium`. `embraion security redact` и redaction evidence заменяют отдельный token с префиксом на `<REDACTED:access-token>`.
+Тело token должно содержать цифру, поэтому идентификаторы и заполнители в документации с этими префиксами не считаются tokens. Домашние каталоги CI runner, общие каталоги и имена-заполнители вроде `user`, `example` или `<name>` не считаются machine paths. Finding `machine-path` ниже порога по умолчанию `--fail-on high`; чтобы он приводил к ошибке, передайте `--fail-on medium`. `embraion security redact` и redaction evidence заменяют отдельный token с префиксом на `<REDACTED:access-token>`.
 
 ## Канонические data classes и compatibility aliases
 

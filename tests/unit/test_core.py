@@ -378,7 +378,7 @@ class CoreTests(unittest.TestCase):
     def test_security_scanner_detects_prefixed_tokens_and_machine_paths(self) -> None:
         tokens = {
             "github": "gh" + "p_" + "A1b2" * 9,
-            "fine-grained": "github" + "_pat_" + "A1b2_" * 6,
+            "fine-grained": "github" + "_pat_" + "A1b2_C3d4" * 9,
             "cloud": "AK" + "IA" + "ABCDEFGHIJ234567",
             "model": "s" + "k-ant-" + "a1B2c3D4" * 5,
             "maps": "AI" + "za" + "SyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q",
@@ -388,13 +388,17 @@ class CoreTests(unittest.TestCase):
             for name, token in tokens.items():
                 (root / f"{name}.md").write_text(f"Use {token} here.", encoding="utf-8")
             (root / "local.md").write_text("Logs are in C:" + "\\Users\\owner\\Documents\\", encoding="utf-8")
+            (root / "forward.md").write_text("Data in C:/" + "Users/owner/AppData/", encoding="utf-8")
             (root / "placeholder.md").write_text(
-                "See /home/runner/work, /Users/<name>/, C:" + "\\Users\\%USERNAME%\\ and task-abcdefghijklmnopqrstuvwxyz0123456789.",
+                "See /home/runner/work, /Users/<name>/, /Users/Shared/, C:" + "\\Users\\%USERNAME%\\ and "
+                "task-abcdefghijklmnopqrstuvwxyz0123456789, s" + "k-build-cache-key-for-the-release-pipeline-x, "
+                "xo" + "xb-your-bot-token-goes-here, github" + "_pat_placeholder_value_in_the_documentation_page_example_text.",
                 encoding="utf-8",
             )
             findings = {(item["path"], item["category"], item["severity"]) for item in collect_findings(root)}
         self.assertEqual(
-            {(f"{name}.md", "access-token", "high") for name in tokens} | {("local.md", "machine-path", "medium")},
+            {(f"{name}.md", "access-token", "high") for name in tokens}
+            | {("local.md", "machine-path", "medium"), ("forward.md", "machine-path", "medium")},
             findings,
         )
         redacted = redact_text("token " + tokens["github"] + " and " + tokens["cloud"])

@@ -170,20 +170,29 @@ def check_policy_ceilings(project: Path | None = None) -> list[dict[str, str]]:
                 "ceiling-role", location,
                 f"Role '{role}' selects '{deployment}', outside the {provider} ceiling.",
             ))
+        if "data-classes" in ceiling:
+            findings.append(_finding(
+                "ceiling-unbounded", location,
+                f"Role '{role}' selects '{deployment}' for every data class, but the {provider} ceiling "
+                "limits data-classes; use a task-class override.",
+            ))
 
     # Host overrides select deployments for every request that matches their key,
-    # so each key is checked against the ceiling dimensions it cannot narrow.
+    # so each key must be narrow enough that every request it matches stays
+    # within the ceiling: a route class matches every role and data class, a
+    # role or route-role every data class, and a task class one of each.
     for host, overrides in sorted((routing.get("overrides") or {}).items()):
         base = f"routing.overrides.{host}"
         for route, selection in sorted((overrides.get("routes") or {}).items()):
             for deployment, provider, ceiling in selected(selection):
                 bounded = [dimension for dimension in ("roles", "data-classes") if dimension in ceiling]
                 if bounded:
+                    narrower = "task-class" if "data-classes" in bounded else "role, route-role, or task-class"
                     findings.append(_finding(
                         "ceiling-unbounded", f"{base}.routes.{route}",
                         f"Route class '{route}' selects '{deployment}' for every role and data class, "
                         f"but the {provider} ceiling limits {' and '.join(bounded)}; "
-                        "use a role, route-role, or task-class override.",
+                        f"use a {narrower} override.",
                     ))
         for role, selection in sorted((overrides.get("roles") or {}).items()):
             for deployment, provider, ceiling in selected(selection):

@@ -48,10 +48,10 @@ to inspect deterministic security and integration surfaces.
 | `private-key` | critical | a PEM private-key header |
 | `api-key` | high | a key, secret, token, or password assigned a literal value |
 | `access-token` | high | a provider-prefixed token without a key in front of it: GitHub classic and fine-grained (`ghp_…`, `github_pat_…`), cloud access key IDs (`AKIA…`), model-provider keys (`sk-…`), Google API keys (`AIza…`), and Slack tokens (`xox…`) |
-| `machine-path` | medium | a home-directory path such as `/Users/<name>/`, `/home/<name>/`, or `C:\Users\<name>\` |
+| `machine-path` | medium | a home-directory path such as `/Users/<name>/`, `/home/<name>/`, or `C:\Users\<name>\` (also with forward slashes or JSON-escaped backslashes) |
 | `policy-drift` | medium | a legacy data-class name that no execution alias declares |
 
-CI runner homes and placeholder names such as `user`, `example`, or `<name>` are not machine paths. A `machine-path` finding stays below the default `--fail-on high`; pass `--fail-on medium` to make it fail. `embraion security redact` and evidence redaction replace a bare prefixed token with `<REDACTED:access-token>`.
+A token body must contain a digit, so identifiers and documentation placeholders with these prefixes are not reported. CI runner and shared homes and placeholder names such as `user`, `example`, or `<name>` are not machine paths. A `machine-path` finding stays below the default `--fail-on high`; pass `--fail-on medium` to make it fail. `embraion security redact` and evidence redaction replace a bare prefixed token with `<REDACTED:access-token>`.
 
 ## Canonical data classes and compatibility aliases
 

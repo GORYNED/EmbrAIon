@@ -97,6 +97,8 @@ class ReportContractTests(unittest.TestCase):
         self.assertEqual(["workers-summary"], codes)
         summary = GOOD + "\nOne reviewer run on the routed model; accepted.\n"
         self.assertEqual([], validate_report(summary, contract))
+        attached = GOOD + "One reviewer run on the routed model; accepted.\n"
+        self.assertEqual(["workers-summary"], [issue["code"] for issue in validate_report(attached, contract)])
         self.assertIn("<compact summary of models, runs, and outcomes>", render_report_template(contract))
 
     def test_intermediate_updates_reject_workers_table_or_section(self) -> None:

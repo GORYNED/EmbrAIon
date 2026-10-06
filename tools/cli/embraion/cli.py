@@ -1202,7 +1202,8 @@ def _cmd_organization_check(args: argparse.Namespace) -> int:
     if args.json:
         _print_json(report)
     else:
-        print(f"Organization: {report['status']} ({report.get('mode', 'unconfigured')})")
+        print(f"Organization: {report['status']} ({report.get('mode', 'unconfigured')})"
+              + (f": {report['reason']}" if report.get("reason") else ""))
         for finding in report.get("findings", []):
             print(f"{finding.get('status', '')}: {finding.get('path', '')}: {finding.get('code', '')}: {finding.get('message', '')}")
     return 0 if report["passed"] else 1

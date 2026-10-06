@@ -12,7 +12,7 @@
 
 ### Changed
 
-- Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): `roles` and `route-roles` against role ceilings, `task-classes` like routing task classes, and a `routes` override that selects a deployment whose provider limits roles or data classes is `ceiling-unbounded`.
+- Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): every request an override matches must stay within the ceiling, so a `routes` override is `ceiling-unbounded` under a role or data-class ceiling, a `roles` or `route-roles` override is checked against the role ceiling and is `ceiling-unbounded` under a data-class ceiling, and `task-classes` overrides are checked like routing task classes.
 - Tests and examples no longer use consuming-project paths.
 
 ## 0.25.0 - 2026-10-06

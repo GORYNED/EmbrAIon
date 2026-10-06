@@ -234,34 +234,45 @@ class OrganizationTests(unittest.TestCase):
         for path in ("docs/coding-standard.md", "docs/migration-1.0.0.md", "docs/README.md", "docs/README_RU.md",
                      "docs/AGENTS.md", "docs/Image.PNG", "tools/.flake8", "tools/hooks/pre-commit.hook.md",
                      ".github/agents/reviewer.agent.md", ".github/workflows/validation.yml",
-                     ".claude/agents/embraion--reviewer-0123456789ab.md", "Assets/Free_Name.md"):
+                     ".claude/agents/embraion--reviewer-0123456789ab.md", ".claude/agents/embraion--reviewer.md",
+                     "tools/Other_Tool.toml", "Assets/Free_Name.md"):
             self.write(path, "x")
         self.assertTrue(check_organization(self.root)["passed"])
         self.write("docs/Coding_Standard.md", "x")
         self.write("docs/notes.MD", "x")
         self.write("tools/some.random.py", "x")
         self.write(".github/agents/Bad_Name.agent.md", "x")
-        self.write(".claude/agents/embraion--reviewer.md", "x")
+        self.write(".claude/agents/embraion--Bad_Name.md", "x")
         result = check_organization(self.root)
         self.assertEqual({
             ("filename_style", "docs/Coding_Standard.md"), ("filename_extension_case", "docs/notes.MD"),
             ("filename_style", "tools/some.random.py"), ("filename_style", ".github/agents/Bad_Name.agent.md"),
-            ("filename_style", ".claude/agents/embraion--reviewer.md"),
+            ("filename_style", ".claude/agents/embraion--Bad_Name.md"),
         }, {(item["code"], item["path"]) for item in result["findings"]})
 
-    def test_filename_case_collisions_and_incremental_baseline(self) -> None:
+    def test_filename_incremental_baseline(self) -> None:
         self.config({"filenames": {"roots": ["docs"], "extensions": [".md"]}})
         self.write("docs/Old_Name.md", "x")
         base = self.commit()
-        self.write("Assets/Readme.txt", "x")
-        self.write("Assets/README.txt", "x")
         self.write("docs/New_Name.md", "x")
         result = check_organization(self.root, base_ref=base, include_worktree=True)
         status = {(item["code"], item["path"]): item["status"] for item in result["findings"]}
-        self.assertEqual("preexisting", status[("filename_style", "docs/Old_Name.md")])
-        self.assertEqual("new", status[("filename_style", "docs/New_Name.md")])
-        self.assertIn(("filename_collision", "Assets/Readme.txt"), status)
+        self.assertEqual({("filename_style", "docs/Old_Name.md"): "preexisting",
+                          ("filename_style", "docs/New_Name.md"): "new"}, status)
         self.assertFalse(result["passed"])
+
+    def test_filename_case_collisions_in_a_commit(self) -> None:
+        # Case-insensitive file systems cannot hold both paths, so they are added to the index only.
+        self.config({"filenames": {"roots": ["docs"], "extensions": [".md"]}})
+        self.write("docs/guide.md", "x")
+        base = self.commit()
+        blob = git(self.root, "hash-object", "-w", "docs/guide.md")
+        for path in ("Assets/Readme.txt", "Assets/README.txt"):
+            git(self.root, "update-index", "--add", "--cacheinfo", f"100644,{blob},{path}")
+        git(self.root, "commit", "-m", "collision")
+        result = check_organization(self.root, base_ref=base)
+        self.assertEqual([("filename_collision", "Assets/Readme.txt", "new")],
+                         [(item["code"], item["path"], item["status"]) for item in result["findings"]])
 
     def test_meta_required_for_all_files_and_orphans(self) -> None:
         self.config({"unity_meta": {"roots": ["Assets/Project"], "require_for_all": True, "check_orphans": True}})

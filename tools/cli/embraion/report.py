@@ -199,8 +199,10 @@ def validate_report(
         if workers.get("summary"):
             for table in workers_tables:
                 last = table["line"] + 1 + len(table["rows"])
-                if not any(number > last and line.strip() and _table_cells(line) is None
-                           for number, line in body(workers_section)):
+                after = {number: line for number, line in body(workers_section) if number > last}
+                # Text directly under a table without a blank line renders as another row.
+                if after.get(last + 1, "").strip() or not any(
+                        line.strip() and _table_cells(line) is None for line in after.values()):
                     issues.append(_issue("workers-summary", table["line"],
                                          "A compact summary must follow the Workers table."))
         for table in workers_tables:

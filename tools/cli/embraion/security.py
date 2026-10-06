@@ -14,22 +14,23 @@ SEVERITY_ORDER = {
     "critical": 4,
 }
 
-# Provider-issued credentials have recognizable prefixes, so they are found
-# even without a `token=` style key in front of them.
+# Provider-issued credentials have recognizable prefixes, so they are found even without
+# a `token=` style key in front of them. Random token bodies contain digits, which keeps
+# identifiers and documentation placeholders out.
 _ACCESS_TOKEN = re.compile(
-    r"(?<![A-Za-z0-9_])(?:"
-    r"gh[pousr]_[A-Za-z0-9]{36,}"
-    r"|github_pat_[A-Za-z0-9_]{22,}"
+    r"(?<![A-Za-z0-9_-])(?:"
+    r"gh[pousr]_(?=[A-Za-z]*[0-9])[A-Za-z0-9]{36,}"
+    r"|github_pat_(?=[A-Za-z_]*[0-9])[A-Za-z0-9_]{60,}"
     r"|(?:AKIA|ASIA)[0-9A-Z]{16}"
-    r"|sk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}"
-    r"|AIza[0-9A-Za-z_-]{35}"
-    r"|xox[abprs]-[A-Za-z0-9-]{10,}"
+    r"|sk-(?:ant-|proj-)?(?=[A-Za-z_-]*[0-9])(?=[0-9a-z_-]*[A-Z])[A-Za-z0-9_-]{32,}"
+    r"|AIza(?=[A-Za-z_-]*[0-9])[0-9A-Za-z_-]{35}"
+    r"|xox[abprs]-(?=[A-Za-z-]*[0-9])[A-Za-z0-9-]{20,}"
     r")(?![A-Za-z0-9_])"
 )
 # A home directory names a person and a machine; placeholders and CI runner homes are allowed.
 _MACHINE_PATH = re.compile(
-    r"(?<![A-Za-z0-9_.])(?:/Users/|/home/|[A-Za-z]:\\Users\\)"
-    r"(?!(?:runner|user|username|example|you|me|name|USER|USERNAME)(?:[/\\]|$))"
+    r"(?<![A-Za-z0-9_.])(?:/Users/|/home/|[A-Za-z]:(?:\\{1,2}|/)Users(?:\\{1,2}|/))"
+    r"(?!(?:runner|user|username|example|you|me|name|USER|USERNAME|Shared|linuxbrew|node)(?:[/\\]|$))"
     r"(?![<$%{])[A-Za-z0-9._-]+[/\\]"
 )
 
