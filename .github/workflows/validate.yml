@@ -108,6 +108,48 @@ jobs:
           cd /tmp
           python "$TEST_FILE"
 
+  setup-action:
+    name: Setup action
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Write a consumer project locked to a published release
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/consumer/.embraion"
+          cat > "$RUNNER_TEMP/consumer/.embraion/project.yaml" <<'YAML'
+          framework:
+            repository: GORYNED/EmbrAIon
+            version: 0.26.0
+            artifact:
+              schema: 1
+              source: github-release
+              release: v0.26.0
+              asset: embraion-0.26.0-py3-none-any.whl
+              digest: sha256:490bca7603db00478d18556c64ec791d5409857f4fbbd08062c029c7a98a0bfa
+          YAML
+          echo "CONSUMER=$RUNNER_TEMP/consumer" >> "$GITHUB_ENV"
+
+      - name: Run the setup action from this checkout
+        id: setup
+        uses: ./actions/setup
+        with:
+          project-path: ${{ env.CONSUMER }}
+
+      - name: Check the installed pin
+        shell: bash
+        env:
+          INSTALLED_VERSION: ${{ steps.setup.outputs.version }}
+          INSTALLED_DIGEST: ${{ steps.setup.outputs.digest }}
+        run: |
+          test "$INSTALLED_VERSION" = "0.26.0"
+          test "$INSTALLED_DIGEST" = "sha256:490bca7603db00478d18556c64ec791d5409857f4fbbd08062c029c7a98a0bfa"
+          embraion --version
+
   compatibility:
     name: Compatibility / ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
