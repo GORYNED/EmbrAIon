@@ -28,7 +28,7 @@ embraion report validate report.md --pull-request
 embraion report validate update.md --kind intermediate
 ```
 
-A `final` report must match the contract. An `intermediate` update must not contain the Workers table or section. Fenced code blocks are ignored while parsing, so quoted examples do not count.
+A `final` report must match the contract. An `intermediate` update must not contain the Workers table or section. Section headings use ATX (`## Name`) or a bold-only line; setext underlines and a trailing colon are not recognized. Fenced code blocks are ignored while parsing, so quoted examples do not count.
 
 Validation is structural. It cannot tell whether the content is true, and it does not replace review.
 

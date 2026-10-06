@@ -72,7 +72,14 @@ def check_policy_ceilings(project: Path | None = None) -> list[dict[str, str]]:
     def check_task_class(ceiling: dict[str, Any], name: str, location: str, provider: str) -> None:
         profile = task_classes.get(name)
         if profile is None:
-            return  # Binding entries may name route classes instead of task classes.
+            # Route-class or alias names cannot be traced to a role and data class.
+            if "data-classes" in ceiling or "roles" in ceiling:
+                findings.append(_finding(
+                    "ceiling-unbounded", location,
+                    f"'{name}' is not a routing task class, so the {provider} role and data-class "
+                    "ceilings cannot be checked; list routing task classes.",
+                ))
+            return
         data_class = profile.get("data-class") or default_data_class
         if not within(ceiling, "data-classes", [data_class]):
             findings.append(_finding(
@@ -89,6 +96,11 @@ def check_policy_ceilings(project: Path | None = None) -> list[dict[str, str]]:
     for name, definition in sorted(enabled.items()):
         provider = definition.get("provider")
         ceiling = provider_ceilings.get(provider or "")
+        if provider is None and provider_ceilings:
+            findings.append(_finding(
+                "ceiling-provider-missing", f"deployments.{name}",
+                "Enabled deployment declares no provider, so provider ceilings cannot apply.",
+            ))
         if ceiling is None:
             continue
         location = f"deployments.{name}"

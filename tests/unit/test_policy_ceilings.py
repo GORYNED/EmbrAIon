@@ -123,6 +123,14 @@ class PolicyCeilingTests(unittest.TestCase):
         self.assertIn(("ceiling-data-class-provider", "deployments.other"), codes)
         self.assertIn(("ceiling-unbounded", "deployments.other.capabilities.data-classes"), codes)
 
+    def test_unverifiable_binding_task_classes_and_missing_provider_fail(self) -> None:
+        self.edit("execution.yaml", lambda data: data["bindings"]["review-api"].update({"taskClasses": ["complex"]}))
+        self.assertIn(("ceiling-unbounded", "execution.bindings.review-api.taskClasses"), self.codes())
+        def drop(data: dict) -> None:
+            data["deployments"]["other"] = {"host": "native-host", "model": "x"}
+        self.edit("deployments.yaml", drop)
+        self.assertIn(("ceiling-provider-missing", "deployments.other"), self.codes())
+
     def test_disabled_deployments_are_ignored(self) -> None:
         def disable(data: dict) -> None:
             data["deployments"]["other"] = {"host": "native-host", "provider": "review", "model": "x", "enabled": False}

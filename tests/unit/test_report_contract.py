@@ -63,6 +63,8 @@ class ReportContractTests(unittest.TestCase):
     def test_workers_status_columns_location_and_count(self) -> None:
         self.assertEqual(["workers-task-status"], self.codes(GOOD.replace("Task status: completed\n\n", "")))
         self.assertEqual(["workers-task-status"], self.codes(GOOD.replace("completed\n", "finished\n")))
+        self.assertEqual(["workers-task-status"],
+                         self.codes(GOOD.replace("completed\n", "completed|cancelled|incomplete\n")))
         moved = GOOD.replace("Task status: completed\n\n" + TABLE, TABLE + "\nTask status: completed\n")
         self.assertEqual(["workers-task-status"], self.codes(moved))
         self.assertEqual(["workers-columns", "workers-table-count"],
@@ -96,8 +98,10 @@ class ReportContractTests(unittest.TestCase):
             write_yaml(project / ".embraion/report.yaml", CONTRACT)
             contract = read_report_contract(project)
             template = render_report_template(contract)
-            self.assertEqual([], [issue["code"] for issue in validate_report(
-                template.split("\nRules:")[0].replace("|incomplete", "") + TABLE.splitlines()[2] + "\n", contract)])
+            skeleton = template.split("\nRules:")[0]
+            self.assertIn("workers-task-status", [issue["code"] for issue in validate_report(skeleton, contract)])
+            filled = skeleton.replace("completed|cancelled|incomplete", "completed") + TABLE.splitlines()[2] + "\n"
+            self.assertEqual([], [issue["code"] for issue in validate_report(filled, contract)])
             self.assertIn("Report each external worker attempt before it starts.", template)
 
             report = project / "report.md"

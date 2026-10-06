@@ -21,7 +21,7 @@ _HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$")
 _BOLD_LINE = re.compile(r"^\s{0,3}\*\*(.+?)\*\*\s*:?\s*$")
 _FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 _SEPARATOR_CELL = re.compile(r"^:?-{3,}:?$")
-_TASK_STATUS = re.compile(r"^[\s>*_`-]*Task status[*_`]*\s*:\s*[*_`]*([A-Za-z-]+)", re.IGNORECASE)
+_TASK_STATUS = re.compile(r"^[\s>*_`-]*Task status[*_`]*\s*:\s*[*_`]*([^\s*_`]+)", re.IGNORECASE)
 _PULL_REQUEST = re.compile(r"https?://[^\s<>()\[\]]+/(?:pull|pulls|merge_requests)/\d+")
 _ABSOLUTE_PATH = re.compile(
     r"(?<![\w.])(?:[A-Za-z]:[\\/]|\\\\[\w.-]+\\|/(?:Users|home|root|tmp|var|etc|opt|mnt|private|Volumes)/)"
