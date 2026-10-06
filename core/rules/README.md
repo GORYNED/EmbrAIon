@@ -11,6 +11,9 @@ Current foundation rules are intentionally split by concern:
 - `review.md`
 - `parallelism.md`
 - `human-merge.md`
+- `authorization.md`
+- `owner-interaction.md`
+- `reporting.md`
 - `classification.md`
 - `instructions.md`
 - `integrations.md`
@@ -19,4 +22,4 @@ Current foundation rules are intentionally split by concern:
 - `learning.md`
 - `spec-kit.md`
 
-<sub>Last updated: 2026-09-23 19:34 UTC</sub>
+<sub>Last updated: 2026-10-06 02:15 UTC</sub>

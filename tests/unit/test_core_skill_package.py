@@ -17,6 +17,18 @@ from embraion.project import generate_host
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = ROOT / "evals/evolution/candidates/core-skills-package.json"
+# Catalog entries added after this package was applied. The replay removes them
+# (and restores the package-era catalog version) so the frozen package is still
+# verified byte for byte; any other catalog drift keeps failing the replay.
+LATER_CATALOG_VERSION = ("catalog-version: 9", "catalog-version: 8")
+LATER_CATALOG_ENTRIES = ("handling-review-findings", "authorization", "owner-interaction", "reporting")
+
+
+def restore_package_era_catalog(path: Path) -> None:
+    text = path.read_text(encoding="utf-8").replace(*LATER_CATALOG_VERSION)
+    kept = [line for line in text.splitlines(keepends=True)
+            if not any(line.startswith(f"  - {{ id: {entry},") for entry in LATER_CATALOG_ENTRIES)]
+    path.write_bytes("".join(kept).encode("utf-8"))
 
 
 def digest(path: Path) -> str:
@@ -41,6 +53,7 @@ class CoreSkillPackageTests(unittest.TestCase):
         for name in ("core", "adapters", "schemas", "templates"):
             shutil.copytree(ROOT / name, cls.candidate / name)
         shutil.copyfile(ROOT / "framework.yaml", cls.candidate / "framework.yaml")
+        restore_package_era_catalog(cls.candidate / "core/catalog.yaml")
         for package in cls.package["packages"]:
             if digest(ROOT / package["patch"]) != package["sha256"]:
                 raise AssertionError("proposal patch digest changed: " + package["id"])

@@ -347,6 +347,9 @@ class ProjectionPolicyTests(unittest.TestCase):
             # The pending proposal still runs against the unchanged v7 Core.
             if read_yaml(framework_root() / "core/catalog.yaml")["catalog-version"] >= 8:
                 expected_skills.add("security-assessment")
+            # Catalog v9 adds the author-side review-findings skill.
+            if read_yaml(framework_root() / "core/catalog.yaml")["catalog-version"] >= 9:
+                expected_skills.add("handling-review-findings")
 
             codex_root = project / ".codex" / "agents"
             self.assertEqual(
