@@ -26,6 +26,7 @@ from .artifacts import (
     FrameworkArtifactLock,
     download_locked_artifact,
     read_project_artifact_lock,
+    resolve_latest_release_artifact,
 )
 
 CANONICAL_REPOSITORY = "GORYNED/EmbrAIon"
@@ -36,6 +37,7 @@ DISABLE_RESOLUTION_ENV = "EMBRAION_DISABLE_VERSION_RESOLUTION"
 
 _BYPASS_COMMANDS = {"init", "update", "status", "cache", "help", "framework"}
 _VERSION_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!-]{0,127}$")
+_STABLE_VERSION_PATTERN = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 _LEGACY_DEV_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 
 _LOCK_TIMEOUT_SECONDS = 60.0
@@ -619,3 +621,76 @@ def prune_cache(
             shutil.rmtree(Path(str(item["path"])), ignore_errors=True)
 
     return candidates
+
+
+def _compare_to_latest(version: str, latest: str) -> str:
+    current = _STABLE_VERSION_PATTERN.fullmatch(version)
+    target = _STABLE_VERSION_PATTERN.fullmatch(latest)
+    if current is None or target is None:
+        return "not-comparable"
+
+    current_key = tuple(int(part) for part in current.groups())
+    target_key = tuple(int(part) for part in target.groups())
+    if current_key < target_key:
+        return "outdated"
+    if current_key > target_key:
+        return "ahead"
+    return "current"
+
+
+def update_check_report(
+    current_version: str,
+    *,
+    start: Path | None = None,
+) -> dict[str, object]:
+    """Compare the launcher and project pin with the latest release without writing files."""
+    manifest = find_project_manifest(start)
+    pin: str | None = None
+    project_version: str | None = None
+    artifact_lock: FrameworkArtifactLock | None = None
+    if manifest is not None:
+        try:
+            pin = read_project_pin(manifest)
+        except (OSError, UnicodeError, yaml.YAMLError) as error:
+            raise RuntimeError(f"Could not read EmbrAIon project manifest {manifest}: {error}") from error
+        project_version = package_version_for_pin(pin)
+        artifact_lock = read_project_artifact_lock(manifest, required=False)
+
+    latest, artifact = resolve_latest_release_artifact()
+    launcher_version = package_version_for_pin(current_version)
+    launcher_status = _compare_to_latest(launcher_version, latest)
+    project_status = (
+        _compare_to_latest(project_version, latest)
+        if project_version is not None
+        else None
+    )
+
+    actions: list[str] = []
+    if launcher_status == "outdated":
+        actions.append(
+            f"Upgrade the EmbrAIon launcher to {latest} (for example: pipx upgrade embraion)."
+        )
+    if project_status == "outdated":
+        actions.append(
+            f"Run 'embraion update' in the project with the {latest} launcher "
+            "to move the pin and artifact lock."
+        )
+    elif project_status == "current" and artifact_lock is None:
+        actions.append(
+            f"Run 'embraion update' with the {latest} launcher to record the release artifact lock."
+        )
+
+    return {
+        "launcher-version": current_version,
+        "launcher-status": launcher_status,
+        "latest-version": latest,
+        "latest-release": artifact["release"],
+        "latest-asset": artifact["asset"],
+        "latest-digest": artifact["digest"],
+        "project": str(manifest.parent.parent) if manifest is not None else None,
+        "project-pin": pin,
+        "project-status": project_status,
+        "artifact-locked": artifact_lock is not None if manifest is not None else None,
+        "update-available": launcher_status == "outdated" or project_status == "outdated",
+        "actions": actions,
+    }

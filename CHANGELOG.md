@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Read-only `embraion update --check [--json]` compares the launcher and project pin with the latest stable GitHub Release, validates that release's expected wheel and SHA-256 digest metadata, and lists the next upgrade steps without writing project files.
+
 ## 0.23.0 - 2026-10-05
 
 ### Added
