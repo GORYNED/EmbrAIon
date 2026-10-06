@@ -9,6 +9,15 @@
 
 ![Безопасное обновление](../assets/diagrams/en/11-safe-update.svg){ loading=lazy }
 
+## Проверка новой release
+
+```bash
+embraion update --check
+embraion update --check --json
+```
+
+Проверка только читает: она сравнивает launcher и pin текущего проекта с последней stable GitHub Release, проверяет, что release содержит ожидаемый wheel и SHA-256 digest, и выводит следующие шаги. Файлы проекта не меняются.
+
 ## Обычный процесс обновления
 
 Сначала обновите launcher:

@@ -141,6 +141,15 @@ embraion update
 embraion update --framework-version <published-version>
 ```
 
+Check for a newer published release without changing any file:
+
+```bash
+embraion update --check
+embraion update --check --json
+```
+
+`--check` reads the latest stable GitHub Release, validates its tag and expected wheel digest, and reports the launcher and project-pin status (`current`, `outdated`, `ahead`, or `not-comparable`), whether the project has an artifact lock, and the next steps. It exits `0` whether or not an update is available; `update-available` in the JSON report carries that answer. Unreachable or malformed release metadata exits non-zero. `--check` cannot be combined with `--framework-version`.
+
 Safe configuration normalization targets the installed EmbrAIon launcher version only. To move a project to another published version, install or upgrade/downgrade the launcher to that version first, then run `embraion update`.
 
 Before changing the pin, EmbrAIon resolves the canonical GitHub Release and requires exactly one expected wheel named `embraion-<version>-py3-none-any.whl` with a valid server-side GitHub `sha256:` digest. It validates the release tag, asset identity, URL, digest shape, and all candidate canonical `.embraion/` configuration.

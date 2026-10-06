@@ -9,6 +9,15 @@ Project updates are intentionally explicit.
 
 ![Safe update flow](../assets/diagrams/en/11-safe-update.svg){ loading=lazy }
 
+## Check for a newer release
+
+```bash
+embraion update --check
+embraion update --check --json
+```
+
+The check is read-only: it compares the launcher and the current project's pin with the latest stable GitHub Release, verifies that the release carries the expected wheel and SHA-256 digest, and prints the next steps. It writes no project files.
+
 ## Normal update flow
 
 Upgrade the launcher:
