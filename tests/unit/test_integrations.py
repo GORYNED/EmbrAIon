@@ -148,6 +148,14 @@ class DeclaredIntegrationTests(unittest.TestCase):
         self._declare(_declaration(), _declaration(id="legacy", host="codex"))
         self.assertEqual({("integration-missing", "high")}, self._kinds())
 
+    def test_enabled_key_is_ignored_outside_codex(self) -> None:
+        self._declare(_declaration())
+        self._observe({
+            "docs": {"command": "npx", "args": ["-y", "docs-server"], "env": {"DOCS_TOKEN": "x"}},
+            "extra": {"command": "npx", "args": ["extra-server"], "enabled": False},
+        })
+        self.assertEqual({("integration-unexpected", "high")}, self._kinds())
+
     def test_security_scan_fails_on_drift_and_passes_when_aligned(self) -> None:
         self._observe({"docs": {"command": "npx", "args": ["-y", "docs-server"], "env": {"DOCS_TOKEN": "x"}}})
         self._declare(_declaration())
