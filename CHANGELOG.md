@@ -21,6 +21,7 @@
 
 ### Changed
 
+- The release workflow accepts `Co-authored-by` trailers after the exact `release: vX.Y.Z` subject, so a squash merge that includes another author's commit can still release; any other body text still stops it before the tag.
 - Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): every request an override matches must stay within the ceiling, so a `routes` override is `ceiling-unbounded` under a role ceiling, a `roles` or `route-roles` override is checked against the role ceiling, either is `ceiling-unbounded` under a data-class ceiling unless the selected deployment's `capabilities.data-classes` stay within it (routing refuses other data classes), and `task-classes` overrides are checked like routing task classes.
 - Tests and examples no longer use consuming-project paths.
 - Core review guidance names a hosted bot review generically instead of a specific vendor's review product.
