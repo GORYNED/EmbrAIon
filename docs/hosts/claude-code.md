@@ -94,6 +94,7 @@ embraion install --host claude-code --component scoped-agents
 embraion projection verify --host claude-code --component agents --component skills --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
+embraion projection verify --host claude-code --component hooks
 embraion claude-native status
 ```
 
@@ -103,7 +104,7 @@ Start a **new working Thread** attached to this checkout after setup. Each local
 
 ## Native hooks and evidence
 
-Hook installation is explicit and merges only EmbrAIon's exact entries into `.claude/settings.json`, preserving unrelated settings and hooks. It refuses malformed settings or a changed conflicting entry. Host trust, hook support and a working `embraion` command still need verification in each surface.
+Hook installation is explicit and merges only EmbrAIon's exact entries into `.claude/settings.json`, preserving unrelated settings and hooks. It refuses malformed settings or a changed conflicting entry, even with `--force`. `install-hooks` installs the `hooks` projection component (`embraion install --host claude-code --component hooks`), which records the managed entries in the projection ledger, so `projection verify --host claude-code --component hooks` reports a missing or changed entry as drift. A managed entry from an earlier release that is still unchanged is replaced on the next installation. Host trust, hook support and a working `embraion` command still need verification in each surface.
 
 The PreToolUse guard refuses configured base-agent calls, stale scoped types, invocation model overrides, and explicit isolation/resume settings whose definition propagation or reuse is unverified. It verifies definition identity and bytes; it does not prove fresh task classification or critical justification, which still require canonical dispatch before invocation. With `read-policy`, it also confines scoped read/search tools to the project and rejects protected source paths or searches that can traverse them. This uses the project's current policy patterns; it does not change source classification or make unclassified data safe. It does not sandbox parent tools, arbitrary agents or shell access. The parent must still follow source-authority instructions and pass eligible bounded context.
 

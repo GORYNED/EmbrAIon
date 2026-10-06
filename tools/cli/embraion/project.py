@@ -43,7 +43,7 @@ HOST_SKILL_DIRECTORIES = {
 HOST_COMPONENTS = {
     "codex": ("config", "agents", "skills"),
     "copilot": ("agents", "skills"),
-    "claude-code": ("agents", "skills", "scoped-agents"),
+    "claude-code": ("agents", "skills", "scoped-agents", "hooks"),
     "portable": ("bundle",),
 }
 
@@ -123,6 +123,8 @@ def _component_for_path(host: str, relative: str) -> str | None:
         if normalized.startswith(".github/skills/") or normalized == COPILOT_CORE_RULES:
             return "skills"
     elif host == "claude-code":
+        if normalized == CLAUDE_SETTINGS:
+            return "hooks"
         if normalized.startswith(".claude/agents/embraion--") and normalized.endswith(".md"):
             return "scoped-agents"
         if normalized == ".claude/embraion-native.json":
@@ -679,14 +681,16 @@ def _project_specialists_section(root: Path, project: Path) -> str:
 
 
 CLAUDE_CORE_RULES = ".claude/rules/embraion-core.md"
+CLAUDE_SETTINGS = ".claude/settings.json"
 COPILOT_CORE_RULES = ".github/instructions/embraion-core.instructions.md"
 
 
-def core_rules_text(root: Path) -> str:
+def core_rules_text(root: Path, merge_mode: str | None = None) -> str:
     """Return every Core rule as one always-loaded instruction document.
 
     Skills load on demand, so rules that must apply to every task are projected
-    into each host's startup instructions. The README order is canonical.
+    into each host's startup instructions. The README order is canonical. Host
+    projections state the merge mode in one line after the merge rule.
     """
     rules = root / "core" / "rules"
     names = re.findall(r"^- `([a-z0-9-]+\.md)`", (rules / "README.md").read_text(encoding="utf-8"), re.M)
@@ -705,7 +709,16 @@ def core_rules_text(root: Path) -> str:
         text = re.sub(r"\]\(([a-z0-9-]+)\.md(#[a-z0-9_-]+)?\)",
                       lambda match: f"]({match.group(2) or '#' + _rule_anchor(rules / (match.group(1) + '.md'))})", text)
         parts += ["", text]
+        if name == "human-merge.md" and merge_mode is not None:
+            parts += ["", f"This project's merge mode: `{merge_mode}` (`merge.mode` in `.embraion/policy.yaml`)."]
     return "\n".join(parts) + "\n"
+
+
+def _project_merge_mode(project: Path | None) -> str:
+    """Generic output matches a project that keeps the default mode."""
+    from .policy import DEFAULT_POLICY, merge_mode
+
+    return DEFAULT_POLICY["merge"]["mode"] if project is None else merge_mode(project)
 
 
 def _rule_anchor(path: Path) -> str:
@@ -752,7 +765,7 @@ def _generate_codex(
         contract = (root / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         instructions += "\n\n" + contract
         instructions += "\n\n" + _agent_instructions(lead)
-        instructions += "\n\n" + core_rules_text(root)
+        instructions += "\n\n" + core_rules_text(root, _project_merge_mode(project))
         config = [
             "developer_instructions = " + json.dumps(orchestration_block(instructions), ensure_ascii=False),
             "",
@@ -900,12 +913,14 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
             (root / "adapters/claude-code/activation.md").read_text(encoding="utf-8"),
             encoding="utf-8", newline="\n",
         )
-        (output / CLAUDE_CORE_RULES).write_text(core_rules_text(root), encoding="utf-8", newline="\n")
+        (output / CLAUDE_CORE_RULES).write_text(
+            core_rules_text(root, _project_merge_mode(project)), encoding="utf-8", newline="\n")
     elif host == "copilot":
         # Repository instruction files with a global applyTo are attached to every request.
         rules = output / COPILOT_CORE_RULES
         rules.parent.mkdir(parents=True, exist_ok=True)
-        rules.write_text('---\napplyTo: "**"\n---\n\n' + core_rules_text(root), encoding="utf-8", newline="\n")
+        rules.write_text('---\napplyTo: "**"\n---\n\n' + core_rules_text(root, _project_merge_mode(project)),
+                         encoding="utf-8", newline="\n")
 
 
 PROJECT_SKILLS = Path(".embraion") / "skills"
@@ -1013,6 +1028,13 @@ def _generate_claude_scoped_agents(output: Path, project: Path | None) -> None:
     write_json(output / ".claude" / "embraion-native.json", projection_metadata(assignments))
 
 
+def _generate_claude_hooks(output: Path) -> None:
+    """Generate only EmbrAIon's hook entries; installation merges them into settings."""
+    from .claude_hooks import managed_hooks
+
+    write_json(output / CLAUDE_SETTINGS, {"hooks": managed_hooks()})
+
+
 def _generate_portable(root: Path, output: Path, project: Path | None = None) -> None:
     target = output / "embraion"
     target.mkdir(parents=True, exist_ok=True)
@@ -1063,6 +1085,8 @@ def generate_host(
             _generate_host_skills(root, output, host, project)
         if "scoped-agents" in selected:
             _generate_claude_scoped_agents(output, project)
+        if "hooks" in selected:
+            _generate_claude_hooks(output)
     elif host == "portable":
         if "bundle" in selected:
             _generate_portable(root, output, project)
@@ -1353,6 +1377,75 @@ def _load_projection_state(
     return _projection_record(path, host, destination)
 
 
+def _merged_projection_output(host: str, relative: str, record: dict[str, Any]) -> bool:
+    """Merged files stay partly user-owned, so they are never classified as generated."""
+    return ((host == "claude-code" and relative == CLAUDE_SETTINGS)
+            or (host == "codex" and relative == ".codex/config.toml"
+                and record.get("config-mode") == "merge"))
+
+
+def projection_ledger_outputs(project: Path) -> list[str]:
+    """Return project-relative files recorded in projection ownership ledgers.
+
+    Only intact ownership records for destinations inside the project count;
+    recovery evidence, damaged records and merged files are skipped.
+    """
+    root = _canonical_projection_destination(project)
+    try:
+        state = _projection_target(root, ".embraion/state/projections")
+    except RuntimeError:
+        return []
+    if not state.is_dir():
+        return []
+    outputs: set[str] = set()
+    for host in HOST_COMPONENTS:
+        candidates = [state / f"{host}.json"]
+        if (state / host).is_dir() and not (state / host).is_symlink():
+            candidates += sorted((state / host).glob("*.json"))
+        for path in candidates:
+            if path.name.endswith(".recovery.json") or path.is_symlink() or not path.is_file():
+                continue
+            try:
+                destination = Path(read_json(path).get("destination"))
+                record = _projection_record(path, host, destination)
+                if record is None:
+                    continue
+                relative = _canonical_projection_destination(destination).relative_to(root)
+            except (OSError, ValueError, TypeError, AttributeError, RuntimeError):
+                continue
+            for name in record["files"]:
+                parts = Path(name).parts
+                if not parts or Path(name).is_absolute() or ".." in parts:
+                    continue
+                if not _merged_projection_output(host, name, record):
+                    outputs.add((relative / name).as_posix())
+    return sorted(outputs)
+
+
+def ignored_projection_outputs(project: Path) -> list[str] | None:
+    """Return ledger outputs that Git ignores, or None when Git cannot answer.
+
+    ``--no-index`` reports tracked files too: a matching rule would leave a new
+    projected file next to them silently untracked.
+    """
+    outputs = projection_ledger_outputs(project)
+    if not outputs:
+        return []
+    from .environment import child_environment
+
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(project), "check-ignore", "--no-index", "-z", "--stdin"],
+            input="\x00".join(outputs).encode("utf-8") + b"\x00",
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=child_environment(), check=False,
+        )
+    except OSError:
+        return None
+    if result.returncode not in (0, 1):
+        return None
+    return sorted(name for name in result.stdout.decode("utf-8", "surrogateescape").split("\x00") if name)
+
+
 def _projection_target(destination: Path, relative: str) -> Path:
     """Resolve below the canonical destination, never through nested aliases.
 
@@ -1427,6 +1520,22 @@ def _projection_plan_from_generated(
 
     for relative, generated_hash in generated_files.items():
         target = _projection_target(destination, relative)
+
+        if host == "claude-code" and relative == CLAUDE_SETTINGS:
+            # Settings stay user-owned; only EmbrAIon's hook entries are managed.
+            from .claude_hooks import merge_hook_settings
+
+            if not target.exists():
+                plan["create"].append(relative)
+                continue
+            try:
+                _, changed = merge_hook_settings(
+                    target.read_text(encoding="utf-8"), _managed_hooks_record(previous))
+            except (OSError, UnicodeError, RuntimeError):
+                plan["conflict"].append(relative)
+                continue
+            plan["update" if changed else "unchanged"].append(relative)
+            continue
 
         if (
             host == "codex"
@@ -1509,6 +1618,16 @@ def _projection_plan_from_generated(
     return plan
 
 
+def _managed_hooks_record(record: dict[str, Any] | None) -> dict[str, Any] | None:
+    hooks = (record or {}).get("managed-hooks")
+    if not isinstance(hooks, dict) or not all(
+        isinstance(entries, list) and all(isinstance(entry, dict) for entry in entries)
+        for entries in hooks.values()
+    ):
+        return None
+    return hooks
+
+
 def projection_plan(
     host: str,
     destination: Path,
@@ -1566,6 +1685,14 @@ def install(
     project = project_root(destination)
     selected = _normalize_components(host, components)
     config_mode = _validate_codex_config_mode(host, selected, config_mode)
+    if host == "claude-code" and "hooks" in selected and "scoped-agents" not in selected:
+        # The guard and observer serve scoped agents; never install them for stale definitions.
+        from .claude_native import observer_status
+
+        if observer_status(project).get("installation") != "verified":
+            raise RuntimeError(
+                "Install and verify the configured scoped-agents projection before installing observer hooks."
+            )
 
     with tempfile.TemporaryDirectory(prefix="embraion-install-") as temporary:
         generated = Path(temporary)
@@ -1603,6 +1730,29 @@ def install(
                 cleanup[candidate] = original
 
         conflicts = list(plan["conflict"])
+        previous = _load_projection_state(project, host, destination)
+        recovery = (
+            None
+            if previous is not None
+            else _load_projection_recovery(project, host, destination)
+        )
+        previous_files = (previous or recovery or {}).get("files") or {}
+        previous_hooks = _managed_hooks_record(previous)
+        if host == "claude-code" and CLAUDE_SETTINGS in conflicts:
+            from .claude_hooks import merge_hook_settings
+
+            try:
+                merge_hook_settings(
+                    _projection_target(destination, CLAUDE_SETTINGS).read_text(encoding="utf-8"),
+                    previous_hooks,
+                )
+                reason = "the settings changed during installation"
+            except (OSError, UnicodeError, RuntimeError) as error:
+                reason = str(error)
+            raise RuntimeError(
+                f"Cannot safely merge {CLAUDE_SETTINGS}: {reason} Settings were preserved; "
+                "review the file before installing the hooks component."
+            )
         if (
             config_mode == "merge"
             and ".codex/config.toml" in conflicts
@@ -1631,7 +1781,14 @@ def install(
             source = generated / relative
             target = _projection_target(destination, relative)
             target.parent.mkdir(parents=True, exist_ok=True)
-            if (
+            if host == "claude-code" and relative == CLAUDE_SETTINGS:
+                from .claude_hooks import merge_hook_settings, settings_bytes
+
+                merged, changed = merge_hook_settings(
+                    target.read_text(encoding="utf-8") if target.exists() else None, previous_hooks)
+                if changed:
+                    atomic_write_bytes(target, settings_bytes(merged))
+            elif (
                 host == "codex"
                 and relative == ".codex/config.toml"
                 and config_mode == "merge"
@@ -1646,14 +1803,6 @@ def install(
                 ).encode("utf-8"))
             else:
                 atomic_write_bytes(target, source.read_bytes(), mode=source.stat().st_mode & 0o777)
-
-        previous = _load_projection_state(project, host, destination)
-        recovery = (
-            None
-            if previous is not None
-            else _load_projection_recovery(project, host, destination)
-        )
-        previous_files = (previous or recovery or {}).get("files") or {}
 
         if prune:
             for relative in list(plan["obsolete-owned"]):
@@ -1682,6 +1831,8 @@ def install(
             merged_config = _projection_target(destination, ".codex/config.toml")
             if merged_config.is_file():
                 current_files[".codex/config.toml"] = _sha256(merged_config)
+        if host == "claude-code" and "hooks" in selected:
+            current_files[CLAUDE_SETTINGS] = _sha256(_projection_target(destination, CLAUDE_SETTINGS))
         preserved_obsolete = list(plan["obsolete-modified"])
         if not prune:
             preserved_obsolete += list(plan["obsolete-owned"])
@@ -1714,6 +1865,12 @@ def install(
                 ),
                 "files": current_files,
             }
+        if host == "claude-code" and "hooks" in selected:
+            from .claude_hooks import managed_hooks
+
+            record["managed-hooks"] = managed_hooks()
+        elif previous_hooks is not None:
+            record["managed-hooks"] = previous_hooks
         write_json(state_path, record)
         if _projection_record(state_path, host, destination) != record:
             raise RuntimeError("Projection ownership write verification failed; prior evidence preserved.")

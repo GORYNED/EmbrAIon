@@ -56,7 +56,7 @@ class CoreRulesProjectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
             init_project(project, name="CoreRules")
-            expected = core_rules_text(framework_root())
+            expected = core_rules_text(framework_root(), "human-only")
             install("claude-code", project, components=["skills"])
             self.assertEqual(expected, (project / CLAUDE_CORE_RULES).read_text(encoding="utf-8"))
             install("copilot", project, components=["skills"])

@@ -83,6 +83,23 @@
       },
       "additionalProperties": false
     },
+    "merge": {
+      "type": "object",
+      "description": "Optional merge policy. Omitted means human-only, the Core default.",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "human-only",
+            "owner-permission"
+          ],
+          "description": "human-only: a human merges. owner-permission: an agent may merge a pull request only with the owner's explicit permission for it, after required checks pass and the independent reviewer confirms its final head; auto-merge is never enabled."
+        }
+      },
+      "additionalProperties": false
+    },
     "projection": {
       "type": "object",
       "description": "Optional checks for projected host configuration outside EmbrAIon-managed blocks.",

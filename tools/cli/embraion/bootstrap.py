@@ -6,6 +6,7 @@ the Core skill. This helper never runs repository commands or installs tooling.
 from __future__ import annotations
 
 import copy
+import glob
 import hashlib
 import os
 import re
@@ -17,6 +18,7 @@ from jsonschema import Draft202012Validator
 
 from .common import framework_root, read_json, read_yaml, write_yaml
 from .policy import path_matches
+from .project import projection_ledger_outputs
 from .security import redact_text
 
 _WRITABLE = ("knowledge", "policy", "validation")
@@ -177,11 +179,15 @@ def plan_bootstrap(project: Path) -> dict[str, Any]:
 
     knowledge = copy.deepcopy(configs["knowledge"])
     slots = knowledge.setdefault("slots", {})
+    # Projection ledger outputs are generated even when policy does not list them.
+    unbindable = (list(configs["policy"]["sources"]["generated"])
+                  + [glob.escape(path) for path in projection_ledger_outputs(root)]
+                  + list(configs["policy"]["sources"]["external"]))
     for slot, names in _DOCS.items():
         matches = [name for name in names if name in inventory]
         for name in matches:
             record(name, "contract-candidate", slot=slot)
-        excluded = [name for name in matches if any(path_matches(name, configs["policy"]["sources"][category]) for category in ("generated", "external"))]
+        excluded = [name for name in matches if path_matches(name, unbindable)]
         if excluded:
             limitations.append(f"{slot} source ownership requires review; generated/external candidates are not bound.")
             continue
