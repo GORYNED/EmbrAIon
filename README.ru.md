@@ -65,6 +65,14 @@ Lead читает контракт проекта, автоматически в
 
 Для подробной инженерной модели см. [Engineering Model Deep Dive](docs/reference/engineering-model.ru.md).
 
+## Новое в 0.27
+
+- [CI проекта](docs/reference/runtime-version-resolution.ru.md) может устанавливать закреплённый релиз переиспользуемым action `GORYNED/EmbrAIon/actions/setup`, а `embraion framework pin` выводит точный pin; [enforcement](docs/guides/enforcement.ru.md) генерирует workflow с этим action.
+- Проекции переносят собственные skills проекта из [`.embraion/skills/`](docs/configuration/project-files.ru.md), triggers и outputs специалистов, ссылки на Core с тегом релиза и опциональный компонент [hooks Claude Code](docs/hosts/claude-code.ru.md); файлы из журналов проекций считаются generated sources.
+- [Объявленные integrations](docs/security.ru.md) в `.embraion/integrations.yaml` показывают расхождения между ожидаемыми и фактическими MCP-серверами.
+- `embraion validate` проверяет собственные `.embraion/*.yaml` проекта, а `claude-native status --require` превращает состояние проекции Claude Code в проверку CI.
+- [Режим merge](docs/configuration/policy.ru.md) `owner-permission` разрешает агенту merge с явного разрешения владельца; [профили валидации](docs/configuration/validation.ru.md) получают тайм-ауты для каждой команды, полные логи и завершение всего дерева процессов.
+
 ## Новое в 0.26
 
 - Правила Core проецируются в стартовые инструкции каждого хоста: файлы правил Claude Code и Copilot и управляемые инструкции Codex. Применяет ли их поверхность, проверяется на этой поверхности; см. [Claude Code](docs/hosts/claude-code.ru.md) и [Copilot](docs/hosts/copilot.ru.md).
@@ -82,4 +90,4 @@ Lead читает контракт проекта, автоматически в
 
 ---
 
-<sub>Последнее обновление: 2026-10-06 15:37 UTC</sub>
+<sub>Последнее обновление: 2026-10-06 19:04 UTC</sub>

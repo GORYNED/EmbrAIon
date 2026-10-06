@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.27.0 - 2026-10-06
+
 ### Added
 
 - Project-owned skills under `.embraion/skills/<name>/SKILL.md` are projected by the `skills` component next to the Core skills for Codex, Copilot and Claude Code, recorded in the projection ledger, and checked by `projection diff` and `projection verify`, including removed skills as obsolete. A name that matches a Core skill, an unsafe name, a symbolic link, or `SKILL.md` front matter without a matching `name` and a `description` stops projection before anything is written.

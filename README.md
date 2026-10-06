@@ -91,6 +91,14 @@ Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
+## New in 0.27
+
+- [Consumer CI](docs/reference/runtime-version-resolution.md#consumer-ci) can install the pinned release with the reusable `GORYNED/EmbrAIon/actions/setup` action, and `embraion framework pin` prints the exact pin; [enforcement](docs/guides/enforcement.md) generates workflows that use the action.
+- Projections carry project-owned skills from [`.embraion/skills/`](docs/configuration/project-files.md), specialist triggers and outputs, Core links pinned to the release tag, and an opt-in [Claude Code hooks](docs/hosts/claude-code.md#native-hooks-and-evidence) component; files recorded in projection ledgers count as generated sources.
+- [Declared integrations](docs/security.md#declared-integrations) in `.embraion/integrations.yaml` report drift between expected and observed MCP servers.
+- `embraion validate` checks the project's own `.embraion/*.yaml`, and `claude-native status --require` turns the Claude Code projection state into a CI gate.
+- [Merge mode](docs/configuration/policy.md#merge-mode) `owner-permission` lets an agent merge with the owner's explicit permission; [validation profiles](docs/configuration/validation.md#timeouts) gain per-command timeouts, full logs and process-tree containment.
+
 ## New in 0.26
 
 - Core rules are projected into each host's startup instructions: Claude Code and Copilot rule files and the managed Codex instructions. Whether a surface applies them is checked on that surface; see [Claude Code](docs/hosts/claude-code.md) and [Copilot](docs/hosts/copilot.md).
@@ -122,4 +130,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-06 15:37 UTC</sub>
+<sub>Last updated: 2026-10-06 19:04 UTC</sub>
