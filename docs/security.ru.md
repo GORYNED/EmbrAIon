@@ -49,6 +49,8 @@ embraion mcp inventory
 
 Тело token должно содержать цифру, поэтому идентификаторы и заполнители в документации с этими префиксами не считаются tokens. Домашние каталоги CI runner, общие каталоги и имена-заполнители вроде `user`, `example` или `<name>` не считаются machine paths. Finding `machine-path` ниже порога по умолчанию `--fail-on high`; чтобы он приводил к ошибке, передайте `--fail-on medium`. `embraion security redact` и redaction evidence заменяют отдельный token с префиксом на `<REDACTED:access-token>`.
 
+По умолчанию сканируются файлы Markdown, YAML, JSON, TOML, обычный текст, Python, PowerShell и shell. `--all-files` дополнительно читает каждый другой tracked или неигнорируемый untracked файл (вне Git — каждый файл вне служебных папок вроде `.git`, `.venv`, `node_modules` и `Library`) размером не больше 2 MiB и без байта NUL, например исходники C#, native-код или Unity assets. В них проверяются только `private-key`, `access-token` и `machine-path`: проверка `api-key` по ключевым словам срабатывала бы на обычные присваивания в коде.
+
 ## Канонические data classes и compatibility aliases
 
 Core policy использует только `PUBLIC`, `PRIVATE` и `CONFIDENTIAL`.

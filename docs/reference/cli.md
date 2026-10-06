@@ -519,6 +519,8 @@ Scan for likely secrets and policy drift.
 embraion security scan --path . --fail-on high
 ```
 
+`--all-files` also checks source and other text files for private keys, access tokens, and machine paths; see [Security](../security.md#scan-findings).
+
 Redact likely credentials from diagnostic text:
 
 ```bash

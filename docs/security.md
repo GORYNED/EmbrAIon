@@ -53,6 +53,8 @@ to inspect deterministic security and integration surfaces.
 
 A token body must contain a digit, so identifiers and documentation placeholders with these prefixes are not reported. CI runner and shared homes and placeholder names such as `user`, `example`, or `<name>` are not machine paths. A `machine-path` finding stays below the default `--fail-on high`; pass `--fail-on medium` to make it fail. `embraion security redact` and evidence redaction replace a bare prefixed token with `<REDACTED:access-token>`.
 
+By default the scan reads Markdown, YAML, JSON, TOML, plain-text, Python, PowerShell, and shell files. `--all-files` also reads every other tracked or unignored untracked file (outside Git, every file outside tool folders such as `.git`, `.venv`, `node_modules`, and `Library`) of at most 2 MiB that contains no NUL byte, such as C#, native, or Unity asset sources. Those files are checked only for `private-key`, `access-token`, and `machine-path`; the keyword-based `api-key` check would flag ordinary code assignments there.
+
 ## Canonical data classes and compatibility aliases
 
 Core policy uses exactly `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`.

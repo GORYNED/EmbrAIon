@@ -1102,7 +1102,7 @@ def _cmd_enforcement_install(args: argparse.Namespace) -> int:
 
 def _cmd_security_scan(args: argparse.Namespace) -> int:
     root = Path(args.path or ".").resolve()
-    findings = collect_findings(root)
+    findings = collect_findings(root, all_files=args.all_files)
 
     if args.json:
         _print_json({"findings": findings})
@@ -2404,6 +2404,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--fail-on",
         choices=list(SEVERITY_ORDER),
         default="high",
+    )
+    scan.add_argument(
+        "--all-files",
+        action="store_true",
+        help="Also check every other tracked or unignored text file up to 2 MiB, such as source code, "
+        "for private keys, access tokens and machine paths",
     )
     scan.add_argument("--json", action="store_true")
     scan.set_defaults(func=_cmd_security_scan)
