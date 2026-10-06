@@ -34,7 +34,7 @@ Follow the canonical [review workflow](core/workflows/review.md). For every Embr
 author reviews the full diff and related code before independent review. Required tests and GitHub CI
 remain merge gates. Independent reviewer approval never replaces user merge or release approval. Who may
 merge follows the merge mode in [`.embraion/policy.yaml`](.embraion/policy.yaml) (`merge.mode`) and the Core
-human merge rule; auto-merge is never enabled. Copilot Review is not
+[human merge rule](core/rules/human-merge.md); auto-merge is never enabled. Copilot Review is not
 requested or used as a gate. Copilot host support remains available for unrelated supported workflows.
 
 ## Data classes
