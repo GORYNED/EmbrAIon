@@ -27,4 +27,5 @@ Some actions need the owner's explicit approval before an agent takes them. Ask 
 ## Permission prompts and credentials
 
 - Never bypass, suppress, or work around a permission prompt or sandbox restriction, and never change the agent's own permission settings to gain access. When the environment refuses an action, report the refusal and ask the owner instead of trying another route to the same effect.
-- Credential handling follows the [security rule](security.md). When a step needs a secret, ask the owner to perform it or to supply the secret through the approved tool. If a secret appears in output or a commit by mistake, stop and tell the owner so it can be rotated.
+- Never type, paste, store, or commit a real or production credential, and do not read credentials from files only to reuse them elsewhere. Test values for a local development application are allowed when the agent generates them or reads them from the project's own fixtures. Secret scanning and fail-closed handling follow the [security rule](security.md).
+- When a step needs a secret, ask the owner to perform it or to supply the secret through the approved tool. If a secret appears in output or a commit by mistake, stop and tell the owner so it can be rotated.
