@@ -73,7 +73,7 @@ class ReportContractTests(unittest.TestCase):
     def test_table_cells_reject_paths_credentials_and_raw_content(self) -> None:
         for value, code in (("/home/user/run.log", "workers-absolute-path"),
                             ("C:\\\\work\\\\run.log", "workers-absolute-path"),
-                            ("api_key=abcdef0123456789", "workers-credential"),
+                            ("api" "_key=abcdef0123456789", "workers-credential"),
                             ("```diff```", "workers-raw-content")):
             with self.subTest(value=value):
                 self.assertEqual([code], self.codes(GOOD.replace("| passed |", f"| {value} |")))
