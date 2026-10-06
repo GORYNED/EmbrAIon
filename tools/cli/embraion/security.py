@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .common import SKIP_PARTS, framework_root, iter_text_files, read_json, read_yaml, state_root, write_json
+from .policy import path_matches
 
 SEVERITY_ORDER = {
     "info": 0,
@@ -97,9 +98,47 @@ def _path_key(relative: str) -> str:
     return key.casefold() if os.name == "nt" else key
 
 
-def _other_text_files(root: Path, seen: set[str]) -> Iterable[tuple[Path, str]]:
+def _policy_sources(root: Path) -> dict[str, list[str]] | None:
+    """Return the project's source globs, or None so that an absent or unusable policy skips nothing."""
+    path = root / ".embraion" / "policy.yaml"
+    try:
+        if path.is_symlink() or not path.is_file():
+            return None
+        data = read_yaml(path)
+    except Exception:
+        return None
+    sources = data.get("sources") if isinstance(data, dict) else None
+    if not isinstance(sources, dict):
+        return None
+    result: dict[str, list[str]] = {}
+    for key in ("canonical", "protected", "generated", "external"):
+        value = sources.get(key) or []
+        if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+            return None
+        result[key] = value
+    try:
+        path_matches("", [pattern for patterns in result.values() for pattern in patterns])
+    except RuntimeError:
+        return None
+    return result
+
+
+def _policy_skips(relative: str, sources: dict[str, list[str]] | None, categories: tuple[str, ...]) -> bool:
+    """Skip vendor or generated paths, but never EmbrAIon configuration or a canonical or protected path."""
+    if sources is None or Path(relative).parts[:1] == (".embraion",) or \
+            path_matches(relative, sources["canonical"] + sources["protected"]):
+        return False
+    return any(path_matches(relative, sources[category]) for category in categories)
+
+
+def _other_text_files(root: Path, seen: set[str], sources: dict[str, list[str]] | None = None,
+                      skipped: list[str] | None = None) -> Iterable[tuple[Path, str]]:
     for name in sorted(_inventory(root)):
         if _path_key(name) in seen or Path(name).parts[:2] == (".embraion", "state"):
+            continue
+        if _policy_skips(name, sources, ("external", "generated")):
+            if skipped is not None:
+                skipped.append(name)
             continue
         path = root / name
         try:
@@ -160,21 +199,32 @@ def _pattern_findings(relative: str, text: str, categories: frozenset[str] | Non
     ]
 
 
-def collect_findings(root: Path, all_files: bool = False) -> list[dict[str, str]]:
+def collect_findings(root: Path, all_files: bool = False,
+                     skipped: list[str] | None = None) -> list[dict[str, str]]:
     """Scan configuration and documentation files; with ``all_files`` also every other text file.
 
     Other text files are the tracked and unignored untracked files (every file outside tool folders
     without Git) of at most ``ALL_FILES_MAX_BYTES`` without a NUL byte. They are checked only for
     ``PRECISE_CATEGORIES``.
+
+    With ``all_files`` the project's ``.embraion/policy.yaml`` excludes content the project cannot
+    edit: other text files under ``sources.external`` or ``sources.generated``, and configuration and
+    documentation files under ``sources.external``. Canonical and protected paths are always
+    scanned. Skipped relative paths are appended to ``skipped``.
     """
     findings: list[dict[str, str]] = []
     legacy_data_class = "COMPANY" + "_SECRET"
     declared_aliases = _declared_confidential_aliases(root)
     seen: set[str] = set()
+    sources = _policy_sources(root) if all_files else None
 
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
         seen.add(_path_key(relative))
+        if _policy_skips(relative, sources, ("external",)):
+            if skipped is not None:
+                skipped.append(relative)
+            continue
         text = path.read_text(encoding="utf-8", errors="ignore")
 
         findings.extend(_pattern_findings(relative, text, None))
@@ -192,7 +242,7 @@ def collect_findings(root: Path, all_files: bool = False) -> list[dict[str, str]
             )
 
     if all_files:
-        for path, text in _other_text_files(root, seen):
+        for path, text in _other_text_files(root, seen, sources, skipped):
             findings.extend(_pattern_findings(str(path.relative_to(root)), text, PRECISE_CATEGORIES))
 
     findings.extend(integration_findings(root))

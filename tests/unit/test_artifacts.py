@@ -11,6 +11,8 @@ from unittest.mock import patch
 from embraion.artifacts import (
     artifact_download_url,
     download_locked_artifact,
+    prepare_pinned_install,
+    read_framework_pin,
     read_project_artifact_lock,
     resolve_release_artifact,
     verify_project_artifact,
@@ -222,6 +224,118 @@ class ArtifactLockTests(unittest.TestCase):
 
             self.assertFalse(destination.exists())
             self.assertFalse(destination.with_name(destination.name + ".tmp").exists())
+
+    def test_framework_pin_reports_exact_version_and_optional_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            locked = read_framework_pin(self._manifest(root))
+            manifest = root / ".embraion" / "project.yaml"
+            manifest.write_text("framework:\n  repository: GORYNED/EmbrAIon\n  version: 1.2.3\n"
+                                "project:\n  name: Demo\n", encoding="utf-8")
+            unlocked = read_framework_pin(manifest)
+        self.assertEqual({"version": "1.2.3", "digest": "sha256:" + "a" * 64}, locked)
+        self.assertEqual({"version": "1.2.3", "digest": None}, unlocked)
+
+    def test_framework_pin_refuses_missing_or_inexact_pins_without_echo(self) -> None:
+        cases = {
+            "latest": "'latest'", "ranges": "'>=1'", "partial": "'1.2'", "prerelease": "'1.2.3rc1'",
+            "injected": '"1.2.3\\n::warning::injected"', "command": "'1.2.3; curl'",
+            "unicode-digits": '"\\u0661.2.3"', "number": "1.2", "empty": "''", "missing": None,
+        }
+        for name, value in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                manifest = Path(temporary) / "project.yaml"
+                version = "" if value is None else f"  version: {value}\n"
+                manifest.write_text("framework:\n  repository: GORYNED/EmbrAIon\n" + version, encoding="utf-8")
+                with self.assertRaisesRegex(RuntimeError, "framework.version") as error:
+                    read_framework_pin(manifest)
+                self.assertNotIn("curl", str(error.exception))
+                self.assertNotIn("::warning", str(error.exception))
+        with tempfile.TemporaryDirectory() as temporary:
+            manifest = Path(temporary) / "project.yaml"
+            manifest.write_text("framework:\n  repository: Other/Fork\n  version: 1.2.3\n", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "framework.repository"):
+                read_framework_pin(manifest)
+            # A lock that disagrees with the pin is refused like every other artifact read.
+            self._manifest(Path(temporary), release="v9.9.9")
+            with self.assertRaisesRegex(RuntimeError, "mismatch"):
+                read_framework_pin(Path(temporary) / ".embraion" / "project.yaml")
+
+    def test_framework_pin_command_prints_key_value_lines(self) -> None:
+        from embraion.cli import main
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._manifest(root)
+            outputs = []
+            for arguments in ([str(root)], [str(root), "--json"]):
+                stdout = io.StringIO()
+                with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                        patch("sys.stdout", stdout):
+                    self.assertEqual(0, main(["framework", "pin", *arguments]))
+                outputs.append(stdout.getvalue())
+            (root / ".embraion" / "project.yaml").write_text(
+                "framework:\n  repository: GORYNED/EmbrAIon\n  version: latest\n", encoding="utf-8")
+            stderr = io.StringIO()
+            with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                    patch("sys.stdout", io.StringIO()), patch("sys.stderr", stderr):
+                self.assertEqual(2, main(["framework", "pin", str(root)]))
+        self.assertEqual("version=1.2.3\ndigest=sha256:" + "a" * 64 + "\n", outputs[0])
+        self.assertEqual({"version": "1.2.3", "digest": "sha256:" + "a" * 64}, json.loads(outputs[1]))
+        self.assertIn("exact stable release", stderr.getvalue())
+
+    def test_prepare_pinned_install_verifies_locked_wheel_or_names_exact_version(self) -> None:
+        payload = b"wheel-bytes"
+        digest = "sha256:" + hashlib.sha256(payload).hexdigest()
+
+        class Response(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = self._manifest(root, digest=digest)
+            with patch("embraion.artifacts.urlopen", return_value=Response(payload)) as opened:
+                target = prepare_pinned_install(manifest, root / "wheel")
+            self.assertEqual(payload, Path(target["wheel"]).read_bytes())
+            self.assertEqual("https://github.com/GORYNED/EmbrAIon/releases/download/v1.2.3/"
+                             "embraion-1.2.3-py3-none-any.whl", opened.call_args.args[0].full_url)
+            self.assertEqual({"version": "1.2.3", "digest": digest},
+                             {key: target[key] for key in ("version", "digest")})
+            self._manifest(root, digest="sha256:" + "b" * 64)
+            with patch("embraion.artifacts.urlopen", return_value=Response(payload)), \
+                    self.assertRaisesRegex(RuntimeError, "digest mismatch"):
+                prepare_pinned_install(manifest, root / "other")
+            self.assertFalse((root / "other" / "embraion-1.2.3-py3-none-any.whl").exists())
+            manifest.write_text("framework:\n  repository: GORYNED/EmbrAIon\n  version: 1.2.3\n", encoding="utf-8")
+            with patch("embraion.artifacts.urlopen") as unlocked_open:
+                self.assertEqual({"version": "1.2.3", "digest": "", "wheel": ""},
+                                 prepare_pinned_install(manifest, root / "none"))
+            unlocked_open.assert_not_called()
+
+    def test_setup_action_is_composite_and_never_expands_inputs_in_scripts(self) -> None:
+        import yaml
+
+        root = Path(__file__).resolve().parents[2]
+        action = yaml.safe_load((root / "actions" / "setup" / "action.yml").read_text(encoding="utf-8"))
+        self.assertEqual("composite", action["runs"]["using"])
+        steps = action["runs"]["steps"]
+        self.assertTrue(steps[0]["uses"].startswith("actions/setup-python@"))
+        self.assertEqual("${{ inputs.python-version }}", steps[0]["with"]["python-version"])
+        scripts = [step["run"] for step in steps if "run" in step]
+        self.assertTrue(scripts)
+        for step in steps:
+            if "run" in step:
+                self.assertEqual("bash", step["shell"])
+                self.assertNotIn("${{", step["run"])
+        joined = "\n".join(scripts)
+        self.assertIn("prepare_pinned_install", joined)
+        self.assertIn("::stop-commands::", joined)
+        self.assertIn('"embraion==$EMBRAION_VERSION"', joined)
+        self.assertEqual({"version", "digest"}, set(action["outputs"]))
 
 
 if __name__ == "__main__":

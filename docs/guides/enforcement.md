@@ -58,6 +58,8 @@ This explicitly creates:
 
 and enables the matching project policy block.
 
+The workflow installs EmbrAIon through the reusable `GORYNED/EmbrAIon/actions/setup` action, referenced at the release that generated it. The action reads the project pin when the job runs and installs exactly that release, verifying the artifact digest when the pin is locked, so `embraion update` needs no workflow edit. Installation refuses a missing or inexact pin before writing any file. See [Consumer CI](../reference/runtime-version-resolution.md#consumer-ci).
+
 Existing different workflow content is not silently replaced; intentional replacement requires `--force`.
 
 ## What the gate checks

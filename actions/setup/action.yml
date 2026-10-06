@@ -1,0 +1,94 @@
+name: Set up EmbrAIon
+description: >-
+  Set up Python and install the exact EmbrAIon release pinned in a consumer project's
+  .embraion/project.yaml, verifying the release artifact digest when the pin is locked.
+author: GORYNED
+
+inputs:
+  python-version:
+    description: Python version passed to actions/setup-python.
+    required: false
+    default: "3.13"
+  project-path:
+    description: Directory containing .embraion/project.yaml, or a directory below it.
+    required: false
+    default: "."
+
+outputs:
+  version:
+    description: The exact pinned EmbrAIon version that was installed.
+    value: ${{ steps.pin.outputs.version }}
+  digest:
+    description: The verified artifact lock digest, or empty when the pin has no lock.
+    value: ${{ steps.pin.outputs.digest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    # Inputs reach scripts only through environment variables, never through template expansion.
+    - name: Read and fetch the project pin
+      id: pin
+      shell: bash
+      env:
+        EMBRAION_ACTION_SOURCE: ${{ github.action_path }}/../../tools/cli
+        EMBRAION_PROJECT_PATH: ${{ inputs.project-path }}
+        EMBRAION_WORK: ${{ runner.temp }}/embraion-setup
+      run: |
+        set -euo pipefail
+        rm -rf "$EMBRAION_WORK"
+        mkdir -p "$EMBRAION_WORK/wheel"
+        # The pin reader and digest check come from this action's own release; an isolated
+        # environment keeps their PyYAML dependency out of the project's Python.
+        python -m venv "$EMBRAION_WORK/reader"
+        reader="$EMBRAION_WORK/reader/bin/python"
+        [ -x "$reader" ] || reader="$EMBRAION_WORK/reader/Scripts/python.exe"
+        "$reader" -m pip install --disable-pip-version-check --no-input --quiet "PyYAML>=6.0,<7"
+        # Project text must never become a workflow command in the log.
+        token="$("$reader" -I -c 'import secrets; print(secrets.token_hex(16))')"
+        echo "::stop-commands::$token"
+        status=0
+        "$reader" -I -c '
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, sys.argv[1])
+        from embraion.artifacts import prepare_pinned_install
+        from embraion.versioning import find_project_manifest
+
+        manifest = find_project_manifest(Path(sys.argv[2]))
+        if manifest is None:
+            raise SystemExit("ERROR: No .embraion/project.yaml found.")
+        try:
+            target = prepare_pinned_install(manifest, Path(sys.argv[3]))
+        except RuntimeError as error:
+            raise SystemExit("ERROR: " + str(error))
+        with open(sys.argv[4], "w", encoding="utf-8") as output:
+            output.writelines(key + "=" + value + "\n" for key, value in target.items())
+        ' "$EMBRAION_ACTION_SOURCE" "$EMBRAION_PROJECT_PATH" "$EMBRAION_WORK/wheel" "$EMBRAION_WORK/pin" || status=$?
+        echo "::$token::"
+        [ "$status" -eq 0 ] || exit "$status"
+        cat "$EMBRAION_WORK/pin" >> "$GITHUB_OUTPUT"
+
+    - name: Install the pinned EmbrAIon release
+      shell: bash
+      env:
+        EMBRAION_VERSION: ${{ steps.pin.outputs.version }}
+        EMBRAION_WHEEL: ${{ steps.pin.outputs.wheel }}
+      run: |
+        set -euo pipefail
+        if [ -n "$EMBRAION_WHEEL" ]; then
+          # The wheel was digest-verified against the project lock before reaching this step.
+          python -m pip install --disable-pip-version-check --no-input "$EMBRAION_WHEEL"
+        else
+          python -m pip install --disable-pip-version-check --no-input "embraion==$EMBRAION_VERSION"
+        fi
+        installed="$(python -I -c 'from importlib.metadata import version; print(version("embraion"))')"
+        if [ "$installed" != "$EMBRAION_VERSION" ]; then
+          echo "Expected EmbrAIon $EMBRAION_VERSION, installed $installed." >&2
+          exit 1
+        fi
+        echo "Installed EmbrAIon $installed."

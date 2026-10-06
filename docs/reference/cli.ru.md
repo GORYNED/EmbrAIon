@@ -180,6 +180,15 @@ embraion framework install --json
 
 Обе команды читают `.embraion/project.yaml`, требуют валидный artifact lock, скачивают точный canonical GitHub Release asset и проверяют его SHA-256 до успешного завершения. `framework install` выполняет проверку до вызова pip и записывает identity lock в runtime cache marker. Cached runtimes с другой artifact identity или digest отклоняются.
 
+Вывести точный pin для скриптов и CI без обращения к сети:
+
+```bash
+embraion framework pin
+embraion framework pin --json
+```
+
+Вывод состоит из строк `version=<x.y.z>` и, если pin закреплён lock, `digest=sha256:<hex>`, поэтому его можно дописать в `$GITHUB_OUTPUT`. Команда завершается с ошибкой, если `framework.version` отсутствует или не является точной release `MAJOR.MINOR.PATCH` (например `latest`, `>=1`, `1.2` или лишний текст), если указан другой `framework.repository`, а также при некорректном или несовпадающем artifact lock. Сообщения об ошибке не повторяют отклонённое значение. [Setup action](runtime-version-resolution.ru.md#consumer-ci) использует тот же код чтения.
+
 ### `embraion sync`
 
 Создать disposable host projections без установки в проект.
@@ -266,9 +275,19 @@ embraion status --json
 ```bash
 embraion validate
 embraion validate --json
+embraion validate --strict
 ```
 
 Внутри проекта `validate` также предупреждает (`projection-ignored`), если Git игнорирует файл из журнала projection в `.embraion/state/projections`: новый файл projection по такому пути останется неотслеживаемым. Предупреждение не делает проверку неуспешной.
+
+Внутри проекта `validate` также проверяет структуру `.embraion/*.yaml` и выдаёт предупреждения:
+
+- ключи, которых нет в схеме из `schemas/`, на верхнем уровне и на один уровень ниже (`config-unknown-key`);
+- slots и записи knowledge с отсутствующим путём или путём за пределами проекта, а также несуществующие `roots` в organization (`config-path`);
+- `roles` в knowledge, которые не совпадают ни с ролью Core, ни с агентом из `.embraion/agents.yaml` (`config-role`);
+- пустые файлы, пустые секции, где ожидается значение, и YAML-файлы в `.embraion`, которые EmbrAIon не читает (`config-inert`), а также нечитаемый YAML (`config-parse`).
+
+Предупреждения не меняют код выхода 0; `--strict` превращает их в ошибки. Без находок вывод остаётся `PASS: no validation issues.`. Полную проверку по схеме по-прежнему выполняют команды, которые загружают каждый файл; проверка policy ceilings остаётся ошибкой.
 
 ### `embraion validation`
 
@@ -473,7 +492,7 @@ Check отклоняет mutations protected sources, требует real pass c
 embraion enforcement install   --surface github-actions   --validation-profile affected   --require-review
 ```
 
-Ни `init`, ни `install`, ни `harness audit` не устанавливают enforcement workflow/native hook молча. Generated workflow возвращает non-zero при policy/validation/review failures. Чтобы gate стал обязательным для merge, настройте **EmbrAIon enforcement** как required status check в branch rules/ruleset.
+Ни `init`, ни `install`, ни `harness audit` не устанавливают enforcement workflow/native hook молча. Generated workflow устанавливает EmbrAIon через переиспользуемый action `GORYNED/EmbrAIon/actions/setup` версии, которая создала workflow; action читает project pin во время запуска, поэтому обновление pin не требует правки workflow, см. [Consumer CI](runtime-version-resolution.ru.md#consumer-ci). `install` отказывается работать с неточным pin до записи файлов. Generated workflow возвращает non-zero при policy/validation/review failures. Чтобы gate стал обязательным для merge, настройте **EmbrAIon enforcement** как required status check в branch rules/ruleset.
 
 ### `embraion security`
 
@@ -483,7 +502,7 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths; см. [Security](../security.ru.md). Если существует `.embraion/integrations.yaml`, scan также сравнивает объявленные MCP servers с наблюдаемой host configuration и сообщает о drift как о high-severity findings `integration-drift`; см. [Объявленные integrations](../security.ru.md#integrations).
+`--all-files` дополнительно проверяет исходники и другие текстовые файлы на private keys, access tokens и machine paths. Пути, которые `.embraion/policy.yaml` проекта относит к `external` или `generated`, пропускаются (пути `canonical` и `protected` не пропускаются никогда), а число пропущенных файлов выводится (`skipped-files` с `--json`); см. [Security](../security.ru.md). Если существует `.embraion/integrations.yaml`, scan также сравнивает объявленные MCP servers с наблюдаемой host configuration и сообщает о drift как о high-severity findings `integration-drift`; см. [Объявленные integrations](../security.ru.md#integrations).
 
 Redact likely credentials из diagnostic text:
 
@@ -577,6 +596,7 @@ embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
 embraion projection verify --host claude-code --component hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
 
 Компонент `scoped-agents` требует `.embraion/claude-native.yaml`; обычная установка Claude по-прежнему включает только `agents` и `skills`. Определения выводятся из проектной маршрутизации. Начните новый Thread после установки и вызывайте точное имя определения, полученное от dispatch. См. [Claude Code](../hosts/claude-code.md).
@@ -584,3 +604,5 @@ embraion claude-native status
 `install-hooks` устанавливает компонент projection Claude Code `hooks` (то же делает `embraion install --host claude-code --component hooks`) после проверки projection `scoped-agents`. Команда сохраняет остальные настройки и hooks в `.claude/settings.json` и записывает управляемые записи в журнал projection. `guard` читает JSON события PreToolUse из stdin: проверяет выбранные определения, запрещает подмену настроек и, при включённом read-policy, ограничивает чтение выбранных агентов. Он не ограничивает родительскую сессию, произвольных агентов или Bash. `observe` принимает PostToolUse/SubagentStop и сохраняет только идентификаторы и сообщённый effort в игнорируемом локальном состоянии. Эти две команды предназначены для hooks.
 
 `status` различает установку файлов, записанные события и справочное сравнение `reported-effort`. Источник ввода помечен `evidence-origin: unverified-command-input`; `execution`, фактические `effort` и `model` остаются `unverified`; `callbacks: recorded` означает принятую запись. Тесты с искусственным JSON и локальные записи не доказывают передачу поля приложением, загрузку инструкций, завершение запуска или применение настроек.
+
+Без `--require` `status` возвращает 0 при любом состоянии установки. Для CI `--require installed,hooks` (через запятую или повтором флага) добавляет объект `gate` и возвращает 1, если какое-либо условие не выполнено: `installed` требует `installation: verified`, поэтому отсутствующая или устаревшая проекция не проходит; `hooks` требует все записи guard и observer в `.claude/settings.json`. Блокировать можно только эти факты о файлах, потому что `status` проверяет их сам. Model, effort, execution и callbacks зависят от поведения приложения или непроверенного ввода hooks, поэтому `--require` отклоняет их с кодом 2, а не превращает справочные данные в успешную проверку.

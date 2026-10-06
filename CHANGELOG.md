@@ -14,6 +14,10 @@
 - Optional `merge.mode` in `.embraion/policy.yaml`: `human-only` (the default, as before) or `owner-permission`, under which an agent may merge a pull request only with the owner's explicit permission for it, after required checks pass on its final head and the independent reviewer confirms that head. Auto-merge is never enabled; any other value fails validation and projection. The projected Core rules state the selected mode in one line for Claude Code, Copilot, and the managed Codex block, and `embraion policy show` prints it.
 - Claude Code `hooks` projection component (`embraion install --host claude-code --component hooks`, opt-in): merges EmbrAIon's guard and observer hook entries into `.claude/settings.json`, preserves every other setting and hook, records the managed entries in the projection ledger, and makes `projection verify --host claude-code --component hooks` report a missing entry (update) or a changed one (conflict). An unchanged entry recorded by an earlier installation is replaced. `embraion claude-native install-hooks` now installs this component.
 - `embraion validate` warns (`projection-ignored`) when Git ignores a file recorded in a projection ledger, because new projected files at such paths would stay untracked.
+- `embraion claude-native status --require installed,hooks` exits 1 when the scoped projection is missing or stale or the guard and observer hooks are absent, and reports a `gate` object. Model, effort, execution and callbacks cannot be required because the observer cannot verify them. Without `--require` the status is unchanged and exits 0.
+- `embraion validate` checks a project's `.embraion/*.yaml` for keys the schemas do not declare, knowledge paths and organization roots that do not exist, knowledge roles that match no Core role or declared agent, and empty or unread files and sections. Findings are warnings; `embraion validate --strict` reports them as errors.
+- `embraion framework pin` prints the project's exact `framework.version` and, when locked, the artifact digest as `key=value` lines, and fails on a missing or inexact pin such as `latest`, `>=1` or extra text.
+- Reusable composite action `GORYNED/EmbrAIon/actions/setup`: sets up Python, reads the consumer pin, and installs exactly that release, verifying the artifact digest when the pin is locked.
 
 ### Changed
 
@@ -22,6 +26,8 @@
 - `embraion validation run` starts each command in its own process group (new session on POSIX, `CREATE_NEW_PROCESS_GROUP` on Windows) and terminates the whole process tree on a timeout or interrupt instead of only the direct child.
 - Files recorded in projection ledgers under `.embraion/state/projections` count as `sources.generated` wherever EmbrAIon reads it, including bootstrap knowledge binding and `embraion policy show` (`derived-sources.generated` in JSON). Explicit entries stay supported; merged files (`.claude/settings.json`, `.codex/config.toml` in merge mode) are not added.
 - The `human-merge` Core rule and the delivery workflow describe both merge modes.
+- `embraion enforcement install` generates a workflow that installs EmbrAIon through the setup action instead of a literal `embraion==X`, so pin updates need no workflow edit, and refuses an inexact pin before writing.
+- `embraion security scan --all-files` skips paths under the project's `.embraion/policy.yaml` `sources.external` and `sources.generated` (configuration and documentation files only under `external`), never `canonical` or `protected` paths, and reports the skipped file count. The default scan is unchanged.
 
 ## 0.26.0 - 2026-10-06
 
