@@ -1,92 +1,81 @@
 slots:
   constitution: GOVERNANCE.md
-
   architecture: docs/reference/engineering-model.md
-
   source-authority: AGENTS.md
-
   compatibility: docs/reference/runtime-version-resolution.md
-
   persistence: null
-
   engineering-workflow: AGENTS.md
-
   specification: null
-
+  deferred-tasks: null
 routing:
   path: docs/model-routing.md
   trust: project
   roles:
-    - lead
-    - architect
-    - analyst
+  - lead
+  - architect
+  - analyst
   triggers:
-    - routing
-    - model
-    - deployment
-    - effort
-
+  - routing
+  - model
+  - deployment
+  - effort
 runtime-versioning:
   path: docs/reference/runtime-version-resolution.md
   trust: project
   roles:
-    - lead
-    - architect
-    - steward
+  - lead
+  - architect
+  - steward
   triggers:
-    - runtime
-    - version
-    - pin
-    - update
-    - compatibility
-
+  - runtime
+  - version
+  - pin
+  - update
+  - compatibility
 cli-reference:
   path: docs/reference/cli.md
   trust: project
   roles:
-    - lead
-    - analyst
-    - validator
+  - lead
+  - analyst
+  - validator
   triggers:
-    - cli
-    - command
-    - install
-    - update
-
+  - cli
+  - command
+  - install
+  - update
 validation-ci:
   path: .github/workflows/validate.yml
   trust: project
   roles:
-    - lead
-    - validator
-    - reviewer
+  - lead
+  - validator
+  - reviewer
   triggers:
-    - validation
-    - test
-    - ci
-    - release
-
+  - validation
+  - test
+  - ci
+  - release
 docs-ci:
   path: .github/workflows/docs.yml
   trust: project
   roles:
-    - lead
-    - validator
-    - reviewer
+  - lead
+  - validator
+  - reviewer
   triggers:
-    - docs
-    - documentation
-    - mkdocs
-
+  - docs
+  - documentation
+  - mkdocs
 release-process:
   path: .github/workflows/release.yml
   trust: project
   roles:
-    - lead
-    - validator
-    - reviewer
+  - lead
+  - validator
+  - reviewer
   triggers:
-    - release
-    - publish
-    - pypi
-    - version
+  - release
+  - publish
+  - pypi
+  - version
