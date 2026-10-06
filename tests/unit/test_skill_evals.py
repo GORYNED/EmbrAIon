@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from embraion.common import framework_root
-from embraion.skill_evals import MAX_SUITE_BYTES, _check_output_destination, _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
+from embraion.skill_evals import MAX_SUITE_BYTES, _check_output_destination, _claude_events, _digest, _grade, _load_suite, _reject_source_ancestors, _safe_relative, _source_files, _terminate_host, run_suite
 
 
 FAKE_HOST = '''#!/usr/bin/env python3
@@ -48,6 +48,44 @@ print(json.dumps({'type':'turn.completed','usage':{'input_tokens':12,'output_tok
 '''
 
 
+# Emits Claude Code stream-json events: a Skill tool call when the project
+# skill is installed, its tool result, and a final result with usage.
+FAKE_CLAUDE = '''#!/usr/bin/env python3
+import json
+import os
+import sys
+from pathlib import Path
+
+args = sys.argv
+assert args[1] == '-p' and '--permission-prompts' in args and '--setting-sources' in args
+root = Path.cwd()
+prompt = sys.stdin.read()
+mode = os.getenv('FAKE_MODE', 'success')
+if mode == 'failed':
+    print(json.dumps({'type': 'result', 'subtype': 'error_during_execution', 'is_error': True}), flush=True)
+    raise SystemExit(1)
+print(json.dumps({'type': 'system', 'subtype': 'init'}), flush=True)
+if (root / '.claude/skills/code-organization/SKILL.md').is_file():
+    print(json.dumps({'type': 'assistant', 'message': {'content': [{'type': 'tool_use', 'id': 't1', 'name': 'Skill', 'input': {'skill': 'code-organization'}}]}}), flush=True)
+    print(json.dumps({'type': 'user', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 't1', 'is_error': mode == 'skill-error'}]}}), flush=True)
+if 'edit' in prompt:
+    (root / 'answer.txt').write_text('done', encoding='utf-8')
+print(json.dumps({'type': 'result', 'subtype': 'success', 'is_error': False, 'usage': {'input_tokens': 5, 'output_tokens': 3, 'cache_read_input_tokens': 40}}), flush=True)
+'''
+
+# Any agent CLI: reads the prompt on stdin and edits the working directory.
+FAKE_PORTABLE = '''#!/usr/bin/env python3
+import sys
+from pathlib import Path
+
+prompt = sys.stdin.read()
+skill = Path(sys.argv[1]) / 'code-organization' / 'SKILL.md'
+if 'edit' in prompt and skill.is_file():
+    Path('answer.txt').write_text('done', encoding='utf-8')
+raise SystemExit(int(sys.argv[2]) if len(sys.argv) > 2 else 0)
+'''
+
+
 class SkillEvalTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -66,10 +104,14 @@ class SkillEvalTests(unittest.TestCase):
         self.suite.write_text(json.dumps(self.data), encoding="utf-8")
         self.host = self.root / "fake-host"
         self.host.write_text(FAKE_HOST, encoding="utf-8")
+        self.claude = self.root / "fake-claude"
+        self.claude.write_text(FAKE_CLAUDE, encoding="utf-8")
+        self.portable = self.root / "fake-portable"
+        self.portable.write_text(FAKE_PORTABLE, encoding="utf-8")
         real_popen = subprocess.Popen
 
         def run_fake_with_python(argv, *args, **kwargs):
-            if argv and argv[0] == str(self.host):
+            if argv and argv[0] in {str(self.host), str(self.claude), str(self.portable)}:
                 argv = [sys.executable, *argv]
             return real_popen(argv, *args, **kwargs)
 
@@ -260,6 +302,91 @@ class SkillEvalTests(unittest.TestCase):
         self.assertEqual({"code-organization", "implementation"}, set(report["skill-identities"]))
         self.assertEqual(1, report["pair-summary"]["previous"]["tied-pass"])
         self.assertEqual({"unverified"}, set(report["runs"][1]["trigger-evidence"].values()))
+
+    def test_claude_code_host_installs_project_skills_and_reads_stream_events(self) -> None:
+        report = run_suite(self.suite, host="claude-code", model="sonnet", effort="high", attempts=1,
+                           output=self.root / "report.json", host_binary=str(self.claude))
+        self.assertEqual("live-claude-code-subprocess", report["evidence-kind"])
+        baseline, candidate = report["runs"]
+        self.assertEqual("unverified", baseline["trigger-evidence"]["code-organization"])
+        self.assertEqual("read-observed", candidate["trigger-evidence"]["code-organization"])
+        self.assertEqual({"input_tokens": 5, "output_tokens": 3, "cached_input_tokens": 40}, candidate["host"]["tokens"])
+        self.assertEqual(1, candidate["host"]["tool-calls"])
+        self.assertTrue(candidate["behavior-passed"])
+
+    def test_claude_code_failed_result_and_failed_skill_load_are_not_passes(self) -> None:
+        import os
+
+        prior = os.environ.get("FAKE_MODE")
+        try:
+            os.environ["FAKE_MODE"] = "failed"
+            report = run_suite(self.suite, host="claude-code", model=None, effort=None, attempts=1,
+                               output=self.root / "report.json", host_binary=str(self.claude))
+            self.assertEqual({"host-failed"}, {run["host"]["status"] for run in report["runs"]})
+            self.assertFalse(any(run["behavior-passed"] for run in report["runs"]))
+            os.environ["FAKE_MODE"] = "skill-error"
+            report = run_suite(self.suite, host="claude-code", model=None, effort=None, attempts=1,
+                               output=self.root / "report.json", host_binary=str(self.claude))
+            self.assertEqual("unverified", report["runs"][1]["trigger-evidence"]["code-organization"])
+        finally:
+            if prior is None:
+                os.environ.pop("FAKE_MODE", None)
+            else:
+                os.environ["FAKE_MODE"] = prior
+
+    def test_claude_code_rejects_an_effort_the_cli_does_not_offer(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unsupported reasoning effort"):
+            run_suite(self.suite, host="claude-code", model=None, effort="ultra", attempts=1,
+                      output=self.root / "report.json", host_binary=str(self.claude))
+
+    def test_claude_events_only_count_successful_skill_reads(self) -> None:
+        events = self.root / "events.jsonl"
+        lines = [
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "a", "name": "Read", "input": {"file_path": "/x/.claude/skills/code-organization/SKILL.md"}},
+                {"type": "tool_use", "id": "b", "name": "Read", "input": {"file_path": "/x/.claude/skills/other/SKILL.md"}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "a"}, {"type": "tool_result", "tool_use_id": "b"}]}},
+            {"type": "result", "subtype": "success", "is_error": False, "usage": {"input_tokens": 1, "output_tokens": 1}},
+        ]
+        events.write_text("\n".join(json.dumps(line) for line in lines), encoding="utf-8")
+        observed = _claude_events(events, ["code-organization"])
+        self.assertEqual(["code-organization"], observed["observed-reads"])
+        self.assertEqual(2, observed["tool-calls"])
+        self.assertTrue(observed["usage-complete"])
+        events.write_text("[]", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            _claude_events(events, ["code-organization"])
+
+    def test_portable_host_runs_any_command_with_a_chosen_skill_directory(self) -> None:
+        report = run_suite(self.suite, host="portable", model=None, effort=None, attempts=1, output=self.root / "report.json",
+                           host_command=[str(self.portable), "agent-skills"], skill_directory="agent-skills")
+        self.assertEqual("live-portable-subprocess", report["evidence-kind"])
+        baseline, candidate = report["runs"]
+        self.assertFalse(baseline["behavior-passed"])
+        self.assertTrue(candidate["behavior-passed"])
+        self.assertEqual("unverified", candidate["trigger-evidence"]["code-organization"])
+        self.assertEqual(1, report["pair-summary"]["baseline"]["improved"])
+        self.assertNotIn("fake-portable", (self.root / "report.json").read_text(encoding="utf-8"))
+
+    def test_portable_host_failure_and_invalid_options(self) -> None:
+        report = run_suite(self.suite, host="portable", model=None, effort=None, attempts=1, output=self.root / "report.json",
+                           host_command=[str(self.portable), ".agents/skills", "3"])
+        self.assertEqual({"host-failed"}, {run["host"]["status"] for run in report["runs"]})
+        for kwargs, message in (
+            ({"host_command": []}, "argument vector"),
+            ({"host_command": [str(self.portable)], "model": "m"}, "cannot apply model"),
+            ({"host_command": [str(self.portable)], "skill_directory": "../x"}, "unsafe relative path"),
+            ({"host_command": [str(self.portable)], "skill_directory": ""}, "unsafe relative path"),
+            ({"host_command": [str(self.portable)], "host_binary": "agent"}, "not a host binary"),
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, message):
+                run_suite(self.suite, **{"host": "portable", "model": None, "effort": None, "attempts": 1,
+                                         "output": self.root / "report.json", **kwargs})
+        with self.assertRaisesRegex(ValueError, "only to the portable host"):
+            run_suite(self.suite, host="codex", model=None, effort=None, attempts=1, output=self.root / "report.json",
+                      host_command=["x"])
+        with self.assertRaisesRegex(ValueError, "unsupported live skill eval host"):
+            run_suite(self.suite, host="copilot", model=None, effort=None, attempts=1, output=self.root / "report.json")
 
 
 if __name__ == "__main__":

@@ -574,7 +574,7 @@ embraion eval compare --baseline baseline.json --reports build/evals
 embraion eval skills run --suite evals/skills/code-organization.json --host codex --attempts 2 --output build/skill-evals.json --path . --route-class ordinary --data PRIVATE
 ```
 
-`eval run --record` evaluates a supplied execution record; it does not launch an AI host. `eval skills run` starts fresh native Codex sessions for baseline and candidate skill variants, subject to project routing and privacy gates. Optional `--model` and `--effort` must agree with resolved project settings when the route is explicit. Its report distinguishes observed behavior from narrow skill-read evidence; neither proves the skill caused an outcome. See [Live skill evaluations](../guides/skill-evals.md).
+`eval run --record` evaluates a supplied execution record; it does not launch an AI host. `eval skills run` starts fresh host sessions (`--host codex`, `claude-code`, or `portable` with `--host-command`) for baseline and candidate skill variants, subject to project routing and privacy gates. Optional `--model` and `--effort` must agree with resolved project settings when the route is explicit. Its report distinguishes observed behavior from narrow skill-read evidence; neither proves the skill caused an outcome. See [Live skill evaluations](../guides/skill-evals.md).
 
 ## Help
 
