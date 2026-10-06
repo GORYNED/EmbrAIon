@@ -75,6 +75,7 @@ from .versioning import (
     prune_cache,
     read_project_pin,
     resolve_project_runtime,
+    update_check_report,
 )
 
 
@@ -358,6 +359,11 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
+    if args.check:
+        return _cmd_update_check(args)
+    if args.json:
+        raise RuntimeError("--json is only supported with 'embraion update --check'.")
+
     destination = Path(args.path or ".")
     previous, current = update_project(
         destination,
@@ -374,6 +380,36 @@ def _cmd_update(args: argparse.Namespace) -> int:
         f"Locked artifact: {artifact_lock.release}/{artifact_lock.asset} "
         f"({artifact_lock.digest})"
     )
+    return 0
+
+
+def _cmd_update_check(args: argparse.Namespace) -> int:
+    if args.framework_version:
+        raise RuntimeError("--check cannot be combined with --framework-version.")
+
+    report = update_check_report(__version__, start=Path(args.path or "."))
+    if args.json:
+        _print_json(report)
+        return 0
+
+    print(f"Launcher: {report['launcher-version']} ({report['launcher-status']})")
+    if report["project"] is None:
+        print("Project: none found")
+    else:
+        locked = "locked" if report["artifact-locked"] else "unlocked"
+        print(
+            f"Project pin: {report['project-pin']} "
+            f"({report['project-status']}, {locked})"
+        )
+    print(f"Latest release: {report['latest-version']} ({report['latest-digest']})")
+    actions = report["actions"]
+    if actions:
+        print()
+        print("Next steps:")
+        for action in actions:
+            print(f"- {action}")
+    elif report["launcher-status"] == "current" and report["project-status"] in {None, "current"}:
+        print("Up to date.")
     return 0
 
 
@@ -1735,6 +1771,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     update.add_argument("path", nargs="?")
     update.add_argument("--framework-version")
+    update.add_argument(
+        "--check",
+        action="store_true",
+        help="Report available releases without changing project files",
+    )
+    update.add_argument("--json", action="store_true", help="With --check, print JSON")
     update.set_defaults(func=_cmd_update)
 
     framework_parser = sub.add_parser(

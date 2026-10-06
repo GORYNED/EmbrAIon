@@ -100,11 +100,41 @@ def _read_json_url(url: str) -> dict[str, object]:
     return payload
 
 
+def _latest_release_api_url() -> str:
+    return f"https://api.github.com/repos/{CANONICAL_REPOSITORY}/releases/latest"
+
+
 def resolve_release_artifact(version: str) -> dict[str, object]:
     version = _validate_stable_version(version)
+    return _artifact_from_release_metadata(
+        version,
+        _read_json_url(_release_api_url(version)),
+    )
+
+
+def resolve_latest_release_artifact() -> tuple[str, dict[str, object]]:
+    """Return the latest stable published version and its verified artifact identity."""
+    metadata = _read_json_url(_latest_release_api_url())
+    if metadata.get("draft") is True or metadata.get("prerelease") is True:
+        raise RuntimeError("Latest EmbrAIon release metadata is not a stable published release.")
+
+    tag = str(metadata.get("tag_name") or "").strip()
+    if not tag.startswith("v") or not _STABLE_VERSION_PATTERN.fullmatch(tag[1:]):
+        raise RuntimeError(
+            f"Latest EmbrAIon release has an unsupported tag '{tag or 'missing'}'; "
+            "expected v<major>.<minor>.<patch>."
+        )
+
+    version = tag[1:]
+    return version, _artifact_from_release_metadata(version, metadata)
+
+
+def _artifact_from_release_metadata(
+    version: str,
+    metadata: dict[str, object],
+) -> dict[str, object]:
     release = _expected_release(version)
     asset_name = _expected_asset(version)
-    metadata = _read_json_url(_release_api_url(version))
 
     if metadata.get("tag_name") != release:
         raise RuntimeError(
