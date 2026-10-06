@@ -12,7 +12,7 @@ from embraion.ceilings import check_policy_ceilings, enforce_critical_justificat
 from embraion.cli import build_parser
 from embraion.common import read_yaml, write_yaml
 from embraion.project import init_project
-from embraion.runtime import resolve_task_route, validate_task_routes
+from embraion.runtime import resolve_task_route, route, validate_task_routes
 
 
 DEPLOYMENTS = {
@@ -170,8 +170,6 @@ class PolicyCeilingTests(unittest.TestCase):
             ("ceiling-unbounded", "routing.overrides.api-host.routes.complex"),
             ("ceiling-unbounded", "routing.overrides.api-host.routes.ordinary"),
             ("ceiling-role", "routing.overrides.api-host.route-roles.substantial.implementation"),
-            ("ceiling-unbounded", "routing.overrides.api-host.route-roles.substantial.implementation"),
-            ("ceiling-unbounded", "routing.overrides.api-host.route-roles.substantial.independent-review"),
             ("ceiling-data-class", "routing.overrides.api-host.task-classes.diagnostic"),
             ("ceiling-role", "routing.overrides.api-host.task-classes.diagnostic"),
         }, self.codes())
@@ -183,11 +181,54 @@ class PolicyCeilingTests(unittest.TestCase):
             "routes": {"complex": {"deployment": "native"}}}}}))
         self.assertEqual(set(), self.codes())
 
-    def test_role_overrides_cannot_cover_every_data_class_under_a_data_ceiling(self) -> None:
+    def test_role_overrides_are_bounded_by_deployment_data_classes(self) -> None:
         self.edit("routing.yaml", lambda data: data.update({"overrides": {"api-host": {
-            "roles": {"independent-review": {"deployment": "review-api"}}}}}))
-        self.assertEqual({("ceiling-unbounded", "routing.overrides.api-host.roles.independent-review")},
-                         self.codes())
+            "roles": {"independent-review": {"deployment": "review-api"}},
+            "route-roles": {"complex": {"independent-review": {"deployment": "review-api"}}}}}}))
+        # Routing refuses data classes the deployment does not list, so the override stays bounded.
+        self.assertEqual(set(), self.codes())
+        selected = route("api-host", "substantial", "PRIVATE", role="independent-review",
+                         task_class="review", project=self.project)
+        self.assertEqual("review-api", selected["deployment"])
+        with self.assertRaisesRegex(RuntimeError, "does not allow data class 'CONFIDENTIAL'"):
+            route("api-host", "substantial", "CONFIDENTIAL", role="independent-review",
+                  task_class="review", project=self.project)
+
+        self.edit("deployments.yaml", lambda data: data["deployments"]["review-api"]["capabilities"]
+                  .update({"data-classes": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"]}))
+        self.assertEqual({
+            ("ceiling-exceeded", "deployments.review-api.capabilities.data-classes"),
+            ("ceiling-data-class-provider", "deployments.review-api"),
+            ("ceiling-unbounded", "routing.overrides.api-host.roles.independent-review"),
+            ("ceiling-unbounded", "routing.overrides.api-host.route-roles.complex.independent-review"),
+        }, self.codes())
+
+    def test_route_overrides_are_bounded_by_deployment_data_classes_without_role_ceiling(self) -> None:
+        def configure(data: dict) -> None:
+            data["ceilings"]["providers"]["review"].pop("roles")
+        self.edit("policy.yaml", configure)
+        self.edit("routing.yaml", lambda data: data.update({"overrides": {"api-host": {
+            "routes": {"substantial": {"deployment": "review-api"}}}}}))
+        self.assertEqual(set(), self.codes())
+
+        self.edit("deployments.yaml", lambda data: data["deployments"]["review-api"]["capabilities"]
+                  .pop("data-classes"))
+        findings = [item for item in check_policy_ceilings(self.project)
+                    if item["path"] == "routing.overrides.api-host.routes.substantial"]
+        self.assertEqual(["ceiling-unbounded"], [item["code"] for item in findings])
+        self.assertIn("limits data-classes; use a task-class override", findings[0]["message"])
+
+    def test_override_fallbacks_are_checked_with_their_own_capabilities(self) -> None:
+        def widen(data: dict) -> None:
+            data["deployments"]["review-open"] = {
+                "host": "api-host", "provider": "review", "model": "review-open-model",
+                "capabilities": {"access-modes": ["read-only"], "roles": ["independent-review"]}}
+        self.edit("deployments.yaml", widen)
+        self.edit("routing.yaml", lambda data: data.update({"overrides": {"api-host": {
+            "roles": {"independent-review": {"deployment": "review-api",
+                                             "fallbacks": [{"deployment": "review-open"}]}}}}}))
+        self.assertIn(("ceiling-unbounded", "routing.overrides.api-host.roles.independent-review"),
+                      self.codes())
 
     def test_pinned_task_classes_cannot_be_lowered(self) -> None:
         self.edit("routing.yaml", lambda data: data["task-classes"]["protected"].update({"route-class": "complex"}))

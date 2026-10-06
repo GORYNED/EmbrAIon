@@ -19,7 +19,7 @@
 
 ### Changed
 
-- Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): every request an override matches must stay within the ceiling, so a `routes` override is `ceiling-unbounded` under a role or data-class ceiling, a `roles` or `route-roles` override is checked against the role ceiling and is `ceiling-unbounded` under a data-class ceiling, and `task-classes` overrides are checked like routing task classes.
+- Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): every request an override matches must stay within the ceiling, so a `routes` override is `ceiling-unbounded` under a role ceiling, a `roles` or `route-roles` override is checked against the role ceiling, either is `ceiling-unbounded` under a data-class ceiling unless the selected deployment's `capabilities.data-classes` stay within it (routing refuses other data classes), and `task-classes` overrides are checked like routing task classes.
 - Tests and examples no longer use consuming-project paths.
 - Core review guidance names a hosted bot review generically instead of a specific vendor's review product.
 - `embraion execute` now persists each validated, redacted attempt to the bounded local ledger `.embraion/state/execution-attempts.jsonl` (one rotation, truncated-line recovery). When a request supplies no `healthObservations`, it orders candidates and skips unavailable ones by ledger health.
