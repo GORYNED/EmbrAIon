@@ -30,7 +30,7 @@ from .response_contracts import resolve_response_contract
 SOURCE_PREFIXES = ("core/", "adapters/", "schemas/", "tools/cli/", "templates/",
                    ".agents/", ".codex/", ".claude/", ".github/agents/", ".github/skills/", ".embraion/", "embraion/")
 SOURCE_NAMES = {"framework.yaml", "pyproject.toml", "AGENTS.md", "CLAUDE.md", ".github/copilot-instructions.md", "tools/source.py"}
-SKIP = {"__pycache__", ".git", ".cache", ".tmp", "build", "dist", "node_modules"}
+SKIP = {"__pycache__", ".git", ".cache", ".tmp", ".venv", "build", "dist", "node_modules"}
 HOST_PREFIXES = {"codex": (".agents/", ".codex/"), "claude-code": (".claude/",),
                  "copilot": (".github/agents/", ".github/skills/"), "portable": ("embraion/",)}
 MAX_BYTES = 20_000_000
