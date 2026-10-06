@@ -114,7 +114,7 @@ def _component_for_path(host: str, relative: str) -> str | None:
     elif host == "copilot":
         if normalized.startswith(".github/agents/"):
             return "agents"
-        if normalized.startswith(".github/skills/"):
+        if normalized.startswith(".github/skills/") or normalized == COPILOT_CORE_RULES:
             return "skills"
     elif host == "claude-code":
         if normalized.startswith(".claude/agents/embraion--") and normalized.endswith(".md"):
@@ -123,7 +123,7 @@ def _component_for_path(host: str, relative: str) -> str | None:
             return "scoped-agents"
         if normalized.startswith(".claude/agents/"):
             return "agents"
-        if normalized == ".claude/rules/embraion.md":
+        if normalized in (".claude/rules/embraion.md", CLAUDE_CORE_RULES):
             return "skills"
         if normalized.startswith(".claude/skills/"):
             return "skills"
@@ -638,6 +638,43 @@ def _agent_instructions(agent: dict[str, Any]) -> str:
     return "\n".join(lines).strip()
 
 
+CLAUDE_CORE_RULES = ".claude/rules/embraion-core.md"
+COPILOT_CORE_RULES = ".github/instructions/embraion-core.instructions.md"
+
+
+def core_rules_text(root: Path) -> str:
+    """Return every Core rule as one always-loaded instruction document.
+
+    Skills load on demand, so rules that must apply to every task are projected
+    into each host's startup instructions. The README order is canonical.
+    """
+    rules = root / "core" / "rules"
+    names = re.findall(r"^- `([a-z0-9-]+\.md)`", (rules / "README.md").read_text(encoding="utf-8"), re.M)
+    present = sorted(path.name for path in rules.glob("*.md") if path.name != "README.md")
+    if sorted(names) != present:
+        raise RuntimeError("core/rules/README.md must list every Core rule exactly once.")
+    parts = [
+        "# EmbrAIon Core rules",
+        "",
+        "Generated from EmbrAIon Core. These rules apply to every task. Project instructions may add "
+        "stricter rules or project values, but never weaken these.",
+    ]
+    for name in names:
+        text = (rules / name).read_text(encoding="utf-8").strip()
+        text = re.sub(r"^(#+) ", lambda match: "#" + match.group(1) + " ", text, flags=re.M)
+        text = re.sub(r"\]\(([a-z0-9-]+)\.md(#[a-z0-9_-]+)?\)",
+                      lambda match: f"]({match.group(2) or '#' + _rule_anchor(rules / (match.group(1) + '.md'))})", text)
+        parts += ["", text]
+    return "\n".join(parts) + "\n"
+
+
+def _rule_anchor(path: Path) -> str:
+    if not path.is_file():
+        raise RuntimeError(f"Core rule links to a missing rule: {path.name}")
+    title = path.read_text(encoding="utf-8").splitlines()[0].lstrip("# ").strip()
+    return re.sub(r"[^a-z0-9 _-]", "", title.lower()).replace(" ", "-")
+
+
 def _projected_orchestration_guidance(root: Path, host: str) -> str:
     guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
     # Both projection paths embed the canonical contract in the same content.
@@ -661,6 +698,7 @@ def _generate_codex(
         contract = (root / "core/skills/orchestration/SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         instructions += "\n\n" + contract
         instructions += "\n\n" + _agent_instructions(lead)
+        instructions += "\n\n" + core_rules_text(root)
         config = [
             "developer_instructions = " + json.dumps(orchestration_block(instructions), ensure_ascii=False),
             "",
@@ -801,6 +839,12 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
             (root / "adapters/claude-code/activation.md").read_text(encoding="utf-8"),
             encoding="utf-8", newline="\n",
         )
+        (output / CLAUDE_CORE_RULES).write_text(core_rules_text(root), encoding="utf-8", newline="\n")
+    elif host == "copilot":
+        # Repository instruction files with a global applyTo are attached to every request.
+        rules = output / COPILOT_CORE_RULES
+        rules.parent.mkdir(parents=True, exist_ok=True)
+        rules.write_text('---\napplyTo: "**"\n---\n\n' + core_rules_text(root), encoding="utf-8", newline="\n")
 
 
 def _append_lead_skill(root: Path, skills: Path) -> None:

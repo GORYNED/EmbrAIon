@@ -45,7 +45,7 @@ Lead выполняет тривиальную работу напрямую и 
 
 Codex должен загрузить project config и доверять ему. Возможности host, permissions, native limits и инструкции более высокого приоритета продолжают действовать. Generated instructions направляют orchestration; static TOML сам по себе не гарантирует делегирование и не обеспечивает исполняемую validation или review.
 
-Component `skills` также содержит canonical `orchestration` skill с generated Core Lead contract. Copilot и Claude Code skill projections включают Core contract и собственное native guidance; Portable включает только canonical contract. Загрузку skill выбирает host. Корневой Codex `developer_instructions` дополнительно передаёт guidance без зависимости от выбора skill.
+Component `skills` также содержит canonical `orchestration` skill с generated Core Lead contract. Copilot и Claude Code skill projections включают Core contract и собственное native guidance; Portable включает только canonical contract. Загрузку skill выбирает host. Корневой Codex `developer_instructions` дополнительно передаёт guidance и все правила Core без зависимости от выбора skill.
 
 ## Ownership config
 

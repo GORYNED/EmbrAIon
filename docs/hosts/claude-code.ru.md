@@ -19,7 +19,8 @@ embraion install --host claude-code --destination .
 ```text
 .claude/
 ├── rules/
-│   └── embraion.md
+│   ├── embraion.md
+│   └── embraion-core.md
 ├── agents/
 │   ├── analyst.md
 │   ├── architect.md
@@ -52,7 +53,7 @@ Opt-in planner `embraion dispatch --native-surface` поддерживает `cl
 
 ## Selective adoption
 
-Компонент `skills` также управляет `.claude/rules/embraion.md`. Это правило без ограничения по путям: оно просит каждый Thread прочитать orchestration и применимые `AGENTS.md`. Установка сохраняет пользовательский `CLAUDE.md` и чужие skills. Загрузка правила зависит от конкретного режима Claude — её нужно проверить в самом приложении.
+Компонент `skills` также управляет `.claude/rules/embraion.md`. Это правило без ограничения по путям: оно просит каждый Thread прочитать orchestration и применимые `AGENTS.md`. Рядом лежит `.claude/rules/embraion-core.md`: все правила Core в одном безусловном файле. Установка сохраняет пользовательский `CLAUDE.md` и чужие skills. Загрузка правила зависит от конкретного режима Claude — её нужно проверить в самом приложении.
 
 Начиная с 0.18.0 имена профилей Claude используют машинные ID, например `reviewer`, вместо названий вроде `Reviewer` или `Video/CV`. Длинные ID получают сокращённое имя с хешем. Пересоздайте профили и используйте полученные имена; заголовки инструкций сохраняют удобные для чтения названия.
 

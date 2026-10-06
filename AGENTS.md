@@ -14,7 +14,7 @@ EmbrAIon is the upstream source of truth for reusable AI-First engineering behav
 ## Capability loading
 
 - `core/catalog.yaml` is the canonical discovery index.
-- Prefer conditional capability loading over injecting the entire Core into every task.
+- Prefer conditional capability loading over injecting the entire Core into every task. Core rules are the exception: they are short, apply to every task, and are projected into each host's startup instructions.
 - Every catalog path must resolve to exactly one canonical capability.
 - Skills use one directory per skill with `SKILL.md` as the entry point.
 

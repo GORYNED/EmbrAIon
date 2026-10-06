@@ -19,7 +19,8 @@ embraion install --host claude-code --destination .
 ```text
 .claude/
 ├── rules/
-│   └── embraion.md
+│   ├── embraion.md
+│   └── embraion-core.md
 ├── agents/
 │   ├── analyst.md
 │   ├── architect.md
@@ -52,7 +53,7 @@ The opt-in `embraion dispatch --native-surface` planner supports `claude-agent`;
 
 ## Selective adoption
 
-The `skills` component also owns `.claude/rules/embraion.md`, an unconditional entry point that asks each Thread to load orchestration and applicable `AGENTS.md` files. Installation preserves user-owned `CLAUDE.md` and unrelated skills. Rule loading still depends on the active Claude surface and must be checked there.
+The `skills` component also owns `.claude/rules/embraion.md`, an unconditional entry point that asks each Thread to load orchestration and applicable `AGENTS.md` files, and `.claude/rules/embraion-core.md`, every Core rule in one unconditional rule file. Installation preserves user-owned `CLAUDE.md` and unrelated skills. Rule loading still depends on the active Claude surface and must be checked there.
 
 From 0.18.0, Claude profile names use machine IDs such as `reviewer` rather than display titles such as `Reviewer` or `Video/CV`. Long IDs receive a bounded hashed name. Regenerate profiles and use their emitted native names; human titles remain in the instruction heading.
 

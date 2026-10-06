@@ -23,6 +23,8 @@ embraion install --host copilot --destination .
 │   ├── architect.agent.md
 │   ├── reviewer.agent.md
 │   └── ...
+├── instructions/
+│   └── embraion-core.instructions.md
 └── skills/
     ├── implementation/
     ├── orchestration/
@@ -41,6 +43,8 @@ Generated Copilot agent profiles включают repository instructions чер
 Host всё ещё может глобально отключить repository instructions, а host-level settings имеют приоритет над projection.
 
 Generated `tools` — allowlist инструментов, доступных на активной Copilot surface. EmbrAIon может запрашивать aliases `read`, `search`, `edit`, `execute`, но не обещает, что host реально предоставляет каждый alias в каждом custom-subagent context.
+
+Компонент `skills` также записывает `.github/instructions/embraion-core.instructions.md` с `applyTo: "**"`: все правила Core предлагаются как path-specific repository instruction file для всех путей. Применяет ли такие файлы конкретный режим (чат в IDE, CLI, coding agent или code review), зависит от режима и его настроек; это нужно проверить в нём самом.
 
 Skills в `.github/skills/` проецируются как root/session procedural capabilities. Adapter не обещает автоматическое inheritance этих skills каждым custom subagent, пока GitHub не предоставляет такой contract и EmbrAIon явно его не конфигурирует.
 
