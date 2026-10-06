@@ -22,6 +22,14 @@ PACKAGE = ROOT / "evals/evolution/candidates/core-skills-package.json"
 # verified byte for byte; any other catalog drift keeps failing the replay.
 LATER_CATALOG_VERSION = ("catalog-version: 9", "catalog-version: 8")
 LATER_CATALOG_ENTRIES = ("handling-review-findings", "authorization", "owner-interaction", "architecture-decision")
+# Wording edits made to packaged files after the package was applied, as
+# (current, package-era) pairs. The replay restores the package-era text.
+LATER_FILE_EDITS = {
+    "core/skills/orchestration/SKILL.md": (
+        ("No hosted bot review or cross-host external review is required by default.",
+         "No Copilot Review or cross-host external review is required by default."),
+    ),
+}
 
 
 def restore_package_era_catalog(path: Path) -> None:
@@ -29,6 +37,17 @@ def restore_package_era_catalog(path: Path) -> None:
     kept = [line for line in text.splitlines(keepends=True)
             if not any(line.startswith(f"  - {{ id: {entry},") for entry in LATER_CATALOG_ENTRIES)]
     path.write_bytes("".join(kept).encode("utf-8"))
+
+
+def restore_package_era_files(root: Path) -> None:
+    for name, edits in LATER_FILE_EDITS.items():
+        path = root / name
+        text = path.read_text(encoding="utf-8")
+        for current, original in edits:
+            if text.count(current) != 1:
+                raise AssertionError("later edit is not present exactly once: " + name)
+            text = text.replace(current, original)
+        path.write_bytes(text.encode("utf-8"))
 
 
 def digest(path: Path) -> str:
@@ -54,6 +73,7 @@ class CoreSkillPackageTests(unittest.TestCase):
             shutil.copytree(ROOT / name, cls.candidate / name)
         shutil.copyfile(ROOT / "framework.yaml", cls.candidate / "framework.yaml")
         restore_package_era_catalog(cls.candidate / "core/catalog.yaml")
+        restore_package_era_files(cls.candidate)
         for package in cls.package["packages"]:
             if digest(ROOT / package["patch"]) != package["sha256"]:
                 raise AssertionError("proposal patch digest changed: " + package["id"])
