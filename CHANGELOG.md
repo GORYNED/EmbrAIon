@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.26.0 - 2026-10-06
+
 ### Added
 
 - Core rules reach every host at startup: `.claude/rules/embraion-core.md` for Claude Code, `.github/instructions/embraion-core.instructions.md` with `applyTo: "**"` for Copilot (both owned by the `skills` component), and the managed Codex `developer_instructions` block. Previously only the portable bundle carried the rule texts. Experiment snapshots for Copilot include the instruction file. Whether a surface applies the files is checked on that surface.
@@ -9,8 +11,8 @@
 - Organization `filenames` checks: files under `roots` (`.` for the whole repository) with a listed extension need lowercase kebab-case stems with an optional numeric version (`filename_style`, `filename_extension_case`), and case-only path collisions are reported (`filename_collision`). Ecosystem and host basenames, host-native suffixes in their folders, reserved scoped Claude profiles, and dot-prefixed names are exempt; `allow` and `suffixes` extend them.
 - Organization `unity_meta.require_for_all` requires an adjacent `.meta` for every file under its roots, and `unity_meta.check_orphans` reports `.meta` files without an asset file or folder (`meta_orphan`). `embraion organization check --require-config` fails instead of skipping when the configuration is missing.
 - `embraion security scan` reports provider-prefixed access tokens as `access-token` (high) and home-directory machine paths as `machine-path` (medium); `security redact` and evidence redaction replace bare prefixed tokens with `<REDACTED:access-token>`.
-- Report contract `workers.summary: true` requires a compact summary after the Workers table, and `embraion report validate --pull-request-not-created` requires a compare URL when a needed pull request was not created.
 - `embraion security scan --all-files` also checks every other tracked or unignored text file up to 2 MiB, such as source code, for private keys, access tokens, and machine paths.
+- Report contract `workers.summary: true` requires a compact summary after the Workers table, and `embraion report validate --pull-request-not-created` requires a compare URL when a needed pull request was not created.
 - `core/routing/complexity.yaml` lists `critical` examples and what is `not-critical`.
 - `embraion execution envelope` builds `payload.inputsByDeployment` for every adapter-bound candidate from committed blobs at an explicit commit, bound to each binding `contextBoundary`, with per-file digests. It fails closed on paths outside the repository, protected or withheld paths, symlinks, LFS pointers, binary files, credential material, machine-local paths, data classes above the request, and byte bounds, including an optional binding `maxContextBytes`.
 - `embraion execution health` shows per-deployment health from the local attempt ledger.

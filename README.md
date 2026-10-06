@@ -91,6 +91,14 @@ Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
+## New in 0.26
+
+- Core rules are projected into each host's startup instructions: Claude Code and Copilot rule files and the managed Codex instructions. Whether a surface applies them is checked on that surface; see [Claude Code](docs/hosts/claude-code.md) and [Copilot](docs/hosts/copilot.md).
+- [API execution](docs/configuration/execution.md#context-envelopes) builds fail-closed context envelopes from committed files, records each attempt in a local ledger that feeds candidate health, and checks readiness without a provider call.
+- [Code organization](docs/configuration/organization.md#filenames) checks file names and can require a `.meta` for every file under its Unity roots, with orphan detection.
+- [Security scan](docs/security.md#scan-findings) finds provider-prefixed tokens and home-directory paths, and `--all-files` extends the precise checks to source code.
+- [Policy ceilings](docs/configuration/policy.md#policy-ceilings) also bound host routing overrides, and the [report contract](docs/configuration/report.md) can require a Workers summary and a compare link.
+
 ## New in 0.20
 
 - [Engineering skills](docs/guides/engineering-skills.md) and [live skill evaluations](docs/guides/skill-evals.md) cover repeatable procedures and fresh host-run comparisons. A recorded eval remains distinct from a live run.
@@ -114,4 +122,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-04 14:24 UTC</sub>
+<sub>Last updated: 2026-10-06 15:37 UTC</sub>
