@@ -96,7 +96,7 @@ embraion projection verify --host codex --destination .
 embraion projection verify --host copilot --component agents --component skills
 ```
 
-`projection verify` exits zero only when every selected projection file is already canonical and there is no create, update, conflict, or obsolete managed output. With partial Codex config ownership, pass `--config-mode merge` to both `projection diff` and `projection verify`.
+`projection verify` exits zero only when every selected projection file is already canonical and there is no create, update, conflict, or obsolete managed output. Files under a reserved projection prefix (Claude Code `scoped-agents`: `.claude/agents/embraion--*.md`) that the current projection would not produce are reported as `obsolete-modified` even without an ownership ledger. With partial Codex config ownership, pass `--config-mode merge` to both `projection diff` and `projection verify`.
 
 Merge mode preserves user content outside the managed blocks, so verify also reports `root-findings` for that content: root keys that override the user's model or effort or the routed subagent selection (`model`, `model_reasoning_effort`, `agents.default_subagent_*`), keys outside an optional `allowed-root-keys` list, and root `developer_instructions` text outside the managed orchestration block. Findings are warnings by default. `--strict-root`, or `projection.codex.strict-root: true` in [policy](../configuration/policy.md#projection-root-checks), makes them fail verification:
 

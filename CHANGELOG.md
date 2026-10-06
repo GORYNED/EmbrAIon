@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- Project-owned skills under `.embraion/skills/<name>/SKILL.md` are projected by the `skills` component next to the Core skills for Codex, Copilot and Claude Code, recorded in the projection ledger, and checked by `projection diff` and `projection verify`, including removed skills as obsolete. A name that matches a Core skill, an unsafe name, a symbolic link, or `SKILL.md` front matter without a matching `name` and a `description` stops projection before anything is written.
+- Project specialist profiles for Claude Code, Codex and Copilot list the specialist's `triggers` and `outputs`, and the projected `orchestration` skill gets a `Project specialists` section with each specialist's ID, purpose, and declared triggers and outputs. Nothing is added when `.embraion/agents.yaml` declares no specialists.
+
+### Changed
+
+- Projected orchestration guidance and the Codex managed block link to the Core worktree workflow at the release tag of the projected framework version instead of a source-relative `../../core/` path that does not exist in a consuming project. A link to a missing Core file stops projection.
+- With Claude Code `scoped-agents` selected, `projection diff` and `projection verify` report every `.claude/agents/embraion--*.md` file the current projection would not produce as `obsolete-modified`, even without a local ownership ledger. `--prune` keeps such files because their ownership is unproven.
+
 ## 0.26.0 - 2026-10-06
 
 ### Added

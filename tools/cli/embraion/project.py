@@ -12,6 +12,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+import yaml
 from jsonschema import Draft202012Validator
 
 from . import __version__
@@ -44,6 +45,11 @@ HOST_COMPONENTS = {
     "copilot": ("agents", "skills"),
     "claude-code": ("agents", "skills", "scoped-agents"),
     "portable": ("bundle",),
+}
+
+# Files under a reserved name prefix are produced only by the projection.
+RESERVED_PROJECTION_FILES = {
+    "claude-code": {"scoped-agents": (".claude/agents", "embraion--*.md")},
 }
 
 HOST_DEFAULT_COMPONENTS = {
@@ -607,6 +613,7 @@ def _project_agents(
                     definition.get("outputs"),
                 ),
                 "extends": base_id,
+                "origin": "project",
             }
         )
 
@@ -635,7 +642,40 @@ def _agent_instructions(agent: dict[str, Any]) -> str:
         lines.append("Restrictions:")
         lines.extend(f"- {value}" for value in agent["restrictions"])
 
+    # Project specialists carry their delegation cues into every native profile.
+    if agent.get("origin") == "project":
+        for key, label in (("triggers", "Triggers"), ("outputs", "Outputs")):
+            if agent.get(key):
+                lines.append(f"{label}:")
+                lines.extend(f"- {value}" for value in agent[key])
+
     return "\n".join(lines).strip()
+
+
+def _project_specialists_section(root: Path, project: Path) -> str:
+    """Summarize project specialists for Lead; empty when none are declared."""
+    if not (project / ".embraion" / "agents.yaml").is_file():
+        return ""
+    specialists = [agent for agent in load_agents(root, project) if agent.get("origin") == "project"]
+    if not specialists:
+        return ""
+    # List what the project declares; inherited Core cues stay in the role's own profile.
+    declared = {str(item["id"]): item for item in read_agents_config(project).get("agents") or []}
+    lines = [
+        "## Project specialists",
+        "",
+        "Generated from `.embraion/agents.yaml`. Delegate to a specialist when its triggers match the "
+        "assignment; the assignment routing contract still applies.",
+        "",
+    ]
+    for agent in specialists:
+        base = f" (extends `{agent['extends']}`)" if agent.get("extends") else ""
+        lines.append(f"- `{agent['id']}`{base}: {agent.get('purpose', '')}")
+        for key, label in (("triggers", "Triggers"), ("outputs", "Outputs")):
+            values = declared[agent["id"]].get(key) or []
+            if values:
+                lines.append(f"  - {label}: " + "; ".join(str(value) for value in values))
+    return "\n".join(lines)
 
 
 CLAUDE_CORE_RULES = ".claude/rules/embraion-core.md"
@@ -678,9 +718,23 @@ def _rule_anchor(path: Path) -> str:
 def _projected_orchestration_guidance(root: Path, host: str) -> str:
     guidance = (root / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
     # Both projection paths embed the canonical contract in the same content.
-    return guidance.replace(
+    guidance = guidance.replace(
         "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
     )
+    return _pin_core_links(root, guidance)
+
+
+def _pin_core_links(root: Path, text: str) -> str:
+    """Rewrite source-relative Core links, which do not exist in a consumer, to the pinned release."""
+    base = f"https://github.com/GORYNED/EmbrAIon/blob/v{framework_version(root)}/"
+
+    def pinned(match: re.Match[str]) -> str:
+        relative = match.group(1)
+        if not (root / relative.split("#", 1)[0]).is_file():
+            raise RuntimeError(f"Adapter guidance links to a missing Core file: {relative}")
+        return f"]({base}{relative})"
+
+    return re.sub(r"\]\(\.\./\.\./(core/[^)\s]+)\)", pinned, text)
 
 
 def _generate_codex(
@@ -820,11 +874,18 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
         # checked out with platform newline conversion.
         entry = target / directory.name / "SKILL.md"
         entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
+    if project is not None:
+        for directory in project_skill_directories(root, project):
+            shutil.copytree(directory, target / directory.name)
+            entry = target / directory.name / "SKILL.md"
+            entry.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8", newline="\n")
     _append_lead_skill(root, target)
     entry = target / "orchestration/SKILL.md"
     guidance = _projected_orchestration_guidance(root, host)
     content = entry.read_text(encoding="utf-8")
     content += "\n" + guidance + "\n"
+    if project is not None and (specialists := _project_specialists_section(root, project)):
+        content += "\n" + specialists + "\n"
     if project is not None and (project / ".embraion" / "report.yaml").is_file():
         from .report import read_report_contract, render_report_guidance
 
@@ -845,6 +906,60 @@ def _generate_host_skills(root: Path, output: Path, host: str, project: Path | N
         rules = output / COPILOT_CORE_RULES
         rules.parent.mkdir(parents=True, exist_ok=True)
         rules.write_text('---\napplyTo: "**"\n---\n\n' + core_rules_text(root), encoding="utf-8", newline="\n")
+
+
+PROJECT_SKILLS = Path(".embraion") / "skills"
+_SKILL_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+
+
+def _core_skill_names(root: Path) -> set[str]:
+    return {
+        directory.name
+        for directory in (root / "core" / "skills").iterdir()
+        if directory.is_dir() and (directory / "SKILL.md").is_file()
+    }
+
+
+def project_skill_directories(root: Path, project: Path) -> list[Path]:
+    """Return validated project-owned skills from `.embraion/skills/<name>/SKILL.md`.
+
+    Every entry must be a skill directory; links, unsafe names, malformed
+    entry points, and Core name collisions fail closed.
+    """
+    base = project / PROJECT_SKILLS
+    if not base.exists() and not base.is_symlink():
+        return []
+    if base.is_symlink() or not base.is_dir():
+        raise RuntimeError(f"{PROJECT_SKILLS.as_posix()} must be a real directory.")
+    core = _core_skill_names(root)
+    skills: list[Path] = []
+    for directory in sorted(base.iterdir()):
+        label = f"{PROJECT_SKILLS.as_posix()}/{directory.name}"
+        if directory.is_symlink() or not directory.is_dir():
+            raise RuntimeError(f"Project skill entry must be a skill directory: {label}")
+        name = directory.name
+        if len(name) > 64 or not _SKILL_NAME.fullmatch(name):
+            raise RuntimeError(f"Project skill name must be lowercase kebab-case (max 64): {label}")
+        if name in core:
+            raise RuntimeError(f"Project skill '{name}' collides with a Core skill; rename it.")
+        if any(path.is_symlink() for path in directory.rglob("*")):
+            raise RuntimeError(f"Project skill contains a symbolic link: {label}")
+        entry = directory / "SKILL.md"
+        if not entry.is_file():
+            raise RuntimeError(f"Project skill is missing SKILL.md: {label}")
+        text = entry.read_text(encoding="utf-8").replace("\r\n", "\n")
+        parts = text.split("---", 2) if text.startswith("---\n") else []
+        try:
+            metadata = yaml.safe_load(parts[1]) if len(parts) == 3 else None
+        except yaml.YAMLError:
+            metadata = None
+        if (not isinstance(metadata, dict) or metadata.get("name") != name
+                or not isinstance(metadata.get("description"), str) or not metadata["description"].strip()):
+            raise RuntimeError(
+                f"Project skill {label}/SKILL.md needs front matter with name '{name}' and a description."
+            )
+        skills.append(directory)
+    return skills
 
 
 def _append_lead_skill(root: Path, skills: Path) -> None:
@@ -1362,6 +1477,23 @@ def _projection_plan_from_generated(
         if _sha256(target) == previous_hash:
             plan["obsolete-owned"].append(relative)
         else:
+            plan["obsolete-modified"].append(relative)
+
+    # Reserved-prefix files belong to the projection by contract, so stale ones
+    # are drift even without a ledger (a clean clone or CI). Without ownership
+    # evidence they are reported as modified and never pruned.
+    reported = set(plan["obsolete-owned"]) | set(plan["obsolete-modified"])
+    for component, (directory, pattern) in RESERVED_PROJECTION_FILES.get(host, {}).items():
+        if component not in selected:
+            continue
+        folder = _projection_target(destination, directory)
+        if not folder.is_dir():
+            continue
+        for path in sorted(folder.glob(pattern)):
+            relative = f"{directory}/{path.name}"
+            if relative in generated_files or relative in reported or not path.is_file():
+                continue
+            _projection_target(destination, relative)
             plan["obsolete-modified"].append(relative)
 
     for key in (

@@ -14,8 +14,16 @@ from embraion.codex_config import (
     codex_root_findings, merge_codex_config, orchestration_block,
 )
 from embraion.cli import build_parser
-from embraion.common import framework_root, read_json, read_yaml, write_json, write_yaml
+from embraion.common import framework_root, framework_version, read_json, read_yaml, write_json, write_yaml
 from embraion.project import generate_host, init_project, install, projection_is_verified, projection_plan
+
+
+def _projected_guidance(guidance: str) -> str:
+    """Expected projected adapter text: embedded contract anchor and release-pinned Core links."""
+    pinned = f"](https://github.com/GORYNED/EmbrAIon/blob/v{framework_version(framework_root())}/core/"
+    return guidance.replace(
+        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
+    ).replace("](../../core/", pinned)
 
 
 class CodexConfigTests(unittest.TestCase):
@@ -181,16 +189,12 @@ name = "one"
                 self.assertIn(contract, skill)
                 if host != "portable":
                     guidance = (framework_root() / "adapters" / host / "orchestration.md").read_text(encoding="utf-8").strip()
-                    guidance = guidance.replace(
-                        "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
-                    )
+                    guidance = _projected_guidance(guidance)
                     self.assertIn(guidance, skill)
                 else:
                     for native_host in ("codex", "copilot", "claude-code"):
                         guidance = (framework_root() / "adapters" / native_host / "orchestration.md").read_text(encoding="utf-8").strip()
-                        guidance = guidance.replace(
-                            "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
-                        )
+                        guidance = _projected_guidance(guidance)
                         self.assertNotIn(guidance, skill)
 
     def test_codex_skills_only_receive_native_dispatch_contract_idempotently(self) -> None:
@@ -201,9 +205,7 @@ name = "one"
             entry = project / ".agents/skills/orchestration/SKILL.md"
             first = entry.read_bytes()
             guidance = (framework_root() / "adapters/codex/orchestration.md").read_text(encoding="utf-8").strip()
-            guidance = guidance.replace(
-                "(../../core/skills/orchestration/SKILL.md)", "(#assignment-routing-contract)"
-            )
+            guidance = _projected_guidance(guidance)
             self.assertIn(guidance, first.decode("utf-8"))
             self.assertEqual(1, first.decode("utf-8").count(guidance))
             self.assertFalse((project / ".codex/config.toml").exists())
