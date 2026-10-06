@@ -96,8 +96,15 @@ jobs:
             exit 1
           fi
 
-          if [ "$RELEASE_COMMIT_MESSAGE" != "release: $TAG" ]; then
-            echo "Release commit message must be exactly: release: $TAG"
+          # A squash merge that includes commits by other authors gets
+          # Co-authored-by trailers from GitHub; any other body text stops the release.
+          SUBJECT="${RELEASE_COMMIT_MESSAGE%%$'\n'*}"
+          BODY="${RELEASE_COMMIT_MESSAGE#"$SUBJECT"}"
+          EXTRA="$(printf '%s\n' "$BODY" \
+            | grep -v -E '^[[:space:]]*$' \
+            | grep -v -i -E '^Co-authored-by: [^<>]+ <[^<>[:space:]]+@[^<>[:space:]]+>[[:space:]]*$' || true)"
+          if [ "$SUBJECT" != "release: $TAG" ] || [ -n "$EXTRA" ]; then
+            echo "Release commit message must be exactly: release: $TAG (optionally followed only by Co-authored-by trailers)"
             exit 1
           fi
 
