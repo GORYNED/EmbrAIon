@@ -55,6 +55,14 @@ A token body must contain a digit, so identifiers and documentation placeholders
 
 By default the scan reads Markdown, YAML, JSON, TOML, plain-text, Python, PowerShell, and shell files plus `.gitignore` and `.editorconfig`, outside tool folders such as `.git`, `.venv`, `node_modules`, and `Library`. `--all-files` also reads every other tracked or unignored untracked file of at most 2 MiB that contains no NUL byte, such as C#, native, or Unity asset sources; outside Git it reads every other file outside the tool folders. Those files are checked only for `private-key`, `access-token`, and `machine-path`; the keyword-based `api-key` check would flag ordinary code assignments there. `--all-files` adds no files from Git submodules.
 
+With `--all-files`, the scan reads `sources` from the project's `.embraion/policy.yaml` and skips content the project cannot edit, using the same glob matching as policy elsewhere (`fnmatch` plus `**` for zero or more folders):
+
+- other text files under `external` or `generated` are skipped;
+- configuration and documentation files under `external` are skipped, because they are vendor-owned; those under `generated` stay scanned, because generated configuration is what tools load and is fixed by regenerating it from its source;
+- EmbrAIon configuration under `.embraion/` and a path that also matches `canonical` or `protected` are always scanned.
+
+The output reports how many files were skipped (`skipped-files` with `--json`). A missing, unreadable, or malformed policy skips nothing. Without `--all-files` the policy is not consulted, so the default scan is unchanged and still reports configuration and documentation under `external`.
+
 ## Canonical data classes and compatibility aliases
 
 Core policy uses exactly `PUBLIC`, `PRIVATE`, and `CONFIDENTIAL`.

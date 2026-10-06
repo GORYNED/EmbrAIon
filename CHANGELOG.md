@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- `embraion claude-native status --require installed,hooks` exits 1 when the scoped projection is missing or stale or the guard and observer hooks are absent, and reports a `gate` object. Model, effort, execution and callbacks cannot be required because the observer cannot verify them. Without `--require` the status is unchanged and exits 0.
+- `embraion validate` checks a project's `.embraion/*.yaml` for keys the schemas do not declare, knowledge paths and organization roots that do not exist, knowledge roles that match no Core role or declared agent, and empty or unread files and sections. Findings are warnings; `embraion validate --strict` reports them as errors.
+- `embraion framework pin` prints the project's exact `framework.version` and, when locked, the artifact digest as `key=value` lines, and fails on a missing or inexact pin such as `latest`, `>=1` or extra text.
+- Reusable composite action `GORYNED/EmbrAIon/actions/setup`: sets up Python, reads the consumer pin, and installs exactly that release, verifying the artifact digest when the pin is locked.
+
+### Changed
+
+- `embraion enforcement install` generates a workflow that installs EmbrAIon through the setup action instead of a literal `embraion==X`, so pin updates need no workflow edit, and refuses an inexact pin before writing.
+- `embraion security scan --all-files` skips paths under the project's `.embraion/policy.yaml` `sources.external` and `sources.generated` (configuration and documentation files only under `external`), never `canonical` or `protected` paths, and reports the skipped file count. The default scan is unchanged.
+
 ## 0.26.0 - 2026-10-06
 
 ### Added

@@ -70,6 +70,26 @@ embraion framework install
 
 Both commands read only the project pin/lock for artifact identity. They do not require consumer-owned checksum logic.
 
+## Consumer CI
+
+GitHub Actions workflows can use the reusable setup action instead of their own setup step and pin reader:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: GORYNED/EmbrAIon/actions/setup@v<release>
+    with:
+      python-version: "3.13"  # optional, the default
+      project-path: .         # optional, a directory at or below the project root
+  - run: embraion validate --strict
+```
+
+The action sets up Python, reads `.embraion/project.yaml` with the same reader as `embraion framework pin`, and installs exactly the pinned release. With an artifact lock it downloads the canonical release wheel and verifies its SHA-256 before pip installs it; without a lock it installs `embraion==<version>`. It then confirms the installed version. A missing or inexact pin, a mismatched lock, or a digest mismatch fails the step. Outputs: `version` and `digest` (empty without a lock).
+
+The action ref selects only the bootstrap code. The installed release always comes from the project pin, so `embraion update` takes effect without a workflow edit; move the ref only to adopt newer bootstrap behavior. The pin reader runs from the action's own release in an isolated environment with PyYAML only, and project text cannot issue workflow commands to the log. The steps use `bash` and are written for Linux and macOS runners; Windows runners are not covered. Commands in a locked project still run from the digest-bound runtime cache described above.
+
+Other CI systems can follow the same contract: `embraion framework pin` prints `version=` and `digest=` lines and fails on an inexact pin. `embraion enforcement install` generates a workflow that uses the action.
+
 ## Inspect resolution
 
 ```bash

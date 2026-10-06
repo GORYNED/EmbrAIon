@@ -182,6 +182,15 @@ embraion framework install --json
 
 Both commands read `.embraion/project.yaml`, require a valid artifact lock, download the exact canonical GitHub Release asset, and verify its SHA-256 before success. `framework install` verifies before invoking pip and records the lock identity in the runtime cache marker. Cached runtimes with a different artifact identity or digest are rejected.
 
+Print the exact pin for scripts and CI without network access:
+
+```bash
+embraion framework pin
+embraion framework pin --json
+```
+
+The output is `version=<x.y.z>` and, when the pin is locked, `digest=sha256:<hex>`, one per line, so it can be appended to `$GITHUB_OUTPUT`. The command fails on a missing `framework.version`, on anything other than an exact `MAJOR.MINOR.PATCH` release (for example `latest`, `>=1`, `1.2` or extra text), on another `framework.repository`, and on a malformed or mismatched artifact lock. Error messages never repeat the rejected value. The [setup action](runtime-version-resolution.md#consumer-ci) uses the same reader.
+
 ### `embraion sync`
 
 Generate disposable host projections without installing them into a project.
@@ -268,7 +277,17 @@ Validate framework schemas, catalogs, references, localization, and other determ
 ```bash
 embraion validate
 embraion validate --json
+embraion validate --strict
 ```
+
+Inside a project, `validate` also checks the project's `.embraion/*.yaml` structure and reports warnings for:
+
+- keys a schema in `schemas/` does not declare, at the top level and one section down (`config-unknown-key`);
+- knowledge slots or entries whose path is missing or leaves the project, and organization `roots` that do not exist (`config-path`);
+- knowledge `roles` that match no Core role or agent declared in `.embraion/agents.yaml` (`config-role`);
+- empty files, empty sections that expect a value, and `.embraion` YAML files EmbrAIon does not read (`config-inert`), plus unreadable YAML (`config-parse`).
+
+Warnings keep the exit code at 0; `--strict` reports them as errors. Without findings the output stays `PASS: no validation issues.`. Full schema conformance remains with the commands that load each file, and the policy-ceiling check stays an error.
 
 ### `embraion validation`
 
@@ -509,7 +528,7 @@ embraion enforcement install \
   --require-review
 ```
 
-No enforcement workflow or native hook is installed by `init`, `install`, or `harness audit`. The generated workflow exits non-zero for policy/validation/review failures. To make that check a mandatory merge gate, configure **EmbrAIon enforcement** as a required status check in the repository branch rules/ruleset.
+No enforcement workflow or native hook is installed by `init`, `install`, or `harness audit`. The generated workflow installs EmbrAIon through the reusable `GORYNED/EmbrAIon/actions/setup` action at the generating release, which reads the project pin at run time, so later pin updates need no workflow edit; see [Consumer CI](runtime-version-resolution.md#consumer-ci). `install` refuses an inexact pin before writing. The generated workflow exits non-zero for policy/validation/review failures. To make that check a mandatory merge gate, configure **EmbrAIon enforcement** as a required status check in the repository branch rules/ruleset.
 
 ### `embraion security`
 
@@ -519,7 +538,7 @@ Scan for likely secrets and policy drift.
 embraion security scan --path . --fail-on high
 ```
 
-`--all-files` also checks source and other text files for private keys, access tokens, and machine paths; see [Security](../security.md#scan-findings).
+`--all-files` also checks source and other text files for private keys, access tokens, and machine paths. It skips paths the project's `.embraion/policy.yaml` marks as `external` or `generated`, never `canonical` or `protected` ones, and reports the skipped count (`skipped-files` with `--json`); see [Security](../security.md#scan-findings).
 
 Redact likely credentials from diagnostic text:
 
@@ -622,6 +641,7 @@ embraion install --host claude-code --component scoped-agents
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
 
 The explicit `scoped-agents` component requires `.embraion/claude-native.yaml`; the default Claude installation still includes only `agents` and `skills`. Definitions derive from project routing. Start a new Thread after installation and invoke the exact definition type returned by dispatch. See [Claude Code](../hosts/claude-code.md).
@@ -629,3 +649,5 @@ The explicit `scoped-agents` component requires `.embraion/claude-native.yaml`; 
 `install-hooks` preserves unrelated settings and hooks in `.claude/settings.json`. `guard` reads a PreToolUse JSON event from stdin: it checks configured definitions, refuses invocation overrides and, with read-policy enabled, bounds configured scoped-agent reads. It does not restrict parent sessions, arbitrary agents or Bash. `observe` receives PostToolUse/SubagentStop events and stores only identity and reported effort in ignored local state. These two commands are hook entry points.
 
 `status` separates file installation from recorded callback metadata and advisory `reported-effort` comparisons. Observer input has `evidence-origin: unverified-command-input`; `execution`, effective `effort` and `model` remain `unverified`; `callbacks: recorded` denotes accepted metadata. Synthetic parser tests and local records do not prove host delivery, instruction loading, invocation completion or applied settings.
+
+Without `--require`, `status` exits 0 whatever the installation state. For CI, `--require installed,hooks` (comma-separated or repeated) adds a `gate` object and exits 1 unless each listed fact holds: `installed` requires `installation: verified`, so a missing or stale projection fails; `hooks` requires every guard and observer hook entry in `.claude/settings.json`. Only these file facts can gate, because `status` verifies them itself. Model, effort, execution and callbacks come from host behavior or unverified hook input, so `--require` refuses them with exit 2 rather than turning advisory data into a pass.

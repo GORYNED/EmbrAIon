@@ -14,6 +14,8 @@ embraion validate
 
 Используйте при проверке установки EmbrAIon или разработке framework.
 
+Внутри проекта команда также проверяет policy ceilings и предупреждает о структурных ошибках в `.embraion/*.yaml`: неизвестных ключах, отсутствующих путях knowledge и roots в organization, неизвестных ролях knowledge, пустых и непрочитанных файлах. `embraion validate --strict` превращает эти предупреждения в ошибки; см. [справочник CLI](reference/cli.ru.md#embraion-validate).
+
 ## Project validation profiles
 
 Consuming repositories определяют executable commands в `.embraion/validation.yaml` и запускают:

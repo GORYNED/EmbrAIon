@@ -14,6 +14,8 @@ This validates the installed EmbrAIon framework itself: schemas, catalogs, refer
 
 Use it when verifying the EmbrAIon installation or developing the framework.
 
+Inside a project it also checks the project's policy ceilings and warns about structural problems in `.embraion/*.yaml`: unknown keys, missing knowledge paths and organization roots, unknown knowledge roles, and empty or unread files. `embraion validate --strict` turns those warnings into errors; see the [CLI reference](reference/cli.md#embraion-validate).
+
 ## Project validation profiles
 
 Consuming repositories define executable commands in `.embraion/validation.yaml` and run them with:

@@ -95,7 +95,10 @@ embraion projection verify --host claude-code --component agents --component ski
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
+
+`--require` позволяет использовать status как проверку в CI: команда возвращает 1, если проекция отсутствует или устарела либо нужные hooks не установлены. Требовать model и effort нельзя, потому что их не подтверждают ни файлы, ни данные hooks; см. [справочник CLI](../reference/cli.ru.md#embraion-claude-native).
 
 Установка добавляет отдельные `.claude/agents/embraion--*.md` и метаданные `.claude/embraion-native.json`. Обычный `reviewer.md` остаётся без привязки к модели. Изменённые пользователем файлы и устаревшие изменённые определения сохраняют обычную защиту проекций. `--prune` удаляет только неизменённые устаревшие файлы с подтверждённым владением после проверки изменений.
 

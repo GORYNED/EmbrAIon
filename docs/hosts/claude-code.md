@@ -95,7 +95,10 @@ embraion projection verify --host claude-code --component agents --component ski
 embraion claude-native install-hooks --dry-run
 embraion claude-native install-hooks
 embraion claude-native status
+embraion claude-native status --require installed,hooks
 ```
+
+`--require` makes the status usable as a CI gate: it exits 1 when the projection is missing or stale or required hooks are absent. Model and effort cannot be required, because no file or hook payload proves them; see the [CLI reference](../reference/cli.md#embraion-claude-native).
 
 Installation adds separate hash-named `.claude/agents/embraion--*.md` files and metadata in `.claude/embraion-native.json`. The usual `reviewer.md` stays model-neutral. Projection conflicts and obsolete modified files retain the same protections as other components; use a reviewed `--prune` only for unchanged owned obsolete definitions.
 

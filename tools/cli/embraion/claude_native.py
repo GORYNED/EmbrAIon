@@ -308,6 +308,37 @@ def observe(payload: Any, project: Path | None = None) -> dict[str, Any]:
             "model-status": "unverified"}
 
 
+# Only file facts that `status` verifies itself can gate CI. Model, effort, execution and callbacks
+# come from host-delivered or unverified command input, so they stay advisory.
+GATEABLE_REQUIREMENTS = ("installed", "hooks")
+UNGATEABLE_FACTS = frozenset({"model", "effort", "reported-effort", "execution", "callbacks"})
+
+
+def parse_requirements(value: str) -> list[str]:
+    """Parse a comma-separated `--require` list; unverifiable facts are refused, not ignored."""
+    names = [item.strip() for item in value.split(",")]
+    if not names or any(not name for name in names):
+        raise ValueError("Empty claude-native requirement.")
+    for name in names:
+        if name in UNGATEABLE_FACTS:
+            raise ValueError(f"Requirement '{name}' cannot gate: the observer cannot verify it.")
+        if name not in GATEABLE_REQUIREMENTS:
+            raise ValueError(f"Unknown claude-native requirement '{name}'; "
+                             f"use {', '.join(GATEABLE_REQUIREMENTS)}.")
+    return list(dict.fromkeys(names))
+
+
+def gate_status(status: dict[str, Any], required: list[str]) -> dict[str, Any]:
+    """Evaluate opt-in requirements against an `observer_status` report."""
+    failed = []
+    if "installed" in required and status.get("installation") != "verified":
+        failed.append("installed")
+    if "hooks" in required and (status.get("hooks") or {}).get("installed") is not True:
+        failed.append("hooks")
+    return {"required": list(required), "failed": failed,
+            "status": "failed" if failed else "passed"}
+
+
 def observer_status(project: Path | None = None) -> dict[str, Any]:
     root = project_root(project)
     installation, assignments = _installation(root)
