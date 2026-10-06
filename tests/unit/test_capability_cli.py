@@ -86,6 +86,24 @@ class CapabilityCliTests(unittest.TestCase):
             self.assertEqual("host-model", launch.call_args.kwargs["model"])
             self.assertEqual("medium", launch.call_args.kwargs["effort"])
 
+    def test_live_eval_rejects_a_host_command_that_is_not_an_argument_vector(self) -> None:
+        host_default = self.selected(resolution="host-default", model=None, effort=None)
+        with patch.object(cli, "route", return_value=host_default) as resolve, \
+             patch.object(cli, "run_suite") as launch:
+            args = self.eval_args("--host", "portable", "--host-command", "not json [")
+            with self.assertRaisesRegex(RuntimeError, "JSON array of strings"):
+                args.func(args)
+            resolve.assert_not_called()
+            launch.assert_not_called()
+        suite = self.project / "suite.json"
+        suite.write_text("{}", encoding="utf-8")
+        with patch.object(cli, "route", return_value=host_default):
+            args = self.parse("eval", "skills", "run", "--suite", str(suite), "--output", str(self.project / "report.json"),
+                              "--path", str(self.project), "--host", "portable", "--host-command", '"my-agent run"')
+            with self.assertRaisesRegex(RuntimeError, "argument vector") as failure:
+                args.func(args)
+            self.assertNotIn("my-agent", str(failure.exception))
+
     def test_organization_finding_fails_and_skipped_passes(self) -> None:
         args = self.parse("organization", "check", "--path", str(self.project), "--json")
         output = io.StringIO()

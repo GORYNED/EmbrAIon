@@ -444,11 +444,13 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
             raise ValueError("portable host requires a non-empty command argument vector")
         if model is not None or effort is not None:
             raise ValueError("portable host cannot apply model or effort; configure them in the command")
+        if host_binary is not None:
+            raise ValueError("portable host takes its executable from the command, not a host binary")
     elif host_command is not None:
         raise ValueError("a host command applies only to the portable host")
     if skill_directory is not None and host != "portable":
         raise ValueError("a skill directory applies only to the portable host")
-    skill_root = _safe_relative(skill_directory or SKILL_DIRECTORIES[host])
+    skill_root = _safe_relative(SKILL_DIRECTORIES[host] if skill_directory is None else skill_directory)
     if model is not None and (not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", model)):
         raise ValueError("invalid model name")
     suite = suite.resolve(strict=True)

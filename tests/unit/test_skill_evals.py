@@ -376,6 +376,8 @@ class SkillEvalTests(unittest.TestCase):
             ({"host_command": []}, "argument vector"),
             ({"host_command": [str(self.portable)], "model": "m"}, "cannot apply model"),
             ({"host_command": [str(self.portable)], "skill_directory": "../x"}, "unsafe relative path"),
+            ({"host_command": [str(self.portable)], "skill_directory": ""}, "unsafe relative path"),
+            ({"host_command": [str(self.portable)], "host_binary": "agent"}, "not a host binary"),
         ):
             with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, message):
                 run_suite(self.suite, **{"host": "portable", "model": None, "effort": None, "attempts": 1,
