@@ -91,6 +91,49 @@ embraion enforcement install \
 
 See [Enforcement](../guides/enforcement.md) for the complete workflow.
 
+## Policy ceilings
+
+`ceilings` declares the most a project allows. Deployments, execution bindings, and routing may narrow these limits but never widen them, so a routine YAML edit cannot silently grant a provider more data, access, or sources:
+
+```yaml
+ceilings:
+  providers:
+    deepseek:
+      data-classes: [PUBLIC]
+      access-modes: [read-only]
+      roles: [research]
+      sources: [PublicOfficialUpstream]
+    anthropic:
+      data-classes: [PUBLIC, PRIVATE]
+      access-modes: [read-only]
+      roles: [independent-review]
+      binding-required-billing-modes: [api]
+  data-classes:
+    CONFIDENTIAL: {providers: [openai]}
+  sources:
+    VendorSdk: {providers: [openai]}
+  task-classes:
+    protected-decision: {route-class: critical}
+  critical:
+    justifications: [security-critical, migration-data-loss, recovery-integrity, exceptional-systemic-risk]
+```
+
+- `providers.<provider>` limits every enabled deployment of that provider. A listed dimension that the deployment leaves out counts as unrestricted and fails. `sources` limits the deployment's execution binding `sourceIds`. When `data-classes` or `roles` are limited, the binding must list `taskClasses`, and every task class that the binding or routing sends to the deployment must stay within the limit. `binding-required-billing-modes` requires an execution binding for those billing modes.
+- `data-classes.<class>.providers` allows that data class only for these providers. A deployment without a `data-classes` list counts as allowing every class.
+- `sources.<sourceId>.providers` allows an execution source only for these providers.
+- `task-classes.<id>` pins the route class, role, or data class of a routing task class so it cannot be lowered.
+- `critical.justifications` turns critical-route justification into a closed set. `embraion route`, `dispatch`, and `execute` then accept only `<reason>` or `<reason>: details` with a listed reason.
+
+Check the ceilings explicitly or as part of `embraion validate` inside the project:
+
+```bash
+embraion policy check
+embraion policy check --json
+embraion validate
+```
+
+Each finding names the file location and the ceiling it exceeds. Projects without `ceilings` keep the previous behavior.
+
 ## Projection root checks
 
 Codex merge mode keeps user-owned content in `.codex/config.toml`. The optional `projection` section decides how `embraion projection verify --config-mode merge` treats that content:

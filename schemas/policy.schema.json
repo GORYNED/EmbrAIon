@@ -107,6 +107,132 @@
         }
       },
       "additionalProperties": false
+    },
+    "ceilings": {
+      "type": "object",
+      "description": "Project-declared maximum permissions that deployments, execution bindings, and routing may narrow but never widen.",
+      "properties": {
+        "providers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "data-classes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "PUBLIC",
+                    "PRIVATE",
+                    "CONFIDENTIAL"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "access-modes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "read-only",
+                    "workspace-write"
+                  ]
+                },
+                "uniqueItems": true
+              },
+              "roles": {
+                "$ref": "#/$defs/names"
+              },
+              "sources": {
+                "$ref": "#/$defs/names"
+              },
+              "binding-required-billing-modes": {
+                "$ref": "#/$defs/names"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "data-classes": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "PUBLIC",
+              "PRIVATE",
+              "CONFIDENTIAL"
+            ]
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "providers"
+            ],
+            "properties": {
+              "providers": {
+                "$ref": "#/$defs/names",
+                "minItems": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "providers"
+            ],
+            "properties": {
+              "providers": {
+                "$ref": "#/$defs/names",
+                "minItems": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "task-classes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+              "route-class": {
+                "enum": [
+                  "bounded-read",
+                  "bounded-write",
+                  "ordinary",
+                  "substantial",
+                  "complex",
+                  "critical"
+                ]
+              },
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "data-class": {
+                "enum": [
+                  "PUBLIC",
+                  "PRIVATE",
+                  "CONFIDENTIAL"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "critical": {
+          "type": "object",
+          "properties": {
+            "justifications": {
+              "$ref": "#/$defs/names",
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {
@@ -119,6 +245,14 @@
       "uniqueItems": true
     },
     "keyPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "names": {
       "type": "array",
       "items": {
         "type": "string",

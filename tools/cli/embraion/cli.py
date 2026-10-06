@@ -211,6 +211,18 @@ def _cmd_help(args: argparse.Namespace) -> int:
 def _cmd_validate(args: argparse.Namespace) -> int:
     root = framework_root(Path(args.root) if args.root else None)
     issues = collect_issues(root)
+    project = find_project_root()
+    if project is not None and (project / ".embraion" / "policy.yaml").is_file():
+        from .ceilings import check_policy_ceilings
+        try:
+            findings = check_policy_ceilings(project)
+        except RuntimeError as error:
+            findings = [{"code": "policy-invalid", "path": ".embraion", "message": str(error)}]
+        issues += [
+            {"severity": "error", "code": "policy-ceiling", "path": item["path"],
+             "message": f"{item['code']}: {item['message']}"}
+            for item in findings
+        ]
 
     if args.json:
         _print_json({"issues": issues, "count": len(issues)})
@@ -365,6 +377,24 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             print(f"Sources {category}: {len(patterns)} pattern(s)")
         print(f"Routing override hosts: {len(policy['routing']['overrides'])}")
     return 0
+
+
+def _cmd_policy_check(args: argparse.Namespace) -> int:
+    from .ceilings import check_policy_ceilings, read_ceilings
+
+    project = project_root(Path(args.path) if args.path else None)
+    declared = bool(read_ceilings(project))
+    findings = check_policy_ceilings(project)
+    if args.json:
+        _print_json({"ceilings-declared": declared, "valid": not findings, "findings": findings})
+    elif not declared:
+        print("No policy ceilings declared in .embraion/policy.yaml.")
+    elif findings:
+        for item in findings:
+            print(f"ERROR   {item['code']:28} {item['path']}: {item['message']}")
+    else:
+        print("PASS: deployments, execution bindings, and routing stay within policy ceilings.")
+    return 1 if findings else 0
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -1743,6 +1773,18 @@ def build_parser() -> argparse.ArgumentParser:
     policy_show = policy_sub.add_parser("show", help="Show effective project policy")
     policy_show.add_argument("--json", action="store_true")
     policy_show.set_defaults(func=_cmd_policy_show)
+    policy_check = policy_sub.add_parser(
+        "check",
+        help="Fail when configuration widens policy ceilings",
+        description=(
+            "Check that deployments, execution bindings, and routing stay within "
+            "the ceilings declared in .embraion/policy.yaml. 'embraion validate' "
+            "runs the same check inside a project."
+        ),
+    )
+    policy_check.add_argument("--path", help="Project path (default: current directory)")
+    policy_check.add_argument("--json", action="store_true")
+    policy_check.set_defaults(func=_cmd_policy_check)
 
     update = sub.add_parser(
         "update",

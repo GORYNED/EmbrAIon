@@ -5,6 +5,7 @@
 ### Added
 
 - `projection verify --config-mode merge` reports `root-findings` for Codex content outside managed ownership: root model/effort or `agents.default_subagent_*` overrides, keys outside an optional `allowed-root-keys` list, and root instructions outside the managed orchestration block. `--strict-root` or `policy.yaml` `projection.codex.strict-root` makes them fail verification.
+- Policy `ceilings` declare the most a project allows per provider, data class, execution source, and pinned task class. `embraion policy check` and `embraion validate` fail when deployments, execution bindings, or routing widen them, and `critical.justifications` makes critical-route reasons a closed set at routing and execution time.
 
 ## 0.23.0 - 2026-10-05
 

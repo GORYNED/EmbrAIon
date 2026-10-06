@@ -113,6 +113,13 @@ embraion policy show
 embraion policy show --json
 ```
 
+Fail when deployments, execution bindings, or routing widen the project's [policy ceilings](../configuration/policy.md#policy-ceilings). `embraion validate` runs the same check inside a project:
+
+```bash
+embraion policy check
+embraion policy check --json
+```
+
 ### `embraion update`
 
 Safely normalize project configuration and atomically synchronize the framework pin with the exact published release artifact lock.

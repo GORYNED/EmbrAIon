@@ -109,6 +109,13 @@ embraion policy show
 embraion policy show --json
 ```
 
+Завершиться с ошибкой, если deployments, execution bindings или routing расширяют [policy ceilings](../configuration/policy.ru.md#policy-ceilings) проекта. `embraion validate` внутри проекта выполняет ту же проверку:
+
+```bash
+embraion policy check
+embraion policy check --json
+```
+
 ### `embraion update`
 
 Безопасно нормализует project configuration и атомарно синхронизирует framework pin с точным lock опубликованного release artifact.
