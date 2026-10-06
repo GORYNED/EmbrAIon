@@ -1,4 +1,4 @@
-"""Run declarative skill cases against isolated native Codex sessions."""
+"""Run declarative skill cases against isolated native host sessions."""
 
 from __future__ import annotations
 
@@ -24,6 +24,11 @@ MAX_EVENT_BYTES = 2_000_000
 MAX_SUITE_BYTES = 2_000_000
 VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max", "ultra"}
 READ_COMMAND = re.compile(r"(?:^|\s)(?:cat|sed|head|tail|rg|grep|less|more|type)\s")
+# Live hosts and where each discovers project skills. `portable` runs any
+# agent CLI given as an argument vector; its skill directory is configurable.
+SKILL_EVAL_HOSTS = ("codex", "claude-code", "portable")
+SKILL_DIRECTORIES = {"codex": ".agents/skills", "claude-code": ".claude/skills", "portable": ".agents/skills"}
+CLAUDE_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
 
 def _safe_relative(value: str) -> Path:
@@ -211,6 +216,22 @@ def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effor
     if trusted_workspace:
         argv += ["--config", "projects." + json.dumps(str(root.resolve())) + '.trust_level="trusted"']
     argv.append("-")
+    result = _run_host_process(argv, root, prompt, timeout, scratch)
+    if result["status"] != "completed":
+        return result
+    try:
+        observations = _events(scratch / "events.jsonl", skill_ids)
+    except (ValueError, UnicodeError):
+        result["status"] = "invalid-host-events"
+        return result
+    result.update(observations)
+    if result["exit-code"] != 0 or observations["failed"] or not observations["completed"]:
+        result["status"] = "host-failed"
+    return result
+
+
+def _run_host_process(argv: list[str], root: Path, prompt: str, timeout: int, scratch: Path) -> dict[str, Any]:
+    """Run one bounded host process with the prompt on stdin and its output kept in scratch."""
     start = time.monotonic()
     stdout = scratch / "events.jsonl"
     stderr = scratch / "stderr.txt"
@@ -235,18 +256,107 @@ def _invoke_codex(binary: str, root: Path, prompt: str, model: str | None, effor
             time.sleep(0.05)
         process.wait()
     result: dict[str, Any] = {"status": status, "duration-seconds": round(time.monotonic() - start, 3), "exit-code": process.returncode}
-    if status != "completed":
-        return result
-    if stdout.stat().st_size > MAX_EVENT_BYTES or stderr.stat().st_size > MAX_EVENT_BYTES:
+    if status == "completed" and (stdout.stat().st_size > MAX_EVENT_BYTES or stderr.stat().st_size > MAX_EVENT_BYTES):
         result["status"] = "output-limit"
+    return result
+
+
+def _claude_events(path: Path, skill_ids: list[str]) -> dict[str, Any]:
+    """Translate Claude Code stream-json events into the neutral observation fields."""
+    completed = False
+    failed = False
+    usage_complete = True
+    tool_calls = 0
+    tokens: dict[str, int] = {}
+    pending: dict[str, str] = {}
+    reads: set[str] = set()
+    with path.open(encoding="utf-8") as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            event = json.loads(line)
+            if not isinstance(event, dict) or not isinstance(event.get("type"), str):
+                raise ValueError("invalid host event")
+            kind = event["type"]
+            message = event.get("message")
+            content = message.get("content") if isinstance(message, dict) else None
+            blocks = [block for block in content if isinstance(block, dict)] if isinstance(content, list) else []
+            if kind == "assistant":
+                for block in blocks:
+                    if block.get("type") != "tool_use":
+                        continue
+                    tool_calls += 1
+                    data = block.get("input") if isinstance(block.get("input"), dict) else {}
+                    target = None
+                    if block.get("name") == "Skill" and data.get("skill") in skill_ids:
+                        target = data["skill"]
+                    elif block.get("name") == "Read" and isinstance(data.get("file_path"), str):
+                        normalized = data["file_path"].replace("\\", "/")
+                        target = next((skill_id for skill_id in skill_ids
+                                       if normalized.endswith(f".claude/skills/{skill_id}/SKILL.md")), None)
+                    if target is not None and isinstance(block.get("id"), str):
+                        pending[block["id"]] = target
+            elif kind == "user":
+                for block in blocks:
+                    if (block.get("type") == "tool_result" and block.get("tool_use_id") in pending
+                            and block.get("is_error") is not True):
+                        reads.add(pending[block["tool_use_id"]])
+            elif kind == "result":
+                if event.get("subtype") == "success" and event.get("is_error") is False:
+                    completed = True
+                else:
+                    failed = True
+                usage = event.get("usage")
+                if not isinstance(usage, dict) or any(
+                    type(usage.get(key)) is not int or usage[key] < 0
+                    for key in ("input_tokens", "output_tokens")
+                ):
+                    usage_complete = False
+                if isinstance(usage, dict):
+                    for source, key in (("input_tokens", "input_tokens"), ("output_tokens", "output_tokens"),
+                                        ("cache_read_input_tokens", "cached_input_tokens")):
+                        value = usage.get(source)
+                        if type(value) is int and value >= 0:
+                            tokens[key] = tokens.get(key, 0) + value
+    return {"completed": completed, "failed": failed, "tool-calls": tool_calls, "tokens": tokens,
+            "usage-complete": completed and usage_complete, "observed-reads": sorted(reads)}
+
+
+def _invoke_claude_code(binary: str, root: Path, prompt: str, model: str | None, effort: str | None, timeout: int,
+                        skill_ids: list[str], scratch: Path) -> dict[str, Any]:
+    """Run one non-interactive Claude Code session that loads only project settings.
+
+    Edits inside the project are accepted; anything that would prompt is denied.
+    """
+    argv = [binary, "-p", "--output-format", "stream-json", "--verbose", "--setting-sources", "project",
+            "--strict-mcp-config", "--permission-mode", "acceptEdits", "--permission-prompts", "none",
+            "--no-session-persistence"]
+    if model:
+        argv += ["--model", model]
+    if effort:
+        argv += ["--effort", effort]
+    result = _run_host_process(argv, root, prompt, timeout, scratch)
+    if result["status"] != "completed":
         return result
     try:
-        observations = _events(stdout, skill_ids)
+        observations = _claude_events(scratch / "events.jsonl", skill_ids)
     except (ValueError, UnicodeError):
         result["status"] = "invalid-host-events"
         return result
     result.update(observations)
-    if process.returncode != 0 or observations["failed"] or not observations["completed"]:
+    if result["exit-code"] != 0 or observations["failed"] or not observations["completed"]:
+        result["status"] = "host-failed"
+    return result
+
+
+def _invoke_portable(command: list[str], root: Path, prompt: str, timeout: int, scratch: Path) -> dict[str, Any]:
+    """Run any agent CLI with the prompt on stdin; only its exit code and the files are observed."""
+    result = _run_host_process(command, root, prompt, timeout, scratch)
+    if result["status"] != "completed":
+        return result
+    result.update({"completed": result["exit-code"] == 0, "failed": result["exit-code"] != 0, "tool-calls": None,
+                   "tokens": {}, "usage-complete": False, "observed-reads": []})
+    if result["exit-code"] != 0:
         result["status"] = "host-failed"
     return result
 
@@ -313,18 +423,32 @@ def _check_output_destination(output: Path, suite: Path, source_dirs: list[Path]
         raise ValueError("skill evaluation output overlaps suite source")
 
 
-def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, attempts: int, output: Path, timeout_seconds: int = 180, codex_binary: str = "codex") -> dict[str, Any]:
+def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, attempts: int, output: Path, timeout_seconds: int = 180, codex_binary: str = "codex",
+              host_binary: str | None = None, host_command: list[str] | None = None, skill_directory: str | None = None) -> dict[str, Any]:
     """Run baseline and candidate against clean copies of each fixture.
 
     A previous variant is included when every suite skill supplies `previous`.
     The report contains only digests, check outcomes, and bounded metrics.
+    `codex` and `claude-code` launch their native CLI; `portable` launches the
+    given argument vector, so any agent CLI that reads the prompt on stdin can run.
     """
-    if host != "codex":
-        raise ValueError("live skill eval currently supports host=codex only")
+    if host not in SKILL_EVAL_HOSTS:
+        raise ValueError("unsupported live skill eval host; use one of: " + ", ".join(SKILL_EVAL_HOSTS))
     if attempts < 1 or attempts > 20 or timeout_seconds < 1 or timeout_seconds > 3600:
         raise ValueError("attempts or timeout outside allowed range")
-    if effort is not None and effort not in VALID_EFFORTS:
+    if effort is not None and effort not in (CLAUDE_EFFORTS if host == "claude-code" else VALID_EFFORTS):
         raise ValueError("unsupported reasoning effort")
+    if host == "portable":
+        if (not isinstance(host_command, list) or not host_command or len(host_command) > 64
+                or not all(isinstance(item, str) and item and "\0" not in item and len(item) <= 4096 for item in host_command)):
+            raise ValueError("portable host requires a non-empty command argument vector")
+        if model is not None or effort is not None:
+            raise ValueError("portable host cannot apply model or effort; configure them in the command")
+    elif host_command is not None:
+        raise ValueError("a host command applies only to the portable host")
+    if skill_directory is not None and host != "portable":
+        raise ValueError("a skill directory applies only to the portable host")
+    skill_root = _safe_relative(skill_directory or SKILL_DIRECTORIES[host])
     if model is not None and (not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", model)):
         raise ValueError("invalid model name")
     suite = suite.resolve(strict=True)
@@ -368,11 +492,17 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
                     _copy_source(fixture, project)
                     if variant != "baseline":
                         for skill in skills:
-                            destination = project / ".agents" / "skills" / skill["id"]
+                            destination = project / skill_root / skill["id"]
                             destination.parent.mkdir(parents=True, exist_ok=True)
                             _copy_source(skill[variant]["path"], destination)
                     before = _snapshot(project)
-                    host_result = _invoke_codex(codex_binary, project, case["prompt"], model, effort, timeout_seconds, [skill["id"] for skill in skills], scratch)
+                    skill_ids = [skill["id"] for skill in skills]
+                    if host == "codex":
+                        host_result = _invoke_codex(host_binary or codex_binary, project, case["prompt"], model, effort, timeout_seconds, skill_ids, scratch)
+                    elif host == "claude-code":
+                        host_result = _invoke_claude_code(host_binary or "claude", project, case["prompt"], model, effort, timeout_seconds, skill_ids, scratch)
+                    else:
+                        host_result = _invoke_portable(host_command, project, case["prompt"], timeout_seconds, scratch)
                     try:
                         checks = _grade(project, before, case["checks"])
                     except (ValueError, OSError):
@@ -412,6 +542,6 @@ def run_suite(suite: Path, *, host: str, model: str | None, effort: str | None, 
                 comparisons[reference] = outcome
             pairs.append({"case": case["id"], "attempt": attempt, "candidate-vs": comparisons})
     pair_summary = {reference: {outcome: sum(pair["candidate-vs"].get(reference) == outcome for pair in pairs) for outcome in ("improved", "regressed", "tied-pass", "tied-fail", "unavailable")} for reference in ("baseline", "previous") if reference in variants}
-    report = {"schema-version": 1, "evidence-kind": "live-codex-subprocess", "suite": data["id"], "suite-digest": suite_digest, "host": host, "model": model, "effort": effort, "attempts": attempts, "skill-identities": identity, "summary": summary, "pair-summary": pair_summary, "pairs": pairs, "runs": records}
+    report = {"schema-version": 1, "evidence-kind": f"live-{host}-subprocess", "suite": data["id"], "suite-digest": suite_digest, "host": host, "model": model, "effort": effort, "attempts": attempts, "skill-identities": identity, "summary": summary, "pair-summary": pair_summary, "pairs": pairs, "runs": records}
     write_json(output, report)
     return report

@@ -80,4 +80,4 @@ See [Runs & Review](guides/runs-review.md) and [Enforcement](guides/enforcement.
 
 Declare exact project namespace, assembly and asset rules in [organization configuration](configuration/organization.md), then bind `embraion organization check` to the affected validation profiles and CI. Incremental checks show existing debt separately; a full audit reports every finding. Missing configuration reports `skipped`, not evidence that the repository is organized.
 
-The existing `eval run` grades supplied execution records. [Live skill evals](guides/skill-evals.md) launch isolated authenticated Codex sessions and compare baseline/candidate behavior across repeated English and Russian cases. Fake-host runner tests verify mechanics and never establish semantic skill quality.
+The existing `eval run` grades supplied execution records. [Live skill evals](guides/skill-evals.md) launch isolated authenticated host sessions (Codex, Claude Code, or any agent CLI through the portable host) and compare baseline/candidate behavior across repeated English and Russian cases. Fake-host runner tests verify mechanics and never establish semantic skill quality.

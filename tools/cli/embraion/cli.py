@@ -1227,9 +1227,15 @@ def _cmd_knowledge(args: argparse.Namespace) -> int:
 
 def _cmd_eval_skills_run(args: argparse.Namespace) -> int:
     project = project_root(Path(args.path))
+    host_command = None
+    if args.host_command is not None:
+        try:
+            host_command = json.loads(args.host_command)
+        except ValueError:
+            raise RuntimeError("--host-command must be a JSON array of strings.") from None
     selected = route(args.host, args.route_class, args.data, role="worker", access="workspace-write", project=project)
     if selected.get("options") or selected.get("provider"):
-        raise RuntimeError("Live Codex eval cannot apply this route's provider or additional options; use an applicable declared route.")
+        raise RuntimeError("Live skill eval cannot apply this route's provider or additional options; use an applicable declared route.")
     model, effort = selected.get("model"), selected.get("effort")
     if selected["resolution"] != "host-default":
         if ((args.model is not None and args.model != model)
@@ -1239,7 +1245,8 @@ def _cmd_eval_skills_run(args: argparse.Namespace) -> int:
         model, effort = args.model, args.effort
     try:
         report = run_suite(Path(args.suite), host=args.host, model=model, effort=effort,
-                           attempts=args.attempts, output=Path(args.output), timeout_seconds=args.timeout)
+                           attempts=args.attempts, output=Path(args.output), timeout_seconds=args.timeout,
+                           host_binary=args.host_binary, host_command=host_command, skill_directory=args.skill_dir)
     except (ValueError, OSError) as error:
         raise RuntimeError("Cannot run live skill evaluation: " + redact_text(str(error))) from error
     _print_json(report)
@@ -2458,7 +2465,10 @@ def build_parser() -> argparse.ArgumentParser:
     eval_skills_sub = eval_skills.add_subparsers(dest="eval_skills_command", required=True)
     eval_skills_run = eval_skills_sub.add_parser("run")
     eval_skills_run.add_argument("--suite", required=True)
-    eval_skills_run.add_argument("--host", default="codex", choices=["codex"])
+    eval_skills_run.add_argument("--host", default="codex", choices=["codex", "claude-code", "portable"])
+    eval_skills_run.add_argument("--host-binary", help="native CLI to launch for codex or claude-code (default: codex or claude)")
+    eval_skills_run.add_argument("--host-command", help="portable host: JSON array with the agent CLI argument vector; the prompt arrives on stdin")
+    eval_skills_run.add_argument("--skill-dir", help="portable host: project-relative directory the agent discovers skills in (default: .agents/skills)")
     eval_skills_run.add_argument("--model")
     eval_skills_run.add_argument("--effort")
     eval_skills_run.add_argument("--attempts", type=int, default=2)
