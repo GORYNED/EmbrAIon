@@ -136,8 +136,8 @@ def _valid_record(line: bytes) -> dict[str, Any] | None:
                 or not isinstance(attempt.get("finishedUtc"), str)
                 or not (attempt.get("failure") is None or isinstance(attempt["failure"], str))):
             return None
-        datetime.fromisoformat(attempt["finishedUtc"].replace("Z", "+00:00"))
-    except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+        datetime.fromisoformat(attempt["finishedUtc"].replace("Z", "+00:00")).astimezone(timezone.utc)
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError):
         return None
     return record
 

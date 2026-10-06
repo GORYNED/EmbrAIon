@@ -159,16 +159,18 @@ class LedgerTests(unittest.TestCase):
         (self.project / ".embraion" / "state").mkdir(exist_ok=True)
         numeric = {"schemaVersion": 1, "attempt": {**_attempt("first", "failed", "transport"), "finishedUtc": 20261006}}
         listed = {"schemaVersion": 1, "attempt": {**_attempt("first", "failed"), "failure": ["transport"]}}
+        extreme = {"schemaVersion": 1, "attempt": {**_attempt("first", "failed", "transport"),
+                                                   "finishedUtc": "0001-01-01T00:00:00+01:00"}}
         with self.path.open("ab") as stream:
             stream.write(json.dumps(numeric).encode() + b"\n" + json.dumps(listed).encode() + b"\n"
-                         + b"[" * 100_000 + b"\n")
+                         + json.dumps(extreme).encode() + b"\n" + b"[" * 100_000 + b"\n")
 
     def test_type_confused_and_deeply_nested_lines_are_corrupt(self) -> None:
         self.append(_attempt("first"))
         self.write_malformed()
         self.append(_attempt("second"))
         loaded = ledger.read_records(self.project)
-        self.assertEqual(3, loaded["corruptLines"])
+        self.assertEqual(4, loaded["corruptLines"])
         self.assertEqual(["first", "second"], [item["attempt"]["deployment"] for item in loaded["records"]])
 
     def test_execute_health_and_preflight_survive_malformed_lines(self) -> None:
@@ -178,7 +180,7 @@ class LedgerTests(unittest.TestCase):
                          persist_attempts=True)
         self.assertEqual("completed", result["status"])
         report = ledger.health_report(self.project)
-        self.assertEqual(3, report["corruptLines"])
+        self.assertEqual(4, report["corruptLines"])
         self.assertEqual([("first", "healthy")], [(item["deployment"], item["state"]) for item in report["deployments"]])
         checked = preflight_execution(_request(), project=self.project, adapters={"fake": FakeAdapter([])})
         self.assertTrue(checked["ready"], checked)
