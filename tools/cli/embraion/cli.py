@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import subprocess
 import sys
@@ -1361,9 +1362,10 @@ def _cmd_check(args: argparse.Namespace) -> int:
     checks = planned_checks(project, base_ref=args.base_ref, fail_on=args.fail_on, all_files=args.all_files)
     parser = build_parser()
     results = []
-    for check in checks:
-        code, output = run_check(parser, check["argv"])
-        results.append({**check, "exit": code, "passed": code == 0, "output": output})
+    with contextlib.chdir(project):
+        for check in checks:
+            code, output = run_check(parser, check["argv"])
+            results.append({**check, "exit": code, "passed": code == 0, "output": output})
     failed = [item["id"] for item in results if not item["passed"]]
     if args.json:
         _print_json({"passed": not failed, "failed": failed, "checks": results})

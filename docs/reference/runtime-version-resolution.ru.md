@@ -77,6 +77,8 @@ Workflow GitHub Actions может использовать переисполь
 ```yaml
 steps:
   - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0  # история для --base-ref
   - uses: GORYNED/EmbrAIon/actions/setup@v<release>
     with:
       python-version: "3.13"  # необязательно, значение по умолчанию

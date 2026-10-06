@@ -4,9 +4,9 @@
 
 ### Added
 
-- `embraion check` runs, from the project root, every check the project configuration selects and exits 1 when any fails: `validate --strict`, `route --validate`, `route --audit-authority`, `security scan` (with `--fail-on` and `--all-files` passed through), `projection verify` for each host whose components `.embraion/policy.yaml` declares, `claude-native status --require` for declared Claude Code `scoped-agents` and `hooks`, and `organization check --require-config` when `.embraion/organization.yaml` exists (with `--base-ref` passed through). Consumer CI needs one step instead of a list of internal commands.
+- `embraion check` runs, from the project root, every check the project configuration selects and exits 1 when any fails: `validate --strict`, `route --validate`, `route --audit-authority`, `security scan` (with `--fail-on` and `--all-files` passed through), `projection verify` for each host whose components `.embraion/policy.yaml` declares, `claude-native status --require` for declared Claude Code `scoped-agents` and `hooks`, and `organization check --require-config` when `.embraion/organization.yaml` exists (compared against `--base-ref` when given). Consumer CI needs one step instead of a list of internal commands.
 - Optional `projection.<host>.components` in `.embraion/policy.yaml` for `codex`, `copilot` and `claude-code`, plus `projection.codex.config-mode`, declare the projections `embraion check` verifies.
-- Optional `privacy.sources` in `.embraion/policy.yaml` gives each stable source ID its data class. When declared, an execution request may name only listed sources, and its data class must be at least the highest class of those sources; without it requests are checked as before.
+- Optional `privacy.sources` in `.embraion/policy.yaml` gives each stable source ID its data class. When declared, an execution request may name only listed sources, and its data class must be at least the highest class of those sources. Execution and preflight now read the whole `.embraion/policy.yaml` to find it, so a policy that fails its schema also fails those requests.
 
 ## 0.27.0 - 2026-10-06
 

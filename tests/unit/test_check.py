@@ -56,6 +56,8 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(["claude-native", "status", "--require", "installed,hooks"], checks["claude-native"])
         self.assertEqual(["organization", "check", "--require-config", "--path", ".", "--json",
                           "--base-ref", "origin/main"], checks["organization"])
+        self.assertEqual(["organization", "check", "--require-config", "--path", ".", "--json"],
+                         {item["id"]: item["argv"] for item in planned_checks(self.project)}["organization"])
         self.assertEqual(["security", "scan", "--path", ".", "--fail-on", "medium", "--all-files"],
                          checks["security"])
 
@@ -102,6 +104,36 @@ class CheckTests(unittest.TestCase):
             self.assertEqual(0, main(["check"]))
         self.assertIn("Check: passed", output.getvalue())
 
+    def test_command_runs_real_checks_from_the_project_root(self) -> None:
+        nested = self.project / "nested"
+        nested.mkdir()
+        (self.project / "notes.md").write_text("token = ghp_" + "a" * 36 + "\n", encoding="utf-8")
+        previous = Path.cwd()
+        os.chdir(nested)
+        self.addCleanup(os.chdir, previous)
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), redirect_stdout(output):
+            code = main(["check", "--json", "--all-files"])
+        report = json.loads(output.getvalue())
+        self.assertEqual(["validate", "routes", "routing-authority", "security"],
+                         [item["id"] for item in report["checks"]])
+        self.assertIn("security", report["failed"])
+        self.assertEqual(1, code)
+        self.assertEqual(nested, Path.cwd())
+
+    def test_run_check_fails_only_the_broken_check(self) -> None:
+        from embraion.check import run_check
+        from embraion.cli import build_parser
+
+        parser = build_parser()
+        code, output = run_check(parser, ["route", "--no-such-option"])
+        self.assertEqual(2, code)
+        self.assertIn("unrecognized arguments", output)
+        with patch("embraion.cli._cmd_validate", side_effect=KeyError("missing")):
+            code, output = run_check(build_parser(), ["validate", "--strict"])
+        self.assertEqual(2, code)
+        self.assertIn("KeyError", output)
+
 
 class SourceClassTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -126,6 +158,9 @@ class SourceClassTests(unittest.TestCase):
                          source_data_classes(self.project))
         check_source_classes("PRIVATE", ["Docs", "App"], self.project)
         check_source_classes("CONFIDENTIAL", ["Vendor", "App"], self.project)
+        self.declare({"repo:App/main": "PRIVATE"})
+        check_source_classes("PRIVATE", ["repo:App/main"], self.project)
+        self.declare({"Docs": "PUBLIC", "App": "PRIVATE", "Vendor": "CONFIDENTIAL"})
         with self.assertRaisesRegex(RuntimeError, "without a declared data class: Other"):
             check_source_classes("CONFIDENTIAL", ["App", "Other"], self.project)
         with self.assertRaisesRegex(RuntimeError, r"PRIVATE is below the declared class of: Vendor \(CONFIDENTIAL\)"):
@@ -141,7 +176,7 @@ class SourceClassTests(unittest.TestCase):
             check_request_consistency({**request, "sourceIds": ["Vendor"]}, self.project)
 
     def test_invalid_source_class_is_rejected(self) -> None:
-        for sources in ({"App": "SECRET"}, {"bad id": "PRIVATE"}, ["App"]):
+        for sources in ({"App": "SECRET"}, {"": "PRIVATE"}, ["App"]):
             with self.subTest(sources=sources):
                 self.declare(sources)
                 with self.assertRaises(RuntimeError):

@@ -57,7 +57,7 @@ def planned_checks(
 
 
 def run_check(parser: argparse.ArgumentParser, argv: list[str]) -> tuple[int, str]:
-    """Run one CLI command in this process and capture its output."""
+    """Run one CLI command in this process and capture its output; any error fails only that check."""
     output = io.StringIO()
     with redirect_stdout(output), redirect_stderr(output):
         try:
@@ -65,10 +65,10 @@ def run_check(parser: argparse.ArgumentParser, argv: list[str]) -> tuple[int, st
             code = int(args.func(args))
         except SystemExit as error:
             code = error.code if isinstance(error.code, int) else 2
-        except (RuntimeError, ValueError) as error:
-            print(f"ERROR: {error}")
-            code = 2
         except subprocess.CalledProcessError as error:
             print(f"ERROR: {error}")
             code = error.returncode or 2
+        except Exception as error:  # noqa: BLE001 - one broken check must not stop the others
+            print(f"ERROR: {type(error).__name__}: {error}")
+            code = 2
     return code, output.getvalue()

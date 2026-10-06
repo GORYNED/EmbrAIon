@@ -63,7 +63,7 @@
           "type": "object",
           "description": "Optional data class of each stable source ID. When declared, an execution request may name only listed sources, and its data class must be at least the highest class of the sources it names.",
           "propertyNames": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+            "minLength": 1
           },
           "additionalProperties": {
             "enum": [

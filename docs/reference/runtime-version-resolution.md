@@ -77,6 +77,8 @@ GitHub Actions workflows can use the reusable setup action instead of their own 
 ```yaml
 steps:
   - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0  # history for --base-ref
   - uses: GORYNED/EmbrAIon/actions/setup@v<release>
     with:
       python-version: "3.13"  # optional, the default

@@ -291,7 +291,7 @@ embraion validate --strict
 
 ### `embraion check`
 
-Запустить из корня проекта все проверки, которые выбирает конфигурация проекта, чтобы CI потребителя обходился одним шагом:
+Запустить все проверки, которые выбирает конфигурация проекта, из корня проекта, откуда бы ни была вызвана команда, чтобы CI потребителя обходился одним шагом:
 
 ```bash
 embraion check
@@ -299,7 +299,7 @@ embraion check --base-ref origin/main --fail-on medium --all-files
 embraion check --json
 ```
 
-Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on` и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, и `organization check --require-config`, когда есть `.embraion/organization.yaml`; `--base-ref` передаётся ему. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, и команда завершается с кодом 1, если упала хотя бы одна. См. [Policy](../configuration/policy.md#projection-root-checks).
+Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on`, по умолчанию `high`, и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, и `organization check --require-config`, когда есть `.embraion/organization.yaml`. Без `--base-ref` organization check проверяет всю структуру; с ним проверка сравнивает с этим ref, поэтому падают только findings, которых нет в ref, а также перемещения и смена GUID. Ref должен быть получен, поэтому checkout в CI нужен с историей. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, а ошибка в одной проверке роняет только её. Команда завершается с кодом 1, если упала хотя бы одна проверка, и с кодом 2, если `.embraion/policy.yaml` не читается. См. [Policy](../configuration/policy.md#projection-root-checks).
 
 ### `embraion validation`
 
