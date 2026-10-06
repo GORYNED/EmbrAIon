@@ -227,6 +227,75 @@ class OrganizationTests(unittest.TestCase):
         self.assertEqual(["Assets/Project/Temp/Bad.cs"], [finding["path"] for finding in result["findings"]])
         self.assertFalse(result["passed"])
 
+    def test_filenames_follow_style_with_canonical_host_and_configured_exemptions(self) -> None:
+        self.config({"filenames": {"roots": ["docs", "tools", ".github", ".claude"],
+                                   "extensions": [".md", ".py", ".yml"], "allow": ["README_RU.md"],
+                                   "suffixes": [{"path": "tools/hooks", "suffix": ".hook.md"}]}})
+        for path in ("docs/coding-standard.md", "docs/migration-1.0.0.md", "docs/README.md", "docs/README_RU.md",
+                     "docs/AGENTS.md", "docs/Image.PNG", "tools/.flake8", "tools/hooks/pre-commit.hook.md",
+                     ".github/agents/reviewer.agent.md", ".github/workflows/validation.yml",
+                     ".claude/agents/embraion--reviewer-0123456789ab.md", "Assets/Free_Name.md"):
+            self.write(path, "x")
+        self.assertTrue(check_organization(self.root)["passed"])
+        self.write("docs/Coding_Standard.md", "x")
+        self.write("docs/notes.MD", "x")
+        self.write("tools/some.random.py", "x")
+        self.write(".github/agents/Bad_Name.agent.md", "x")
+        self.write(".claude/agents/embraion--reviewer.md", "x")
+        result = check_organization(self.root)
+        self.assertEqual({
+            ("filename_style", "docs/Coding_Standard.md"), ("filename_extension_case", "docs/notes.MD"),
+            ("filename_style", "tools/some.random.py"), ("filename_style", ".github/agents/Bad_Name.agent.md"),
+            ("filename_style", ".claude/agents/embraion--reviewer.md"),
+        }, {(item["code"], item["path"]) for item in result["findings"]})
+
+    def test_filename_case_collisions_and_incremental_baseline(self) -> None:
+        self.config({"filenames": {"roots": ["docs"], "extensions": [".md"]}})
+        self.write("docs/Old_Name.md", "x")
+        base = self.commit()
+        self.write("Assets/Readme.txt", "x")
+        self.write("Assets/README.txt", "x")
+        self.write("docs/New_Name.md", "x")
+        result = check_organization(self.root, base_ref=base, include_worktree=True)
+        status = {(item["code"], item["path"]): item["status"] for item in result["findings"]}
+        self.assertEqual("preexisting", status[("filename_style", "docs/Old_Name.md")])
+        self.assertEqual("new", status[("filename_style", "docs/New_Name.md")])
+        self.assertIn(("filename_collision", "Assets/Readme.txt"), status)
+        self.assertFalse(result["passed"])
+
+    def test_meta_required_for_all_files_and_orphans(self) -> None:
+        self.config({"unity_meta": {"roots": ["Assets/Project"], "require_for_all": True, "check_orphans": True}})
+        self.write("Assets/Project.meta", "guid: " + "c" * 32 + "\n")
+        self.write("Assets/Project/Scenes.meta", "guid: " + "d" * 32 + "\n")
+        self.write("Assets/Project/Scenes/Main.unity", "x")
+        self.write("Assets/Project/Scenes/Main.unity.meta", "guid: " + "e" * 32 + "\n")
+        self.write("Assets/Project/Docs~/notes.md", "x")
+        self.write("Assets/Project/.hidden/file.txt", "x")
+        self.write("Assets/Other/NoMeta.txt", "x")
+        self.write(".gitignore", "Assets/Project/Ignored.bin\n")
+        self.write("Assets/Project/Ignored.bin", "x")
+        self.assertTrue(check_organization(self.root)["passed"])
+        self.write("Assets/Project/Scenes/Data.bytes", "x")
+        self.write("Assets/Project/Gone.png.meta", "guid: " + "f" * 32 + "\n")
+        self.assertEqual({("meta_missing", "Assets/Project/Scenes/Data.bytes"),
+                          ("meta_orphan", "Assets/Project/Gone.png.meta")},
+                         {(item["code"], item["path"]) for item in check_organization(self.root)["findings"]})
+        base = self.commit()
+        self.write("Assets/Project/Scenes/Data.bytes.meta", "guid: " + "1" * 32 + "\n")
+        self.write("Assets/Project/Gone.png", "x")
+        self.write("Assets/Project/Added.txt", "x")
+        result = check_organization(self.root, base_ref=base, include_worktree=True)
+        self.assertEqual([("meta_missing", "Assets/Project/Added.txt", "new")],
+                         [(item["code"], item["path"], item["status"]) for item in result["findings"]])
+        committed = check_organization(self.root, base_ref=base)
+        self.assertEqual(2, committed["counts"]["preexisting"])
+        self.assertTrue(committed["passed"])
+
+    def test_missing_configuration_can_be_required(self) -> None:
+        self.assertEqual("skipped", check_organization(self.root)["status"])
+        result = check_organization(self.root, require_config=True)
+        self.assertEqual(("failed", False), (result["status"], result["passed"]))
+
 
 if __name__ == "__main__":
     unittest.main()

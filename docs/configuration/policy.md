@@ -119,6 +119,7 @@ ceilings:
 ```
 
 - `providers.<provider>` limits every enabled deployment of that provider. A listed dimension that the deployment leaves out counts as unrestricted and fails. `sources` limits the deployment's execution binding `sourceIds`. When `data-classes` or `roles` are limited, the binding must list `taskClasses`, and every task class that the binding or routing sends to the deployment must stay within the limit. `binding-required-billing-modes` requires an execution binding for those billing modes.
+- Host overrides under `overrides.<host>` in `.embraion/routing.yaml` are checked with their fallbacks. `roles` and `route-roles` must keep each role within the provider's `roles` ceiling (`ceiling-role`), and `task-classes` are checked like routing task classes. A `routes` override applies to every role and data class, so one that selects a ceilinged deployment is reported as `ceiling-unbounded` when that provider limits `roles` or `data-classes`; use a role, route-role, or task-class override instead.
 - `data-classes.<class>.providers` allows that data class only for these providers. A deployment without a `data-classes` list counts as allowing every class.
 - `sources.<sourceId>.providers` allows an execution source only for these providers.
 - `task-classes.<id>` pins the route class, role, or data class of a routing task class so it cannot be lowered.

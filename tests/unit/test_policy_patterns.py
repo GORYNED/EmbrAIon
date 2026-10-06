@@ -9,12 +9,12 @@ from embraion.policy import path_matches
 class PolicyPatternTests(unittest.TestCase):
     def test_recursive_protected_patterns_match_immediate_and_nested_files(self) -> None:
         cases = (
-            ("Assets/Project/Pressure/Sensor/Wireless/SDK/**/*.cs",
-             "Assets/Project/Pressure/Sensor/Wireless/SDK/Adapter.cs"),
-            ("Assets/Project/Pressure/Sensor/Wired/MeasureX/**/*.dll",
-             "Assets/Project/Pressure/Sensor/Wired/MeasureX/driver.dll"),
-            ("Assets/StreamingAssets/Pressure/Sensor/Wired/Sensors/**/*.mxd",
-             "Assets/StreamingAssets/Pressure/Sensor/Wired/Sensors/device.mxd"),
+            ("Assets/Project/Device/Vendor/SDK/**/*.cs",
+             "Assets/Project/Device/Vendor/SDK/Adapter.cs"),
+            ("Assets/Project/Device/Vendor/Driver/**/*.dll",
+             "Assets/Project/Device/Vendor/Driver/driver.dll"),
+            ("Assets/StreamingAssets/Device/Profiles/**/*.bin",
+             "Assets/StreamingAssets/Device/Profiles/device.bin"),
         )
         for pattern, immediate in cases:
             with self.subTest(pattern=pattern):

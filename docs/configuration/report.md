@@ -9,6 +9,7 @@ workers:
   section: Workers
   task-status: [completed, cancelled, incomplete]
   columns: [Status, Worker, Role, Billing, Access, Data, Runs, Cost, Routing, Validation]
+  summary: true
 pull-request:
   section: Changed
 guidance:
@@ -16,8 +17,8 @@ guidance:
 ```
 
 - `sections` are the top-level sections of the final report, in required order. Each appears exactly once as a Markdown heading or a bold-only line.
-- `workers` (optional) requires one table with exactly these columns inside `workers.section`, preceded by a `Task status: <value>` line using one of `task-status`. Cells must not contain absolute machine paths, credential-like values, code fences, or diffs.
-- `pull-request` (optional) makes `--pull-request` require a full pull request URL in that section.
+- `workers` (optional) requires one table with exactly these columns inside `workers.section`, preceded by a `Task status: <value>` line using one of `task-status`. Cells must not contain absolute machine paths, credential-like values, code fences, or diffs. With `summary: true`, a compact non-table summary line must follow the table (`workers-summary`).
+- `pull-request` (optional) makes `--pull-request` require a full pull request URL in that section (`pull-request-link`). When a pull request was needed but not created, `--pull-request-not-created` instead requires a compare URL (`https://<host>/<owner>/<repository>/compare/<target>...<branch>`) there (`pull-request-compare-link`). The two flags are mutually exclusive. Without `pull-request`, both flags check the first section.
 - `guidance` lines are rendered into the template and the skill verbatim. They are not validated.
 
 ## Template and validation
@@ -25,6 +26,7 @@ guidance:
 ```bash
 embraion report template
 embraion report validate report.md --pull-request
+embraion report validate report.md --pull-request-not-created
 embraion report validate update.md --kind intermediate
 ```
 
@@ -36,4 +38,4 @@ Validation is structural. It cannot tell whether the content is true, and it doe
 
 When `.embraion/report.yaml` exists, `embraion install --component skills` adds a *Project completion report contract* section to the projected `orchestration` skill for every host. Run `embraion projection verify` to detect a stale projection after changing the contract.
 
-<sub>Last updated: 2026-10-06 01:40 UTC</sub>
+<sub>Last updated: 2026-10-06 13:20 UTC</sub>

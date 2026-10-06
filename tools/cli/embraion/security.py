@@ -14,6 +14,25 @@ SEVERITY_ORDER = {
     "critical": 4,
 }
 
+# Provider-issued credentials have recognizable prefixes, so they are found
+# even without a `token=` style key in front of them.
+_ACCESS_TOKEN = re.compile(
+    r"(?<![A-Za-z0-9_])(?:"
+    r"gh[pousr]_[A-Za-z0-9]{36,}"
+    r"|github_pat_[A-Za-z0-9_]{22,}"
+    r"|(?:AKIA|ASIA)[0-9A-Z]{16}"
+    r"|sk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}"
+    r"|AIza[0-9A-Za-z_-]{35}"
+    r"|xox[abprs]-[A-Za-z0-9-]{10,}"
+    r")(?![A-Za-z0-9_])"
+)
+# A home directory names a person and a machine; placeholders and CI runner homes are allowed.
+_MACHINE_PATH = re.compile(
+    r"(?<![A-Za-z0-9_.])(?:/Users/|/home/|[A-Za-z]:\\Users\\)"
+    r"(?!(?:runner|user|username|example|you|me|name|USER|USERNAME)(?:[/\\]|$))"
+    r"(?![<$%{])[A-Za-z0-9._-]+[/\\]"
+)
+
 SECRET_PATTERNS = [
     (
         "private-key",
@@ -28,6 +47,8 @@ SECRET_PATTERNS = [
             r"[\"']?(?!\$\{|<|REDACTED|CHANGEME)[A-Za-z0-9_\-/.+=]{16,}"
         ),
     ),
+    ("access-token", "high", _ACCESS_TOKEN),
+    ("machine-path", "medium", _MACHINE_PATH),
 ]
 
 
@@ -202,6 +223,7 @@ _BEARER_SECRET = re.compile(
 def redact_text(value: str) -> str:
     value = _PRIVATE_KEY_BLOCK.sub("<REDACTED:private-key>", value)
     value = _BEARER_SECRET.sub("Bearer <REDACTED>", value)
+    value = _ACCESS_TOKEN.sub("<REDACTED:access-token>", value)
 
     def replace_secret(match: re.Match[str]) -> str:
         return f"{match.group(1)}{match.group(2)}<REDACTED>"

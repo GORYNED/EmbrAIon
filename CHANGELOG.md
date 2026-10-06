@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Added
+
+- Organization `filenames` checks: files under `roots` (`.` for the whole repository) with a listed extension need lowercase kebab-case stems with an optional numeric version (`filename_style`, `filename_extension_case`), and case-only path collisions are reported (`filename_collision`). Ecosystem and host basenames, host-native suffixes in their folders, reserved scoped Claude profiles, and dot-prefixed names are exempt; `allow` and `suffixes` extend them.
+- Organization `unity_meta.require_for_all` requires an adjacent `.meta` for every file under its roots, and `unity_meta.check_orphans` reports `.meta` files without an asset file or folder (`meta_orphan`). `embraion organization check --require-config` fails instead of skipping when the configuration is missing.
+- `embraion security scan` reports provider-prefixed access tokens as `access-token` (high) and home-directory machine paths as `machine-path` (medium); `security redact` and evidence redaction replace bare prefixed tokens with `<REDACTED:access-token>`.
+- Report contract `workers.summary: true` requires a compact summary after the Workers table, and `embraion report validate --pull-request-not-created` requires a compare URL when a needed pull request was not created.
+- `core/routing/complexity.yaml` lists `critical` examples and what is `not-critical`.
+
+### Changed
+
+- Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): `roles` and `route-roles` against role ceilings, `task-classes` like routing task classes, and a `routes` override that selects a deployment whose provider limits roles or data classes is `ceiling-unbounded`.
+- Tests and examples no longer use consuming-project paths.
+
 ## 0.25.0 - 2026-10-06
 
 Includes the 0.24.0 changes below: the 0.24.0 release run was cancelled before it was tagged, so 0.24.0 was not published.

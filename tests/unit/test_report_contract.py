@@ -84,6 +84,20 @@ class ReportContractTests(unittest.TestCase):
         without = GOOD.replace("PR: https://github.com/example/app/pull/12", "Branch pushed.")
         self.assertEqual([], self.codes(without))
         self.assertEqual(["pull-request-link"], self.codes(without, pull_request=True))
+        self.assertEqual(["pull-request-compare-link"], self.codes(without, missing_pull_request=True))
+        compare = GOOD.replace("PR: https://github.com/example/app/pull/12",
+                               "PR not created: https://github.com/example/app/compare/main...task-branch?expand=1")
+        self.assertEqual([], self.codes(compare, missing_pull_request=True))
+        with self.assertRaises(RuntimeError):
+            validate_report(GOOD, CONTRACT, pull_request=True, missing_pull_request=True)
+
+    def test_workers_summary_must_follow_the_table_when_required(self) -> None:
+        contract = {**CONTRACT, "workers": {**CONTRACT["workers"], "summary": True}}
+        codes = [issue["code"] for issue in validate_report(GOOD, contract)]
+        self.assertEqual(["workers-summary"], codes)
+        summary = GOOD + "\nOne reviewer run on the routed model; accepted.\n"
+        self.assertEqual([], validate_report(summary, contract))
+        self.assertIn("<compact summary of models, runs, and outcomes>", render_report_template(contract))
 
     def test_intermediate_updates_reject_workers_table_or_section(self) -> None:
         self.assertEqual([], self.codes("Reviewing the parser now.\n", kind="intermediate"))

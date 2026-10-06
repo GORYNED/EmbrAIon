@@ -10,7 +10,7 @@ from embraion.common import framework_root, read_json, read_yaml, write_yaml
 from embraion.evals import evaluate_case
 from embraion.project import init_project, sync
 from embraion.runtime import route
-from embraion.security import collect_findings
+from embraion.security import collect_findings, redact_text
 from embraion.validation import (
     collect_issues,
     find_model_agnostic_semantic_violations,
@@ -374,6 +374,31 @@ class CoreTests(unittest.TestCase):
             )
             findings = collect_findings(root)
             self.assertTrue(any(item["severity"] == "high" for item in findings))
+
+    def test_security_scanner_detects_prefixed_tokens_and_machine_paths(self) -> None:
+        tokens = {
+            "github": "gh" + "p_" + "A1b2" * 9,
+            "fine-grained": "github" + "_pat_" + "A1b2_" * 6,
+            "cloud": "AK" + "IA" + "ABCDEFGHIJ234567",
+            "model": "s" + "k-ant-" + "a1B2c3D4" * 5,
+            "maps": "AI" + "za" + "SyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for name, token in tokens.items():
+                (root / f"{name}.md").write_text(f"Use {token} here.", encoding="utf-8")
+            (root / "local.md").write_text("Logs are in C:" + "\\Users\\owner\\Documents\\", encoding="utf-8")
+            (root / "placeholder.md").write_text(
+                "See /home/runner/work, /Users/<name>/, C:" + "\\Users\\%USERNAME%\\ and task-abcdefghijklmnopqrstuvwxyz0123456789.",
+                encoding="utf-8",
+            )
+            findings = {(item["path"], item["category"], item["severity"]) for item in collect_findings(root)}
+        self.assertEqual(
+            {(f"{name}.md", "access-token", "high") for name in tokens} | {("local.md", "machine-path", "medium")},
+            findings,
+        )
+        redacted = redact_text("token " + tokens["github"] + " and " + tokens["cloud"])
+        self.assertEqual("token <REDACTED:access-token> and <REDACTED:access-token>", redacted)
 
     def test_security_scanner_ignores_public_key_token_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

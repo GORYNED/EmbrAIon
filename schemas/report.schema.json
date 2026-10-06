@@ -34,6 +34,10 @@
         "columns": {
           "$ref": "#/$defs/names",
           "minItems": 1
+        },
+        "summary": {
+          "description": "Require a compact summary after the Workers table.",
+          "type": "boolean"
         }
       },
       "additionalProperties": false

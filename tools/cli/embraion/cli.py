@@ -415,7 +415,8 @@ def _cmd_report_validate(args: argparse.Namespace) -> int:
         text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         raise RuntimeError(f"Cannot read report: {error}") from error
-    issues = validate_report(text, contract, kind=args.kind, pull_request=args.pull_request)
+    issues = validate_report(text, contract, kind=args.kind, pull_request=args.pull_request,
+                             missing_pull_request=args.pull_request_not_created)
     if args.json:
         _print_json({"kind": args.kind, "valid": not issues, "issues": issues})
     elif issues:
@@ -1196,7 +1197,8 @@ def _cmd_capabilities(args: argparse.Namespace) -> int:
 def _cmd_organization_check(args: argparse.Namespace) -> int:
     report = check_organization(Path(args.path), base_ref=args.base_ref, head_ref=args.head_ref,
                                include_worktree=args.include_worktree,
-                               config_path=Path(args.config) if args.config else None)
+                               config_path=Path(args.config) if args.config else None,
+                               require_config=args.require_config)
     if args.json:
         _print_json(report)
     else:
@@ -1874,8 +1876,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report_validate.add_argument("file", help="Report file, or '-' for stdin")
     report_validate.add_argument("--kind", choices=["final", "intermediate"], default="final")
-    report_validate.add_argument("--pull-request", action="store_true",
-                                 help="A pull request was created; require its full URL.")
+    pull_request_state = report_validate.add_mutually_exclusive_group()
+    pull_request_state.add_argument("--pull-request", action="store_true",
+                                    help="A pull request was created; require its full URL.")
+    pull_request_state.add_argument("--pull-request-not-created", action="store_true",
+                                    help="A pull request was needed but not created; require a compare URL.")
     report_validate.add_argument("--contract", help="Contract path (default: .embraion/report.yaml)")
     report_validate.add_argument("--json", action="store_true")
     report_validate.set_defaults(func=_cmd_report_validate)
@@ -2432,6 +2437,8 @@ def build_parser() -> argparse.ArgumentParser:
     organization_check.add_argument("--head-ref", default="HEAD")
     organization_check.add_argument("--include-worktree", action="store_true")
     organization_check.add_argument("--config")
+    organization_check.add_argument("--require-config", action="store_true",
+                                    help="Fail instead of skipping when the organization configuration is missing")
     organization_check.add_argument("--json", action="store_true")
     organization_check.set_defaults(func=_cmd_organization_check)
 
