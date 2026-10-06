@@ -66,6 +66,9 @@ review:
 privacy:
   default-class: PRIVATE
 
+merge:
+  mode: owner-permission
+
 enforcement:
   enabled: false
   validation-profile: affected

@@ -68,7 +68,7 @@ The project's merge mode decides who merges a pull request. A project declares o
 
 In every mode, automation never enables auto-merge and never bypasses the merge decision.
 
-This project's merge mode: `human-only` (`merge.mode` in `.embraion/policy.yaml`).
+This project's merge mode: `owner-permission` (`merge.mode` in `.embraion/policy.yaml`).
 
 ## Authorization
 
