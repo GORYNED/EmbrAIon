@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/pricing-fixtures.schema.json",
+  "title": "EmbrAIon pricing verification fixtures",
+  "type": "object",
+  "required": ["schemaVersion", "fixtures"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "fixtures": {
+      "type": "array", "minItems": 1, "maxItems": 512,
+      "items": {
+        "type": "object",
+        "required": ["id", "deployment", "usage", "expect"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+          "deployment": {"type": "string", "minLength": 1},
+          "atUtc": {"type": "string", "format": "date-time"},
+          "billing": {"enum": ["api", "subscription"]},
+          "usage": {
+            "type": ["object", "null"], "additionalProperties": false,
+            "properties": {
+              "inputTokens": {"type": "integer", "minimum": 0},
+              "cachedInputTokens": {"type": "integer", "minimum": 0},
+              "outputTokens": {"type": "integer", "minimum": 0},
+              "reasoningTokens": {"type": "integer", "minimum": 0}
+            }
+          },
+          "usageSemantics": {
+            "oneOf": [
+              {"enum": ["inclusive", "disjoint"]},
+              {"type": "object", "required": ["input", "output"], "additionalProperties": false,
+               "properties": {"input": {"enum": ["inclusive", "disjoint"]}, "output": {"enum": ["inclusive", "disjoint"]}}}
+            ]
+          },
+          "batch": {"type": "boolean"},
+          "discount": {"type": "string", "minLength": 1},
+          "expect": {
+            "type": "object", "required": ["state", "amount"], "additionalProperties": false,
+            "properties": {
+              "state": {"type": "string", "minLength": 1},
+              "amount": {"type": ["string", "null"], "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+              "currency": {"type": ["string", "null"], "pattern": "^[A-Z]{3}$"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

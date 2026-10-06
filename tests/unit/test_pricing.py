@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 from embraion.adapters.provider_pricing import fetch_and_parse
-from embraion.pricing import calculate_cost, pricing_status, read_snapshot, refresh_pricing
+from embraion.pricing import calculate_cost, pricing_status, read_snapshot, refresh_pricing, verify_pricing_fixtures
 
 
 OFFICIAL = {
@@ -181,6 +181,63 @@ class PricingTests(unittest.TestCase):
         path.write_text(json.dumps(snapshot), encoding="utf-8")
         with self.assertRaises(RuntimeError):
             read_snapshot(self.project)
+
+    def write_fixtures(self, fixtures: list[dict]) -> Path:
+        path = self.project / "pricing-fixtures.yaml"
+        path.write_text(yaml.safe_dump({"schemaVersion": 1, "fixtures": fixtures}), encoding="utf-8")
+        return path
+
+    def test_pricing_fixtures_compare_exact_decimals(self) -> None:
+        refresh_pricing(self.project, fetcher=fixture_fetch)
+        usage = {"inputTokens": 1_000_000, "cachedInputTokens": 250_000,
+                 "outputTokens": 500_000, "reasoningTokens": 100_000}
+        fixtures = [
+            {"id": "inclusive", "deployment": "openai-api", "usage": usage, "usageSemantics": "inclusive",
+             "expect": {"state": "snapshot-computed", "amount": "3.750", "currency": "USD"}},
+            {"id": "mixed", "deployment": "openai-api", "usage": usage,
+             "usageSemantics": {"input": "inclusive", "output": "disjoint"},
+             "expect": {"state": "snapshot-computed", "amount": "4.15"}},
+            {"id": "unproven-semantics", "deployment": "openai-api", "usage": usage,
+             "expect": {"state": "unknown-provider", "amount": None}},
+            {"id": "subscription", "deployment": "openai-api", "usage": None, "billing": "subscription",
+             "expect": {"state": "subscription-quota", "amount": None, "currency": None}},
+        ]
+        report = verify_pricing_fixtures(self.write_fixtures(fixtures), self.project)
+        self.assertTrue(report["passed"], report)
+        fixtures[0]["expect"]["amount"] = "3.7500001"
+        fixtures[2]["expect"] = {"state": "snapshot-computed", "amount": "0"}
+        report = verify_pricing_fixtures(self.write_fixtures(fixtures), self.project)
+        self.assertFalse(report["passed"])
+        self.assertEqual([["amount"], [], ["state", "amount"], []],
+                         [item["mismatches"] for item in report["fixtures"]])
+
+    def test_pricing_fixtures_reject_floats_and_duplicate_ids(self) -> None:
+        refresh_pricing(self.project, fetcher=fixture_fetch)
+        fixture = {"id": "one", "deployment": "openai-api", "usage": None,
+                   "expect": {"state": "unknown-provider", "amount": 0.1}}
+        with self.assertRaisesRegex(RuntimeError, "pricing-fixtures"):
+            verify_pricing_fixtures(self.write_fixtures([fixture]), self.project)
+        fixture["expect"]["amount"] = None
+        with self.assertRaisesRegex(RuntimeError, "unique"):
+            verify_pricing_fixtures(self.write_fixtures([fixture, dict(fixture)]), self.project)
+
+    def test_pricing_verify_command_exit_code(self) -> None:
+        import io
+        import os
+        from contextlib import redirect_stdout
+        from unittest.mock import patch
+        from embraion.cli import main
+        refresh_pricing(self.project, fetcher=fixture_fetch)
+        path = self.write_fixtures([{"id": "wrong", "deployment": "openai-api", "usage": None,
+                                     "expect": {"state": "snapshot-computed", "amount": "1"}}])
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), redirect_stdout(output):
+            code = main(["pricing", "verify", "--fixtures", str(path)])
+        self.assertEqual(1, code)
+        self.assertIn("wrong: FAIL (state, amount)", output.getvalue())
 
 
 if __name__ == "__main__":

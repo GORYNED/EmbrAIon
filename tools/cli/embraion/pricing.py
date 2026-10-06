@@ -327,3 +327,35 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
     except (KeyError, ValueError, InvalidOperation, TypeError):
         return {"state": "unknown-provider", "amount": None, "currency": row["currency"], "provenance": snapshot["digest"]}
     return {"state": "snapshot-computed", "amount": str(total), "currency": row["currency"], "provenance": snapshot["digest"]}
+
+
+def verify_pricing_fixtures(path: Path, project: Path | None = None) -> dict[str, Any]:
+    """Compare offline snapshot costs with reviewed usage fixtures as exact decimals."""
+    try:
+        fixtures = read_yaml(path)
+    except (OSError, ValueError) as error:
+        raise RuntimeError("Pricing fixtures cannot be read.") from error
+    _validate(fixtures, "pricing-fixtures.schema.json")
+    identities = [item["id"] for item in fixtures["fixtures"]]
+    if len(identities) != len(set(identities)):
+        raise RuntimeError("Pricing fixture IDs must be unique.")
+    root = project_root(project)
+    results = []
+    for fixture in fixtures["fixtures"]:
+        at = _timestamp(fixture["atUtc"]) if fixture.get("atUtc") else None
+        actual = calculate_cost(fixture["deployment"], fixture["usage"], project=root, at=at,
+                                billing=fixture.get("billing", "api"), batch=fixture.get("batch", False),
+                                discount=fixture.get("discount"), usage_semantics=fixture.get("usageSemantics"))
+        expected = fixture["expect"]
+        mismatches = []
+        if actual["state"] != expected["state"]:
+            mismatches.append("state")
+        if (expected["amount"] is None) != (actual["amount"] is None) or (
+                expected["amount"] is not None and Decimal(expected["amount"]) != Decimal(actual["amount"])):
+            mismatches.append("amount")
+        if "currency" in expected and expected["currency"] != actual["currency"]:
+            mismatches.append("currency")
+        results.append({"id": fixture["id"], "deployment": fixture["deployment"], "passed": not mismatches,
+                        "mismatches": mismatches, "expected": expected,
+                        "actual": {key: actual[key] for key in ("state", "amount", "currency")}})
+    return {"passed": all(item["passed"] for item in results), "fixtures": results}

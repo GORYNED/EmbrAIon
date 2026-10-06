@@ -210,6 +210,8 @@ Refresh валидирует каждый выбранный source и атом�
 
 `embraion pricing calculate` читает JSON request из stdin с `deployment`, nullable `usage`, `usageSemantics` и optional `billing`, `providerExact`, `adapterCost`, `reportedCurrency`, `atUtc`, `batch`, `discount`. Snapshot calculation требует explicit usage semantics: `inclusive` означает, что cached/reasoning counts входят в input/output totals; `disjoint` — что они дополнительные. Для разных input/output conventions можно передать `{"input":"inclusive","output":"disjoint"}`. Команда читает только validated local snapshot; reported exact costs имеют приоритет. Reported cost имеет unknown currency без `reportedCurrency`. Response различает unknown/stale и zero. Scheduled rate нельзя комбинировать с batch/discount rates в одной snapshot entry.
 
+`embraion pricing verify --fixtures <yaml> [--json]` проверяет, что configured rows дают reviewed costs. Файл содержит `schemaVersion: 1` и список `fixtures`; у каждого fixture уникальный `id`, `deployment`, nullable `usage`, optional `usageSemantics`, `atUtc` (в кавычках), `billing`, `batch`, `discount` и `expect` с `state`, `amount` (decimal string в кавычках или null) и optional `currency`. Каждый fixture считается offline тем же calculation, что и `pricing calculate`; amounts сравниваются как exact decimals (`"3.750"` равно `"3.75"`). При любом mismatch команда завершается с кодом 1.
+
 ### `embraion execute`
 
 Про execution ownership, bindings, aliases, fallback и handoff см. [Execution и провайдеры](../configuration/execution.md).
@@ -218,9 +220,24 @@ Refresh валидирует каждый выбранный source и атом�
 
 Snapshot cost из LiteLLM usage требует отдельно reviewed overlap evidence. Optional binding `usageSemanticsEvidence` содержит project-relative path `.embraion/usage-evidence/*.json` и SHA-256 digest. Checked-in sanitized JSON хранит schema version 1, `transport: litellm-responses`, exact LiteLLM `adapterVersion`, provider, selector, official `sourceUrl`, verification/validity timestamps, explicit input/output `usageSemantics` и representative `sampleUsage`. Adapter принимает evidence только если digest, running LiteLLM version (сейчас 1.77.7), provider, selector, dates и sample shape совпадают. Missing/expired/mismatched evidence оставляет usage semantics unknown, поэтому snapshot-derived cost остаётся unknown; execution при этом не блокируется. Provider-reported exact cost или LiteLLM normalized cost сохраняют собственный приоритет. Записывайте evidence только после review реального normalized Responses usage относительно official billing semantics provider; synthetic fixture не доказывает этот contract.
 
+Без `healthObservations` в request health берётся из локального attempt ledger. Каждый validated attempt добавляется в `.embraion/state/execution-attempts.jsonl` (только redacted attempt fields; одна ротация при 1 MiB). Ошибка записи ledger выводит warning и сохраняет result.
+
 ```bash
 embraion execute < request.json
 ```
+
+### `embraion execution`
+
+Сборка context envelopes, проверка readiness и просмотр attempt health. Правила отказов — в [Execution и провайдеры](../configuration/execution.md#context-envelopes).
+
+```bash
+embraion execution envelope --path src/module.py --task-file task.md < request.json > ready.json
+embraion execution preflight --path src/module.py --task-file task.md --json < request.json
+embraion execution preflight --deployment analysis-api
+embraion execution health --json
+```
+
+`envelope` читает request из stdin и печатает его с `payload.inputsByDeployment` для каждого adapter-bound candidate. Читается только committed content (`--commit`, по умолчанию `HEAD`); `--path` можно повторять, `--task-file` обязателен, `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens` и `--payload-only` опциональны. Refusal завершается с кодом 2 и называет path и причину. `preflight` проверяет полноту binding, request ceilings, наличие credential и adapter preflight без provider call и без вывода credential, и завершается с кодом 1, если что-то не готово. `health` сводит attempt ledger по deployments.
 
 ### `embraion doctor`
 
