@@ -39,9 +39,8 @@ capabilities:
   - { id: integration-safety, type: rule, path: rules/integrations.md, load: conditional, triggers: [external-tool, mcp, server, integration] }
   - { id: artifact-authority, type: rule, path: rules/artifact-authority.md, load: conditional, triggers: [generated-artifact, host-projection, tool-required, external-format, naming-contract] }
   - { id: security, type: rule, path: rules/security.md, load: conditional, triggers: [security, credential, permission, external-tool, provider] }
-  - { id: authorization, type: rule, path: rules/authorization.md, load: conditional, triggers: [destructive-action, publish, force-push, release, permission-prompt, shared-settings] }
+  - { id: authorization, type: rule, path: rules/authorization.md, load: conditional, triggers: [destructive-action, publish, force-push, release, permission-prompt, shared-settings, delegated-assignment] }
   - { id: owner-interaction, type: rule, path: rules/owner-interaction.md, load: conditional, triggers: [owner-question, decision, blocked-task] }
-  - { id: reporting, type: rule, path: rules/reporting.md, load: conditional, triggers: [multi-step-work, progress-update, final-report, completion] }
   - { id: learning-gate, type: rule, path: rules/learning.md, load: conditional, triggers: [learning, promotion, repeated-pattern] }
 
   - { id: access, type: routing, path: routing/access.yaml, load: always }
