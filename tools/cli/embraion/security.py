@@ -426,6 +426,11 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
 
     seen: set[tuple[str, str]] = set()
     for host, server_id, config, source in observed:
+        # In Codex, `enabled = false` only switches a server off, such as one inherited from
+        # user-level configuration, so it is not a server the project runs. Other hosts have no
+        # such per-server key, so their entries are always compared.
+        if host == "codex" and config.get("enabled") is False:
+            continue
         key = (host, server_id)
         seen.add(key)
         entry = declared.get(key)
