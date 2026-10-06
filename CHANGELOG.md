@@ -5,8 +5,12 @@
 ### Added
 
 - Core agent-behavior rules moved from project handbooks: `authorization` and `owner-interaction` rules, honest-check reporting in the `evidence` rule, and a `handling-review-findings` skill. Catalog version 9.
-- The `authorization` rule limits delegated roles other than Lead: they change external or shared state or act on the owner's behalf only when the assignment explicitly grants it, and owner-facing communication goes through Lead.
+- The `authorization` rule limits roles other than Lead: they change external or shared state or act on the owner's behalf only when the assignment explicitly grants it, and owner-facing communication goes through Lead.
 - The `instructions` rule states that each fact has one canonical owner that other documents link to instead of restating.
+
+### Removed
+
+- The repository's CodeRabbit configuration; CodeRabbit is no longer used for review.
 
 ## 0.24.0 - 2026-10-06
 

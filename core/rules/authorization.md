@@ -20,8 +20,8 @@ Some actions need the owner's explicit approval before an agent takes them. Ask 
 
 ## Delegated roles
 
-- A delegated role other than Lead does not change external or shared state or act on the owner's behalf unless its assignment explicitly grants that authority. External or shared state includes remote branches, pull requests, issues, releases, packages, messages, shared settings, and resources owned by someone else.
-- Communication that needs the owner's action goes through Lead.
+- A role other than Lead does not change external or shared state or act on the owner's behalf unless its assignment explicitly grants that authority. External or shared state includes remote branches, pull requests, issues, releases, packages, messages, shared settings, and resources owned by someone else.
+- Owner-facing communication goes through Lead.
 
 ## How to ask
 
