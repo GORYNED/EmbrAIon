@@ -212,3 +212,21 @@ def classify_path(path: str, project: Path | None = None) -> list[str]:
         for category, patterns in policy["sources"].items()
         if path_matches(path, list(patterns or []))
     ]
+
+
+def codex_root_policy(project: Path | None = None) -> dict[str, Any]:
+    """Return Codex root checks; project lists extend, never replace, Core defaults."""
+    from .codex_config import DEFAULT_FORBIDDEN_ROOT_KEYS
+
+    root = project_root(project)
+    configured: dict[str, Any] = {}
+    if (root / ".embraion" / "policy.yaml").is_file():
+        configured = (read_policy_config(root).get("projection") or {}).get("codex") or {}
+    forbidden = list(DEFAULT_FORBIDDEN_ROOT_KEYS)
+    forbidden += [key for key in configured.get("forbidden-root-keys") or [] if key not in forbidden]
+    allowed = configured.get("allowed-root-keys")
+    return {
+        "strict-root": bool(configured.get("strict-root", False)),
+        "forbidden-root-keys": forbidden,
+        "allowed-root-keys": list(allowed) if allowed is not None else None,
+    }

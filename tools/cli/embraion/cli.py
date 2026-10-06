@@ -278,6 +278,12 @@ def _print_projection_plan(plan: dict[str, object]) -> None:
         print(f"{key}: {len(values)}")
         for value in values:
             print(f"  {value}")
+    findings = list(plan.get("root-findings", []) or [])
+    if "root-findings" in plan:
+        label = "error" if plan.get("strict-root") else "warning"
+        print(f"root-findings: {len(findings)} ({label})")
+        for finding in findings:
+            print(f"  {finding['code']} {finding['path']}: {finding['message']}")
 
 
 def _cmd_install(args: argparse.Namespace) -> int:
@@ -324,6 +330,10 @@ def _cmd_projection_verify(args: argparse.Namespace) -> int:
         components=args.component,
         config_mode=args.config_mode,
     )
+    if args.strict_root:
+        if "root-findings" not in plan:
+            raise RuntimeError("--strict-root applies only to the Codex config component in merge mode.")
+        plan["strict-root"] = True
     verified = projection_is_verified(plan)
     if args.json:
         _print_json({**plan, "verified": verified})
@@ -1667,6 +1677,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["replace", "merge"],
         default="replace",
         help="Use the selected Codex config ownership mode while verifying.",
+    )
+    projection_verify.add_argument(
+        "--strict-root",
+        action="store_true",
+        help=(
+            "In Codex merge mode, fail on root findings: forbidden model/effort "
+            "keys, keys outside allowed-root-keys, or root instructions outside "
+            "the managed block. Also enabled by policy projection.codex.strict-root."
+        ),
     )
     projection_verify.add_argument("--json", action="store_true")
     projection_verify.set_defaults(func=_cmd_projection_verify)

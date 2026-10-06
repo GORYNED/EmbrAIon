@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `projection verify --config-mode merge` reports `root-findings` for Codex content outside managed ownership: root model/effort or `agents.default_subagent_*` overrides, keys outside an optional `allowed-root-keys` list, and root instructions outside the managed orchestration block. `--strict-root` or `policy.yaml` `projection.codex.strict-root` makes them fail verification.
+
 ## 0.23.0 - 2026-10-05
 
 ### Added

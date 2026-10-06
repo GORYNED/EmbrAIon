@@ -94,6 +94,12 @@ embraion projection verify --host copilot --component agents --component skills
 
 `projection verify` завершается с кодом 0 только когда каждый selected projection file уже canonical и нет create/update/conflict/obsolete managed output. При partial Codex config ownership передавайте `--config-mode merge` и в `projection diff`, и в `projection verify`.
 
+Merge mode сохраняет пользовательское содержимое вне managed-блоков, поэтому verify дополнительно сообщает `root-findings` об этом содержимом: ключи верхнего уровня, которые переопределяют модель или effort пользователя либо routed-выбор субагентов (`model`, `model_reasoning_effort`, `agents.default_subagent_*`), ключи вне необязательного списка `allowed-root-keys` и текст корневых `developer_instructions` вне managed orchestration block. По умолчанию это предупреждения. `--strict-root` или `projection.codex.strict-root: true` в [policy](../configuration/policy.ru.md#projection-root-checks) делают их ошибкой проверки:
+
+```bash
+embraion projection verify --host codex --component config --config-mode merge --strict-root --json
+```
+
 ### `embraion policy`
 
 Посмотреть normalized source, validation, review и privacy policy:

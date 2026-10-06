@@ -91,6 +91,25 @@ embraion enforcement install \
 
 See [Enforcement](../guides/enforcement.md) for the complete workflow.
 
+## Projection root checks
+
+Codex merge mode keeps user-owned content in `.codex/config.toml`. The optional `projection` section decides how `embraion projection verify --config-mode merge` treats that content:
+
+```yaml
+projection:
+  codex:
+    strict-root: true
+    forbidden-root-keys:
+      - profiles.*.model
+    allowed-root-keys:
+      - mcp_servers
+```
+
+- `forbidden-root-keys` adds dotted key patterns to the Core defaults `model`, `model_reasoning_effort`, and `agents.default_subagent_*`. A project can extend the defaults but cannot remove them.
+- `allowed-root-keys` is an optional allowlist of top-level keys. `developer_instructions` and `agents` are always allowed because EmbrAIon manages blocks inside them.
+- Root `developer_instructions` text outside the managed orchestration block is always reported.
+- `strict-root: true` turns these findings into verification failures, the same as `--strict-root`. Without it they are warnings and verification still depends only on projection drift.
+
 ## Inspect the effective policy
 
 ```bash

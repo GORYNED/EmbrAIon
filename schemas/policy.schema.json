@@ -82,10 +82,43 @@
         }
       },
       "additionalProperties": false
+    },
+    "projection": {
+      "type": "object",
+      "description": "Optional checks for projected host configuration outside EmbrAIon-managed blocks.",
+      "properties": {
+        "codex": {
+          "type": "object",
+          "properties": {
+            "strict-root": {
+              "type": "boolean",
+              "description": "Make projection verify fail on root findings in Codex merge mode."
+            },
+            "forbidden-root-keys": {
+              "$ref": "#/$defs/keyPatterns",
+              "description": "Additional dotted key patterns forbidden outside managed ownership; Core defaults always apply."
+            },
+            "allowed-root-keys": {
+              "$ref": "#/$defs/keyPatterns",
+              "description": "Optional allowlist of top-level keys; developer_instructions and agents are always allowed."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {
     "pathPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "keyPatterns": {
       "type": "array",
       "items": {
         "type": "string",

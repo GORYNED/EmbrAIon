@@ -27,7 +27,7 @@ from .common import (
     write_json,
     write_yaml,
 )
-from .codex_config import merge_codex_config, orchestration_block
+from .codex_config import codex_root_findings, merge_codex_config, orchestration_block
 from .capabilities import _REMOVED_BUNDLE, projected_skills, read_external_capabilities
 from .policy import read_agents_config
 from .versioning import ensure_cached_runtime
@@ -152,7 +152,11 @@ def _validate_codex_config_mode(
 
 
 
-def projection_is_verified(plan: dict[str, Any]) -> bool:
+def projection_is_verified(plan: dict[str, Any], *, strict_root: bool | None = None) -> bool:
+    if strict_root is None:
+        strict_root = bool(plan.get("strict-root"))
+    if strict_root and plan.get("root-findings"):
+        return False
     return not any(
         plan.get(key)
         for key in (
@@ -1339,13 +1343,31 @@ def projection_plan(
     with tempfile.TemporaryDirectory(prefix="embraion-projection-") as temporary:
         generated = Path(temporary)
         generate_host(root, host, generated, selected, project=project_root(destination))
-        return _projection_plan_from_generated(
+        plan = _projection_plan_from_generated(
             host,
             generated,
             destination,
             selected,
             config_mode=config_mode,
         )
+    if host == "codex" and "config" in selected and config_mode == "merge":
+        # Merge preserves user content by design; report what it preserves that
+        # overrides routed model/effort or adds unmanaged root instructions.
+        from .policy import codex_root_policy
+
+        policy = codex_root_policy(destination)
+        config = _projection_target(destination, ".codex/config.toml")
+        plan["strict-root"] = policy["strict-root"]
+        plan["root-findings"] = (
+            codex_root_findings(
+                config.read_text(encoding="utf-8"),
+                forbidden_keys=policy["forbidden-root-keys"],
+                allowed_root_keys=policy["allowed-root-keys"],
+            )
+            if config.is_file()
+            else []
+        )
+    return plan
 
 
 def install(

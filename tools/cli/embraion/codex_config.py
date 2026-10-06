@@ -126,3 +126,74 @@ def merge_codex_config(existing: str, generated: str) -> str:
     ):
         raise _unsafe("non-managed content changed or managed settings are ineffective")
     return merged
+
+
+# Root keys that silently replace the user's root model or effort choice, or the
+# routed subagent selection. Projects may extend this list but never shrink it.
+DEFAULT_FORBIDDEN_ROOT_KEYS = (
+    "model",
+    "model_reasoning_effort",
+    "agents.default_subagent_*",
+)
+MANAGED_ROOT_KEYS = ("developer_instructions", "agents")
+
+
+def _key_paths(value: dict, prefix: str = "") -> list[str]:
+    paths: list[str] = []
+    for key, item in value.items():
+        path = f"{prefix}{key}"
+        paths.append(path)
+        if isinstance(item, dict):
+            paths.extend(_key_paths(item, path + "."))
+    return paths
+
+
+def codex_root_findings(
+    existing: str,
+    *,
+    forbidden_keys: list[str] | tuple[str, ...] = DEFAULT_FORBIDDEN_ROOT_KEYS,
+    allowed_root_keys: list[str] | tuple[str, ...] | None = None,
+) -> list[dict[str, str]]:
+    """Report user content outside managed ownership that merge preserves.
+
+    Merge mode intentionally keeps user content, so these findings never make a
+    merge unsafe; verify reports them and fails only when strict root is chosen.
+    """
+    from fnmatch import fnmatchcase
+
+    try:
+        values = tomllib.loads(existing)
+    except ValueError as error:
+        return [{"code": "root-config-invalid", "path": "<root>", "message": f"invalid TOML: {error}"}]
+
+    findings: list[dict[str, str]] = []
+    for path in _key_paths(values):
+        if any(fnmatchcase(path, pattern) for pattern in forbidden_keys):
+            findings.append({
+                "code": "root-key-override",
+                "path": path,
+                "message": "Overrides the root model/effort or routed subagent selection outside EmbrAIon ownership.",
+            })
+    if allowed_root_keys is not None:
+        allowed = set(allowed_root_keys) | set(MANAGED_ROOT_KEYS)
+        for key in sorted(set(values) - allowed):
+            findings.append({
+                "code": "root-key-unreviewed",
+                "path": key,
+                "message": "Root key is not in the project's allowed-root-keys.",
+            })
+
+    instructions = values.get("developer_instructions")
+    if isinstance(instructions, str):
+        try:
+            prefix, suffix, owned = _instruction_parts(instructions)
+        except RuntimeError as error:
+            findings.append({"code": "root-instructions-markers", "path": "developer_instructions", "message": str(error)})
+        else:
+            if (prefix + suffix).strip() if owned else instructions.strip():
+                findings.append({
+                    "code": "root-instructions-unmanaged-text",
+                    "path": "developer_instructions",
+                    "message": "Root developer_instructions contain text outside the EmbrAIon managed orchestration block.",
+                })
+    return findings

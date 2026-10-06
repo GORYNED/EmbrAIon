@@ -89,6 +89,25 @@ embraion enforcement install   --surface github-actions   --validation-profile a
 
 Полный процесс — в [Enforcement](../guides/enforcement.md).
 
+## Projection root checks
+
+Codex merge mode сохраняет пользовательское содержимое в `.codex/config.toml`. Необязательная секция `projection` определяет, как `embraion projection verify --config-mode merge` относится к этому содержимому:
+
+```yaml
+projection:
+  codex:
+    strict-root: true
+    forbidden-root-keys:
+      - profiles.*.model
+    allowed-root-keys:
+      - mcp_servers
+```
+
+- `forbidden-root-keys` добавляет dotted-шаблоны ключей к Core defaults `model`, `model_reasoning_effort` и `agents.default_subagent_*`. Проект может расширить defaults, но не может их убрать.
+- `allowed-root-keys` — необязательный allowlist ключей верхнего уровня. `developer_instructions` и `agents` разрешены всегда, потому что EmbrAIon управляет блоками внутри них.
+- Текст корневых `developer_instructions` вне managed orchestration block сообщается всегда.
+- `strict-root: true` превращает эти findings в ошибки проверки, так же как `--strict-root`. Без него это предупреждения, и результат verify зависит только от projection drift.
+
 ## Посмотреть effective policy
 
 ```bash
