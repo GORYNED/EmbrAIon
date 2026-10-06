@@ -169,9 +169,9 @@ The builder fails closed. It reads only committed blobs at `--commit` (default `
 
 - paths that are absolute, contain `..`, `:`, or control characters, or are absent from the commit;
 - symbolic links, submodules, directories, Git LFS pointers, and binary or non-UTF-8 files;
-- paths that match `sources.protected` in `.embraion/policy.yaml`, and always `.git/`, `.embraion/state/`, `.embraion/cache/`, and `.env` files;
+- paths that match `sources.protected` in `.embraion/policy.yaml`, and always `.git/`, `.embraion/state/`, `.embraion/cache/`, `.env` files, and credential-like names (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`, `.netrc`, `.npmrc`, `.pypirc`); these matches ignore letter case;
 - files whose data class is unknown or more sensitive than the request; the class comes from the matching `.embraion/knowledge.yaml` entry, otherwise from `privacy.default-class`;
-- content or task text with credential material (security-scan patterns or the value of a bound credential reference) or with a machine-local absolute path or file URL;
+- content, task text, or the request work-item ID, task ID, and source IDs with credential material (security-scan patterns or the value of a bound credential reference) or with a machine-local absolute path or file URL;
 - more than 128 files, a file above `--max-file-bytes` (default 262144), or context above `--max-total-bytes` (default 524288) or a binding `maxContextBytes`;
 - candidates that violate the request ceilings or lack a `contextBoundary`, and requests that already supply payload input.
 
@@ -179,7 +179,7 @@ A refusal names the path and the reason, never the content. `--payload-only` pri
 
 ## Readiness without a call
 
-`embraion execution preflight` checks each adapter-bound candidate of a stdin request: the binding is complete, the request ceilings hold, the credential reference resolves, and adapter preflight passes with the request payload or, when there is none, with a payload built from `--path` and `--task-file`. Only credential presence is checked; the value is never printed or stored, and no provider is called. `--deployment ID` (repeatable) checks bindings and credentials without a request. Cross-host and unbound candidates are listed as handoff. The command exits 1 when anything is not ready.
+`embraion execution preflight` checks each adapter-bound candidate of a stdin request: it first runs the same request consistency checks as `execute` (critical justification, repeated deployments, and the task-class route and candidate order), then checks that the binding is complete, the request ceilings hold, the credential reference resolves, and adapter preflight passes with the request payload or, when there is none, with a payload built from `--path` and `--task-file`. Only credential presence is checked; the value is never printed or stored, and no provider is called. `--deployment ID` (repeatable) checks bindings and credentials without a request. Cross-host and unbound candidates are listed as handoff. The command exits 1 when anything is not ready.
 
 ## Attempt ledger and health
 
@@ -198,6 +198,8 @@ pip install "embraion[litellm]"
 Projects pin and validate the compatible adapter/runtime combination they rely on. EmbrAIon remains provider-neutral: the concrete selectors, bindings, credentials references, source ceilings, and evidence are project-owned.
 
 For LiteLLM, `payload.inputsByDeployment` (built by `embraion execution envelope`) must include a bounded input for every candidate bound to `litellm-loopback` on the request execution host, including external fallback candidates. Cross-host and unbound candidates require no external input. Unknown or non-candidate input keys fail closed. Each selected external input is checked against its approved boundary and original work-item provenance before credentials or transport are used. Core derives the adapter candidate scope internally; callers cannot supply it. Existing valid optional inputs for handoff candidates remain accepted.
+
+`execute` checks only the envelope shape, boundary, and work-item binding of a supplied input. It does not re-verify file content, the builder refusals, `maxContextBytes`, the commit, or the digest. A caller that accepts payloads from elsewhere must build them with `embraion execution envelope` instead.
 
 The current LiteLLM adapter rejects explicit `selected.effort` and nonempty `selected.options` during preflight, before credential resolution or any provider call. These settings have no verified provider translation yet; an option allowlist alone does not establish transport support. Requests without those settings continue to use the bounded Responses transport.
 

@@ -76,23 +76,12 @@ def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict
     )
 
 
-def execute(
-    request: dict[str, Any], *, project: Path | None = None,
-    adapters: dict[str, ExecutionAdapter] | None = None,
-    resolver: CredentialResolver | None = None,
-    evidence_sink: Callable[[dict[str, Any]], None] | None = None,
-    health_observations: dict[str, list[dict[str, Any]]] | None = None,
-    health_policy: dict[str, int] | None = None,
-    persist_attempts: bool = False,
-) -> dict[str, Any]:
-    """Execute only predeclared candidates under the immutable original request ceilings.
+def check_request_consistency(request: dict[str, Any], project: Path | None = None) -> Path:
+    """Request checks shared by execution and preflight; returns the project root.
 
-    The result and sink intentionally omit prompt/context bytes and credential values.
-    With `persist_attempts`, each validated attempt is appended to the local attempt
-    ledger, and ledger health is used when neither the caller nor the request
-    supplies observations.
+    Covers critical justification, repeated deployments, and, for a project task
+    class, the effective route class and candidate order.
     """
-    _validate(request, "execution-request.schema.json")
     if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
     if request["routeClass"] == "critical":
@@ -120,6 +109,28 @@ def execute(
             raise RuntimeError("Execution candidates do not follow the project effective route.")
     elif request.get("escalation"):
         raise RuntimeError("Execution escalation requires a project task class.")
+    return root
+
+
+def execute(
+    request: dict[str, Any], *, project: Path | None = None,
+    adapters: dict[str, ExecutionAdapter] | None = None,
+    resolver: CredentialResolver | None = None,
+    evidence_sink: Callable[[dict[str, Any]], None] | None = None,
+    health_observations: dict[str, list[dict[str, Any]]] | None = None,
+    health_policy: dict[str, int] | None = None,
+    persist_attempts: bool = False,
+) -> dict[str, Any]:
+    """Execute only predeclared candidates under the immutable original request ceilings.
+
+    The result and sink intentionally omit prompt/context bytes and credential values.
+    With `persist_attempts`, each validated attempt is appended to the local attempt
+    ledger, and ledger health is used when neither the caller nor the request
+    supplies observations.
+    """
+    _validate(request, "execution-request.schema.json")
+    root = check_request_consistency(request, project)
+    identities = [item["deployment"] for item in request["candidates"]]
     registry = read_deployments_config(root)["deployments"]
     bindings = read_execution_config(root)["bindings"]
     if request["routeClass"] == "critical":
@@ -355,6 +366,11 @@ def preflight_execution(request: dict[str, Any] | None = None, *, deployments: l
             reasons.append("No deployment was selected.")
     else:
         _validate(request, "execution-request.schema.json")
+        try:
+            check_request_consistency(request, project)
+        except (RuntimeError, ValueError) as error:
+            return {"schemaVersion": 1, "ready": False, "deployments": [], "handoff": [],
+                    "reasons": ["Request consistency: " + str(error)]}
         from .envelope import EnvelopeRefused, adapter_bound_candidates, build_payload, with_payload
         identities = [item["deployment"] for item in request["candidates"]]
         bound = adapter_bound_candidates(request, registry, bindings)

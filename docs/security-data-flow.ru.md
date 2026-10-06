@@ -72,6 +72,8 @@ Validation evidence может содержать redacted stdout/stderr tails, 
 
 Для provider-neutral execution attempt records спроектированы так, чтобы не сохранять raw credentials и raw prompt/context bytes. `embraion execute` хранит их в ограниченном локальном ledger `.embraion/state/execution-attempts.jsonl`, который также питает health deployments.
 
+Известное ограничение: envelope builder распознаёт machine-local paths только как home directories (`/Users/`, `/home/`, `C:\Users\`), repository root и `file:` URLs. Другие absolute paths, например `/opt/...`, `/var/...`, другой диск или UNC share, не обнаруживаются; проверяйте файлы, которые передаёте через `--path`.
+
 ## Как обрабатываются credentials?
 
 Execution bindings ссылаются на credentials по имени, например:

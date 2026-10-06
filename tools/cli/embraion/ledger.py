@@ -25,6 +25,9 @@ ROTATED_NAME = "execution-attempts.1.jsonl"
 LOCK_NAME = "execution-attempts.lock"
 MAX_LEDGER_BYTES = 1_048_576
 MAX_RECORD_BYTES = 16_384
+# When rotation cannot replace the file (for example, a reader holds it open on
+# Windows), appends continue in place up to this hard bound.
+MAX_UNROTATED_BYTES = 2 * MAX_LEDGER_BYTES
 _LOCK_WAIT_SECONDS = 5.0
 
 
@@ -99,7 +102,12 @@ def append_attempt(root: Path, attempt: dict[str, Any], *, run_id: str, work_ite
         _lock(lock_fd)
         try:
             if ledger.exists() and not ledger.is_symlink() and ledger.stat().st_size + len(row) > MAX_LEDGER_BYTES:
-                os.replace(ledger, rotated)
+                try:
+                    os.replace(ledger, rotated)
+                except OSError:
+                    # Keep the record: append to the current file within the hard bound.
+                    if ledger.stat().st_size + len(row) > MAX_UNROTATED_BYTES:
+                        raise
             fd = os.open(ledger, os.O_RDWR | os.O_APPEND | os.O_CREAT | binary | nofollow, 0o600)
             with os.fdopen(fd, "r+b") as stream:
                 if not _regular_matches(stream.fileno(), ledger):
@@ -119,36 +127,81 @@ def append_attempt(root: Path, attempt: dict[str, Any], *, run_id: str, work_ite
         os.close(lock_fd)
 
 
+def _valid_record(line: bytes) -> dict[str, Any] | None:
+    try:
+        record = json.loads(line)
+        attempt = record["attempt"]
+        if (record.get("schemaVersion") != 1 or not isinstance(attempt.get("deployment"), str)
+                or attempt.get("status") not in {"completed", "failed", "cancelled"}
+                or not isinstance(attempt.get("finishedUtc"), str)
+                or not (attempt.get("failure") is None or isinstance(attempt["failure"], str))):
+            return None
+        datetime.fromisoformat(attempt["finishedUtc"].replace("Z", "+00:00"))
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
+        return None
+    return record
+
+
+def _read_tail(path: Path) -> tuple[bytes, bool]:
+    """Read at most the newest bound of bytes; report whether older bytes were cut."""
+    limit = MAX_UNROTATED_BYTES + MAX_RECORD_BYTES
+    with path.open("rb") as stream:
+        size = os.fstat(stream.fileno()).st_size
+        if size > limit:
+            stream.seek(size - limit)
+        return stream.read(limit), size > limit
+
+
 def read_records(root: Path) -> dict[str, Any]:
-    """Read the rotated and current ledgers; unreadable lines are counted, never trusted."""
+    """Read the rotated and current ledgers; unreadable lines are counted, never trusted.
+
+    Reads take the writer lock when it exists, so a reader never observes a rotation
+    in progress; without the lock file (no writer yet) or lock access, reads proceed.
+    """
     records: list[dict[str, Any]] = []
     corrupt = 0
     try:
-        ledger, rotated, _ = _paths(root, create=False)
+        ledger, rotated, lock = _paths(root, create=False)
     except RuntimeError:
         return {"records": [], "corruptLines": 0, "unavailable": True}
-    for path in (rotated, ledger):
-        if not path.is_file() or path.is_symlink():
-            continue
+    lock_fd: int | None = None
+    locked = False
+    if lock.is_file() and not lock.is_symlink():
         try:
-            data = path.read_bytes()[: MAX_LEDGER_BYTES + MAX_RECORD_BYTES]
+            lock_fd = os.open(lock, os.O_RDWR | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0))
+            if _regular_matches(lock_fd, lock):
+                _lock(lock_fd)
+                locked = True
         except OSError:
-            corrupt += 1
-            continue
-        for line in data.split(b"\n"):
-            if not line.strip():
+            locked = False
+    try:
+        for path in (rotated, ledger):
+            if not path.is_file() or path.is_symlink():
                 continue
             try:
-                record = json.loads(line)
-                attempt = record["attempt"]
-                if (record.get("schemaVersion") != 1 or not isinstance(attempt.get("deployment"), str)
-                        or attempt.get("status") not in {"completed", "failed", "cancelled"}):
-                    raise ValueError("record")
-                datetime.fromisoformat(str(attempt["finishedUtc"]).replace("Z", "+00:00"))
-            except (ValueError, TypeError, KeyError, AttributeError):
+                data, cut = _read_tail(path)
+            except OSError:
                 corrupt += 1
                 continue
-            records.append(record)
+            lines = data.split(b"\n")
+            if cut:
+                lines = lines[1:]  # the first line may start mid-record
+            for line in lines:
+                if not line.strip():
+                    continue
+                record = _valid_record(line)
+                if record is None:
+                    corrupt += 1
+                    continue
+                records.append(record)
+    finally:
+        if lock_fd is not None:
+            try:
+                if locked:
+                    _unlock(lock_fd)
+            except OSError:
+                pass
+            os.close(lock_fd)
     return {"records": records, "corruptLines": corrupt, "unavailable": False}
 
 

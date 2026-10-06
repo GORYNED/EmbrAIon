@@ -155,6 +155,78 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual("completed", result["status"])
         self.assertTrue(any(issubclass(item.category, ExecutionEvidenceWarning) for item in caught))
 
+    def write_malformed(self) -> None:
+        (self.project / ".embraion" / "state").mkdir(exist_ok=True)
+        numeric = {"schemaVersion": 1, "attempt": {**_attempt("first", "failed", "transport"), "finishedUtc": 20261006}}
+        listed = {"schemaVersion": 1, "attempt": {**_attempt("first", "failed"), "failure": ["transport"]}}
+        with self.path.open("ab") as stream:
+            stream.write(json.dumps(numeric).encode() + b"\n" + json.dumps(listed).encode() + b"\n"
+                         + b"[" * 100_000 + b"\n")
+
+    def test_type_confused_and_deeply_nested_lines_are_corrupt(self) -> None:
+        self.append(_attempt("first"))
+        self.write_malformed()
+        self.append(_attempt("second"))
+        loaded = ledger.read_records(self.project)
+        self.assertEqual(3, loaded["corruptLines"])
+        self.assertEqual(["first", "second"], [item["attempt"]["deployment"] for item in loaded["records"]])
+
+    def test_execute_health_and_preflight_survive_malformed_lines(self) -> None:
+        from embraion.execution import preflight_execution
+        self.write_malformed()
+        result = execute(_request(), project=self.project, adapters={"fake": FakeAdapter([dict(_COMPLETED)])},
+                         persist_attempts=True)
+        self.assertEqual("completed", result["status"])
+        report = ledger.health_report(self.project)
+        self.assertEqual(3, report["corruptLines"])
+        self.assertEqual([("first", "healthy")], [(item["deployment"], item["state"]) for item in report["deployments"]])
+        checked = preflight_execution(_request(), project=self.project, adapters={"fake": FakeAdapter([])})
+        self.assertTrue(checked["ready"], checked)
+        self.assertEqual("healthy", checked["deployments"][0]["health"])
+
+    def test_failed_rotation_keeps_appending_within_hard_bound(self) -> None:
+        with (patch.object(ledger, "MAX_LEDGER_BYTES", 1200), patch.object(ledger, "MAX_UNROTATED_BYTES", 2400),
+              patch("embraion.ledger.os.replace", side_effect=PermissionError("in use"))):
+            appended = 0
+            with self.assertRaises(OSError):
+                for index in range(20):
+                    self.append(_attempt("first", minutes_ago=index))
+                    appended += 1
+            self.assertGreater(appended, 2)
+            self.assertLessEqual(self.path.stat().st_size, 2400)
+            self.assertFalse(self.path.with_name(ledger.ROTATED_NAME).exists())
+            self.assertEqual(appended, len(ledger.read_records(self.project)["records"]))
+
+    def test_oversized_ledger_reads_newest_records(self) -> None:
+        for index in range(6):
+            self.append(_attempt("first" if index < 5 else "second", minutes_ago=10 - index))
+        with patch.object(ledger, "MAX_UNROTATED_BYTES", 600), patch.object(ledger, "MAX_RECORD_BYTES", 0):
+            loaded = ledger.read_records(self.project)
+        self.assertEqual(0, loaded["corruptLines"])
+        self.assertEqual("second", loaded["records"][-1]["attempt"]["deployment"])
+        self.assertLess(len(loaded["records"]), 6)
+
+    def test_execute_command_reemits_unrelated_warnings(self) -> None:
+        import io
+        from contextlib import redirect_stderr, redirect_stdout
+        from embraion.cli import main
+
+        def fake_execute(request: dict, **_: object) -> dict:
+            warnings.warn("unrelated runtime note", UserWarning)
+            warnings.warn("ledger unavailable", ExecutionEvidenceWarning)
+            return {"schemaVersion": 1, "runId": "run-1", "workItemId": "work-1", "status": "completed",
+                    "attempts": [], "outputText": None}
+
+        output, errors = io.StringIO(), io.StringIO()
+        with (patch("embraion.cli.resolve_project_runtime", return_value=None),
+              patch("embraion.cli.execute", side_effect=fake_execute),
+              patch("sys.stdin", io.StringIO(json.dumps(_request()))),
+              redirect_stdout(output), redirect_stderr(errors)):
+            code = main(["execute"])
+        self.assertEqual(0, code)
+        self.assertIn("unrelated runtime note", errors.getvalue())
+        self.assertIn("WARNING: ledger unavailable", errors.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

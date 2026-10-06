@@ -165,9 +165,9 @@ Builder работает fail closed. Он читает только committed b
 
 - absolute paths, paths с `..`, `:` или control characters, а также paths, отсутствующие в commit;
 - symbolic links, submodules, directories, Git LFS pointers, binary и non-UTF-8 files;
-- paths, совпадающие с `sources.protected` в `.embraion/policy.yaml`, и всегда `.git/`, `.embraion/state/`, `.embraion/cache/` и `.env` files;
+- paths, совпадающие с `sources.protected` в `.embraion/policy.yaml`, и всегда `.git/`, `.embraion/state/`, `.embraion/cache/`, `.env` files и credential-like names (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`, `.netrc`, `.npmrc`, `.pypirc`); регистр букв при этом не учитывается;
 - files с unknown data class или более чувствительные, чем request; class берётся из подходящей записи `.embraion/knowledge.yaml`, иначе из `privacy.default-class`;
-- content или task text с credential material (patterns security scan или значение bound credential reference) либо с machine-local absolute path или file URL;
+- content, task text или work-item ID, task ID и source IDs запроса с credential material (patterns security scan или значение bound credential reference) либо с machine-local absolute path или file URL;
 - больше 128 files, file больше `--max-file-bytes` (по умолчанию 262144) или context больше `--max-total-bytes` (по умолчанию 524288) или binding `maxContextBytes`;
 - candidates, нарушающие request ceilings или не имеющие `contextBoundary`, и requests, которые уже передают payload input.
 
@@ -175,7 +175,7 @@ Refusal называет path и причину, но не content. `--payload-o
 
 ## Readiness без вызова
 
-`embraion execution preflight` проверяет каждый adapter-bound candidate request из stdin: binding полный, request ceilings соблюдены, credential reference разрешается, adapter preflight проходит с payload запроса или, если его нет, с payload из `--path` и `--task-file`. Проверяется только наличие credential; значение не печатается и не сохраняется, provider не вызывается. `--deployment ID` (можно повторять) проверяет bindings и credentials без request. Cross-host и unbound candidates перечисляются как handoff. Команда завершается с кодом 1, если что-то не готово.
+`embraion execution preflight` проверяет каждый adapter-bound candidate request из stdin: сначала выполняются те же проверки согласованности request, что и в `execute` (critical justification, повторяющиеся deployments, task-class route и порядок candidates), затем проверяется, что binding полный, request ceilings соблюдены, credential reference разрешается, adapter preflight проходит с payload запроса или, если его нет, с payload из `--path` и `--task-file`. Проверяется только наличие credential; значение не печатается и не сохраняется, provider не вызывается. `--deployment ID` (можно повторять) проверяет bindings и credentials без request. Cross-host и unbound candidates перечисляются как handoff. Команда завершается с кодом 1, если что-то не готово.
 
 ## Attempt ledger и health
 
@@ -194,6 +194,8 @@ pip install "embraion[litellm]"
 Проекты pin/validate совместимую комбинацию adapter/runtime. EmbrAIon остаётся provider-neutral: concrete selectors, bindings, credential references, source ceilings и evidence принадлежат проекту.
 
 Для LiteLLM `payload.inputsByDeployment` (его строит `embraion execution envelope`) должен содержать bounded input для каждого candidate, привязанного к `litellm-loopback` на execution host запроса, включая external fallback candidates. Cross-host и unbound candidates не требуют external input. Unknown и non-candidate input keys приводят к fail closed. Каждый selected external input проверяется на approved boundary и исходный provenance work item до получения credentials и вызова transport. Core вычисляет adapter candidate scope внутри runtime; caller не может передать его. Существующие валидные optional inputs для handoff candidates остаются допустимыми.
+
+`execute` проверяет у переданного input только форму envelope, boundary и привязку к work item. File content, отказы builder, `maxContextBytes`, commit и digest повторно не проверяются. Caller, принимающий payload извне, должен вместо этого строить его через `embraion execution envelope`.
 
 Текущий LiteLLM adapter отклоняет явный `selected.effort` и непустой `selected.options` на preflight, до получения credentials и provider call. Проверенной трансляции этих настроек пока нет; option allowlist сам по себе не подтверждает поддержку transport. Запросы без этих настроек продолжают использовать bounded Responses transport.
 

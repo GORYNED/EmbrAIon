@@ -237,7 +237,7 @@ embraion execution preflight --deployment analysis-api
 embraion execution health --json
 ```
 
-`envelope` читает request из stdin и печатает его с `payload.inputsByDeployment` для каждого adapter-bound candidate. Читается только committed content (`--commit`, по умолчанию `HEAD`); `--path` можно повторять, `--task-file` обязателен, `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens` и `--payload-only` опциональны. Refusal завершается с кодом 2 и называет path и причину. `preflight` проверяет полноту binding, request ceilings, наличие credential и adapter preflight без provider call и без вывода credential, и завершается с кодом 1, если что-то не готово. `health` сводит attempt ledger по deployments.
+`envelope` читает request из stdin и печатает его с `payload.inputsByDeployment` для каждого adapter-bound candidate. Читается только committed content (`--commit`, по умолчанию `HEAD`); `--path` можно повторять, `--task-file` обязателен, `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens` и `--payload-only` опциональны. Refusal завершается с кодом 2 и называет path и причину. `preflight` выполняет проверки согласованности request из `execute`, затем проверяет полноту binding, request ceilings, наличие credential и adapter preflight без provider call и без вывода credential, и завершается с кодом 1, если что-то не готово. `health` сводит attempt ledger по deployments.
 
 ### `embraion doctor`
 

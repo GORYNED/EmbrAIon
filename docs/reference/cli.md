@@ -241,7 +241,7 @@ embraion execution preflight --deployment analysis-api
 embraion execution health --json
 ```
 
-`envelope` reads a request from stdin and prints it with `payload.inputsByDeployment` for every adapter-bound candidate. It reads committed content only (`--commit`, default `HEAD`); `--path` is repeatable, `--task-file` is required, and `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens`, and `--payload-only` are optional. A refusal exits 2 and names the path and reason. `preflight` checks binding completeness, request ceilings, credential presence, and adapter preflight without a provider call or credential output, and exits 1 when not ready. `health` summarizes the attempt ledger per deployment.
+`envelope` reads a request from stdin and prints it with `payload.inputsByDeployment` for every adapter-bound candidate. It reads committed content only (`--commit`, default `HEAD`); `--path` is repeatable, `--task-file` is required, and `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens`, and `--payload-only` are optional. A refusal exits 2 and names the path and reason. `preflight` runs the request consistency checks of `execute`, then checks binding completeness, request ceilings, credential presence, and adapter preflight without a provider call or credential output, and exits 1 when not ready. `health` summarizes the attempt ledger per deployment.
 
 ### `embraion doctor`
 

@@ -12,7 +12,7 @@
 - Report contract `workers.summary: true` requires a compact summary after the Workers table, and `embraion report validate --pull-request-not-created` requires a compare URL when a needed pull request was not created.
 - `core/routing/complexity.yaml` lists `critical` examples and what is `not-critical`.
 - `embraion execution envelope` builds `payload.inputsByDeployment` for every adapter-bound candidate from committed blobs at an explicit commit, bound to each binding `contextBoundary`, with per-file digests. It fails closed on paths outside the repository, protected or withheld paths, symlinks, LFS pointers, binary files, credential material, machine-local paths, data classes above the request, and byte bounds, including an optional binding `maxContextBytes`.
-- `embraion execute` appends each validated, redacted attempt to the bounded local ledger `.embraion/state/execution-attempts.jsonl` (one rotation, truncated-line recovery) and uses ledger health when a request supplies no `healthObservations`. `embraion execution health` shows per-deployment health from the ledger.
+- `embraion execution health` shows per-deployment health from the local attempt ledger.
 - `embraion execution preflight` checks adapter-bound candidates (or `--deployment` bindings) for binding completeness, request ceilings, credential presence, and adapter preflight with the built payload, without a provider call or credential output.
 - `embraion pricing verify --fixtures <yaml>` compares offline costs for reviewed usage fixtures with expected amounts as exact decimals.
 
@@ -21,6 +21,7 @@
 - Policy ceilings also check host overrides (`overrides.<host>` in `.embraion/routing.yaml`): every request an override matches must stay within the ceiling, so a `routes` override is `ceiling-unbounded` under a role or data-class ceiling, a `roles` or `route-roles` override is checked against the role ceiling and is `ceiling-unbounded` under a data-class ceiling, and `task-classes` overrides are checked like routing task classes.
 - Tests and examples no longer use consuming-project paths.
 - Core review guidance names a hosted bot review generically instead of a specific vendor's review product.
+- `embraion execute` now persists each validated, redacted attempt to the bounded local ledger `.embraion/state/execution-attempts.jsonl` (one rotation, truncated-line recovery). When a request supplies no `healthObservations`, it orders candidates and skips unavailable ones by ledger health.
 
 ## 0.25.0 - 2026-10-06
 

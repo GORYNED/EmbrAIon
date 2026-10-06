@@ -12,6 +12,7 @@ import json
 import os
 import re
 import subprocess
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,9 @@ MAX_TASK_BYTES = 65_536
 MAX_CONTEXT_FILES = 128
 # Repository state that never becomes provider context, regardless of project policy.
 ALWAYS_WITHHELD = (".git/**", ".embraion/state/**", ".embraion/cache/**", "**/.env", "**/.env.*")
+# Credential-like file names, matched case-insensitively against the final path segment.
+WITHHELD_NAMES = ("*.pem", "*.key", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*", "id_ecdsa*",
+                  ".netrc", ".npmrc", ".pypirc")
 _LFS_POINTER = b"version https://git-lfs.github.com/spec/"
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _DRIVE = re.compile(r"^[A-Za-z]:")
@@ -43,10 +47,16 @@ class EnvelopeRefused(RuntimeError):
     """A bounded, non-sensitive refusal; the message never contains file content."""
 
 
+def _git_environment() -> dict[str, str]:
+    """Drop every GIT_* override so repository, object, and replace settings come from the repository."""
+    return {key: value for key, value in child_environment().items() if not key.upper().startswith("GIT_")}
+
+
 def _git(root: Path, *arguments: str, limit: int | None = None) -> bytes:
-    command = ["git", "-c", "core.quotePath=false", "--literal-pathspecs", "-C", str(root), *arguments]
+    command = ["git", "--no-replace-objects", "-c", "core.quotePath=false", "--literal-pathspecs",
+               "-C", str(root), *arguments]
     try:
-        completed = subprocess.run(command, env=child_environment(), stdout=subprocess.PIPE,
+        completed = subprocess.run(command, env=_git_environment(), stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL, timeout=60, check=False)
     except (OSError, subprocess.TimeoutExpired) as error:
         raise EnvelopeRefused("Git is unavailable for the context envelope.") from error
@@ -66,6 +76,13 @@ def normalize_context_path(value: str) -> str:
             or path.endswith("/") or any(part in {"", ".", ".."} for part in path.split("/"))):
         raise EnvelopeRefused(f"Context path is outside the repository or not normalized: {path or value}")
     return path
+
+
+def is_withheld(path: str, patterns: list[str]) -> bool:
+    """Case-insensitive policy match: a case variant of a protected path is still protected."""
+    name = path.rsplit("/", 1)[-1].lower()
+    return (path_matches(path.lower(), [pattern.lower() for pattern in patterns])
+            or any(fnmatchcase(name, pattern) for pattern in WITHHELD_NAMES))
 
 
 def _contains_credential(text: str, credentials: list[str]) -> bool:
@@ -186,12 +203,16 @@ def build_payload(request: dict[str, Any], *, paths: list[str], task: str, proje
     entries = _knowledge_entries(read_knowledge_config(root), default_class)
     withheld = [*ALWAYS_WITHHELD, *[str(item) for item in policy["sources"].get("protected") or []]]
     _check_text(task, "Task text", root, credentials)
+    for label, value in (("Work item ID", request["workItemId"]), ("Task ID", request.get("taskId")),
+                         *(("Source ID", item) for item in request["sourceIds"])):
+        if isinstance(value, str):
+            _check_text(value, label, root, credentials)
     normalized = sorted(dict.fromkeys(normalize_context_path(item) for item in paths))
     if len(normalized) > MAX_CONTEXT_FILES:
         raise EnvelopeRefused(f"Context exceeds {MAX_CONTEXT_FILES} files.")
     request_level = DATA_LEVEL[request["dataClass"]]
     for path in normalized:
-        if path_matches(path, withheld):
+        if is_withheld(path, withheld):
             raise EnvelopeRefused(f"Context path is protected or withheld by policy: {path}")
         if DATA_LEVEL[_file_data_class(path, entries, default_class)] > request_level:
             raise EnvelopeRefused(f"Context path is more sensitive than the request data class: {path}")

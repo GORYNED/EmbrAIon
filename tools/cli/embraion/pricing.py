@@ -331,9 +331,11 @@ def calculate_cost(deployment: str, usage: dict[str, Any] | None, *, project: Pa
 
 def verify_pricing_fixtures(path: Path, project: Path | None = None) -> dict[str, Any]:
     """Compare offline snapshot costs with reviewed usage fixtures as exact decimals."""
+    import yaml
+
     try:
         fixtures = read_yaml(path)
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, yaml.YAMLError) as error:
         raise RuntimeError("Pricing fixtures cannot be read.") from error
     _validate(fixtures, "pricing-fixtures.schema.json")
     identities = [item["id"] for item in fixtures["fixtures"]]

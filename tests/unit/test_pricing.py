@@ -221,6 +221,24 @@ class PricingTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unique"):
             verify_pricing_fixtures(self.write_fixtures([fixture, dict(fixture)]), self.project)
 
+    def test_pricing_fixtures_malformed_yaml_is_an_error(self) -> None:
+        import io
+        import os
+        from contextlib import redirect_stderr
+        from unittest.mock import patch
+        from embraion.cli import main
+        path = self.project / "broken.yaml"
+        path.write_text("fixtures: [\n  - {id: one\n", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "cannot be read"):
+            verify_pricing_fixtures(path, self.project)
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        errors = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), redirect_stderr(errors):
+            self.assertEqual(2, main(["pricing", "verify", "--fixtures", str(path)]))
+        self.assertIn("cannot be read", errors.getvalue())
+
     def test_pricing_verify_command_exit_code(self) -> None:
         import io
         import os

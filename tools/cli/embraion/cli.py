@@ -752,6 +752,9 @@ def _cmd_execute(args: argparse.Namespace) -> int:
     for item in caught:
         if issubclass(item.category, ExecutionEvidenceWarning):
             print(f"WARNING: {item.message}", file=sys.stderr)
+        else:
+            # Recording catches every warning; re-emit unrelated ones instead of dropping them.
+            warnings.showwarning(item.message, item.category, item.filename, item.lineno, item.file, item.line)
     return 0 if result["status"] in {"completed", "handoff-required"} else 1
 
 

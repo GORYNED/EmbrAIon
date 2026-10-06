@@ -110,6 +110,10 @@ def make_project(directory: Path) -> Path:
         "src/machine.md": "See " + _FAKE_HOME_PATH + "\n",
         "assets/model.bin": "version https://git-lfs.github.com/spec/v1\noid sha256:" + "0" * 64 + "\nsize 12\n",
         ".env": "EMPTY=1\n",
+        "config/Server.PEM": "placeholder\n",
+        "keys/id_ED25519.pub": "placeholder\n",
+        "certs/client.p12": "placeholder\n",
+        ".npmrc": "registry=https://registry.example.com/\n",
     }
     for relative, text in files.items():
         target = project / relative
@@ -196,11 +200,41 @@ class EnvelopeTests(unittest.TestCase):
             "src/link.py": "symbolic link",
             "src": "not a regular",
             "src/missing.py": "absent",
+            "config/Server.PEM": "protected",
+            "keys/id_ED25519.pub": "protected",
+            "certs/client.p12": "protected",
+            ".npmrc": "protected",
+            "VENDOR/lib.py": "protected",
+            "Vendor/Lib.py": "protected",
+            ".ENV": "protected",
+            ".Git/config": "protected",
         }
         for path, reason in cases.items():
             with self.subTest(path=path):
                 with self.assertRaisesRegex(EnvelopeRefused, reason):
                     self.build([path])
+
+    def test_refuses_sensitive_request_strings(self) -> None:
+        cases = {"workItemId": "work " + _FAKE_TOKEN, "taskId": "task " + _FAKE_HOME_PATH}
+        for field, value in cases.items():
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(EnvelopeRefused, "Work item ID|Task ID"):
+                    build_payload({**make_request(), field: value}, paths=[], task="t", project=self.project)
+
+    def test_git_environment_overrides_and_replace_refs_are_ignored(self) -> None:
+        overrides = {"GIT_DIR": str(self.project / "missing"), "GIT_OBJECT_DIRECTORY": str(self.project / "missing"),
+                     "GIT_INDEX_FILE": str(self.project / "missing"), "GIT_CONFIG_PARAMETERS": "'core.quotepath'='true'"}
+        original = _git(self.project, "rev-parse", "HEAD:src/app.py")
+        replacement = _git(self.project, "hash-object", "-w", "--stdin", data=b"replaced content\n")
+        _git(self.project, "replace", original, replacement)
+        try:
+            self.assertEqual("replaced content", _git(self.project, "cat-file", "blob", original))
+            with patch.dict(os.environ, overrides):
+                payload = self.build(["src/app.py"])
+        finally:
+            _git(self.project, "replace", "-d", original)
+        envelope = json.loads(payload["inputsByDeployment"]["api-first"][0]["content"][0]["text"])
+        self.assertEqual("def answer() -> int:\n    return 42\n", envelope["context"][0]["content"])
 
     def test_refuses_oversize_content_and_bad_bounds(self) -> None:
         with self.assertRaisesRegex(EnvelopeRefused, "byte bound"):
@@ -282,6 +316,22 @@ class PreflightTests(unittest.TestCase):
             report = self.run_preflight(make_request(), paths=["vendor/lib.py"])
         self.assertFalse(report["ready"])
         self.assertIn("protected", " ".join(report["reasons"]))
+
+    def test_request_consistency_failures_are_not_ready(self) -> None:
+        cases = [
+            ({"candidates": [{"deployment": "api-first"}, {"deployment": "api-first"}]}, "repeats a deployment"),
+            ({"routeClass": "critical"}, "requires justification"),
+            ({"escalation": "quality"}, "requires a project task class"),
+            ({"taskClass": "no-such-task-class"}, ""),
+        ]
+        with patch.dict(os.environ, {_CREDENTIAL_ENV: "example-" + "v" * 30}):
+            for change, reason in cases:
+                with self.subTest(change=change):
+                    report = self.run_preflight({**make_request(), **change})
+                    self.assertFalse(report["ready"])
+                    self.assertEqual([], report["deployments"])
+                    self.assertTrue(report["reasons"][0].startswith("Request consistency: "))
+                    self.assertIn(reason, report["reasons"][0])
 
     def test_deployment_mode_checks_binding_without_request(self) -> None:
         with patch.dict(os.environ, {_CREDENTIAL_ENV: "example-" + "v" * 30}):
