@@ -19,6 +19,7 @@ For the normative security rules, see [Security](security.md).
 | `embraion validation run ...` | Runs configured project commands and records redacted evidence | EmbrAIon itself is not calling a model provider. A project command can still have whatever network behavior that command/tool normally has. |
 | `embraion security scan` / `enforcement check` | Runs deterministic checks over repository/configuration/evidence | No model-provider call is required by the EmbrAIon check itself. |
 | `embraion execute` | Runs the optional bounded provider-neutral execution path | May send the approved request/context to the explicitly configured adapter/provider, subject to project policy and binding ceilings. |
+| `embraion execution envelope` / `preflight` / `health` | Builds context envelopes from committed files, checks bindings and credential presence, or summarizes the attempt ledger | Local only; no provider call. The envelope builder refuses protected paths, credential material, and machine-local paths before anything can be sent. |
 | Project runtime resolution | Resolves the repository's exact published EmbrAIon version when required | May download a published EmbrAIon package into the local version cache; this is framework distribution, not a model-context upload. |
 
 ## Does EmbrAIon upload my repository to GORYNED?
@@ -69,7 +70,9 @@ Runtime evidence/state is stored under `.embraion/state/` and caches under `.emb
 
 Validation evidence can include redacted stdout/stderr tails, command identity, duration, exit state, and evidence IDs.
 
-For provider-neutral execution, attempt records are designed not to persist raw credentials or raw prompt/context bytes.
+For provider-neutral execution, attempt records are designed not to persist raw credentials or raw prompt/context bytes. `embraion execute` keeps them in the bounded local ledger `.embraion/state/execution-attempts.jsonl`, which also feeds deployment health.
+
+Known limitation: machine-local path detection in the envelope builder recognizes home directories (`/Users/`, `/home/`, `C:\Users\`), the repository root, and `file:` URLs. Other absolute paths, such as `/root/...`, a WSL mount like `/mnt/c/Users/...`, `/opt/...`, `/var/...`, another drive, or a UNC share, are not detected; review the files you pass with `--path`.
 
 ## How are credentials handled?
 

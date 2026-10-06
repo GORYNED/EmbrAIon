@@ -73,7 +73,7 @@ Depending on the adapter and project, a binding can declare:
 - data-class compatibility aliases;
 - timeout and option ceilings;
 - expected provider;
-- context-boundary identity;
+- context-boundary identity and a context byte bound (`maxContextBytes`);
 - exact or pattern-based observed model evidence;
 - version-tied usage-semantics evidence.
 
@@ -112,10 +112,10 @@ The runtime:
 
 1. validates the versioned request;
 2. checks each candidate against project deployment capabilities and execution binding ceilings;
-3. evaluates supplied health observations;
+3. evaluates supplied health observations, or the local attempt ledger when none are supplied;
 4. invokes only a declared adapter/binding;
 5. normalizes failure state;
-6. records an attempt without persisting raw credentials or prompt/context bytes;
+6. records an attempt without raw credentials or prompt/context bytes, and the CLI appends it to the attempt ledger;
 7. falls back only when the normalized failure is eligible and mutation/termination evidence is safe.
 
 Provider billing failures, availability failures, transport failures, timeouts, cancellation, and policy denial remain distinct normalized states.
@@ -150,11 +150,42 @@ This separation keeps generic execution mechanics out of project-specific correc
 
 ## Run it
 
+An API run needs only project configuration:
+
 ```bash
-embraion execute < request.json
+embraion execution preflight --path src/module.py --task-file task.md < request.json
+embraion execution envelope --path src/module.py --task-file task.md < request.json > ready.json
+embraion execute < ready.json
+embraion execution health
 ```
 
 The full request/result schema is documented in the [CLI reference](../reference/cli.md#embraion-execute).
+
+## Context envelopes
+
+`embraion execution envelope` reads a request from stdin and prints it with `payload.inputsByDeployment` filled for every candidate bound to an envelope adapter (currently `litellm-loopback`) on the request host. Each input is one envelope bound to the binding `contextBoundary` and to the work item, deployment, model, role, source IDs, access, and aliased data class. It carries the task text, the resolved commit, and one entry per file with path, SHA-256, size, and content.
+
+The builder fails closed. It reads only committed blobs at `--commit` (default `HEAD`), never the working tree, and refuses:
+
+- paths that are absolute, contain `..`, `:`, or control characters, or are absent from the commit;
+- symbolic links, submodules, directories, Git LFS pointers, and binary or non-UTF-8 files;
+- paths that match `sources.protected` in `.embraion/policy.yaml`, and always `.git/`, `.embraion/state/`, `.embraion/cache/`, `.env` files, and credential-like names (`*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`, `.netrc`, `.npmrc`, `.pypirc`); these matches ignore letter case;
+- files whose data class is unknown or more sensitive than the request; the class comes from the matching `.embraion/knowledge.yaml` entry, otherwise from `privacy.default-class`;
+- content, task text, or the request work-item ID, task ID, and source IDs with credential material (security-scan patterns or the value of a bound credential reference) or with a machine-local absolute path or file URL;
+- more than 128 files, a file above `--max-file-bytes` (default 262144), or context above `--max-total-bytes` (default 524288) or a binding `maxContextBytes`;
+- candidates that violate the request ceilings or lack a `contextBoundary`, and requests that already supply payload input.
+
+A refusal names the path and the reason, never the content. `--payload-only` prints only the payload; `--max-output-tokens` sets `payload.maxOutputTokens`.
+
+## Readiness without a call
+
+`embraion execution preflight` checks each adapter-bound candidate of a stdin request: it first runs the same request consistency checks as `execute` (critical justification, repeated deployments, and the task-class route and candidate order), then checks that the binding is complete, the request ceilings hold, the credential reference resolves, and adapter preflight passes with the request payload or, when there is none, with a payload built from `--path` and `--task-file`. Only credential presence is checked; the value is never printed or stored, and no provider is called. `--deployment ID` (repeatable) checks bindings and credentials without a request. Cross-host and unbound candidates are listed as handoff. The command exits 1 when anything is not ready.
+
+## Attempt ledger and health
+
+`embraion execute` appends each validated attempt to `.embraion/state/execution-attempts.jsonl` under a file lock. A record is the same redacted attempt object as in the result, with run and work-item IDs; it never contains prompt, context, output, or credential values. At 1 MiB the ledger rotates once to `execution-attempts.1.jsonl`. Unreadable lines, including a truncated last line after an interrupted write, are skipped and counted. When a request supplies no `healthObservations`, `execute` derives them from the ledger, so repeated operational failures demote or skip a deployment within the health window. A failed ledger write prints a warning and keeps the result.
+
+`embraion execution health [--json]` shows per-deployment state, recent operational failures, cooldown, and the count of unreadable lines.
 
 ## LiteLLM
 
@@ -166,7 +197,9 @@ pip install "embraion[litellm]"
 
 Projects pin and validate the compatible adapter/runtime combination they rely on. EmbrAIon remains provider-neutral: the concrete selectors, bindings, credentials references, source ceilings, and evidence are project-owned.
 
-For LiteLLM, `payload.inputsByDeployment` must include a bounded input for every candidate bound to `litellm-loopback` on the request execution host, including external fallback candidates. Cross-host and unbound candidates require no external input. Unknown or non-candidate input keys fail closed. Each selected external input is checked against its approved boundary and original work-item provenance before credentials or transport are used. Core derives the adapter candidate scope internally; callers cannot supply it. Existing valid optional inputs for handoff candidates remain accepted.
+For LiteLLM, `payload.inputsByDeployment` (built by `embraion execution envelope`) must include a bounded input for every candidate bound to `litellm-loopback` on the request execution host, including external fallback candidates. Cross-host and unbound candidates require no external input. Unknown or non-candidate input keys fail closed. Each selected external input is checked against its approved boundary and original work-item provenance before credentials or transport are used. Core derives the adapter candidate scope internally; callers cannot supply it. Existing valid optional inputs for handoff candidates remain accepted.
+
+`execute` checks only the envelope shape, boundary, and work-item binding of a supplied input. It does not re-verify file content, the builder refusals, `maxContextBytes`, the commit, or the digest. A caller that accepts payloads from elsewhere must build them with `embraion execution envelope` instead.
 
 The current LiteLLM adapter rejects explicit `selected.effort` and nonempty `selected.options` during preflight, before credential resolution or any provider call. These settings have no verified provider translation yet; an option allowlist alone does not establish transport support. Requests without those settings continue to use the bounded Responses transport.
 

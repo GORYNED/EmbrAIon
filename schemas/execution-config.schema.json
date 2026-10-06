@@ -21,6 +21,7 @@
           "properties": {"CONFIDENTIAL": {"type": "string", "pattern": "^(?!PUBLIC$|PRIVATE$|CONFIDENTIAL$)[A-Z][A-Z0-9_]*$"}}}
         ,"expectedProvider": {"type": "string", "minLength": 1}
         ,"contextBoundary": {"type": "string", "minLength": 1}
+        ,"maxContextBytes": {"type": "integer", "minimum": 1, "maximum": 1048576}
         ,"expectedResponseModels": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
         ,"expectedResponseModelPattern": {"type": "string", "minLength": 3, "maxLength": 512}
         ,"usageSemanticsEvidence": {"type": "object", "required": ["path", "sha256"],

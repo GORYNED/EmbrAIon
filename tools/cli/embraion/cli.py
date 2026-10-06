@@ -32,7 +32,7 @@ from .harness import audit_harness
 from .evals import compare, create_baseline, run_case
 from .learning import observe, transition
 from .policy import effective_policy, read_knowledge_config
-from .pricing import calculate_cost, pricing_status, refresh_pricing
+from .pricing import calculate_cost, pricing_status, refresh_pricing, verify_pricing_fixtures
 from .project import (
     init_project,
     install,
@@ -123,6 +123,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  route      Resolve host-default or project routing for a task route class",
         "  dispatch   Create a bounded execution plan with access and owned-path constraints",
         "  execute    Process a versioned execution request from stdin",
+        "  execution  Build context envelopes, check readiness, or show attempt health",
         "  pricing    Inspect or explicitly refresh approved official pricing sources",
         "  context    Select project knowledge with provenance and privacy metadata",
         "  run        Record structured execution evidence for an engineering run",
@@ -702,15 +703,107 @@ def _cmd_pricing_calculate(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_execute(args: argparse.Namespace) -> int:
+def _cmd_pricing_verify(args: argparse.Namespace) -> int:
+    report = verify_pricing_fixtures(Path(args.fixtures))
+    if args.json:
+        _print_json(report)
+    else:
+        for item in report["fixtures"]:
+            state = "PASS" if item["passed"] else "FAIL (" + ", ".join(item["mismatches"]) + ")"
+            print(f"{item['id']}: {state} {item['actual']['state']} {item['actual']['amount'] or '-'} "
+                  f"{item['actual']['currency'] or ''}".rstrip())
+        print(f"Pricing fixtures: {'passed' if report['passed'] else 'failed'}")
+    return 0 if report["passed"] else 1
+
+
+def _read_execution_request(label: str) -> dict[str, Any]:
     try:
         request = json.load(sys.stdin)
     except (json.JSONDecodeError, UnicodeError) as error:
-        raise RuntimeError("Execution stdin is not valid JSON.") from error
+        raise RuntimeError(f"{label} stdin is not valid JSON.") from error
+    if not isinstance(request, dict):
+        raise RuntimeError(f"{label} stdin must be a JSON object.")
+    return request
+
+
+def _read_task_file(path: str | None) -> str | None:
+    if path is None:
+        return None
+    from .envelope import MAX_TASK_BYTES
+    target = Path(path)
+    try:
+        if not target.is_file() or target.stat().st_size > MAX_TASK_BYTES:
+            raise RuntimeError(f"Task file must be a regular file of at most {MAX_TASK_BYTES} bytes.")
+        return target.read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise RuntimeError("Task file cannot be read as UTF-8 text.") from error
+
+
+def _cmd_execute(args: argparse.Namespace) -> int:
+    import warnings
+
+    from .execution import ExecutionEvidenceWarning
+    request = _read_execution_request("Execution")
     from .adapters.litellm_execution import LiteLLMLoopbackAdapter
-    result = execute(request, adapters={"litellm-loopback": LiteLLMLoopbackAdapter()})
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", ExecutionEvidenceWarning)
+        result = execute(request, adapters={"litellm-loopback": LiteLLMLoopbackAdapter()}, persist_attempts=True)
     _print_json(result)
+    for item in caught:
+        if issubclass(item.category, ExecutionEvidenceWarning):
+            print(f"WARNING: {item.message}", file=sys.stderr)
+        else:
+            # Recording catches every warning; re-emit unrelated ones instead of dropping them.
+            warnings.showwarning(item.message, item.category, item.filename, item.lineno, item.file, item.line)
     return 0 if result["status"] in {"completed", "handoff-required"} else 1
+
+
+def _cmd_execution_envelope(args: argparse.Namespace) -> int:
+    from .envelope import build_payload, with_payload
+    request = _read_execution_request("Execution envelope")
+    payload = build_payload(request, paths=args.path or [], task=_read_task_file(args.task_file) or "",
+                            commit=args.commit, max_file_bytes=args.max_file_bytes,
+                            max_total_bytes=args.max_total_bytes, max_output_tokens=args.max_output_tokens)
+    _print_json(payload if args.payload_only else with_payload(request, payload))
+    return 0
+
+
+def _cmd_execution_preflight(args: argparse.Namespace) -> int:
+    from .adapters.litellm_execution import LiteLLMLoopbackAdapter
+    from .execution import preflight_execution
+    request = None if args.deployment else _read_execution_request("Execution preflight")
+    report = preflight_execution(request, deployments=args.deployment,
+                                 adapters={"litellm-loopback": LiteLLMLoopbackAdapter()},
+                                 paths=args.path or [], task=_read_task_file(args.task_file), commit=args.commit)
+    if args.json:
+        _print_json(report)
+    else:
+        for item in report["deployments"]:
+            state = "ready" if item["ready"] else "NOT READY"
+            print(f"{item['deployment']}: {state} (binding {item['binding']}, credential {item['credential']}, "
+                  f"request preflight {item['requestPreflight']}, health {item['health']})")
+            for reason in item["reasons"]:
+                print(f"  - {reason}")
+        for item in report["handoff"]:
+            print(f"{item['deployment']}: handoff ({item['reason']})")
+        for reason in report["reasons"]:
+            print(f"- {reason}")
+        print(f"Execution preflight: {'ready' if report['ready'] else 'not ready'}")
+    return 0 if report["ready"] else 1
+
+
+def _cmd_execution_health(args: argparse.Namespace) -> int:
+    from .ledger import health_report
+    report = health_report(project_root())
+    if args.json:
+        _print_json(report)
+        return 0
+    print(f"Attempt ledger: {report['records']} records, {report['corruptLines']} unreadable lines")
+    for item in report["deployments"]:
+        cooldown = f", cooldown until {item['cooldownUntilUtc']}" if item["cooldownUntilUtc"] else ""
+        print(f"{item['deployment']}: {item['state']} ({item['attempts']} attempts, "
+              f"{item['operationalFailures']} recent operational failures, last {item['lastStatus']}{cooldown})")
+    return 0
 
 
 def _cmd_context_build(args: argparse.Namespace) -> int:
@@ -1979,9 +2072,40 @@ def build_parser() -> argparse.ArgumentParser:
     pricing_refresh_parser.set_defaults(func=_cmd_pricing_refresh)
     pricing_calculate_parser = pricing_sub.add_parser("calculate", help="Calculate cost offline from a JSON stdin request")
     pricing_calculate_parser.set_defaults(func=_cmd_pricing_calculate)
+    pricing_verify_parser = pricing_sub.add_parser("verify", help="Compare snapshot costs with reviewed usage fixtures")
+    pricing_verify_parser.add_argument("--fixtures", required=True, help="YAML file of usage fixtures and expected costs")
+    pricing_verify_parser.add_argument("--json", action="store_true")
+    pricing_verify_parser.set_defaults(func=_cmd_pricing_verify)
 
     execute_parser = sub.add_parser("execute", help="Execute a versioned JSON request from stdin")
     execute_parser.set_defaults(func=_cmd_execute)
+
+    execution_parser = sub.add_parser("execution", help="Build context envelopes, check readiness, or show attempt health")
+    execution_sub = execution_parser.add_subparsers(dest="execution_command", required=True)
+    from .envelope import DEFAULT_MAX_FILE_BYTES, DEFAULT_MAX_TOTAL_BYTES
+    envelope_parser = execution_sub.add_parser(
+        "envelope", help="Attach committed-content context envelopes to a stdin request",
+        description="Read an execution request from stdin and print it with payload.inputsByDeployment "
+                    "for every adapter-bound candidate. Only committed blobs at --commit are read.")
+    preflight_parser = execution_sub.add_parser(
+        "preflight", help="Check bindings, credential presence, and adapter preflight without a call",
+        description="Check adapter-bound candidates of a stdin request, or --deployment bindings, "
+                    "without printing credentials or calling a provider.")
+    for item in (envelope_parser, preflight_parser):
+        item.add_argument("--path", action="append", help="Repository-relative committed file; repeatable")
+        item.add_argument("--task-file", required=item is envelope_parser, help="UTF-8 task text file")
+        item.add_argument("--commit", default="HEAD", help="Commit to read context from (default HEAD)")
+    envelope_parser.add_argument("--max-file-bytes", type=int, default=DEFAULT_MAX_FILE_BYTES)
+    envelope_parser.add_argument("--max-total-bytes", type=int, default=DEFAULT_MAX_TOTAL_BYTES)
+    envelope_parser.add_argument("--max-output-tokens", type=int)
+    envelope_parser.add_argument("--payload-only", action="store_true", help="Print only the payload object")
+    envelope_parser.set_defaults(func=_cmd_execution_envelope)
+    preflight_parser.add_argument("--deployment", action="append", help="Check a declared deployment binding instead of a stdin request; repeatable")
+    preflight_parser.add_argument("--json", action="store_true")
+    preflight_parser.set_defaults(func=_cmd_execution_preflight)
+    health_parser = execution_sub.add_parser("health", help="Show per-deployment health from the local attempt ledger")
+    health_parser.add_argument("--json", action="store_true")
+    health_parser.set_defaults(func=_cmd_execution_health)
 
     route_parser = sub.add_parser("route", help="Resolve host-default or project routing", description="Resolve host-default or project routing for a host, route class, role, and data class.")
     route_parser.add_argument(

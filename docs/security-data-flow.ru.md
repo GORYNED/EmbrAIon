@@ -19,6 +19,7 @@
 | `embraion validation run ...` | Запускает настроенные команды проекта и записывает redacted evidence | Сам EmbrAIon не вызывает model provider. При этом команда проекта может иметь собственное обычное network behavior. |
 | `embraion security scan` / `enforcement check` | Выполняет детерминированные проверки repository/configuration/evidence | Самой проверке EmbrAIon model-provider call не требуется. |
 | `embraion execute` | Запускает опциональный bounded provider-neutral execution path | Может отправить разрешённый request/context явно настроенному adapter/provider в пределах project policy и binding ceilings. |
+| `embraion execution envelope` / `preflight` / `health` | Собирает context envelopes из committed files, проверяет bindings и наличие credentials или сводит attempt ledger | Только локально; provider не вызывается. Envelope builder отклоняет protected paths, credential material и machine-local paths до любой отправки. |
 | Project runtime resolution | При необходимости разрешает точную опубликованную версию EmbrAIon, закреплённую проектом | Может скачать опубликованный package EmbrAIon в локальный version cache; это доставка framework, а не загрузка model context. |
 
 ## Загружает ли EmbrAIon мой репозиторий в GORYNED?
@@ -69,7 +70,9 @@ Runtime evidence/state хранится в `.embraion/state/`, caches — в `.e
 
 Validation evidence может содержать redacted stdout/stderr tails, command identity, duration, exit state и evidence IDs.
 
-Для provider-neutral execution attempt records спроектированы так, чтобы не сохранять raw credentials и raw prompt/context bytes.
+Для provider-neutral execution attempt records спроектированы так, чтобы не сохранять raw credentials и raw prompt/context bytes. `embraion execute` хранит их в ограниченном локальном ledger `.embraion/state/execution-attempts.jsonl`, который также питает health deployments.
+
+Известное ограничение: envelope builder распознаёт machine-local paths только как home directories (`/Users/`, `/home/`, `C:\Users\`), repository root и `file:` URLs. Другие absolute paths, например `/root/...`, WSL mount вроде `/mnt/c/Users/...`, `/opt/...`, `/var/...`, другой диск или UNC share, не обнаруживаются; проверяйте файлы, которые передаёте через `--path`.
 
 ## Как обрабатываются credentials?
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol
@@ -18,6 +19,10 @@ class ExecutionAdapter(Protocol):
     def preflight(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> None: ...
     def execute(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any],
                 credential: str | None) -> dict[str, Any]: ...
+
+
+class ExecutionEvidenceWarning(UserWarning):
+    """A validated attempt could not be persisted; the result itself remains valid."""
 
 
 class CredentialResolver(Protocol):
@@ -71,19 +76,12 @@ def _eligible(request: dict[str, Any], deployment: dict[str, Any], binding: dict
     )
 
 
-def execute(
-    request: dict[str, Any], *, project: Path | None = None,
-    adapters: dict[str, ExecutionAdapter] | None = None,
-    resolver: CredentialResolver | None = None,
-    evidence_sink: Callable[[dict[str, Any]], None] | None = None,
-    health_observations: dict[str, list[dict[str, Any]]] | None = None,
-    health_policy: dict[str, int] | None = None,
-) -> dict[str, Any]:
-    """Execute only predeclared candidates under the immutable original request ceilings.
+def check_request_consistency(request: dict[str, Any], project: Path | None = None) -> Path:
+    """Request checks shared by execution and preflight; returns the project root.
 
-    The result and sink intentionally omit prompt/context bytes and credential values.
+    Covers critical justification, repeated deployments, and, for a project task
+    class, the effective route class and candidate order.
     """
-    _validate(request, "execution-request.schema.json")
     if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
         raise RuntimeError("Critical task routing requires justification.")
     if request["routeClass"] == "critical":
@@ -111,6 +109,28 @@ def execute(
             raise RuntimeError("Execution candidates do not follow the project effective route.")
     elif request.get("escalation"):
         raise RuntimeError("Execution escalation requires a project task class.")
+    return root
+
+
+def execute(
+    request: dict[str, Any], *, project: Path | None = None,
+    adapters: dict[str, ExecutionAdapter] | None = None,
+    resolver: CredentialResolver | None = None,
+    evidence_sink: Callable[[dict[str, Any]], None] | None = None,
+    health_observations: dict[str, list[dict[str, Any]]] | None = None,
+    health_policy: dict[str, int] | None = None,
+    persist_attempts: bool = False,
+) -> dict[str, Any]:
+    """Execute only predeclared candidates under the immutable original request ceilings.
+
+    The result and sink intentionally omit prompt/context bytes and credential values.
+    With `persist_attempts`, each validated attempt is appended to the local attempt
+    ledger, and ledger health is used when neither the caller nor the request
+    supplies observations.
+    """
+    _validate(request, "execution-request.schema.json")
+    root = check_request_consistency(request, project)
+    identities = [item["deployment"] for item in request["candidates"]]
     registry = read_deployments_config(root)["deployments"]
     bindings = read_execution_config(root)["bindings"]
     if request["routeClass"] == "critical":
@@ -133,6 +153,9 @@ def execute(
     output_text: str | None = None
     handoff: dict[str, str] | None = None
     observations = health_observations if health_observations is not None else request.get("healthObservations")
+    if observations is None and persist_attempts:
+        from .ledger import health_observations as ledger_observations
+        observations = ledger_observations(root)
     policy = health_policy if health_policy is not None else request.get("healthPolicy")
     states = ({identifier: evaluate_health(observations.get(identifier, []), **(policy or {}))["state"]
                for identifier in identities} if observations is not None else {})
@@ -254,6 +277,13 @@ def execute(
         attempts.append(attempt)
         if evidence_sink:
             evidence_sink(attempt)
+        if persist_attempts:
+            from .ledger import append_attempt
+            try:
+                append_attempt(root, attempt, run_id=request["runId"], work_item_id=request["workItemId"])
+            except (OSError, RuntimeError):
+                warnings.warn("Execution attempt evidence could not be persisted to the local ledger.",
+                              ExecutionEvidenceWarning, stacklevel=2)
         if attempt_status == "completed":
             status = "completed"
             output_text = raw.get("outputText") if isinstance(raw.get("outputText"), str) else None
@@ -271,3 +301,130 @@ def execute(
         result["handoff"] = handoff
     _validate(result, "execution-result.schema.json")
     return result
+
+
+_PREFLIGHT_TASK = "Readiness check: confirm the bound context envelope only."
+
+
+def _check_bound(identifier: str, deployment: dict[str, Any], binding: dict[str, Any],
+                 adapter: ExecutionAdapter | None, resolver: CredentialResolver) -> dict[str, Any]:
+    """Request-independent checks; never resolve more than credential presence."""
+    entry: dict[str, Any] = {"deployment": identifier, "adapter": binding.get("adapter"),
+                             "binding": "complete", "credential": "not-configured", "reasons": []}
+    if adapter is None:
+        entry["binding"] = "adapter-unavailable"
+        entry["reasons"].append("The binding adapter is not available in this runtime.")
+    else:
+        check = getattr(adapter, "check_binding", None)
+        if callable(check):
+            try:
+                check(deployment, binding)
+            except Exception as error:  # adapter checks raise static reasons only
+                entry["binding"] = "incomplete"
+                entry["reasons"].append(str(error) if isinstance(error, RuntimeError) else "Binding check failed.")
+    reference = binding.get("credentialRef")
+    if reference:
+        try:
+            resolver.resolve(reference, identifier, str(binding.get("adapter")))
+            entry["credential"] = "present"
+        except Exception:
+            entry["credential"] = "missing"
+            entry["reasons"].append(f"Credential reference {reference} does not resolve.")
+    return entry
+
+
+def preflight_execution(request: dict[str, Any] | None = None, *, deployments: list[str] | None = None,
+                        project: Path | None = None, adapters: dict[str, ExecutionAdapter] | None = None,
+                        resolver: CredentialResolver | None = None, paths: list[str] | None = None,
+                        task: str | None = None, commit: str = "HEAD") -> dict[str, Any]:
+    """Check adapter-bound candidates without credential output or any provider call."""
+    root = project_root(project)
+    registry = read_deployments_config(root)["deployments"]
+    bindings = read_execution_config(root)["bindings"]
+    adapter_map = adapters or {}
+    credential_resolver = resolver or EnvironmentResolver()
+    from .ledger import health_observations as ledger_observations
+    observations = ledger_observations(root)
+    entries: list[dict[str, Any]] = []
+    handoff: list[dict[str, str]] = []
+    reasons: list[str] = []
+    if request is None:
+        for identifier in deployments or []:
+            deployment, binding = registry.get(identifier), bindings.get(identifier)
+            if deployment is None or binding is None:
+                entries.append({"deployment": identifier, "adapter": None, "ready": False,
+                                "binding": "undeclared" if deployment is None else "unbound",
+                                "credential": "not-configured", "requestPreflight": "not-run",
+                                "reasons": ["Deployment is not declared." if deployment is None
+                                            else "Deployment has no execution binding."]})
+                continue
+            entry = _check_bound(identifier, deployment, binding, adapter_map.get(binding["adapter"]),
+                                 credential_resolver)
+            entry.update({"requestPreflight": "not-run", "ready": not entry["reasons"]})
+            entries.append(entry)
+        if not entries:
+            reasons.append("No deployment was selected.")
+    else:
+        _validate(request, "execution-request.schema.json")
+        try:
+            check_request_consistency(request, project)
+        except (RuntimeError, ValueError) as error:
+            return {"schemaVersion": 1, "ready": False, "deployments": [], "handoff": [],
+                    "reasons": ["Request consistency: " + str(error)]}
+        from .envelope import EnvelopeRefused, adapter_bound_candidates, build_payload, with_payload
+        identities = [item["deployment"] for item in request["candidates"]]
+        bound = adapter_bound_candidates(request, registry, bindings)
+        payload_reason: str | None = None
+        checked = request
+        if request.get("payload") is None or set(request.get("payload") or {}) <= {"maxOutputTokens"}:
+            if bound:
+                try:
+                    checked = with_payload(request, build_payload(
+                        request, paths=list(paths or []), task=task or _PREFLIGHT_TASK,
+                        project=root, commit=commit))
+                except (EnvelopeRefused, RuntimeError) as error:
+                    payload_reason = str(error)
+                    reasons.append("Context envelope: " + payload_reason)
+        for candidate in request["candidates"]:
+            identifier = candidate["deployment"]
+            deployment, binding = registry.get(identifier), bindings.get(identifier)
+            if deployment is None:
+                entries.append({"deployment": identifier, "adapter": None, "ready": False, "binding": "undeclared",
+                                "credential": "not-configured", "requestPreflight": "not-run",
+                                "reasons": ["Deployment is not declared."]})
+                continue
+            if deployment["host"] != request["host"] or binding is None:
+                handoff.append({"deployment": identifier, "host": deployment["host"],
+                                "reason": "host-boundary" if deployment["host"] != request["host"] else "unbound-adapter"})
+                continue
+            adapter = adapter_map.get(binding["adapter"])
+            entry = _check_bound(identifier, deployment, binding, adapter, credential_resolver)
+            entry["requestPreflight"] = "not-run"
+            if not _eligible(request, deployment, binding):
+                entry["reasons"].append("Candidate violates the request role/data/source/trust/access ceilings.")
+            elif payload_reason is not None and identifier in bound:
+                entry["reasons"].append("No valid context envelope could be built.")
+            elif adapter is not None:
+                attempt_request = {**checked, "selected": {"deployment": identifier, "effort": candidate.get("effort"),
+                                                           "options": candidate.get("options") or {}},
+                                   "_adapterCandidateDeployments": [
+                                       item for item in identities
+                                       if registry.get(item, {}).get("host") == request["host"]
+                                       and bindings.get(item, {}).get("adapter") == binding["adapter"]]}
+                try:
+                    adapter.preflight(attempt_request, deployment, binding)
+                    entry["requestPreflight"] = "passed"
+                except UnsupportedExecutionSettings:
+                    entry["requestPreflight"] = "failed"
+                    entry["reasons"].append(UnsupportedExecutionSettings.diagnostic)
+                except Exception as error:  # adapter preflight raises static reasons only
+                    entry["requestPreflight"] = "failed"
+                    entry["reasons"].append(str(error) if isinstance(error, RuntimeError) else "Adapter preflight failed.")
+            entry["ready"] = not entry["reasons"]
+            entries.append(entry)
+        if not entries:
+            reasons.append("The request has no adapter-bound candidate on its host.")
+    for entry in entries:
+        entry["health"] = evaluate_health(observations.get(entry["deployment"], []))["state"]
+    return {"schemaVersion": 1, "ready": bool(entries) and not reasons and all(item["ready"] for item in entries),
+            "deployments": entries, "handoff": handoff, "reasons": reasons}

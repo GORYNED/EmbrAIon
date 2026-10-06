@@ -160,6 +160,23 @@ Current parser adapters include OpenAI, Anthropic, Gemini, and DeepSeek pricing 
 
 See the [CLI reference](../reference/cli.md#embraion-pricing) for the exact input contract.
 
+## Verify configured rates
+
+`embraion pricing verify --fixtures pricing-fixtures.yaml` runs reviewed usage fixtures through the same offline calculation and compares each state, currency, and amount as exact decimals:
+
+```yaml
+schemaVersion: 1
+fixtures:
+  - id: analysis-basic
+    deployment: analysis-api
+    usage: {inputTokens: 1000000, outputTokens: 1000}
+    usageSemantics: disjoint
+    atUtc: "2026-10-01T12:00:00Z"
+    expect: {state: snapshot-computed, amount: "1.004", currency: USD}
+```
+
+Amounts are quoted decimal strings, never floats. A mismatch exits 1, so a project can gate snapshot refreshes on its own reviewed fixtures.
+
 ## Related
 
 - [How EmbrAIon works](../getting-started/how-it-works.md)

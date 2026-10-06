@@ -214,6 +214,8 @@ Refresh validates every selected source and replaces the snapshot atomically. A 
 
 `embraion pricing calculate` reads a JSON request from stdin with `deployment`, nullable `usage`, `usageSemantics`, and optional `billing`, `providerExact`, `adapterCost`, `reportedCurrency`, `atUtc`, `batch`, and `discount` fields. Snapshot calculation requires explicit usage semantics: `inclusive` means cached and reasoning counts are included in input and output totals; `disjoint` means they are additional counts. Providers with different input and output conventions can supply `{"input":"inclusive","output":"disjoint"}`. It reads only the local validated snapshot; reported exact costs take precedence. A reported cost has unknown currency unless `reportedCurrency` is supplied. The response keeps unknown and stale prices distinct from zero. A scheduled rate cannot be combined with batch or discount rates in one snapshot entry.
 
+`embraion pricing verify --fixtures <yaml> [--json]` checks that the configured rows produce reviewed costs. The file has `schemaVersion: 1` and a `fixtures` list; each fixture has a unique `id`, `deployment`, nullable `usage`, optional `usageSemantics`, `atUtc` (quoted), `billing`, `batch`, and `discount`, and `expect` with `state`, `amount` (a quoted decimal string or null), and optional `currency`. Each fixture runs offline through the same calculation as `pricing calculate`; amounts compare as exact decimals (`"3.750"` equals `"3.75"`). The command exits 1 on any mismatch.
+
 ### `embraion execute`
 
 For execution ownership, bindings, aliases, fallback, and handoff behavior, see [Execution & providers](../configuration/execution.md).
@@ -222,9 +224,24 @@ Read a versioned execution request from stdin and emit a JSON result. Executable
 
 Snapshot cost from LiteLLM usage requires separately reviewed overlap evidence. An optional binding `usageSemanticsEvidence` contains a project-relative `.embraion/usage-evidence/*.json` path and its SHA-256 digest. That checked-in, sanitized JSON records schema version 1, `transport: litellm-responses`, exact LiteLLM `adapterVersion`, provider, selector, official `sourceUrl`, verification and validity timestamps, explicit input/output `usageSemantics`, and a representative `sampleUsage`. The adapter accepts it only when the file digest, running LiteLLM version (currently 1.77.7), provider, selector, dates, and sample shape agree. Missing, expired, or mismatched evidence leaves usage semantics unknown, so snapshot-derived cost remains unknown; it does not block execution. A provider-reported exact cost or LiteLLM normalized cost retains its separate priority. Record evidence only after reviewing real normalized Responses usage against the provider's official billing semantics; a synthetic test fixture does not establish that contract.
 
+Without `healthObservations` in the request, health comes from the local attempt ledger. Each validated attempt is appended to `.embraion/state/execution-attempts.jsonl` (redacted attempt fields only; one rotation at 1 MiB). A failed ledger write prints a warning and keeps the result.
+
 ```bash
 embraion execute < request.json
 ```
+
+### `embraion execution`
+
+Build context envelopes, check readiness, and inspect attempt health. See [Execution & providers](../configuration/execution.md#context-envelopes) for the refusal rules.
+
+```bash
+embraion execution envelope --path src/module.py --task-file task.md < request.json > ready.json
+embraion execution preflight --path src/module.py --task-file task.md --json < request.json
+embraion execution preflight --deployment analysis-api
+embraion execution health --json
+```
+
+`envelope` reads a request from stdin and prints it with `payload.inputsByDeployment` for every adapter-bound candidate. It reads committed content only (`--commit`, default `HEAD`); `--path` is repeatable, `--task-file` is required, and `--max-file-bytes`, `--max-total-bytes`, `--max-output-tokens`, and `--payload-only` are optional. A refusal exits 2 and names the path and reason. `preflight` runs the request consistency checks of `execute`, then checks binding completeness, request ceilings, credential presence, and adapter preflight without a provider call or credential output, and exits 1 when not ready. `health` summarizes the attempt ledger per deployment.
 
 ### `embraion doctor`
 

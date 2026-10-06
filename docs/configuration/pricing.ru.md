@@ -152,6 +152,23 @@ sources:
 
 Точный input contract — в [CLI reference](../reference/cli.md#embraion-pricing).
 
+## Проверка configured rates
+
+`embraion pricing verify --fixtures pricing-fixtures.yaml` прогоняет reviewed usage fixtures через тот же offline calculation и сравнивает state, currency и amount как exact decimals:
+
+```yaml
+schemaVersion: 1
+fixtures:
+  - id: analysis-basic
+    deployment: analysis-api
+    usage: {inputTokens: 1000000, outputTokens: 1000}
+    usageSemantics: disjoint
+    atUtc: "2026-10-01T12:00:00Z"
+    expect: {state: snapshot-computed, amount: "1.004", currency: USD}
+```
+
+Amounts задаются decimal strings в кавычках, не float. Mismatch завершает команду с кодом 1, поэтому проект может проверять snapshot refresh своими reviewed fixtures.
+
 ## Связанные страницы
 
 - [Как работает EmbrAIon](../getting-started/how-it-works.md)

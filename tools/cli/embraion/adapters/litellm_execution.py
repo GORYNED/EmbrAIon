@@ -192,7 +192,15 @@ class LiteLLMLoopbackAdapter:
 
     def preflight(self, request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> None:
         self._check_execution_settings(request)
-        selector = binding["selector"]
+        self.check_binding(deployment, binding)
+        if request["access"] != "read-only":
+            raise RuntimeError("LiteLLM adapter accepts read-only work only.")
+        self._check_payload(request, deployment, binding)
+
+    @staticmethod
+    def check_binding(deployment: dict[str, Any], binding: dict[str, Any]) -> None:
+        """Request-independent binding completeness; raises a static reason."""
+        selector = binding.get("selector")
         provider = binding.get("expectedProvider")
         if not isinstance(selector, str) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,63}/[^\s]{1,128}", selector):
             raise RuntimeError("LiteLLM selector must name one explicit upstream provider/model.")
@@ -205,8 +213,9 @@ class LiteLLMLoopbackAdapter:
         pattern = binding.get("expectedResponseModelPattern")
         if pattern and (len(pattern) > 512 or not pattern.startswith("^") or not pattern.endswith("$")):
             raise RuntimeError("LiteLLM model evidence pattern must be bounded and anchored.")
-        if request["access"] != "read-only":
-            raise RuntimeError("LiteLLM adapter accepts read-only work only.")
+
+    @staticmethod
+    def _check_payload(request: dict[str, Any], deployment: dict[str, Any], binding: dict[str, Any]) -> None:
         payload = request.get("payload")
         candidates = {item["deployment"] for item in request["candidates"]}
         required = request.get("_adapterCandidateDeployments")
