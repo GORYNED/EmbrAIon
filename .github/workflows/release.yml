@@ -422,16 +422,29 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag $GITHUB_REF_NAME is not a stable vX.Y.Z tag."
+            exit 1
+          fi
           PINNED="$(python -c 'import yaml; print(yaml.safe_load(open(".embraion/project.yaml", encoding="utf-8"))["framework"]["version"])')"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          if ! python - "$PINNED" "$VERSION" <<'PY'
+          # Exit 0: the pin is older; exit 1: it is not; any other status is an error.
+          STATUS=0
+          python - "$PINNED" "$VERSION" <<'PY' || STATUS=$?
           import sys
 
-          pinned, target = (tuple(map(int, value.split("."))) for value in sys.argv[1:])
+          try:
+              pinned, target = (tuple(map(int, value.split("."))) for value in sys.argv[1:])
+          except ValueError:
+              raise SystemExit(2)
           raise SystemExit(0 if pinned < target else 1)
           PY
-          then
+          if [ "$STATUS" -gt 1 ]; then
+            echo "Cannot compare self-host pin '$PINNED' with '$VERSION'."
+            exit 1
+          fi
+          if [ "$STATUS" -eq 1 ]; then
             echo "Self-host pin $PINNED is not older than $VERSION; nothing to propose."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -456,15 +469,26 @@ jobs:
         run: |
           BRANCH="chore/self-host-v$VERSION"
           TITLE="chore: upgrade self-host EmbrAIon to $VERSION"
+          BODY="Moves the self-host project pin, artifact lock and Codex projection to the published $GITHUB_REF_NAME release, using \`embraion update\` and \`embraion install --host codex --config-mode merge\` from that release. Review the projection diff before merging."
 
           if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
-            OPEN="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url')"
+            OPEN="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
             if [ -n "$OPEN" ]; then
               echo "Self-host upgrade is already proposed: $OPEN"
               exit 0
             fi
-            echo "Branch $BRANCH already exists without an open pull request; review it manually."
-            exit 1
+            # A previous run may have pushed the branch and failed to open the pull request.
+            # Resume only when the branch holds exactly the result of this run.
+            git fetch --no-tags origin "$BRANCH"
+            git add --all
+            if [ "$(git write-tree)" != "$(git rev-parse FETCH_HEAD^{tree})" ]; then
+              echo "Branch $BRANCH exists without an open pull request and differs from this run; review it manually."
+              exit 1
+            fi
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "$TITLE" --body "$BODY"
+            gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+            gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+            exit 0
           fi
 
           git config user.name "github-actions[bot]"
@@ -479,7 +503,7 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "$TITLE" \
-            --body "Moves the self-host project pin, artifact lock and Codex projection to the published $GITHUB_REF_NAME release, using \`embraion update\` and \`embraion install --host codex --config-mode merge\` from that release. Review the projection diff before merging."
+            --body "$BODY"
 
           # Pull requests opened with the workflow token do not trigger pull_request workflows.
           gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
