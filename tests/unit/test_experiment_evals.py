@@ -14,7 +14,9 @@ from unittest.mock import patch
 from jsonschema import Draft202012Validator
 
 from embraion.common import framework_root
-from embraion.experiment_evals import _artifact_changes, _files, _scratch_root, capture_snapshot, identity, load_baseline_reports, run_experiment
+from embraion.experiment_evals import (_artifact_changes, _files, _scratch_root, capture_snapshot, identity, load_baseline_reports,
+                                       run_experiment, verify_projection)
+from embraion.project import generate_host
 
 
 ROOT = framework_root()
@@ -146,6 +148,22 @@ class ExperimentRoutingContract(unittest.TestCase):
             self.assertEqual("reviewer", route.call_args.kwargs["role"])
             self.assertEqual("read-only", route.call_args.kwargs["access"])
             self.assertEqual("read-only", native.call_args.kwargs["route"]["access"])
+
+
+class CopilotProjectionSnapshot(unittest.TestCase):
+    def test_snapshot_carries_and_verifies_the_core_rules_instruction_file(self):
+        (ROOT / "build").mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=ROOT / "build") as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            source.mkdir()
+            for name in ("core", "adapters", "schemas", "templates"):
+                shutil.copytree(ROOT / name, source / name)
+            shutil.copyfile(ROOT / "framework.yaml", source / "framework.yaml")
+            generate_host(source, "copilot", source, project=source)
+            manifest = capture_snapshot(source, root / "snapshot", root / "snapshot.json", host="copilot")
+            self.assertIn(".github/instructions/embraion-core.instructions.md", manifest["files"])
+            self.assertEqual("pass", verify_projection(root / "snapshot", manifest, "copilot")["status"])
 
 
 class FullCoreExperiments(unittest.TestCase):

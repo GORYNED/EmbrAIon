@@ -23,6 +23,8 @@ embraion install --host copilot --destination .
 │   ├── architect.agent.md
 │   ├── reviewer.agent.md
 │   └── ...
+├── instructions/
+│   └── embraion-core.instructions.md
 └── skills/
     ├── implementation/
     ├── orchestration/
@@ -40,7 +42,7 @@ Generated Copilot agent profiles opt into repository instructions with `include-
 
 The generated `tools` field is an allowlist over tools available on the active Copilot surface. EmbrAIon can request aliases such as `read`, `search`, `edit`, and `execute`, but does not treat every requested alias as a guarantee that the host exposes a corresponding effective tool in every custom-subagent context.
 
-The `skills` component also writes `.github/instructions/embraion-core.instructions.md` with `applyTo: "**"`, so every Core rule is attached to each request as a repository instruction file.
+The `skills` component also writes `.github/instructions/embraion-core.instructions.md` with `applyTo: "**"`, so every Core rule is offered as a path-specific repository instruction file for all paths. Whether a surface (IDE chat, CLI, the coding agent, or code review) applies such files depends on that surface and its settings; check it on the active surface.
 
 Skills under `.github/skills/` are projected as root/session procedural capabilities. The Copilot adapter does not promise automatic skill inheritance by every custom subagent unless GitHub exposes and EmbrAIon explicitly configures such a delivery contract.
 

@@ -52,8 +52,10 @@ sources:
     - .claude/agents/**
     - .claude/skills/**
     - .claude/rules/embraion.md
+    - .claude/rules/embraion-core.md
     - .github/agents/**
     - .github/skills/**
+    - .github/instructions/embraion-core.instructions.md
     - embraion/**
 
   external: []

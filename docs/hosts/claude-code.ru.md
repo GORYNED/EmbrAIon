@@ -19,7 +19,8 @@ embraion install --host claude-code --destination .
 ```text
 .claude/
 ├── rules/
-│   └── embraion.md
+│   ├── embraion.md
+│   └── embraion-core.md
 ├── agents/
 │   ├── analyst.md
 │   ├── architect.md

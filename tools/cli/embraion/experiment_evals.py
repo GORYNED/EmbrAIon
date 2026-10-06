@@ -28,11 +28,11 @@ from .skill_evals import _check_output_destination, _safe_relative
 from .response_contracts import resolve_response_contract
 
 SOURCE_PREFIXES = ("core/", "adapters/", "schemas/", "tools/cli/", "templates/",
-                   ".agents/", ".codex/", ".claude/", ".github/agents/", ".github/skills/", ".embraion/", "embraion/")
+                   ".agents/", ".codex/", ".claude/", ".github/agents/", ".github/skills/", ".github/instructions/", ".embraion/", "embraion/")
 SOURCE_NAMES = {"framework.yaml", "pyproject.toml", "AGENTS.md", "CLAUDE.md", ".github/copilot-instructions.md", "tools/source.py"}
 SKIP = {"__pycache__", ".git", ".cache", ".tmp", ".venv", "build", "dist", "node_modules"}
 HOST_PREFIXES = {"codex": (".agents/", ".codex/"), "claude-code": (".claude/",),
-                 "copilot": (".github/agents/", ".github/skills/"), "portable": ("embraion/",)}
+                 "copilot": (".github/agents/", ".github/skills/", ".github/instructions/"), "portable": ("embraion/",)}
 MAX_BYTES = 20_000_000
 MAX_FILES = 1500
 RUNTIME_ROOT = Path(__file__).resolve().parent

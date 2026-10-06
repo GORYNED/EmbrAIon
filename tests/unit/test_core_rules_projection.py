@@ -25,6 +25,25 @@ class CoreRulesProjectionTests(unittest.TestCase):
         self.assertIn("persisted-data compatibility", text)
         self.assertIn("deferred tasks", text)
 
+    def test_rules_document_rewrites_anchored_links_and_rejects_bad_sets(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            rules = Path(temporary) / "core" / "rules"
+            rules.mkdir(parents=True)
+            (rules / "README.md").write_text("# Rules\n\n- `first.md`\n- `second-rule.md`\n", encoding="utf-8")
+            (rules / "first.md").write_text("# First\n\nSee [second](second-rule.md) and [part](second-rule.md#part).\n",
+                                            encoding="utf-8")
+            (rules / "second-rule.md").write_text("# Second_rule\n\n## Part\n", encoding="utf-8")
+            text = core_rules_text(Path(temporary))
+            self.assertIn("](#second_rule)", text)
+            self.assertIn("](#part)", text)
+            self.assertNotIn(".md", text.split("\n", 3)[3])
+            (rules / "first.md").write_text("# First\n\nSee [gone](gone.md).\n", encoding="utf-8")
+            with self.assertRaises(RuntimeError):
+                core_rules_text(Path(temporary))
+            (rules / "third.md").write_text("# Third\n", encoding="utf-8")
+            with self.assertRaises(RuntimeError):
+                core_rules_text(Path(temporary))
+
     def test_each_host_loads_the_rules_at_startup(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)

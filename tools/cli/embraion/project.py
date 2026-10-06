@@ -662,14 +662,17 @@ def core_rules_text(root: Path) -> str:
     for name in names:
         text = (rules / name).read_text(encoding="utf-8").strip()
         text = re.sub(r"^(#+) ", lambda match: "#" + match.group(1) + " ", text, flags=re.M)
-        text = re.sub(r"\]\(([a-z0-9-]+)\.md\)", lambda match: f"](#{_rule_anchor(rules / (match.group(1) + '.md'))})", text)
+        text = re.sub(r"\]\(([a-z0-9-]+)\.md(#[a-z0-9_-]+)?\)",
+                      lambda match: f"]({match.group(2) or '#' + _rule_anchor(rules / (match.group(1) + '.md'))})", text)
         parts += ["", text]
     return "\n".join(parts) + "\n"
 
 
 def _rule_anchor(path: Path) -> str:
+    if not path.is_file():
+        raise RuntimeError(f"Core rule links to a missing rule: {path.name}")
     title = path.read_text(encoding="utf-8").splitlines()[0].lstrip("# ").strip()
-    return re.sub(r"[^a-z0-9 -]", "", title.lower()).replace(" ", "-")
+    return re.sub(r"[^a-z0-9 _-]", "", title.lower()).replace(" ", "-")
 
 
 def _projected_orchestration_guidance(root: Path, host: str) -> str:
