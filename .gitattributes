@@ -2,6 +2,10 @@
 .embraion/** text eol=lf
 .agents/** text eol=lf
 .codex/** text eol=lf
+.claude/** text eol=lf
+.github/agents/** text eol=lf
+.github/skills/** text eol=lf
+embraion/** text eol=lf
 evals/foundation/fixtures/** text eol=lf
 # Canonical instruction and proposal digests must survive Windows checkouts.
 core/** text eol=lf

@@ -25,7 +25,9 @@ sources:
     - evals/**
     - examples/**
     - docs/**
-    - .github/**
+    - .github/pull_request_template.md
+    - .github/ISSUE_TEMPLATE/**
+    - .github/workflows/**
 
   protected:
     - LICENSE
@@ -47,6 +49,12 @@ sources:
     - .embraion/cache/**
     - .codex/**
     - .agents/skills/**
+    - .claude/agents/**
+    - .claude/skills/**
+    - .claude/rules/embraion.md
+    - .github/agents/**
+    - .github/skills/**
+    - embraion/**
 
   external: []
 

@@ -34,3 +34,7 @@ coverage/
 # Local EmbrAIon runtime state
 .embraion/cache/
 .embraion/state/
+
+# Machine-local Claude Code state.
+.claude/settings.local.json
+.claude/worktrees/
