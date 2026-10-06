@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The release workflow proposes the self-host pin, artifact lock and Codex projection upgrade as a `chore/self-host-vX.Y.Z` pull request after the GitHub Release is published, and dispatches `validate` and `docs` for it. Merging remains a human decision.
+
 ## 0.23.0 - 2026-10-05
 
 ### Added

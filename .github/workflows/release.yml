@@ -384,6 +384,107 @@ jobs:
           assert status["runtime-cached"] is True
           PY
 
+  self-host-upgrade:
+    name: Propose self-host upgrade
+    needs: consumer-artifact-lock-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Download Python distribution
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: ${{ runner.temp }}/dist
+
+      - name: Install release launcher
+        shell: bash
+        run: python -m pip install "$RUNNER_TEMP"/dist/*.whl
+
+      - name: Upgrade self-host pin and Codex projection
+        id: upgrade
+        env:
+          EMBRAION_CACHE_HOME: ${{ runner.temp }}/embraion-cache
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PINNED="$(python -c 'import yaml; print(yaml.safe_load(open(".embraion/project.yaml", encoding="utf-8"))["framework"]["version"])')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if ! python - "$PINNED" "$VERSION" <<'PY'
+          import sys
+
+          pinned, target = (tuple(map(int, value.split("."))) for value in sys.argv[1:])
+          raise SystemExit(0 if pinned < target else 1)
+          PY
+          then
+            echo "Self-host pin $PINNED is not older than $VERSION; nothing to propose."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          embraion update --framework-version "$VERSION"
+          embraion install --host codex --destination . --config-mode merge
+
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git status --short
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open self-host upgrade pull request
+        if: steps.upgrade.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.upgrade.outputs.version }}
+        shell: bash
+        run: |
+          BRANCH="chore/self-host-v$VERSION"
+          TITLE="chore: upgrade self-host EmbrAIon to $VERSION"
+
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            OPEN="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url')"
+            if [ -n "$OPEN" ]; then
+              echo "Self-host upgrade is already proposed: $OPEN"
+              exit 0
+            fi
+            echo "Branch $BRANCH already exists without an open pull request; review it manually."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$BRANCH"
+          git add --all
+          git commit --message "$TITLE"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head "$BRANCH" \
+            --title "$TITLE" \
+            --body "Moves the self-host project pin, artifact lock and Codex projection to the published $GITHUB_REF_NAME release, using \`embraion update\` and \`embraion install --host codex --config-mode merge\` from that release. Review the projection diff before merging."
+
+          # Pull requests opened with the workflow token do not trigger pull_request workflows.
+          gh workflow run validate.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+          gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+
   pypi-publish:
     name: Publish to PyPI
     needs: consumer-artifact-lock-smoke
