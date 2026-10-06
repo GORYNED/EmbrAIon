@@ -426,6 +426,10 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
 
     seen: set[tuple[str, str]] = set()
     for host, server_id, config, source in observed:
+        # An entry with `enabled = false` only switches a server off, such as one inherited from
+        # user-level configuration, so it is not a server the project runs.
+        if config.get("enabled") is False:
+            continue
         key = (host, server_id)
         seen.add(key)
         entry = declared.get(key)
