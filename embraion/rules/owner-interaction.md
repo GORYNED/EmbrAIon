@@ -13,6 +13,12 @@ The owner sets the goal, decides, and gives final acceptance. The agent plans, i
 - Ask when the answer changes the goal, the scope, or something hard to undo. Otherwise pick a sensible default, say which, make it reversible where possible, and continue with work that does not depend on the answer.
 - Actions that need approval follow the [authorization rule](authorization.md).
 
+## Keep the owner informed
+
+- Keep a visible checklist of the plan in the host's status or planning tool, or as a short text checklist, and update it after each substantial stage.
+- Give a short plain-language update per stage. Do not narrate individual reads, searches, or routine edits.
+- When the project keeps a list of deferred tasks, read it at the start of a task and remind the owner once, in one line, of the items that touch the task's area. Do not start a deferred item without the owner's word.
+
 ## Stay in scope
 
 - Keep the change small and reviewable under the [minimum change rule](minimum-change.md). Report an unrelated problem noticed along the way instead of fixing it in the same change.

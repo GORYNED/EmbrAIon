@@ -12,6 +12,14 @@ classes:
     description: cross-domain, lifecycle, concurrency, or difficult review
   critical:
     description: exceptional protected-decision risk
+    examples:
+      - irreversible migration or deletion of persisted user data
+      - a data-loss or recovery-failure path
+      - credential, permission, or other systemic security exposure
+      - a breaking public contract that needs a versioned migration
+    not-critical:
+      - large or cross-cutting work without one of the risks above
+      - an unavailable or exhausted cheaper deployment
 principles:
   role-model-separation: true
   explicit-route-per-dispatch: true

@@ -6,4 +6,4 @@ The author first completes implementation, obtains passing required checks for t
 
 The independent Reviewer is a different agent from the author or remediator, has read-only access in the same authorized execution host, and is routed through the existing project role and task mapping. Unavailable required reviewer capability blocks readiness; Lead cannot substitute its own review. The Reviewer examines the cumulative candidate and confirms the exact final PR source HEAD SHA, reviewed base and diff, and current evidence after all remediation. Any later candidate content or commit change invalidates that confirmation, including cosmetic or metadata changes.
 
-Reviewer confirmation does not authorize merge or release. Preserve the project's user approval and human merge rules. Copilot Review and a cross-host external reviewer are not default requirements.
+Reviewer confirmation does not authorize merge or release. Preserve the project's user approval and human merge rules. A hosted bot review and a cross-host external reviewer are not default requirements.
