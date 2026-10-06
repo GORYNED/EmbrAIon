@@ -61,7 +61,7 @@ does not execute commands, install dependencies, or invent documents.
 
 Configure the canonical Project Contract Slots in `.embraion/knowledge.yaml`:
 constitution, architecture, source-authority, compatibility, persistence,
-engineering-workflow and specification. Prefer existing authoritative documents
+engineering-workflow, specification and deferred-tasks. Prefer existing authoritative documents
 and retain valid intentional bindings and custom entries. Bind a source only
 after confirming it governs that concern. A README can govern several concerns
 when its actual contents justify the bindings; its name alone is insufficient.

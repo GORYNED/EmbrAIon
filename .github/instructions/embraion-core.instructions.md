@@ -12,6 +12,8 @@ Use the smallest coherent architectural change that satisfies the requested outc
 
 Avoid opportunistic cleanup, speculative frameworks, unrelated formatting, and generalized abstractions without a credible reusable contract.
 
+Preserve observable runtime behavior unless the task explicitly authorizes a change, and give a new option a default that reproduces the previous behavior.
+
 ## Evidence
 
 Repository documentation and validation reports must describe observable current state.
@@ -33,6 +35,8 @@ Every capability has an owner before implementation.
 
 Reusable consumer-agnostic behavior belongs upstream in the owning reusable system. Product/domain semantics, composition, and project-specific adapters remain in the consuming project.
 
+Report reusable behavior found in a consumer as an upstream candidate. The upstream change lands first in its own pull request, and the consumer then updates its pin to it.
+
 ## Compatibility
 
 Stable identifiers, serialized shapes, persisted formats, public contracts, coordinate or unit conventions, and supported platform branches are protected compatibility surfaces.
@@ -40,6 +44,8 @@ Stable identifiers, serialized shapes, persisted formats, public contracts, coor
 A breaking change requires explicit migration, compatibility impact, and validation evidence.
 
 Compatibility impact is unresolved until it is verified. Report source and API compatibility separately from persisted-data compatibility, and for each one state what was verified and how.
+
+Compatibility classification fails closed: impact that has not been verified is treated as breaking.
 
 ## Independent Review
 
@@ -59,9 +65,14 @@ Overlapping files, shared contracts, dependency-linked edits, or unresolved writ
 
 ## Human Merge
 
-When the project uses a human-only merge gate, agents stop after producing a reviewable pull request and completion evidence.
+The project's merge mode decides who merges a pull request. A project declares one mode; without a declaration the mode is `human-only`.
 
-Automation must not silently enable auto-merge or bypass the human decision.
+- `human-only`: agents stop after producing a reviewable pull request and completion evidence. A human merges.
+- `owner-permission`: an agent may merge a pull request only when the owner has explicitly permitted merging that pull request, the required checks have passed on its final head, and the independent reviewer has confirmed that exact head. When any condition is missing, the agent stops as in `human-only`.
+
+In every mode, automation never enables auto-merge and never bypasses the merge decision.
+
+This project's merge mode: `human-only` (`merge.mode` in `.embraion/policy.yaml`).
 
 ## Authorization
 
@@ -119,7 +130,7 @@ The owner sets the goal, decides, and gives final acceptance. The agent plans, i
 
 - Keep a visible checklist of the plan in the host's status or planning tool, or as a short text checklist, and update it after each substantial stage.
 - Give a short plain-language update per stage. Do not narrate individual reads, searches, or routine edits.
-- When the project keeps a list of deferred tasks, read it at the start of a task and remind the owner once, in one line, of the items that touch the task's area. Do not start a deferred item without the owner's word.
+- When the project keeps a list of deferred tasks (the configured `deferred-tasks` project contract slot), read it at the start of a task and remind the owner once, in one line, of the items that touch the task's area. Do not start a deferred item without the owner's word.
 
 ### Stay in scope
 
@@ -140,6 +151,8 @@ Broad instructions define repository-wide policy. Narrow instructions may refine
 Detailed project/domain invariants belong near the project-owned content that they govern.
 
 Each fact has one canonical owner. Other instructions and documents link to that owner instead of restating it, and prose does not repeat a value that configuration owns.
+
+Remove a duplicated instruction only after delivery of its canonical replacement to every host the project uses is proven.
 
 ## Integrations
 
