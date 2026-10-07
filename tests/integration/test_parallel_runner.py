@@ -78,7 +78,7 @@ class ParallelRunnerTests(unittest.TestCase):
     def test_a_module_that_dies_is_reported_as_crashed(self) -> None:
         (self.suite / "test_exit.py").write_text(
             "import os, unittest\nclass Exit(unittest.TestCase):\n"
-            "    def test_dies(self):\n        print('last words')\n        os._exit(3)\n", encoding="utf-8")
+            "    def test_dies(self):\n        print('last words', flush=True)\n        os._exit(3)\n", encoding="utf-8")
         code, output = self.run_suite(2)
         self.assertEqual(1, code)
         self.assertIn("without a result", output)
