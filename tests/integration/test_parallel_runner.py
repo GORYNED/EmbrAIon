@@ -58,7 +58,7 @@ class ParallelRunnerTests(unittest.TestCase):
         parent = Path(tempfile.gettempdir()).resolve()
         for directory in recorded:
             self.assertNotEqual(parent, Path(directory).resolve())
-            self.assertIn("embraion-tests-", directory)
+            self.assertIn("et-", directory)
         self.assertIn("process 1:", output)
         self.assertIn("process 2:", output)
 
@@ -85,6 +85,30 @@ class ParallelRunnerTests(unittest.TestCase):
         self.assertIn("last words", output)
         self.assertIn("crashed-modules=1", output)
         self.assertIn("test-count-mismatch=1", output)
+
+    def test_a_worker_that_exits_non_zero_after_writing_a_result_fails_the_run(self) -> None:
+        (self.suite / "test_late.py").write_text(
+            "import atexit, os, sys, unittest\n"
+            "# Discovery imports this module in other processes too: only its own worker exits late.\n"
+            "here = os.path.dirname(os.path.abspath(__file__))\n"
+            "if sys.argv[1:2] == ['--worker'] and os.path.abspath(sys.argv[2]) == here:\n"
+            "    atexit.register(os._exit, 5)\n"
+            "class Late(unittest.TestCase):\n    def test_passes(self): pass\n", encoding="utf-8")
+        code, output = self.run_suite(2)
+        self.assertEqual(1, code, output)
+        self.assertIn("exited with status 5 after writing a result", output)
+        self.assertIn("crashed-modules=1", output)
+        self.assertIn("Test count matches discovery: 1.", output)
+
+    def test_a_module_that_skips_itself_on_import_is_counted_as_skipped(self) -> None:
+        (self.suite / "test_optional.py").write_text(
+            "import unittest\nraise unittest.SkipTest('optional dependency missing')\n", encoding="utf-8")
+        (self.suite / "test_plain.py").write_text(
+            "import unittest\nclass Plain(unittest.TestCase):\n    def test_ok(self): pass\n", encoding="utf-8")
+        code, output = self.run_suite(2)
+        self.assertEqual(0, code, output)
+        self.assertIn("Test count matches discovery: 2.", output)
+        self.assertIn("OK (skipped=1)", output)
 
     def test_named_sequential_modules_run_in_the_parent_after_the_workers(self) -> None:
         for name in ("a", "b"):
