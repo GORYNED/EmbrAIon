@@ -230,10 +230,16 @@ def source_data_classes(project: Path | None = None) -> dict[str, str] | None:
 def check_source_classes(data_class: str, source_ids: list[str], project: Path | None = None) -> None:
     """Fail closed when a request names an undeclared source or a class below its sources."""
     declared = source_data_classes(project)
+    from .sources import effective_data_classes, registry_data_classes
+    root = project_root(project)
     if declared is None:
-        return
-    from .sources import effective_data_classes
-    declared = effective_data_classes(project_root(project), declared)
+        # Without privacy.sources only the registry's raised classes apply; other IDs stay unchecked.
+        declared = registry_data_classes(root)
+        if not declared:
+            return
+        source_ids = [source for source in source_ids if source in declared]
+    else:
+        declared = effective_data_classes(root, declared)
     unknown = sorted(set(source_ids) - set(declared))
     if unknown:
         raise RuntimeError(

@@ -18,7 +18,18 @@ from .policy import DATA_CLASS_ORDER
 
 SOURCES_CONFIG = Path(".embraion") / "sources.yaml"
 LOCAL_SOURCES = Path(".embraion") / "state" / "sources-local.yaml"
+# Messages name these files in POSIX form on every platform.
+SOURCES_LABEL = SOURCES_CONFIG.as_posix()
+LOCAL_LABEL = LOCAL_SOURCES.as_posix()
 WRITABLE = "workspace-write"
+
+
+def _exists(path: Path) -> bool:
+    """Path.exists() that treats an unreadable location as not present (it can raise before Python 3.12)."""
+    try:
+        return path.exists()
+    except OSError:
+        return False
 
 
 def _location(error: Any) -> str:
@@ -50,15 +61,15 @@ def registry_errors(root: Path) -> list[str]:
     if not path.exists() and not path.is_symlink():
         return []
     try:
-        data = _load_mapping(path, str(SOURCES_CONFIG))
+        data = _load_mapping(path, SOURCES_LABEL)
     except RuntimeError as error:
         return [str(error)]
     if not isinstance(data, dict):
-        return [f"Invalid {SOURCES_CONFIG}: expected a mapping."]
+        return [f"Invalid {SOURCES_LABEL}: expected a mapping."]
     schema = read_json(framework_root() / "schemas" / "sources.schema.json")
     schema_errors = sorted(Draft202012Validator(schema).iter_errors(data), key=lambda item: list(item.absolute_path))
     if schema_errors:
-        return [f"Invalid {SOURCES_CONFIG}: {_location(error)}: {error.message}" for error in schema_errors]
+        return [f"Invalid {SOURCES_LABEL}: {_location(error)}: {error.message}" for error in schema_errors]
 
     errors: list[str] = []
     try:
@@ -69,7 +80,7 @@ def registry_errors(root: Path) -> list[str]:
     project = root.resolve()
     for index, entry in enumerate(data["sources"]):
         source_id = entry["id"]
-        where = f"{SOURCES_CONFIG}: sources[{index}] '{source_id}'"
+        where = f"{SOURCES_LABEL}: sources[{index}] '{source_id}'"
         if source_id in seen:
             errors.append(f"{where}: duplicate id.")
         seen.add(source_id)
@@ -114,7 +125,7 @@ def load_registry(root: Path) -> list[dict[str, Any]] | None:
 def _require_registry(root: Path) -> list[dict[str, Any]]:
     registry = load_registry(root)
     if registry is None:
-        raise RuntimeError(f"Missing {SOURCES_CONFIG}; declare the project sources first.")
+        raise RuntimeError(f"Missing {SOURCES_LABEL}; declare the project sources first.")
     return registry
 
 
@@ -130,6 +141,12 @@ def effective_data_classes(root: Path, declared: dict[str, str]) -> dict[str, st
         if raised is not None and current is not None and DATA_CLASS_ORDER[raised] > DATA_CLASS_ORDER[current]:
             result[entry["id"]] = raised
     return result
+
+
+def registry_data_classes(root: Path) -> dict[str, str]:
+    """Raised `data-class` values of the registry; empty when there is no registry or no raise."""
+    registry = load_registry(root)
+    return {entry["id"]: entry["data-class"] for entry in registry or [] if entry.get("data-class")}
 
 
 def check_source_writes(access: str, source_ids: list[str], root: Path) -> None:
@@ -157,14 +174,14 @@ def read_local_paths(root: Path) -> dict[str, str]:
     path = root / LOCAL_SOURCES
     if not path.exists() and not path.is_symlink():
         return {}
-    data = _load_mapping(path, str(LOCAL_SOURCES))
+    data = _load_mapping(path, LOCAL_LABEL)
     if data is None:
         return {}
     if not isinstance(data, dict) or not all(
             isinstance(key, str) and key and isinstance(value, str) and value for key, value in data.items()):
-        raise RuntimeError(f"Invalid {LOCAL_SOURCES}: expected a mapping of source ID to absolute path.")
+        raise RuntimeError(f"Invalid {LOCAL_LABEL}: expected a mapping of source ID to absolute path.")
     if any(not Path(value).is_absolute() for value in data.values()):
-        raise RuntimeError(f"Invalid {LOCAL_SOURCES}: every path must be absolute.")
+        raise RuntimeError(f"Invalid {LOCAL_LABEL}: every path must be absolute.")
     return dict(data)
 
 
@@ -179,7 +196,7 @@ def source_status(root: Path) -> list[dict[str, Any]]:
     rows = []
     for entry in registry:
         raw = local.get(entry["id"])
-        availability = "unset" if raw is None else ("available" if Path(raw).exists() else "missing")
+        availability = "unset" if raw is None else ("available" if _exists(Path(raw)) else "missing")
         rows.append({"id": entry["id"], "role": entry["role"], "write": entry["write"],
                      "availability": availability})
     return rows
@@ -189,15 +206,15 @@ def set_local_path(root: Path, source_id: str, raw_path: str) -> str:
     """Record the local path of a declared source. Returns the source ID."""
     registry = _require_registry(root)
     if source_id not in {entry["id"] for entry in registry}:
-        raise RuntimeError(f"Unknown source id '{source_id}'; declare it in {SOURCES_CONFIG} first.")
+        raise RuntimeError(f"Unknown source id '{source_id}'; declare it in {SOURCES_LABEL} first.")
     resolved = Path(raw_path).expanduser().resolve()
-    if not resolved.exists():
+    if not _exists(resolved):
         raise RuntimeError(f"The path for source '{source_id}' does not exist.")
     local = read_local_paths(root)
     local[source_id] = str(resolved)
     target = root / LOCAL_SOURCES
-    if target.parent.is_symlink():
-        raise RuntimeError(f"Invalid {LOCAL_SOURCES}: the state folder must not be a symbolic link.")
+    if any((root / folder).is_symlink() for folder in (".embraion", LOCAL_SOURCES.parent)):
+        raise RuntimeError(f"Invalid {LOCAL_LABEL}: the .embraion and state folders must not be symbolic links.")
     atomic_write_bytes(target, yaml.safe_dump(local, sort_keys=True, allow_unicode=True).encode("utf-8"), mode=0o600)
     return source_id
 
@@ -212,6 +229,6 @@ def local_path_values(root: Path) -> dict[str, str]:
 
 __all__ = [
     "LOCAL_SOURCES", "SOURCES_CONFIG", "check_source_writes", "effective_data_classes", "list_sources",
-    "load_registry", "local_path_values", "read_local_paths", "registry_errors",
+    "load_registry", "local_path_values", "read_local_paths", "registry_data_classes", "registry_errors",
     "set_local_path", "source_status",
 ]

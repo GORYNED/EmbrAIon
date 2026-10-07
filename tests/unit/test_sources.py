@@ -118,11 +118,33 @@ class SourceRegistryTests(unittest.TestCase):
                 self.registry(entry("App", doc=doc))
                 self.assertEqual(1, len(registry_errors(self.root)))
 
-    def test_malformed_yaml_and_symlink_are_errors(self) -> None:
+    def test_malformed_yaml_and_wrong_shape_are_errors(self) -> None:
         (self.root / ".embraion" / "sources.yaml").write_text("a: [", encoding="utf-8")
         self.assertEqual(1, len(registry_errors(self.root)))
         (self.root / ".embraion" / "sources.yaml").write_text("- 1\n", encoding="utf-8")
         self.assertEqual(1, len(registry_errors(self.root)))
+
+    def test_symlinked_registry_is_an_error(self) -> None:
+        real = self.root / "docs" / "real-sources.yaml"
+        write(real, {"schema-version": 1, "sources": [entry("App")]})
+        link = self.root / ".embraion" / "sources.yaml"
+        try:
+            link.symlink_to(real)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic links are not available on this platform")
+        errors = registry_errors(self.root)
+        self.assertEqual(1, len(errors))
+        self.assertIn("symbolic link", errors[0])
+
+    def test_raised_class_applies_without_privacy_sources(self) -> None:
+        policy = yaml.safe_load((self.root / ".embraion" / "policy.yaml").read_text(encoding="utf-8"))
+        del policy["privacy"]["sources"]
+        write(self.root / ".embraion" / "policy.yaml", policy)
+        self.registry(entry("Vendor", **{"data-class": "CONFIDENTIAL"}), entry("Plain"))
+        check_source_classes("CONFIDENTIAL", ["Vendor", "Plain"], self.root)
+        check_source_classes("PUBLIC", ["Plain", "Unregistered"], self.root)
+        with self.assertRaisesRegex(RuntimeError, r"PRIVATE is below the declared class of: Vendor \(CONFIDENTIAL\)"):
+            check_source_classes("PRIVATE", ["Vendor"], self.root)
 
     def test_write_requests_need_writable_registry_sources(self) -> None:
         self.registry(entry("App", write="workspace-write"), entry("Docs"), entry("Vendor", write="forbidden"))
@@ -188,6 +210,39 @@ class LocalAvailabilityTests(unittest.TestCase):
         self.assertEqual(["source-path-leak:Docs:notes.md"], [item["id"] for item in findings])
         self.assertEqual("medium", findings[0]["severity"])
         self.assertNotIn(LOCAL_PATH_MARKER, json.dumps(findings))
+
+    def test_security_scan_treats_a_sentence_ending_dot_as_a_boundary(self) -> None:
+        set_local_path(self.root, "Docs", str(self.elsewhere))
+        resolved = self.elsewhere.resolve()
+        (self.root / "end.md").write_text(f"It lives in {resolved}.\nOr in {resolved}, or ({resolved}).\n", encoding="utf-8")
+        (self.root / "ext.md").write_text(f"See {resolved}.bak and {resolved}.d/x\n", encoding="utf-8")
+        ids = [item["id"] for item in collect_findings(self.root) if item["id"].startswith("source-path-leak")]
+        self.assertEqual(["source-path-leak:Docs:end.md"], ids)
+
+    def test_set_refuses_symlinked_embraion_folder(self) -> None:
+        moved = self.root.parent / "moved-config"
+        (self.root / ".embraion").rename(moved)
+        try:
+            (self.root / ".embraion").symlink_to(moved, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("symbolic links are not available on this platform")
+        with self.assertRaisesRegex(RuntimeError, "symbolic links"):
+            set_local_path(self.root, "Docs", str(self.elsewhere))
+        self.assertFalse((moved / "state" / "sources-local.yaml").exists())
+
+    def test_status_treats_an_unreadable_location_as_missing(self) -> None:
+        set_local_path(self.root, "Docs", str(self.elsewhere))
+        original = Path.exists
+        recorded = str(self.elsewhere.resolve())
+
+        def exists(path: Path) -> bool:
+            if str(path) == recorded:
+                raise PermissionError("denied")
+            return original(path)
+
+        with patch("pathlib.Path.exists", autospec=True, side_effect=exists):
+            rows = {row["id"]: row["availability"] for row in source_status(self.root)}
+        self.assertEqual("missing", rows["Docs"])
 
     def test_security_scan_is_unchanged_without_a_local_file(self) -> None:
         (self.root / "notes.md").write_text(f"See {self.elsewhere.resolve()} for more.\n", encoding="utf-8")
