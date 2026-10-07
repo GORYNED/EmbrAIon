@@ -44,8 +44,8 @@ LATER_FILE_EDITS = {
     "core/skills/compatibility-migration/SKILL.md": (
         ("   - Never reuse a retired identifier, number, or name for a different meaning. A rename is a removal "
          "plus an addition.\n   - Deprecate before removing: mark the old surface, name its replacement, and "
-         "state how long it keeps working.\n   - Readers tolerate unknown fields, so a newer writer does not "
-         "break an older reader.\n", ""),
+         "state how long it keeps working.\n   - Readers of persisted data formats tolerate unknown fields, so a newer writer "
+         "does not break an older reader.\n", ""),
         (" A failed migration must leave the source data intact and recoverable: keep the original until the "
          "new form is verified.", ""),
     ),
@@ -175,8 +175,8 @@ class CoreSkillPackageTests(unittest.TestCase):
                     with self.subTest(host=host, skill=skill):
                         matches = [path for path in output.rglob("SKILL.md") if path.parent.name == skill]
                         self.assertEqual(1, len(matches))
-                        canonical = (self.candidate / "core/skills" / skill / "SKILL.md").read_text()
-                        self.assertIn(canonical.strip(), matches[0].read_text())
+                        canonical = (self.candidate / "core/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+                        self.assertIn(canonical.strip(), matches[0].read_text(encoding="utf-8"))
 
     def test_scenario_references_and_calibrated_oracle_boundaries(self) -> None:
         scenarios = self.package["registered-scenarios"]

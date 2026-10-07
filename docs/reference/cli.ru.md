@@ -335,7 +335,7 @@ Unknown parameters и missing required parameters fail-closed. Parameters мог
 
 `--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в собственной process group; timeout или прерывание завершают всё дерево. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
-Plan options для проектов, которые объявляют `areas` в `.embraion/validation.yaml` (см. [План validation](../configuration/validation.ru.md#план-validation)):
+Plan options для проектов, которые объявляют `areas` в `.embraion/validation.yaml` (см. [План validation](../configuration/validation.ru.md#validation-plan)):
 
 ```bash
 embraion validation plan affected --base-ref origin/main [--head-ref REF] [--include-worktree] [--full-justification REASON] [--json] [--output FILE]
@@ -562,7 +562,7 @@ embraion enforcement check --base-ref origin/main --run-id task-001 --json
 embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
 
-`--protected-sources {name,base-tree}` переопределяет `enforcement.protected-sources` из policy для этого запуска. Без флага решает более строгий режим из policy head и policy merge base, по умолчанию `name`. В режиме `base-tree` список protected читается на merge base, а защищённые пути сравниваются по ID объектов Git; если policy base или merge base недоступны, проверка не проходит (fail-closed). См. [Enforcement](../guides/enforcement.ru.md#защита-источников-по-идентичности-объектов-git).
+`--protected-sources {name,base-tree}` переопределяет `enforcement.protected-sources` из policy для этого запуска. Без флага решает более строгий режим из policy head и policy merge base, по умолчанию `name`. В режиме `base-tree` список protected читается на merge base, а защищённые пути сравниваются по ID объектов Git; если policy base или merge base недоступны, проверка не проходит (fail-closed). См. [Enforcement](../guides/enforcement.ru.md#protect-sources-by-git-object-identity).
 
 С `--run-id` active runs получают validation evidence. Завершение run с passed review фиксирует HEAD, index и содержимое, modes и symlink targets tracked/nonignored untracked файлов. Gate требует совпадения снимка до и после validation; новый commit, staging или working edit требуют нового reviewed run. Legacy review без снимка не проходит gate. Нечитаемое состояние, submodules и неоднозначные directory aliases приводят к отказу. Завершённый run не изменяется и не завершается повторно. Все gates, включая external-review, отклоняют изменения Git-снимка во время validation; ignored runtime/build output в него не входит.
 

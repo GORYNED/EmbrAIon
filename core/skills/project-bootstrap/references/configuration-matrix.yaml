@@ -60,6 +60,7 @@ requests:
     fields: [validation.yaml:profiles]
     discover: [the existing profile and its commands, the tool or variable a command needs]
     ask: [which commands are optional, the log size limit when it is not stated]
+    owner-decision: true
     verify:
       - embraion validation list
       - embraion validation run <profile>
@@ -73,6 +74,7 @@ requests:
     fields: [validation.yaml:areas, validation.yaml:impact, validation.yaml:full-reasons, validation.yaml:default-area]
     discover: [which folders each existing check proves, CI path filters]
     ask: [which paths force the full profile, the area for unmatched paths]
+    owner-decision: true
     verify:
       - embraion validation list
       - embraion validation explain <profile> --base-ref <base>
@@ -86,6 +88,7 @@ requests:
     fields: [agents.yaml:agents]
     discover: [whether a Core role already covers the work, the access the responsibility needs]
     ask: [the responsibility in one sentence when the request is vague]
+    owner-decision: true
     verify:
       - embraion projection diff --host <installed-host> --destination .
       - embraion install --host <installed-host> --destination .

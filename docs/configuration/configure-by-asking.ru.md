@@ -24,7 +24,7 @@
 
 ## Настройки, которые решаете только вы
 
-Строки с ● расширяют доступ или ослабляют защиту: уборка, которая удаляет ветки, классы приватности, правила ревью, enforcement, режим merge, потолки политики, execution-привязки, интеграции, внешние возможности и политику записи зарегистрированных источников. Агент меняет их, только если ваш запрос это говорит. Иначе он сначала спрашивает.
+Строки с ● расширяют доступ или ослабляют защиту: уборка, которая удаляет ветки, классы приватности, правила ревью, enforcement, режим merge, потолки политики, execution-привязки, интеграции, внешние возможности, политику записи зарегистрированных источников, проектных агентов (их доступ) и изменения validation, которые делают проверки необязательными или более узкими. Агент меняет их, только если ваш запрос это говорит. Иначе он сначала спрашивает.
 
 `merge.mode: owner-permission` не даёт постоянного разрешения на merge. Агент может смержить pull request, только если вы разрешили именно этот pull request, обязательные проверки прошли на его финальном head, а независимый ревьюер подтвердил этот head. Auto-merge остаётся выключенным.
 
@@ -35,9 +35,9 @@
 | `set-up` | Настрой EmbrAIon для этого проекта | набор: `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, `project-identity` |  | `embraion doctor`<br>`embraion validate --strict`<br>`embraion check` |
 | `bind-knowledge` | Зарегистрируй документ с архитектурой | `knowledge.yaml`: slots, свои записи |  | `embraion context slots`<br>`embraion validate --strict` |
 | `project-validation` | Добавь нашу команду тестов в проверки | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run fast` |
-| `validation-guards` | Падай, если тесты меняют рабочее дерево | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run <profile>` |
-| `plan-validation` | Запускай только проверки, относящиеся к изменённым файлам | `validation.yaml`: areas, impact, full-reasons, default-area |  | `embraion validation list`<br>`embraion validation explain <profile> --base-ref <base>` |
-| `project-agents` | Добавь специалиста только для чтения по нашему API | `agents.yaml`: agents |  | `embraion projection diff --host <installed-host> --destination .`<br>`embraion install --host <installed-host> --destination .` |
+| `validation-guards` | Падай, если тесты меняют рабочее дерево | `validation.yaml`: profiles | ● | `embraion validation list`<br>`embraion validation run <profile>` |
+| `plan-validation` | Запускай только проверки, относящиеся к изменённым файлам | `validation.yaml`: areas, impact, full-reasons, default-area | ● | `embraion validation list`<br>`embraion validation explain <profile> --base-ref <base>` |
+| `project-agents` | Добавь специалиста только для чтения по нашему API | `agents.yaml`: agents | ● | `embraion projection diff --host <installed-host> --destination .`<br>`embraion install --host <installed-host> --destination .` |
 | `project-identity` | Переименуй проект в EmbrAIon | `project.yaml`: project, capabilities |  | `embraion status`<br>`embraion validate --strict` |
 | `update-framework` | Обнови EmbrAIon до последнего релиза | `project.yaml`: framework |  | `embraion update --check`<br>`embraion doctor`<br>`embraion status` |
 | `task-housekeeping` | Автоматически чисти старые ветки и рабочие деревья агентов | `project.yaml`: housekeeping | ● | `embraion worktree gc` |

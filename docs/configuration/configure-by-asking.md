@@ -24,7 +24,7 @@ Manual editing and the `embraion` commands stay available. This page is the map 
 
 ## Settings only you decide
 
-Rows marked ● widen access or lower a safety setting: housekeeping that deletes branches, privacy classes, review rules, enforcement, merge mode, policy ceilings, execution bindings, integrations, external capabilities, and the write policy of registered sources. The agent changes them only when your request says so. Otherwise it asks first.
+Rows marked ● widen access or lower a safety setting: housekeeping that deletes branches, privacy classes, review rules, enforcement, merge mode, policy ceilings, execution bindings, integrations, external capabilities, the write policy of registered sources, project agents (their access), and validation changes that make checks optional or narrower. The agent changes them only when your request says so. Otherwise it asks first.
 
 `merge.mode: owner-permission` is not a standing permission to merge. The agent may merge a pull request only when you permit that pull request, the required checks pass on its final head, and the independent reviewer confirmed that exact head. Auto-merge stays off.
 
@@ -35,9 +35,9 @@ Rows marked ● widen access or lower a safety setting: housekeeping that delete
 | `set-up` | Set up EmbrAIon for this project | bundle: `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, `project-identity` |  | `embraion doctor`<br>`embraion validate --strict`<br>`embraion check` |
 | `bind-knowledge` | Register our architecture document | `knowledge.yaml`: slots, custom entries |  | `embraion context slots`<br>`embraion validate --strict` |
 | `project-validation` | Add our test command to validation | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run fast` |
-| `validation-guards` | Fail validation if the tests modify the working tree | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run <profile>` |
-| `plan-validation` | Run only the checks that match what changed | `validation.yaml`: areas, impact, full-reasons, default-area |  | `embraion validation list`<br>`embraion validation explain <profile> --base-ref <base>` |
-| `project-agents` | Add a read-only reviewer for our API | `agents.yaml`: agents |  | `embraion projection diff --host <installed-host> --destination .`<br>`embraion install --host <installed-host> --destination .` |
+| `validation-guards` | Fail validation if the tests modify the working tree | `validation.yaml`: profiles | ● | `embraion validation list`<br>`embraion validation run <profile>` |
+| `plan-validation` | Run only the checks that match what changed | `validation.yaml`: areas, impact, full-reasons, default-area | ● | `embraion validation list`<br>`embraion validation explain <profile> --base-ref <base>` |
+| `project-agents` | Add a read-only reviewer for our API | `agents.yaml`: agents | ● | `embraion projection diff --host <installed-host> --destination .`<br>`embraion install --host <installed-host> --destination .` |
 | `project-identity` | Rename the project in EmbrAIon | `project.yaml`: project, capabilities |  | `embraion status`<br>`embraion validate --strict` |
 | `update-framework` | Update EmbrAIon to the latest release | `project.yaml`: framework |  | `embraion update --check`<br>`embraion doctor`<br>`embraion status` |
 | `task-housekeeping` | Clean up old agent branches and worktrees automatically | `project.yaml`: housekeeping | ● | `embraion worktree gc` |

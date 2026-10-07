@@ -11,7 +11,7 @@ Load when a change can alter persisted data, stable IDs, public APIs, serialized
 2. Choose the smallest compatible path: preserve the old surface, add a versioned reader/writer, or define an explicit breaking migration where authorized. Map each old form to the new form, including missing, malformed, and older records. Do not infer that a rename is safe merely because source references compile.
    - Never reuse a retired identifier, number, or name for a different meaning. A rename is a removal plus an addition.
    - Deprecate before removing: mark the old surface, name its replacement, and state how long it keeps working.
-   - Readers tolerate unknown fields, so a newer writer does not break an older reader.
+   - Readers of persisted data formats tolerate unknown fields, so a newer writer does not break an older reader.
 3. Sequence changes so existing consumers continue working during rollout. State any dual-read/write window, upgrade order, backup or recovery requirement, and rollback boundary. A failed migration must leave the source data intact and recoverable: keep the original until the new form is verified. Avoid turning one compatibility fix into a mass refactor.
 4. Recheck the same representative historical fixtures and affected current consumers after the change against the pre-change baseline, except for explicitly authorized differences. Check stable identifiers, read/write round trips where meaningful, public call sites, and rollback or recovery behavior that the project actually supports.
 

@@ -106,7 +106,7 @@ Verify: `embraion execution preflight --deployment <deployment-id>` (without `--
 Creates `pricing.yaml`: approved official price pages and SKU patterns for cost calculation. EmbrAIon never fetches prices silently.
 
 - Ask for the official pricing page of the provider. The loader accepts only an HTTPS URL on the official documentation host of the chosen `adapter` and says so when it refuses one. Ask permission before `embraion pricing refresh`, which reads the network.
-- Required per source: `url`, `adapter` (`openai`, `anthropic`, `gemini`, `deepseek`), `currency` (three capital letters), `freshnessDays`, `skus`. Each SKU needs `sku` and `patterns` for `input`, `cachedInput`, `output`, `reasoning`. Copy SKU names and patterns from the page; never invent a rate.
+- Required per source: `url`, `adapter` (`openai`, `anthropic`, `gemini`, `deepseek`), `currency` (three capital letters), `freshnessDays`, `skus`. Each SKU needs `sku` and `patterns`: at least one of `input`, `cachedInput`, `output`, `reasoning`, the ones the pricing page states. Copy SKU names and patterns from the page; never invent a rate.
 
 ```yaml
 schemaVersion: 1
