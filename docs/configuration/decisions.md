@@ -10,7 +10,7 @@ slots:
   decisions: docs/architecture/decisions
 ```
 
-The folder holds one Markdown file per record named `NNNN-<kebab-title>.md`, an index (`README.md` by default), and a template (`template.md` by default). Accepted records are immutable apart from metadata; a change supersedes a record with a new one and links the two both ways. Status changes go through the owner or the project's process. The `architecture-decision` skill describes how to write a record; the planning, orchestration, and review skills ask whether a task makes such a decision and whether it is recorded.
+The folder holds one Markdown file per record named `NNNN-<kebab-title>.md`, an index (`README.md` by default), and a template (`0000-template.md` by default). Accepted records are immutable apart from metadata; a change supersedes a record with a new one and links the two both ways. Status changes go through the owner or the project's process. The `architecture-decision` skill describes how to write a record; the planning, orchestration, and review skills ask whether a task makes such a decision and whether it is recorded.
 
 ## Configuration
 
@@ -18,7 +18,7 @@ The folder holds one Markdown file per record named `NNNN-<kebab-title>.md`, an 
 
 ```yaml
 index: README.md          # optional index file inside the folder
-template: template.md     # optional template file inside the folder
+template: 0000-template.md     # optional template file inside the folder
 triggers:                 # optional; replaces the default trigger when present
   - id: assembly-references
     paths: ["**/*.asmdef"]
@@ -55,4 +55,4 @@ embraion adr new "Move parsing into its own package"
 embraion adr new "Move parsing into its own package" --locale ru --status Proposed
 ```
 
-The command creates the next numbered record from the project template, adds a row to the index, and with `--locale <code>` creates a localized copy next to it (`NNNN-<title>-ru.md`; a `template-ru.md` next to the template is used for it when present). In a project without records it also creates the folder, the template, and the index. Numbers are never reused: the next number is above every number found in the folder, the index, and the folder's history on any ref. A new row follows the columns of an existing index table by header name. The title must contain ASCII words for the file name, or pass `--slug`. The template can use `{{number}}`, `{{title}}`, `{{status}}`, and `{{date}}`; `--date` fixes the date, so the same inputs give the same files.
+The command creates the next numbered record from the project template, adds a row to the index, and with `--locale <code>` creates a localized copy next to it (`NNNN-<title>-ru.md`; a `0000-template-ru.md` next to the template is used for it when present). In a project without records it also creates the folder, the template, and the index; their layout (a `README.md` index with an `ADR | Status | Decision` table, the lifecycle statuses, and a template with context, decision, consequences, alternatives, validation, and rollout sections) is the format the first projects using this workflow settled on, and the project owns it from then on. Numbers are never reused: the next number is above every number found in the folder, the index, and the folder's history on any ref. A new row follows the columns of an existing index table by header name. The title must contain ASCII words for the file name, or pass `--slug`. The template can use `{{number}}`, `{{title}}`, `{{status}}`, and `{{date}}`; `--date` fixes the date, so the same inputs give the same files.

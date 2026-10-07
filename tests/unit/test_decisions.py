@@ -96,7 +96,7 @@ class DetectionTests(DecisionFixture):
         self.start()
         self.write("a/package.json", "{}\n")
         self.write("docs/architecture/decisions/README.md", "# index\n")
-        self.write("docs/architecture/decisions/template.md", "# template\n")
+        self.write("docs/architecture/decisions/0000-template.md", "# template\n")
         self.commit()
         self.assertEqual("missing-record", self.check()["outcome"])
 
@@ -213,13 +213,13 @@ class ScaffoldTests(DecisionFixture):
         folder = "docs/architecture/decisions"
         self.assertEqual("0001", result["number"])
         self.assertEqual([f"{folder}/0001-use-a-shared-library.md"], result["paths"])
-        self.assertEqual([f"{folder}/template.md", f"{folder}/README.md"], result["created"])
+        self.assertEqual([f"{folder}/0000-template.md", f"{folder}/README.md"], result["created"])
         record = (self.root / result["paths"][0]).read_text(encoding="utf-8")
-        self.assertTrue(record.startswith("# 0001. Use a shared library\n"))
+        self.assertTrue(record.startswith("# ADR 0001: Use a shared library\n"))
         self.assertIn("- Status: Proposed\n- Date: 2026-10-07\n", record)
         self.assertNotIn("{{", record)
         index = (self.root / folder / "README.md").read_text(encoding="utf-8")
-        self.assertTrue(index.endswith("| [0001](0001-use-a-shared-library.md) | Use a shared library | Proposed |\n"))
+        self.assertTrue(index.endswith("| [`0001-use-a-shared-library.md`](0001-use-a-shared-library.md) | Proposed | Use a shared library |\n"))
 
     def test_numbers_continue_and_are_never_reused(self) -> None:
         self.new("First")
@@ -251,12 +251,12 @@ class ScaffoldTests(DecisionFixture):
         self.assertIn("(013-limit-dependencies.md) ([ru](013-limit-dependencies-ru.md))",
                       (self.root / "docs/decisions/README.md").read_text(encoding="utf-8"))
         localized = (self.root / result["paths"][1]).read_text(encoding="utf-8")
-        self.assertIn("# 013. Ограничить зависимости", localized)
+        self.assertIn("# ADR 013: Ограничить зависимости", localized)
         self.assertIn("- Status: Accepted", localized)
 
     def test_locale_template_is_preferred_when_present(self) -> None:
-        self.write("docs/architecture/decisions/template.md", "{{number}} {{title}} en\n")
-        self.write("docs/architecture/decisions/template-ru.md", "{{number}} {{title}} ru\n")
+        self.write("docs/architecture/decisions/0000-template.md", "{{number}} {{title}} en\n")
+        self.write("docs/architecture/decisions/0000-template-ru.md", "{{number}} {{title}} ru\n")
         result = self.new("Layers", locales=["ru"])
         self.assertEqual(["0001 Layers en\n", "0001 Layers ru\n"],
                          [(self.root / path).read_text(encoding="utf-8") for path in result["paths"]])
@@ -269,23 +269,23 @@ class ScaffoldTests(DecisionFixture):
         self.new("B")
         text = (self.root / "docs/architecture/decisions/README.md").read_text(encoding="utf-8")
         self.assertIn("| [0001](0001-a.md) | A | 2026-01-01 | Accepted | team |\n"
-                      "| [0002](0002-b.md) | B | 2026-10-07 | Proposed |  |\n\nTrailing notes.", text)
+                      "| [`0002-b.md`](0002-b.md) | B | 2026-10-07 | Proposed |  |\n\nTrailing notes.", text)
 
     def test_pipe_in_title_and_crlf_index_are_preserved(self) -> None:
-        self.write("docs/architecture/decisions/README.md", "# D\r\n\r\n| Record | Title |\r\n| --- | --- |\r\n")
+        self.write("docs/architecture/decisions/README.md", "# D\r\n\r\n| ADR | Decision |\r\n| --- | --- |\r\n")
         self.new("A | B")
         data = (self.root / "docs/architecture/decisions/README.md").read_bytes()
-        self.assertEqual(b"# D\r\n\r\n| Record | Title |\r\n| --- | --- |\r\n| [0001](0001-a-b.md) | A \\| B |\r\n", data)
+        self.assertEqual(b"# D\r\n\r\n| ADR | Decision |\r\n| --- | --- |\r\n| [`0001-a-b.md`](0001-a-b.md) | A \\| B |\r\n", data)
 
     def test_title_text_is_not_expanded_as_a_template_token(self) -> None:
-        self.assertIn("# 0001. {{status}}", (self.root / self.new("{{status}}", slug="token")["paths"][0]).read_text(encoding="utf-8"))
+        self.assertIn("# ADR 0001: {{status}}", (self.root / self.new("{{status}}", slug="token")["paths"][0]).read_text(encoding="utf-8"))
 
     def test_index_without_a_table_gets_one(self) -> None:
         self.write("docs/architecture/decisions/README.md", "# Decisions\n")
         self.new("B")
         text = (self.root / "docs/architecture/decisions/README.md").read_text(encoding="utf-8")
-        self.assertEqual("# Decisions\n\n| Record | Title | Status |\n| --- | --- | --- |\n"
-                         "| [0001](0001-b.md) | B | Proposed |\n", text)
+        self.assertEqual("# Decisions\n\n| ADR | Status | Decision |\n| --- | --- | --- |\n"
+                         "| [`0001-b.md`](0001-b.md) | Proposed | B |\n", text)
 
     def test_same_inputs_give_the_same_files(self) -> None:
         self.new("One", locales=["ru"])

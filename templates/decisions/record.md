@@ -1,22 +1,36 @@
-# {{number}}. {{title}}
+# ADR {{number}}: {{title}}
 
 - Status: {{status}}
 - Date: {{date}}
-- Supersedes: none
-- Superseded by: none
+- Owners: Team or role
+- Supersedes: None
+- Superseded by: None
 
 ## Context
 
-Observed facts, kept apart from assumptions.
+Describe the current problem, constraints, evidence, and forces that make a decision necessary.
+Separate observed facts from assumptions and proposals.
 
 ## Decision
 
-What is decided, its scope, and its owner.
+State the chosen approach precisely, including ownership, dependency direction, compatibility
+requirements, and scope boundaries.
 
 ## Consequences
 
-Costs, follow-up work, and compatibility or rollout notes.
+List important positive and negative consequences, operational costs, migrations, and follow-up
+work. Do not hide known tradeoffs.
 
 ## Alternatives considered
 
-Each credible alternative and why it was not chosen.
+Summarize credible alternatives and why they were not selected.
+
+## Validation and evidence
+
+Define how the decision is or will be verified. Link to committed tests, reports, or current-state
+documentation, and label any evidence that is historical, local, or not yet available.
+
+## Rollout and compatibility
+
+Describe sequencing, data/serialization migration, fallback or rollback constraints, and platform
+considerations. Use "Not applicable" only when the decision genuinely has none.

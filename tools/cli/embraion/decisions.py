@@ -12,7 +12,7 @@ from .policy import _validated_config_mapping, path_matches, read_knowledge_conf
 
 DEFAULT_FOLDER = "docs/architecture/decisions"
 DEFAULT_INDEX = "README.md"
-DEFAULT_TEMPLATE = "template.md"
+DEFAULT_TEMPLATE = "0000-template.md"
 WAIVER_TRAILER = "Decision-Waiver"
 CHANGE_KINDS = {"A": "added", "D": "deleted", "M": "modified", "T": "modified", "R": "renamed"}
 # A new or removed package is the only default trigger: a changed manifest is mostly a routine
@@ -201,8 +201,8 @@ def _index_with_row(text: str, row: dict[str, str]) -> str:
                 end += 1
             table = [position, end]
     if not table:
-        table_text = ("| Record | Title | Status |", "| --- | --- | --- |",
-                      f"| {row['link']} | {row['title']} | {row['status']} |")
+        table_text = ("| ADR | Status | Decision |", "| --- | --- | --- |",
+                      f"| {row['link']} | {row['status']} | {row['title']} |")
         return text.rstrip("\r\n") + (newline * 2 if text.strip() else "") + newline.join(table_text) + newline
     headers = [cell.strip() for cell in lines[table[0]].strip().strip("|").split("|")]
     roles = [_cell_role(header) for header in headers]
@@ -263,7 +263,7 @@ def new_decision(title: str, project: Path | None = None, *, locales: list[str] 
     if not index_path.is_file():
         index_text = _template(root, "index.md")
         created.append(index_path.relative_to(root).as_posix())
-    link = f"[{number}]({stem}.md)" + "".join(f" ([{locale}]({stem}-{locale}.md))" for locale in locales)
+    link = f"[`{stem}.md`]({stem}.md)" + "".join(f" ([{locale}]({stem}-{locale}.md))" for locale in locales)
     atomic_write_bytes(index_path, _index_with_row(index_text, {"link": link, "title": title.replace("|", "\\|"),
                                                                 "status": status, "date": day}).encode("utf-8"))
     return {"number": number, "status": status, "paths": [path.relative_to(root).as_posix() for path in files],
