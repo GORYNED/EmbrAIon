@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Optional `check` section in `.embraion/policy.yaml` declares the `embraion check` options: `organization` (`full`, `compare` or both, reported as `organization-full` and `organization-compare`; `compare` is `NOT RUN` without `--base-ref`), `fail-on` and `all-files`. `--fail-on` overrides `fail-on` and `--all-files` turns the full scan on; without the section behavior is unchanged.
+- Reusable composite action `GORYNED/EmbrAIon/actions/check` runs `embraion framework install` for a locked pin and `embraion check` after the setup action, defaulting the base ref to the pull request base branch, so consumer CI needs no project flags.
+
 ## 0.29.0 - 2026-10-07
 
 ### Added

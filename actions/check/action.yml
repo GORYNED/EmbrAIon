@@ -1,0 +1,45 @@
+name: Check with EmbrAIon
+description: >-
+  Run every EmbrAIon check a project's .embraion configuration selects, using the release
+  that the setup action installed from the project pin.
+author: GORYNED
+
+inputs:
+  project-path:
+    description: Directory containing .embraion/project.yaml, or a directory below it.
+    required: false
+    default: "."
+  base-ref:
+    description: >-
+      Ref to compare against, for example origin/main. Defaults to the pull request base
+      branch (origin/<base>). Without either, checks that need a base ref are reported as not
+      run. The ref must be fetched, so the checkout needs its history.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    # Inputs reach scripts only through environment variables, never through template expansion.
+    - name: Run the configured checks
+      shell: bash
+      working-directory: ${{ inputs.project-path }}
+      env:
+        EMBRAION_BASE_REF: ${{ inputs.base-ref }}
+        EMBRAION_PR_BASE: ${{ github.base_ref }}
+      run: |
+        set -euo pipefail
+        base="$EMBRAION_BASE_REF"
+        if [ -z "$base" ] && [ -n "$EMBRAION_PR_BASE" ]; then
+          base="origin/$EMBRAION_PR_BASE"
+        fi
+        # Commands in a locked project run from the digest-bound runtime cache.
+        pin="$(embraion framework pin)"
+        if grep -q '^digest=' <<< "$pin"; then
+          embraion framework install
+        fi
+        if [ -n "$base" ]; then
+          embraion check --base-ref "$base"
+        else
+          embraion check
+        fi
