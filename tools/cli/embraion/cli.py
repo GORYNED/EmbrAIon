@@ -418,7 +418,19 @@ def _cmd_projection_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_policy_show(args: argparse.Namespace) -> int:
-    policy = effective_policy()
+    if args.ref is not None:
+        from .policy import read_policy_config_at_ref
+
+        result = read_policy_config_at_ref(Path(args.path) if args.path else Path.cwd(), args.ref)
+        if args.json:
+            _print_json(result)
+        else:
+            print(f"Committed policy at {result['commit']}")
+            for category, patterns in result["policy"].get("sources", {}).items():
+                print(f"Sources {category}: {len(patterns)} pattern(s)")
+        return 0
+    project = project_root(Path(args.path) if args.path else None)
+    policy = effective_policy(project)
     if args.json:
         _print_json(policy)
     else:
@@ -429,7 +441,7 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             "Substantial review required: "
             f"{policy['review']['substantial-required']}"
         )
-        validation_specs = validation_profile_specs()
+        validation_specs = validation_profile_specs(project)
         for name, spec in validation_specs.items():
             print(
                 f"Validation {name}: {len(spec['commands'])} command(s), "
@@ -2248,7 +2260,9 @@ def build_parser() -> argparse.ArgumentParser:
         description="Inspect normalized source, validation, review, and privacy policy.",
     )
     policy_sub = policy.add_subparsers(dest="policy-command", required=True)
-    policy_show = policy_sub.add_parser("show", help="Show effective project policy")
+    policy_show = policy_sub.add_parser("show", help="Show effective or committed project policy")
+    policy_show.add_argument("--path", help="Project path (default: current directory)")
+    policy_show.add_argument("--ref", help="Read the schema-checked policy committed at this Git ref, not working-tree overlays")
     policy_show.add_argument("--json", action="store_true")
     policy_show.set_defaults(func=_cmd_policy_show)
     policy_check = policy_sub.add_parser(

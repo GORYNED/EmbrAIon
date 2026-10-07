@@ -115,6 +115,15 @@ embraion policy show
 embraion policy show --json
 ```
 
+To read the policy committed at a specific Git ref as structured JSON, pass `--ref` and the
+project path. This validates the committed file against the policy schema, rejects duplicate
+YAML keys and symlinks, and reports the resolved commit. It does not merge working-tree
+configuration or local projection state:
+
+```bash
+embraion policy show --path /path/to/project --ref HEAD --json
+```
+
 Fail when deployments, execution bindings, or routing widen the project's [policy ceilings](../configuration/policy.md#policy-ceilings). `embraion validate` runs the same check inside a project:
 
 ```bash

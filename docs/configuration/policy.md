@@ -236,4 +236,9 @@ embraion policy show
 embraion policy show --json
 ```
 
+For a committed policy, `embraion policy show --ref <git-ref> --json` returns the resolved
+commit and its schema-checked `policy` object. It reads Git objects, so uncommitted edits and
+local projection ledgers cannot change the result. Missing or ambiguous committed policy
+fails closed. A consumer can use `--path <project-root>` to inspect another checkout.
+
 Invalid project configuration fails closed instead of being interpreted heuristically.
