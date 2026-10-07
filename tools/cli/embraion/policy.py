@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from fnmatch import fnmatchcase
 from glob import escape as escape_pattern
+import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
+import yaml
 
 from .common import framework_root, project_root, read_json, read_yaml
+from .environment import child_environment
 
 
 DEFAULT_POLICY: dict[str, Any] = {
@@ -158,6 +162,62 @@ def read_policy_config(project: Path | None = None) -> dict[str, Any]:
         schema_name="policy.schema.json",
         label=".embraion/policy.yaml",
     )
+
+
+class _UniqueMappingLoader(yaml.SafeLoader):
+    """Reject ambiguous committed YAML before a consumer relies on its policy."""
+
+    def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict[str, Any]:
+        if not isinstance(node, yaml.MappingNode):
+            raise yaml.constructor.ConstructorError(None, None, "policy must be a mapping", node.start_mark)
+        seen: set[str] = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if not isinstance(key, str) or key in seen:
+                raise yaml.constructor.ConstructorError(None, None, "duplicate or non-string policy key", key_node.start_mark)
+            seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def read_policy_config_at_ref(project: Path, ref: str) -> dict[str, Any]:
+    """Return a schema-checked committed policy and its resolved commit identity.
+
+    The working tree and projection ledgers do not affect this result. Missing,
+    symlinked, malformed or ambiguous policy entries fail closed.
+    """
+    root = project_root(project)
+    if not ref or "\x00" in ref or "\n" in ref or "\r" in ref:
+        raise RuntimeError("A nonempty Git commit ref is required.")
+
+    def git(*args: str) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.run(["git", "-C", str(root), *args], capture_output=True,
+                              env=child_environment(), check=False)
+
+    resolved = git("rev-parse", "--verify", "--quiet", "--end-of-options", f"{ref}^{{commit}}")
+    if resolved.returncode or not re.fullmatch(rb"[0-9a-f]{40}|[0-9a-f]{64}", resolved.stdout.strip()):
+        raise RuntimeError("Cannot resolve policy Git ref to a commit.")
+    commit = resolved.stdout.decode("ascii").strip()
+    entry = git("ls-tree", "-z", commit, "--", ".embraion/policy.yaml")
+    if entry.returncode or not entry.stdout:
+        raise RuntimeError("Committed .embraion/policy.yaml is missing or unreadable.")
+    record = entry.stdout.rstrip(b"\x00").split(b"\t", 1)
+    fields = record[0].split() if len(record) == 2 and record[1] == b".embraion/policy.yaml" else []
+    if len(fields) != 3 or fields[0] not in {b"100644", b"100755"} or fields[1] != b"blob":
+        raise RuntimeError("Committed .embraion/policy.yaml must be a regular file.")
+    size = git("cat-file", "-s", fields[2].decode("ascii"))
+    if size.returncode or not size.stdout.strip().isdigit() or int(size.stdout) > 2 * 1024 * 1024:
+        raise RuntimeError("Committed .embraion/policy.yaml is unreadable or too large.")
+    blob = git("cat-file", "blob", fields[2].decode("ascii"))
+    if blob.returncode or len(blob.stdout) != int(size.stdout):
+        raise RuntimeError("Committed .embraion/policy.yaml cannot be read.")
+    try:
+        policy = yaml.load(blob.stdout.decode("utf-8"), Loader=_UniqueMappingLoader)
+    except (UnicodeDecodeError, yaml.YAMLError) as error:
+        raise RuntimeError("Committed .embraion/policy.yaml is invalid YAML.") from error
+    schema = read_json(framework_root() / "schemas" / "policy.schema.json")
+    if not isinstance(policy, dict) or not Draft202012Validator(schema).is_valid(policy):
+        raise RuntimeError("Committed .embraion/policy.yaml does not satisfy policy schema.")
+    return {"commit": commit, "policy": policy}
 
 
 def effective_policy(project: Path | None = None) -> dict[str, Any]:
