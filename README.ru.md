@@ -65,6 +65,11 @@ Lead читает контракт проекта, автоматически в
 
 Для подробной инженерной модели см. [Engineering Model Deep Dive](docs/reference/engineering-model.ru.md).
 
+## Новое в 0.28
+
+- [`embraion check`](docs/reference/cli.ru.md#embraion-check) запускает все проверки, которые выбирает конфигурация проекта, поэтому [CI проекта](docs/reference/runtime-version-resolution.ru.md) обходится одним шагом; `projection.<host>.components` в [policy](docs/configuration/policy.ru.md) объявляют проверяемые проекции.
+- Необязательная секция [`privacy.sources`](docs/configuration/policy.ru.md) задаёт data class каждого source ID, и execution requests, называющие source, отклоняются, если их класс ниже.
+
 ## Новое в 0.27
 
 - [CI проекта](docs/reference/runtime-version-resolution.ru.md) может устанавливать закреплённый релиз переиспользуемым action `GORYNED/EmbrAIon/actions/setup`, а `embraion framework pin` выводит точный pin; [enforcement](docs/guides/enforcement.ru.md) генерирует workflow с этим action.
@@ -90,4 +95,4 @@ Lead читает контракт проекта, автоматически в
 
 ---
 
-<sub>Последнее обновление: 2026-10-06 19:04 UTC</sub>
+<sub>Последнее обновление: 2026-10-07 00:14 UTC</sub>
