@@ -31,13 +31,34 @@ def _python(statement: str) -> str:
 def _remove_tree(path: Path) -> None:
     """Remove a tree whose files may be read-only, as Git object files are on Windows."""
     def make_writable_and_retry(function, target, _error):  # noqa: ANN001
-        os.chmod(target, stat.S_IWRITE)
-        function(target)
+        try:
+            os.chmod(target, stat.S_IWRITE)
+            function(target)
+        except FileNotFoundError:
+            # Git maintenance can remove a lock between enumeration and deletion.
+            pass
 
     if sys.version_info >= (3, 12):
         shutil.rmtree(path, onexc=make_writable_and_retry)
     else:
         shutil.rmtree(path, onerror=make_writable_and_retry)
+
+
+class TreeRemovalTests(unittest.TestCase):
+    def test_file_disappearing_during_removal_is_tolerated(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            tree = Path(temporary) / "tree"
+            tree.mkdir()
+            (tree / "maintenance.lock").write_text("", encoding="utf-8")
+            unlink = os.unlink
+
+            def disappear(path, *args, **kwargs):
+                unlink(path, *args, **kwargs)
+                raise FileNotFoundError("lock disappeared during removal")
+
+            with mock.patch("os.unlink", side_effect=disappear):
+                _remove_tree(tree)
+            self.assertFalse(tree.exists())
 
 
 def _project(temporary: str, profile: object) -> Path:

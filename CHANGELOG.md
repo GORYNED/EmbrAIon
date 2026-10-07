@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.32.0 - 2026-10-07
+
 ### Added
 
 - `embraion check` and `actions/check` can run project validation profiles: the new `check.validation-profiles` list in `.embraion/policy.yaml` adds a `validation-<profile>` step per profile. Each step runs the profile as `embraion validation run` does and keeps its evidence. A profile that is not `passed`, is empty, is unknown, or needs a missing required parameter fails the step. The action gains an optional `upload-evidence` input (default `false`) that uploads `.embraion/state/validation/` as an artifact.
@@ -21,6 +23,10 @@
 
 - Git is a stated prerequisite and GitHub the supported delivery surface (ADR 0001, issue #86). The Git and GitHub mechanics of the worktree and delivery workflows now live in `core/workflows/git.md`; the workflows keep the universal rules. The installation requirements state the Git prerequisite. The decision itself changes no command behavior.
 - Compatibility: `project.yaml` now validates a top-level `worktree` object (`lfs: none|hydrate`, unknown keys rejected), so a project that already keeps its own top-level `worktree` key there must rename it; every command that reads the project overlay reports the error. Evidence records written by the validation runner can gain keys without any new option: `termination` on a timed-out command, `stdout-head`/`stderr-head` and `output` when a stream exceeds the 8000-character tail, and an unconfirmed termination now stops later commands even without `--fail-fast`.
+
+### Fixed
+
+- Cross-platform tests construct quoted Git paths in the index without changing repository configuration, and tolerate Git maintenance removing a lock during test cleanup on Python 3.11.
 
 ## 0.31.0 - 2026-10-07
 

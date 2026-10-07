@@ -306,8 +306,10 @@ class HardeningTests(ProtectedSourcesTestCase):
         return result.stdout.decode().strip()
 
     def stage(self, project: Path, mode: str, oid: str, path: str) -> None:
-        # Index-only entries work on every platform, whatever the file system allows.
-        self.git(project, "update-index", "--add", "--cacheinfo", f"{mode},{oid},{path}")
+        # These entries never touch the working tree. Git for Windows otherwise rejects
+        # names with quotes even in the index; relax that check for this command only.
+        self.git(project, "-c", "core.protectNTFS=false", "update-index", "--add",
+                 "--cacheinfo", f"{mode},{oid},{path}")
 
     def commit_index(self, project: Path, message: str) -> str:
         self.git(project, "commit", "-q", "-m", message)
