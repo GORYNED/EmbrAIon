@@ -516,6 +516,17 @@ embraion adr new "Move parsing into its own package" --locale ru --status Propos
 
 `adr new` writes the record from the project template, adds the index row, and with `--locale <code>` (repeatable) writes a localized copy next to it. It creates the folder, template, and index when the project has none. `--slug` names the file when the title has no ASCII words. See [Architecture decision records](../configuration/decisions.md#scaffold).
 
+### `embraion pr-template`
+
+Install the optional, project-neutral pull request template:
+
+```bash
+embraion pr-template
+embraion pr-template --path ../service --json
+```
+
+The command writes `.github/pull_request_template.md` from `templates/pull-request/pull-request-template.md`. The template has sections for what changed, architecture, compatibility (source and API separate from persisted data), validation, checks that were not run, risks, workers, and the independent review with the exact final head SHA. It never overwrites: if the project already has a pull request template (in the root, `docs/`, or `.github/`, including a `PULL_REQUEST_TEMPLATE/` folder) or a link at that path, the command reports it and leaves everything unchanged. `embraion init` does not run it. `--path` selects the project directory, and `--json` prints `status` (`created` or `exists`) and `path`.
+
 ### `embraion checkpoint`
 
 Save a local, reference-only task checkpoint and inspect its freshness later:

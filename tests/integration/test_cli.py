@@ -194,6 +194,23 @@ class CliIntegrationTests(unittest.TestCase):
             self.assertEqual([], prune_report["candidates"])
             self.assertFalse(prune_report["apply"])
 
+    def test_pr_template_is_opt_in_and_never_overwrites(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "TemplateDemo", cwd=project)
+            template = project / ".github" / "pull_request_template.md"
+            self.assertFalse(template.exists())
+
+            created = json.loads(self._run("pr-template", "--json", cwd=project).stdout)
+            self.assertEqual({"status": "created", "path": ".github/pull_request_template.md"}, created)
+            self.assertIn("## Not run", template.read_text(encoding="utf-8"))
+
+            template.write_text("mine\n", encoding="utf-8")
+            kept = json.loads(self._run("pr-template", "--json", cwd=project).stdout)
+            self.assertEqual("exists", kept["status"])
+            self.assertEqual("mine\n", template.read_text(encoding="utf-8"))
+
     def test_validation_run_accepts_declared_runtime_parameters(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary) / "project"

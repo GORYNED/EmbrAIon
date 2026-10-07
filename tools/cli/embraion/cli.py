@@ -13,6 +13,7 @@ from .capabilities import diagnose_external_capabilities
 from .checkpoints import create_checkpoint, resume_checkpoint
 from .knowledge_audit import audit_knowledge, snapshot_knowledge
 from .decisions import check_decisions, new_decision
+from .pr_template import install_pr_template
 from .organization import check_organization
 from .skill_evals import run_suite
 from .artifacts import read_framework_pin, read_project_artifact_lock, verify_project_artifact
@@ -142,6 +143,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  organization Check configured namespace, assembly, and Unity metadata rules",
         "  decisions  Check that architectural changes carry a decision record or waiver",
         "  adr        Create the next numbered architecture decision record",
+        "  pr-template Install the optional pull request template, never overwriting",
         "  checkpoint Record or inspect local task continuity anchors",
         "  knowledge  Snapshot or audit declared documentation/source relationships",
         "  claude-native Inspect scoped Claude agents and install guard/observer hooks",
@@ -1384,6 +1386,17 @@ def _cmd_adr_new(args: argparse.Namespace) -> int:
         for path in report["created"] + report["paths"]:
             print(path)
         print(f"Record {report['number']} added to {report['index']} with status {report['status']}.")
+    return 0
+
+
+def _cmd_pr_template(args: argparse.Namespace) -> int:
+    report = install_pr_template(Path(args.path))
+    if args.json:
+        _print_json(report)
+    elif report["status"] == "created":
+        print(f"Created {report['path']}")
+    else:
+        print(f"{report['path']} already exists; left unchanged.")
     return 0
 
 
@@ -2726,6 +2739,16 @@ def build_parser() -> argparse.ArgumentParser:
     adr_new.add_argument("--date", help="Record date as YYYY-MM-DD (default: today, UTC)")
     adr_new.add_argument("--json", action="store_true")
     adr_new.set_defaults(func=_cmd_adr_new)
+
+    pr_template_parser = sub.add_parser(
+        "pr-template",
+        help="Install the optional pull request template",
+        description="Write .github/pull_request_template.md from the project-neutral EmbrAIon template. "
+        "Never overwrites an existing pull request template; init does not run this.",
+    )
+    pr_template_parser.add_argument("--path", default=".", help="Project directory (default: current directory)")
+    pr_template_parser.add_argument("--json", action="store_true")
+    pr_template_parser.set_defaults(func=_cmd_pr_template)
 
     check_parser = sub.add_parser(
         "check",
