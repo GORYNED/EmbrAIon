@@ -17,13 +17,19 @@ def planned_checks(
     project: Path | None = None,
     *,
     base_ref: str | None = None,
-    fail_on: str = "high",
-    all_files: bool = False,
+    fail_on: str | None = None,
+    all_files: bool | None = None,
 ) -> list[dict[str, Any]]:
-    """Return the checks the project configuration selects, in run order."""
+    """Return the checks the project configuration selects, in run order.
+
+    Explicit options override the policy `check` section, which overrides the defaults.
+    """
     root = project_root(project)
     policy = read_policy_config(root) if (root / ".embraion" / "policy.yaml").is_file() else {}
     projection = policy.get("projection") or {}
+    options = policy.get("check") or {}
+    fail_on = fail_on or options.get("fail-on", "high")
+    all_files = options.get("all-files", False) if all_files is None else all_files
     checks: list[dict[str, Any]] = [
         {"id": "validate", "argv": ["validate", "--strict"]},
         {"id": "routes", "argv": ["route", "--validate"]},
@@ -46,9 +52,18 @@ def planned_checks(
         checks.append({"id": "claude-native", "argv": ["claude-native", "status", "--require", ",".join(required)]})
     if (root / ".embraion" / "organization.yaml").is_file():
         argv = ["organization", "check", "--require-config", "--path", ".", "--json"]
-        if base_ref:
-            argv += ["--base-ref", base_ref]
-        checks.append({"id": "organization", "argv": argv})
+        modes = options.get("organization")
+        if modes is None:
+            # Without a declaration the mode follows the base ref, as before.
+            checks.append({"id": "organization", "argv": argv + (["--base-ref", base_ref] if base_ref else [])})
+        else:
+            if "full" in modes:
+                checks.append({"id": "organization-full", "argv": argv})
+            if "compare" in modes:
+                if base_ref:
+                    checks.append({"id": "organization-compare", "argv": argv + ["--base-ref", base_ref]})
+                else:
+                    checks.append({"id": "organization-compare", "argv": None, "not-run": "needs --base-ref"})
     if (root / ".embraion" / "decisions.yaml").is_file():
         if base_ref:
             checks.append({"id": "decisions", "argv": ["decisions", "check", "--require-config", "--path", ".",

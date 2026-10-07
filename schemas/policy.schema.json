@@ -197,6 +197,39 @@
       },
       "additionalProperties": false
     },
+    "check": {
+      "type": "object",
+      "description": "Optional options for `embraion check`. Command-line flags override them; omitted keys keep the previous behavior.",
+      "properties": {
+        "organization": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "full",
+              "compare"
+            ]
+          },
+          "description": "Organization-check modes to run: full audits the whole structure; compare checks against --base-ref and is not run without one. Omitted runs full without --base-ref and compare with it."
+        },
+        "fail-on": {
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "description": "Lowest security finding severity that fails the check; defaults to high."
+        },
+        "all-files": {
+          "type": "boolean",
+          "description": "Scan all files in the security scan instead of changed files; defaults to false."
+        }
+      },
+      "additionalProperties": false
+    },
     "ceilings": {
       "type": "object",
       "description": "Project-declared maximum permissions that deployments, execution bindings, and routing may narrow but never widen.",

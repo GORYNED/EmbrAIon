@@ -196,6 +196,23 @@ projection:
 
 Объявленные Claude Code `scoped-agents` и `hooks` также заставляют `embraion check` требовать их через `claude-native status --require`.
 
+## Параметры check
+
+Необязательная секция `check` выбирает, что запускает [`embraion check`](../reference/cli.md#embraion-check), поэтому в CI нет флагов проекта:
+
+```yaml
+check:
+  organization: [full, compare]
+  fail-on: medium
+  all-files: true
+```
+
+- `organization` перечисляет режимы organization check. `full` проверяет всю структуру. `compare` сравнивает с `--base-ref`, поэтому падают только новые findings, перемещения и смена GUID; без base ref он отмечается как `NOT RUN`. Без секции `embraion check` запускает `full` без `--base-ref` и `compare` с ним. Объявленные режимы называются `organization-full` и `organization-compare` и работают только при наличии `.embraion/organization.yaml`.
+- `fail-on` задаёт минимальную серьёзность находки security scan, при которой проверка падает (`info`, `low`, `medium`, `high` или `critical`); по умолчанию `high`.
+- `all-files` сканирует все файлы вместо изменённых; по умолчанию `false`.
+
+Флаг `--fail-on` переопределяет `fail-on`, а `--all-files` включает полное сканирование; у остальных значений флагов нет. Проект без секции ведёт себя как раньше.
+
 ## Посмотреть effective policy
 
 ```bash

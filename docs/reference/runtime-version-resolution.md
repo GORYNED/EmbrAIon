@@ -83,10 +83,10 @@ steps:
     with:
       python-version: "3.13"  # optional, the default
       project-path: .         # optional, a directory at or below the project root
-  - run: embraion check --base-ref origin/main
+  - uses: GORYNED/EmbrAIon/actions/check@v<release>
 ```
 
-`embraion check` runs every check the project configuration selects; see the [CLI reference](cli.md#embraion-check).
+The `check` action runs `embraion framework install` for a locked pin and then `embraion check`, so the workflow carries no project flags: the organization modes, security threshold and scan scope come from the `check` section of `.embraion/policy.yaml` (see [Check options](../configuration/policy.md#check-options)). It takes `project-path` (default `.`) and `base-ref`. Without `base-ref` it compares against `origin/<base branch>` on pull requests; elsewhere checks that need a base ref are reported as not run. It expects EmbrAIon to be installed by the setup action first and has no `python-version` input. `embraion check` runs every check the project configuration selects; see the [CLI reference](cli.md#embraion-check).
 
 The action sets up Python, reads `.embraion/project.yaml` with the same reader as `embraion framework pin`, and installs exactly the pinned release. With an artifact lock it downloads the canonical release wheel and verifies its SHA-256 before pip installs it; without a lock it installs `embraion==<version>`. It then confirms the installed version. A missing or inexact pin, a mismatched lock, or a digest mismatch fails the step. Outputs: `version` and `digest` (empty without a lock).
 

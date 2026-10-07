@@ -1407,9 +1407,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
     else:
         for item in results:
             if item["passed"] is None:
-                print(f"NOT RUN  {item['id']:18} {item['output']}")
+                print(f"NOT RUN  {item['id']:21} {item['output']}")
                 continue
-            print(f"{'PASS' if item['passed'] else 'FAIL'}  {item['id']:18} embraion {' '.join(item['argv'])}")
+            print(f"{'PASS' if item['passed'] else 'FAIL'}  {item['id']:21} embraion {' '.join(item['argv'])}")
             if not item["passed"]:
                 for line in item["output"].rstrip().splitlines():
                     print(f"      {line}")
@@ -2734,10 +2734,11 @@ def build_parser() -> argparse.ArgumentParser:
         "organization, and security checks that the project configuration selects, and fail if any fails.",
     )
     check_parser.add_argument("--base-ref", help="Base ref for the organization check, for example origin/main")
-    check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER), default="high",
-                              help="Lowest security finding severity that fails the check")
-    check_parser.add_argument("--all-files", action="store_true",
-                              help="Pass --all-files to the security scan")
+    check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER),
+                              help="Lowest security finding severity that fails the check "
+                              "(default: policy check.fail-on, else high)")
+    check_parser.add_argument("--all-files", action="store_true", default=None,
+                              help="Pass --all-files to the security scan (default: policy check.all-files)")
     check_parser.add_argument("--json", action="store_true")
     check_parser.set_defaults(func=_cmd_check)
 
