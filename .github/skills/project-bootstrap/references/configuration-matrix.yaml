@@ -1,0 +1,429 @@
+# Configure by request: which skill and recipe fills which project configuration field.
+#
+# Read this file when the user asks, in any language, to set up or change EmbrAIon for the project.
+# Match the request to the closest `intents` entry, load the named `skill`, follow its `recipe`,
+# and run every `verify` command. The user never needs to name files, fields, or commands.
+#
+# Field notation: `<file>:<dotted key>` inside `.embraion/`; `<file>:<key>.*` covers a key and its
+# nested keys; `<entries>` means user-named top-level entries; `skills/` is `.embraion/skills/`.
+# `owner-decision: true` marks a change that widens access or lowers a safety setting: make it
+# only when the request itself states that intent.
+# A unit test derives the real files and keys from the schemas and fails when one has no entry here.
+schema-version: 1
+requests:
+  - id: set-up
+    intents:
+      en: [Set up EmbrAIon for this project, Configure EmbrAIon completely]
+      ru: [Настрой EmbrAIon для этого проекта, Настрой EmbrAIon полностью]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    composes: [bind-knowledge, protect-paths, project-validation, project-agents, project-identity]
+    discover: [repository documents, CI, manifests, vendor and generated folders, existing .embraion files]
+    ask: [only what the repository cannot answer]
+    verify:
+      - embraion doctor
+      - embraion validate --strict
+      - embraion check
+
+  - id: bind-knowledge
+    intents:
+      en: ["Register our architecture document", "Tell the AI where our design docs are"]
+      ru: ["Зарегистрируй документ с архитектурой", "Укажи, где лежат наши проектные документы"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [knowledge.yaml:slots.*, "knowledge.yaml:<entries>"]
+    discover: [the document that governs each concern, its path in the repository]
+    ask: [which document governs a concern when two compete]
+    verify:
+      - embraion context slots
+      - embraion validate --strict
+
+  - id: project-validation
+    intents:
+      en: [Add our test command to validation, Define fast and full checks]
+      ru: [Добавь нашу команду тестов в проверки, Настрой быстрые и полные проверки]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [validation.yaml:profiles]
+    discover: [CI workflows, package scripts, task runners, test folders]
+    ask: [whether a slow or side-effecting command may run locally]
+    verify:
+      - embraion validation list
+      - embraion validation run fast
+
+  - id: validation-guards
+    intents:
+      en: ["Fail validation if the tests modify the working tree", "Make the lint step optional", "Skip the device check when the tool is missing", "Limit the size of validation logs"]
+      ru: ["Падай, если тесты меняют рабочее дерево", "Сделай шаг линтера необязательным", "Пропускай проверку на устройстве, если нет нужного инструмента", "Ограничь размер логов проверок"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [validation.yaml:profiles]
+    discover: [the existing profile and its commands, the tool or variable a command needs]
+    ask: [which commands are optional, the log size limit when it is not stated]
+    owner-decision: true
+    verify:
+      - embraion validation list
+      - embraion validation run <profile>
+
+  - id: plan-validation
+    intents:
+      en: ["Run only the checks that match what changed", "Run the full profile when the data format changes"]
+      ru: ["Запускай только проверки, относящиеся к изменённым файлам", "Запускай полный профиль, когда меняется формат данных"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [validation.yaml:areas, validation.yaml:impact, validation.yaml:full-reasons, validation.yaml:default-area]
+    discover: [which folders each existing check proves, CI path filters]
+    ask: [which paths force the full profile, the area for unmatched paths]
+    owner-decision: true
+    verify:
+      - embraion validation list
+      - embraion validation explain <profile> --base-ref <base>
+
+  - id: project-agents
+    intents:
+      en: [Add a read-only reviewer for our API, Create a project specialist]
+      ru: [Добавь специалиста только для чтения по нашему API, Создай проектного агента]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [agents.yaml:agents]
+    discover: [whether a Core role already covers the work, the access the responsibility needs]
+    ask: [the responsibility in one sentence when the request is vague]
+    owner-decision: true
+    verify:
+      - embraion projection diff --host <installed-host> --destination .
+      - embraion install --host <installed-host> --destination .
+
+  - id: project-identity
+    intents:
+      en: ["Rename the project in EmbrAIon", "Record that this is a web service"]
+      ru: ["Переименуй проект в EmbrAIon", "Запиши, что это веб-сервис"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [project.yaml:project.*, project.yaml:capabilities]
+    discover: [the current name and metadata]
+    ask: []
+    verify:
+      - embraion status
+      - embraion validate --strict
+
+  - id: update-framework
+    intents:
+      en: [Update EmbrAIon to the latest release, Move this project to the new framework version]
+      ru: [Обнови EmbrAIon до последнего релиза, Переведи проект на новую версию фреймворка]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [project.yaml:framework.*]
+    discover: [embraion update --check]
+    ask: [whether to move the pin now]
+    verify:
+      - embraion update --check
+      - embraion doctor
+      - embraion status
+
+  - id: task-housekeeping
+    intents:
+      en: ["Clean up old agent branches and worktrees automatically", "Keep the main and release branches"]
+      ru: ["Автоматически чисти старые ветки и рабочие деревья агентов", "Не трогай ветки main и release"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [project.yaml:housekeeping.*]
+    discover: [the branches the team keeps, whether remote deletion is wanted]
+    ask: [which branches to preserve, whether remote branches may be deleted]
+    owner-decision: true
+    verify:
+      - embraion worktree gc
+
+  - id: declare-sources
+    intents:
+      en: ["Register our repositories and say which ones you may write", "Record that the vendor SDK is read-only", "Tell EmbrAIon where the shared library lives on this machine"]
+      ru: ["Зарегистрируй наши репозитории и укажи, какие можно изменять", "Запиши, что вендорный SDK только для чтения", "Укажи EmbrAIon, где на этой машине лежит общая библиотека"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [sources.yaml:schema-version, sources.yaml:sources]
+    discover: [repositories and data folders the project uses, their governing documents, source ids already in policy.yaml privacy.sources]
+    ask: [the role and write policy of each source, the local path on this machine, never committed]
+    owner-decision: true
+    verify:
+      - embraion sources list
+      - embraion sources status
+      - embraion validate --strict
+
+  - id: hydrate-lfs-worktrees
+    intents:
+      en: ["Fetch Git LFS files in new worktrees", "Stop fetching LFS content in new worktrees"]
+      ru: ["Подтягивай файлы Git LFS в новых рабочих деревьях", "Больше не подтягивай содержимое LFS в новых рабочих деревьях"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [project.yaml:worktree.*]
+    discover: [whether the repository uses Git LFS, .gitattributes with filter=lfs]
+    ask: []
+    verify:
+      - embraion policy show
+
+  - id: add-pr-template
+    intents:
+      en: ["Add a pull request template", "Give the project the standard PR checklist"]
+      ru: ["Добавь шаблон pull request", "Дай проекту стандартный чек-лист для PR"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    generates: [.github/pull_request_template.md]
+    discover: [an existing pull request template in the root, docs, or .github]
+    ask: []
+    verify:
+      - embraion pr-template
+
+  - id: protect-paths
+    intents:
+      en: [Protect these folders, Mark vendor code as third-party, Treat build output as generated]
+      ru: [Защити эти папки, Отметь вендорный код как сторонний, Считай результаты сборки сгенерированными]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:sources.*]
+    discover: [which of the named paths exist, vendor and build folders, generated markers]
+    ask: [protected, external, or generated when the request does not say]
+    verify:
+      - embraion policy show
+      - embraion check
+
+  - id: classify-privacy
+    intents:
+      en: [Treat this source as confidential, Keep project data private by default]
+      ru: [Считай этот источник конфиденциальным, По умолчанию данные проекта приватные]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:privacy.*]
+    discover: [source ids already used in execution.yaml, the current default class]
+    ask: [the data class of each named source]
+    owner-decision: true
+    verify:
+      - embraion policy show
+      - embraion policy check
+
+  - id: set-review-rule
+    intents:
+      en: [Require review for substantial changes, Stop requiring review evidence]
+      ru: [Требуй ревью для существенных изменений, Больше не требуй подтверждения ревью]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:review.*]
+    discover: [the current setting]
+    ask: []
+    owner-decision: true
+    verify:
+      - embraion policy show
+
+  - id: enable-enforcement
+    intents:
+      en: [Enforce the rules in CI, Block pull requests that touch protected paths]
+      ru: ["Проверяй правила в CI", "Блокируй pull request, которые меняют защищённые пути"]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:enforcement.*]
+    discover: [validation profiles that are not empty, the CI system in use]
+    ask: [which profile CI runs, whether an approved review is required, whether protected paths are compared by Git object identity, permission to add the workflow file]
+    owner-decision: true
+    verify:
+      - embraion enforcement status
+      - embraion policy show
+      - embraion enforcement check --base-ref <base>
+
+  - id: set-merge-mode
+    intents:
+      en: [Allow you to merge after green checks, Only a human may merge]
+      ru: [Разреши тебе мержить после зелёных проверок, Мержить может только человек]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:merge.*]
+    discover: [the current mode, installed hosts from embraion status]
+    ask: []
+    owner-decision: true
+    verify:
+      - embraion policy show
+      - embraion install --host <installed-host> --destination .
+      - embraion projection verify --host <installed-host> --destination .
+
+  - id: set-policy-ceilings
+    intents:
+      en: [Never send confidential data to this provider, Limit what each provider may see]
+      ru: ["Никогда не отправляй конфиденциальные данные этому провайдеру", "Ограничь, что видит каждый провайдер"]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:ceilings.*]
+    discover: [providers in deployments.yaml, execution bindings, routing]
+    ask: [for each provider the data classes, access modes, roles, and sources it may have]
+    owner-decision: true
+    verify:
+      - embraion policy check
+      - embraion route --validate
+
+  - id: configure-check
+    intents:
+      en: ["Make one command run all project checks in CI", "Fail CI on medium security findings"]
+      ru: ["Сделай одну команду со всеми проверками проекта для CI", "Падай в CI на находках средней серьёзности"]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:check.*]
+    discover: [the CI workflow, whether organization rules exist]
+    ask: [the lowest severity that fails CI when the request does not say]
+    verify:
+      - embraion check
+      - embraion policy show
+
+  - id: configure-projection-checks
+    intents:
+      en: [Verify the installed agent files in CI, Check the Codex config for forbidden keys]
+      ru: [Проверяй установленные файлы агентов в CI, Проверяй конфиг Codex на запрещённые ключи]
+    skill: project-bootstrap
+    recipe: references/policy-recipes.md
+    fields: [policy.yaml:projection.*]
+    discover: [installed hosts and components from embraion status and the host folders]
+    ask: [Codex config mode when it is not obvious]
+    verify:
+      - embraion projection verify --host <installed-host> --destination .
+      - embraion check
+
+  - id: configure-routing
+    intents:
+      en: ["Configure routing", "Use a cheaper model for ordinary tasks", "Change effort for complex work"]
+      ru: ["Настрой роутинг", "Используй более дешёвую модель для обычных задач", "Измени effort для сложной работы"]
+    skill: routing-configuration
+    recipe: references/routing-recipes.md
+    fields: [routing.yaml:overrides, routing.yaml:task-classes, routing.yaml:candidate-groups, deployments.yaml:providers, deployments.yaml:deployments]
+    discover: [the hosts in use, the selectors and efforts each host reports]
+    ask: [which hosts to tune, the cost and quality goal, a fallback policy]
+    verify:
+      - embraion route --validate
+      - embraion deployment list
+      - embraion route --host <host> --route-class <class> --data PRIVATE
+      - embraion route --audit-authority
+      - embraion policy check
+
+  - id: declare-execution-binding
+    intents:
+      en: [Let EmbrAIon call this provider through an API key in the environment]
+      ru: [Разреши EmbrAIon вызывать этого провайдера через ключ API из окружения]
+    skill: routing-configuration
+    recipe: references/routing-recipes.md
+    fields: [execution.yaml:schemaVersion, execution.yaml:bindings]
+    discover: [the deployment id, the adapter, the source ids and trust levels already used]
+    ask: [the name of the environment variable that holds the credential, never its value]
+    owner-decision: true
+    verify:
+      - embraion execution preflight --deployment <deployment-id>
+      - embraion policy check
+
+  - id: declare-pricing
+    intents:
+      en: [Track what provider calls cost, Add the official pricing page for this provider]
+      ru: [Считай стоимость вызовов провайдера, Добавь официальную страницу цен этого провайдера]
+    skill: routing-configuration
+    recipe: references/routing-recipes.md
+    fields: [pricing.yaml:schemaVersion, pricing.yaml:sources]
+    discover: [providers and deployments already declared]
+    ask: [the official pricing page, permission to refresh from the network]
+    verify:
+      - embraion pricing status
+
+  - id: declare-integration
+    intents:
+      en: [Declare our MCP server, Make sure the docs server is configured]
+      ru: ["Объяви наш MCP-сервер", "Убедись, что сервер документации настроен"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [integrations.yaml:schema-version, integrations.yaml:servers]
+    discover: [servers in .mcp.json, .vscode/mcp.json, Claude settings, Codex config]
+    ask: [the access level of each server, whether a server is machine-local]
+    owner-decision: true
+    verify:
+      - embraion security scan --path . --fail-on high
+      - embraion doctor
+
+  - id: declare-external-capability
+    intents:
+      en: ["Record that this plugin is installed for the team", "Declare the external tool we rely on"]
+      ru: ["Запиши, что этот плагин установлен у команды", "Объяви внешний инструмент, на который мы опираемся"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [external-capabilities.yaml:schema-version, external-capabilities.yaml:capabilities]
+    discover: [the installed source, version or digest, license]
+    ask: [the host, the access level, the data class]
+    owner-decision: true
+    verify:
+      - embraion capabilities --path . --host <installed-host>
+
+  - id: bind-decisions
+    intents:
+      en: [Require a decision record for dependency changes, Start architecture decision records]
+      ru: [Требуй запись решения при изменении зависимостей, Заведи записи архитектурных решений]
+    skill: architecture-decision
+    recipe: references/decisions-recipes.md
+    fields: [decisions.yaml:index, decisions.yaml:template, decisions.yaml:triggers, decisions.yaml:extra-triggers, knowledge.yaml:slots.decisions]
+    discover: [the existing decisions folder, its index and template, dependency manifests]
+    ask: [which kinds of change need a record when the request is broad]
+    verify:
+      - embraion decisions check --require-config --path . --base-ref <base>
+      - embraion context slots
+      - embraion check --base-ref <base>
+
+  - id: limit-code-structure
+    intents:
+      en: ["Enforce lowercase file names in docs", "Require namespaces to match folders"]
+      ru: ["Требуй имена файлов строчными буквами в docs", "Требуй, чтобы пространства имён совпадали с папками"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [organization.yaml:exclude, organization.yaml:namespaces.*, organization.yaml:assemblies.*, organization.yaml:unity_meta.*, organization.yaml:filenames.*]
+    discover: [the folders the team owns, vendor and generated folders to exclude, existing naming practice]
+    ask: [which rule to enforce when the request is broad]
+    verify:
+      - embraion organization check --require-config --path .
+
+  - id: track-doc-sources
+    intents:
+      en: ["Warn me when the architecture doc is out of date with the code", "Link each document to its sources"]
+      ru: ["Предупреждай, когда документ об архитектуре устарел относительно кода", "Свяжи каждый документ с его источниками"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [knowledge-maintenance.yaml:documents]
+    discover: [which source files each document describes]
+    ask: [the sources when the document does not name them]
+    verify:
+      - embraion knowledge audit --path .
+
+  - id: shape-final-report
+    intents:
+      en: [Use these sections in your final reports, Require a pull request link in the report]
+      ru: [Используй такие разделы в итоговых отчётах, Требуй ссылку на pull request в отчёте]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [report.yaml:schema-version, report.yaml:sections, report.yaml:workers.*, report.yaml:pull-request.*, report.yaml:guidance]
+    discover: [the current report format the team uses]
+    ask: [the section names and their order]
+    verify:
+      - embraion report template
+      - embraion install --host <installed-host> --destination .
+      - embraion projection verify --host <installed-host> --destination .
+
+  - id: claude-native-agents
+    intents:
+      en: [Make the reviewer route available as a native Claude agent]
+      ru: [Сделай маршрут ревьюера доступным как нативного агента Claude]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [claude-native.yaml:bindings, claude-native.yaml:assignments, claude-native.yaml:read-policy.*]
+    discover: [roles and routes already resolved by embraion route, installed Claude Code components]
+    ask: [which roles and route classes, whether reads are limited to the project]
+    verify:
+      - embraion claude-native status
+
+  - id: project-skill
+    intents:
+      en: [Add a project skill for our release process, Teach the agents our deployment checklist]
+      ru: [Добавь проектный навык для нашего процесса релиза, Научи агентов нашему чек-листу развёртывания]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [skills/]
+    discover: [the procedure in existing project documents, whether a Core skill already covers it]
+    ask: [the name and the trigger when they are not clear]
+    verify:
+      - embraion install --host <installed-host> --destination .
+      - embraion projection verify --host <installed-host> --destination .

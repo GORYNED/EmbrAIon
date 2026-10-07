@@ -1,6 +1,6 @@
 ---
 name: project-bootstrap
-description: Configure EmbrAIon for a new, existing, or partially configured repository from verified project evidence, preserving existing decisions and discovering real validation.
+description: Configure EmbrAIon for a new, existing, or partially configured repository from verified project evidence, or change one part of its project configuration from a plain request in any language, such as protecting folders, declaring an MCP server, allowing merge after green checks, adding validation commands or a project specialist, or requiring decision records. Preserves existing decisions and discovers real validation.
 ---
 
 # Project Bootstrap
@@ -10,6 +10,38 @@ Use this capability when the user asks "Configure EmbrAIon for this project",
 этого проекта", or "Настрой EmbrAIon полностью для этого репозитория".
 The user does not need to name YAML files, roles, commands, or routing mechanics.
 An ordinary engineering request after onboarding uses the orchestration skill.
+
+## Targeted requests
+
+The same skill handles a request to change one part of the configuration, in any
+language: "Protect these folders", "Declare our MCP server", "Allow you to merge
+after green checks", "Add the test command to validation", «Защити эти папки».
+Do not wait for file or command names. Read
+`references/configuration-matrix.yaml`, pick the entry whose `intents` match the
+request, load the skill it names, and follow that skill's recipe for the entry.
+The entry lists what to discover from the repository, the few things to ask, the
+fields to write and the commands that prove the result. Each recipe file lives
+next to the skill it names: `references/contract-recipes.md`,
+`references/policy-recipes.md` and `references/optional-recipes.md` here,
+`references/routing-recipes.md` in routing-configuration and
+`references/decisions-recipes.md` in architecture-decision.
+
+- Read the target file first and change only the fields the entry names; keep
+  everything else, including stricter settings. Ask one short question with a
+  recommendation only when the request and the repository leave a field open.
+- An entry marked `owner-decision` widens access or lowers a safety setting. Make
+  that change only when the user's request states it; otherwise ask first.
+- `embraion validate --strict` and `embraion doctor` check key names, not the
+  full shape of a file. Run the loader command each recipe names and fix what it
+  reports instead of guessing values.
+- After a change that is projected into host files (merge mode, report contract,
+  agents, project skills, claude-native), run `embraion status`, then
+  `embraion install --host <host> --destination .` for each installed host and
+  `embraion projection verify`. Never edit generated files or use `--force`.
+- Report the changed files and fields, what was discovered or asked, and each
+  verification as passed, failed or not run.
+- During whole-project setup, optionally offer to run `embraion pr-template` to add the
+  shipped, project-neutral pull request template; it never overwrites an existing one.
 
 ## Authority and outcome
 
@@ -96,6 +128,9 @@ need producer/ownership evidence; ambiguous paths remain unresolved. Unknown
 privacy/integration/access state fails closed. Never widen access or lower
 privacy, review or validation to accommodate tooling or a selected model.
 Do not enable deterministic enforcement without project policy or user intent.
+Other policy keys (merge mode, privacy sources, ceilings, check options, projection
+checks) change only on request; see `references/policy-recipes.md`. A path the user
+explicitly asks to protect is evidence enough for that path.
 
 ## 4. Configure real validation
 
