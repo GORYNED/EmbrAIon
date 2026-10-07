@@ -1120,7 +1120,9 @@ def _cmd_validation_plan(args: argparse.Namespace) -> int:
     output = Path(args.output) if args.output else default_plan_path(project_root())
     write_plan(plan, output)
     if args.json:
-        _print_json(plan)
+        from .security import redact_value
+
+        _print_json(redact_value(plan))
     else:
         print(explain_plan(plan))
         print(f"Plan: {output}")
@@ -1160,8 +1162,10 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
         print(f"Validation profile: {record['profile']}")
         print(f"Status: {record['status']}")
         if record["status"] == "skipped":
-            if record.get("plan"):
+            if record.get("plan") and record["plan"].get("skip-reason"):
                 print(f"The plan selects no commands: {record['plan']['skip-reason']}.")
+            elif record.get("skip-reason"):
+                print(f"Nothing proved: {record['skip-reason']}.")
             else:
                 print("No commands are configured for this profile.")
         for item in record["commands"]:

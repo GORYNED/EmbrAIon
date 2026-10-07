@@ -333,10 +333,11 @@ def _git_output(root: Path, *arguments: str) -> bytes:
         raise _TreeUnavailable("git status did not finish within 120 seconds") from error
     if completed.returncode != 0:
         detail = completed.stderr.decode("utf-8", errors="replace").strip().splitlines()
+        suffix = f": {detail[0]}" if detail else ""
         raise _TreeUnavailable(
-            "the project is not inside a Git work tree"
+            "the project is not inside a Git work tree, or Git refused to read it" + suffix
             if arguments[:1] == ("rev-parse",)
-            else "git status failed" + (f": {detail[0]}" if detail else "")
+            else "git status failed" + suffix
         )
     return completed.stdout
 
@@ -704,6 +705,7 @@ def run_validation_profile(
         if clean_tree_failure:
             failure_reasons.append(clean_tree_failure)
 
+    skip_reason: str | None = None
     if not commands:
         status = "skipped"
     elif len(command_results) == len(commands) and all(
@@ -711,6 +713,10 @@ def run_validation_profile(
         for item in command_results
     ) and not failure_reasons:
         status = "passed"
+        if not any(item["status"] == "passed" for item in command_results):
+            # Optional commands that were blocked or failed prove nothing: never a pass.
+            status = "skipped"
+            skip_reason = "every command is optional and none passed"
     else:
         status = "failed"
 
@@ -724,6 +730,8 @@ def run_validation_profile(
         extra["clean-tree"] = clean_tree_block
     if failure_reasons:
         extra["failure-reasons"] = failure_reasons
+    if skip_reason:
+        extra["skip-reason"] = skip_reason
     if plan is not None:
         from .validation_plan import write_plan_evidence
 

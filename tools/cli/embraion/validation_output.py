@@ -7,10 +7,14 @@ memory: the beginning and the end, cut on line boundaries, plus exact totals.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import BinaryIO, Callable
 
 _CHUNK_BYTES = 1024 * 1024
+# Wider than the redaction patterns on purpose: any armored private key block counts.
+_KEY_BEGIN = re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----")
+_KEY_END = re.compile(rb"-----END [A-Z ]*PRIVATE KEY-----")
 
 
 @dataclass(frozen=True)
@@ -31,6 +35,23 @@ class CapturedOutput:
 
 def _lines(data: bytes) -> int:
     return data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
+
+
+def _drop_unpaired_key_start(head: bytes) -> bytes:
+    """Cut a private key block whose end lies beyond the kept head; redaction needs both markers."""
+    begins = list(_KEY_BEGIN.finditer(head))
+    if begins and not _KEY_END.search(head, begins[-1].end()):
+        return head[: begins[-1].start()]
+    return head
+
+
+def _drop_unpaired_key_end(tail: bytes) -> bytes:
+    """Cut a private key block whose start lies before the kept tail."""
+    end = _KEY_END.search(tail)
+    if end and not _KEY_BEGIN.search(tail, 0, end.start()):
+        line_end = tail.find(b"\n", end.end())
+        return b"" if line_end < 0 else tail[line_end + 1 :]
+    return tail
 
 
 def capture_stream(
@@ -73,6 +94,8 @@ def capture_stream(
         cut = tail.find(b"\n")
         if cut >= 0:
             tail = tail[cut + 1 :]
+    head = _drop_unpaired_key_start(head)
+    tail = _drop_unpaired_key_end(tail)
     return CapturedOutput(
         head=head.decode(encoding, errors="replace"),
         tail=tail.decode(encoding, errors="replace"),

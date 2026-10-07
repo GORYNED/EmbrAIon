@@ -104,7 +104,7 @@ profiles:
 
 Команда с отсутствующим prerequisite не запускается. Она получает статус `blocked` с причиной, а не `failed`. Blocked обязательная команда проваливает profile. Blocked необязательная — нет.
 
-Команда с `required: false` всё равно запускается, её сбой или timeout записываются в evidence. Profile из-за них не падает: он остаётся `passed`, а в записи появляется счётчик `warnings`. Команда без `required` и `requires` ведёт себя как раньше. Неизвестные ключи, не-boolean `required`, неизвестная платформа или пустое имя fail-closed.
+Команда с `required: false` всё равно запускается, её сбой или timeout записываются в evidence. Profile из-за них не падает: он остаётся `passed`, если хотя бы одна команда прошла, а в записи появляется счётчик `warnings`. Если все команды optional и ни одна не прошла, profile получает `skipped` с `skip-reason`, а не `passed`, потому что ничего не доказано. Команда без `required` и `requires` ведёт себя как раньше. Неизвестные ключи, не-boolean `required`, неизвестная платформа или пустое имя fail-closed.
 
 ## Clean-tree guard
 
@@ -123,7 +123,8 @@ profiles:
 - Дерево, которое уже было грязным, допустимо. Его состояние становится baseline, и падают только новые различия. Файл, который уже был изменён и правится снова, считается различием, потому что сравнивается и содержимое.
 - Каталог `.embraion/state/` игнорируется, потому что validation пишет туда собственное evidence.
 - При сбое называются до 20 изменённых путей, а profile падает с записью в `failure-reasons`, которая начинается с `clean-tree guard failed`.
-- Вне Git work tree или без `git` guard получает статус `blocked`, и profile падает. Команды всё равно запускаются, их результаты остаются в evidence.
+- Вне Git work tree или без `git` guard получает статус `blocked`, и profile падает. Команды всё равно запускаются, их результаты остаются в evidence. Причина также говорит об этом, когда Git отказывает в доступе к каталогу (например, из-за владельца), и приводит первую строку сообщения Git.
+- Файл больше 64 MiB сравнивается только по размеру, а не по содержимому.
 
 В записи появляется объект `clean-tree` с полями `status` (`passed`, `failed` или `blocked`), `baseline-dirty`, `changed-count` и `changed-paths`. Profile без команд получает `skipped` и не проверяется.
 
@@ -145,7 +146,7 @@ profiles:
 [... output truncated: 9400000 bytes (210000 lines) omitted; total 9500000 bytes, 211000 lines ...]
 ```
 
-В память читаются только сохранённые части. Каждая часть проходит redaction отдельно. Без ключа log не обрезается.
+В память читаются только сохранённые части. Каждая часть проходит redaction отдельно. Блок private key, который разрезала бы обрезка, отбрасывается из сохранённой части, поэтому половина ключа не попадает в log. Без ключа log не обрезается.
 
 В обоих случаях, если поток длиннее tail записи, строка команды получает `stdout-head` или `stderr-head` (первые 8000 символов) и объект `output` с итогами `bytes` и `lines` по каждому потоку и `log-truncated`. Короткий вывод не добавляет полей. Запись показывает `output-limit-bytes`, если profile его задаёт.
 
@@ -201,7 +202,7 @@ embraion validation plan affected --base-ref origin/main
 embraion validation explain affected --base-ref origin/main --include-worktree
 ```
 
-`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json` или `--output FILE`). `explain` печатает, почему каждая area и command выбраны или не выбраны, и ничего не пишет. Изменённые paths берутся из Git: diff между merge base для `--base-ref` и `--head-ref` (по умолчанию `HEAD`). `--include-worktree` добавляет staged, unstaged и untracked файлы, которые Git не игнорирует. Файлы в `.embraion/state/` игнорируются.
+`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json` или `--output FILE`). `explain` печатает, почему каждая area и command выбраны или не выбраны, и ничего не пишет. Изменённые paths берутся из Git: diff между merge base для `--base-ref` и `--head-ref` (по умолчанию `HEAD`). `--include-worktree` добавляет staged, unstaged и untracked файлы, которые Git не игнорирует. Файлы в `.embraion/state/` игнорируются. `--head-ref` нельзя сочетать с `--include-worktree`, потому что локальные изменения сравниваются с `HEAD`; команда завершается с exit code 2. Сохранённые файлы plan проходят redaction, как и run evidence.
 
 Файл plan имеет `schema-version: 1` и поля: `profile`, `config-digest`, `inputs` (refs и resolved SHA), `changed-paths`, `matched-rules`, `selected-areas`, `skipped-areas` (с причинами), `escalation`, `fallback`, `selected-commands` (с источниками), `skipped-commands`, `status` (`selected` или `skipped`) и `skip-reason`.
 
@@ -216,8 +217,10 @@ embraion validation run full --base-ref origin/main --full-justification release
 - `validation run <profile>` без `--base-ref`, `--include-worktree` и `--plan` выполняет все commands profile, как раньше.
 - Plan выбирает commands из areas, из `profiles` areas и, при повышении или fallback, из всего profile. Дубликаты выполняются один раз.
 - Plan, который ничего не выбрал, например потому что ничего не изменилось, завершается как `skipped` с причиной. Это никогда не pass.
-- `--plan` принимает только plan для того же profile, совпадающий с текущей конфигурацией и выбирающий только объявленные commands. Иначе запуск fail-closed.
-- Timeouts и parameters profile по-прежнему действуют для commands, к которым относятся.
+- `--plan` принимает только plan для того же profile, совпадающий с текущей конфигурацией и выбирающий только объявленные commands. Он также действителен только для того состояния Git, из которого посчитан: refs base и head должны по-прежнему указывать на записанные SHA, а для plan с `--include-worktree` набор изменённых файлов должен совпадать. Иначе запуск fail-closed с просьбой посчитать plan заново.
+- Каждая command сохраняет настройки запуска того места, откуда выбрана. Command из profile использует `required`, `requires`, timeout и parameters этого profile; при нескольких profiles с одной command первым идёт planned profile. Command из `commands` area всегда required и не имеет prerequisites, timeout и parameters.
+- Parameter применяется только к commands того profile, который его объявил. Если plan запускает commands другого profile (например, `full` после escalation) с required parameter без default, передайте его через `--param`, иначе запуск fail-closed. `--full-justification` parameters не заполняет. Два profiles в одном plan должны объявлять parameter с одним именем одинаково.
+- Escalation также применяет guard `clean-tree` запускаемых profiles и наименьший `output-limit-bytes` среди них.
 - Run evidence содержит plan (`plan`) и копию в `.embraion/state/validation/<evidence-id>/plan.json` (`plan-path`).
 - Plan options в проекте без `areas` — ошибка.
 

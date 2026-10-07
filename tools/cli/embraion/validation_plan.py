@@ -14,6 +14,7 @@ from typing import Any
 
 from .common import project_root, read_json, state_root, write_json
 from .environment import child_environment
+from .security import redact_value
 from .policy import normalize_project_path, path_matches, read_validation_config
 
 
@@ -140,6 +141,8 @@ def collect_changed_paths(
     """Return sorted changed paths (relative to the project root) and the resolved Git inputs."""
     if base_ref is None and not include_worktree:
         raise RuntimeError("A validation plan needs --base-ref or --include-worktree.")
+    if include_worktree and head_ref is not None:
+        raise RuntimeError("--head-ref cannot be combined with --include-worktree; local changes are compared with HEAD.")
     base_name = base_ref or "HEAD"
     head_name = head_ref or "HEAD"
     base_sha = _resolve(root, base_name)
@@ -265,7 +268,7 @@ def compute_plan(
             add(selected, command, f"area:{entry['area']}")
         for name in area.get("profiles") or []:
             for command in _profile_commands(specs, name):
-                add(selected, command, f"area:{entry['area']}")
+                add(selected, command, f"area:{entry['area']}>profile:{name}")
 
     covered_whole = escalation is not None or profile == FULL_PROFILE or fallback is not None
     selected_names = {entry["area"] for entry in selected_areas}
@@ -327,7 +330,8 @@ def default_plan_path(project: Path) -> Path:
 
 
 def write_plan(plan: dict[str, Any], path: Path) -> None:
-    write_json(path, plan)
+    # Paths and commands may carry secrets; stored plans are redacted like the run evidence.
+    write_json(path, redact_value(plan))
 
 
 # --- Explain --------------------------------------------------------------------------------
@@ -390,11 +394,70 @@ def explain_plan(plan: dict[str, Any]) -> str:
 # --- Run integration ------------------------------------------------------------------------
 
 
-def declared_commands(config: dict[str, Any], specs: dict[str, dict[str, Any]]) -> set[str]:
-    commands = {command for spec in specs.values() for command in spec["commands"]}
-    for area in (config.get("areas") or {}).values():
-        commands.update(area.get("commands") or [])
-    return commands
+def parse_source(source: Any) -> tuple[str | None, str | None]:
+    """Split a command source into (area, profile): ``area:A``, ``profile:P`` or ``area:A>profile:P``."""
+    if isinstance(source, str) and source.startswith("area:"):
+        area, _, rest = source[len("area:"):].partition(">")
+        if not rest:
+            return area, None
+        if rest.startswith("profile:"):
+            return area, rest[len("profile:"):]
+    elif isinstance(source, str) and source.startswith("profile:"):
+        return None, source[len("profile:"):]
+    raise RuntimeError(f"Validation plan has an unknown command source: {source!r}.")
+
+
+def _check_sources(
+    path: Path,
+    selected: list[dict[str, Any]],
+    config: dict[str, Any],
+    specs: dict[str, dict[str, Any]],
+) -> None:
+    """Every selected command must come from the place its sources name, as the configuration declares it."""
+    areas = config.get("areas") or {}
+    for item in selected:
+        command = item["command"]
+        sources = item.get("sources")
+        if not isinstance(sources, list) or not sources:
+            raise RuntimeError(f"Validation plan {path} selects a command without a source.")
+        for source in sources:
+            area, owner = parse_source(source)
+            if area is None:
+                declared = True
+            elif area not in areas:
+                declared = False
+            elif owner is None:
+                declared = command in (areas[area].get("commands") or [])
+            else:
+                declared = owner in (areas[area].get("profiles") or [])
+            if declared and owner is not None:
+                declared = owner in specs and command in specs[owner]["commands"]
+            if not declared:
+                raise RuntimeError(
+                    f"Validation plan {path} selects a command that is not declared in the configuration."
+                )
+
+
+def _check_inputs_current(path: Path, plan: dict[str, Any], root: Path) -> None:
+    """A stored plan is valid only for the Git state it was computed from."""
+    inputs = plan.get("inputs")
+    keys = ("base-ref", "base-sha", "head-ref", "head-sha")
+    if not isinstance(inputs, dict) or any(not isinstance(inputs.get(key), str) or not inputs[key] for key in keys):
+        raise RuntimeError(f"Validation plan {path} has no usable Git inputs.")
+    hint = "Run 'validation plan' again."
+    for side in ("base", "head"):
+        current = _resolve(root, inputs[f"{side}-ref"])
+        if current != inputs[f"{side}-sha"]:
+            raise RuntimeError(
+                f"Validation plan {path} is stale: {side} ref '{inputs[f'{side}-ref']}' now resolves to "
+                f"{current[:12]}, not {inputs[f'{side}-sha'][:12]}. {hint}"
+            )
+    if inputs.get("include-worktree"):
+        current_paths, _ = collect_changed_paths(
+            root, base_ref=inputs["base-ref"], head_ref=None, include_worktree=True,
+        )
+        if current_paths != plan.get("changed-paths"):
+            raise RuntimeError(f"Validation plan {path} is stale: the changed files differ from the plan. {hint}")
 
 
 def load_plan_file(path: Path, profile: str, project: Path | None = None) -> dict[str, Any]:
@@ -422,12 +485,8 @@ def load_plan_file(path: Path, profile: str, project: Path | None = None) -> dic
         raise RuntimeError(f"Validation plan {path} has an invalid selected-commands list.")
     if plan.get("status") != ("selected" if selected else "skipped"):
         raise RuntimeError(f"Validation plan {path} has an inconsistent status.")
-    undeclared = [
-        item["command"] for item in selected
-        if item["command"] not in declared_commands(config, validation_profile_specs(root))
-    ]
-    if undeclared:
-        raise RuntimeError(f"Validation plan {path} selects a command that is not declared in the configuration.")
+    _check_sources(path, selected, config, validation_profile_specs(root))
+    _check_inputs_current(path, plan, root)
     return plan
 
 
@@ -471,41 +530,89 @@ def plan_spec(
     plan: dict[str, Any],
     parameters: dict[str, str] | None,
 ) -> tuple[dict[str, Any], dict[str, str] | None]:
-    """Return the profile spec restricted to the plan's commands, with parameters and timeouts remapped."""
+    """Return the planned profile's spec restricted to the plan's commands.
+
+    Each command keeps the run semantics of the place it was selected from. A command
+    from a profile uses that profile's entry, timeout and parameters (the planned
+    profile first when several profiles list it). A command from ``area.commands`` is
+    always required and has no prerequisites, timeout or parameters.
+    """
     spec = specs[profile]
-    commands = [item["command"] for item in plan["selected-commands"]]
-    original: dict[str, int] = {}
-    for position, command in enumerate(spec["commands"], start=1):
-        original.setdefault(command, position)
-    # A command keeps the timeout of the profile that declares it; the planned profile wins.
-    timeout_of: dict[str, float | None] = {}
-    for candidate in [spec, *(other for name, other in specs.items() if name != profile)]:
-        for command, timeout in zip(candidate["commands"], candidate["timeouts"]):
-            timeout_of.setdefault(command, timeout)
-    timeouts = [timeout_of.get(command) for command in commands]
-    entry_of: dict[str, dict[str, Any]] = {}
-    for candidate in [spec, *(other for name, other in specs.items() if name != profile)]:
-        for command, entry in zip(candidate["commands"], candidate["entries"]):
-            entry_of.setdefault(command, entry)
-    entries = [entry_of.get(command, {"required": True, "requires": {}}) for command in commands]
-    kept: dict[str, Any] = {}
-    for name, definition in (spec.get("parameters") or {}).items():
-        targets = definition.get("commands")
-        if not targets:
-            kept[name] = definition
-            continue
-        remapped = [
-            number for number, command in enumerate(commands, start=1)
-            if original.get(command) in {int(target) for target in targets}
-        ]
-        if remapped:
-            kept[name] = {**definition, "commands": remapped}
-    declared = spec.get("parameters") or {}
-    # A value for a parameter dropped with its commands is ignored; unknown names still fail later.
+    commands: list[str] = []
+    entries: list[dict[str, Any]] = []
+    timeouts: list[float | None] = []
+    owners: list[tuple[str | None, int]] = []
+    for item in plan["selected-commands"]:
+        command = item["command"]
+        sources = item.get("sources")
+        if not sources:
+            raise RuntimeError(f"Validation plan selects '{command}' without a source.")
+        parsed = [parse_source(source)[1] for source in sources]
+        profile_sources = [name for name in dict.fromkeys(parsed) if name is not None]
+        owner = profile if profile in profile_sources else (profile_sources[0] if profile_sources else None)
+        entry: dict[str, Any] = {"required": True, "requires": {}}
+        timeout: float | None = None
+        position = -1
+        if owner is not None:
+            if owner not in specs or command not in specs[owner]["commands"]:
+                raise RuntimeError(f"Validation plan selects '{command}' from profile '{owner}', which does not declare it.")
+            position = specs[owner]["commands"].index(command)
+            entry = specs[owner]["entries"][position]
+            timeout = specs[owner]["timeouts"][position]
+        if None in parsed:
+            entry = {"required": True, "requires": {}}
+        commands.append(command)
+        entries.append(entry)
+        timeouts.append(timeout)
+        owners.append((owner, position))
+
+    # A parameter applies only to the commands of the profile that declares it.
+    used = list(dict.fromkeys(owner for owner, _ in owners if owner is not None))
+    kept: dict[str, dict[str, Any]] = {}
+    declared_by: dict[str, str] = {}
+    for name in used:
+        for parameter, definition in (specs[name].get("parameters") or {}).items():
+            targets = {int(target) for target in definition.get("commands") or []}
+            numbers = [
+                number for number, (owner, position) in enumerate(owners, start=1)
+                if owner == name and (not targets or position + 1 in targets)
+            ]
+            if not numbers:
+                continue
+            base = {key: value for key, value in definition.items() if key != "commands"}
+            if parameter in kept:
+                if {key: value for key, value in kept[parameter].items() if key != "commands"} != base:
+                    raise RuntimeError(
+                        f"Parameter '{parameter}' is declared differently by profiles "
+                        f"'{declared_by[parameter]}' and '{name}', which this plan runs together."
+                    )
+                kept[parameter]["commands"] = sorted(set(kept[parameter]["commands"]) | set(numbers))
+            else:
+                kept[parameter] = {**base, "commands": numbers}
+                declared_by[parameter] = name
+    supplied_names = set(parameters or {})
+    for parameter, definition in kept.items():
+        if definition.get("required") and "default" not in definition and parameter not in supplied_names:
+            raise RuntimeError(
+                f"The plan runs commands of profile '{declared_by[parameter]}', which requires parameter "
+                f"'{parameter}'; pass --param {parameter}=VALUE."
+            )
+    # A value for a parameter this plan does not need is ignored; unknown names still fail later.
+    known = {name for other in specs.values() for name in (other.get("parameters") or {})}
     supplied = None if parameters is None else {
-        key: value for key, value in parameters.items() if key in kept or key not in declared
+        key: value for key, value in parameters.items() if key in kept or key not in known
     }
-    return {**spec, "commands": commands, "entries": entries, "parameters": kept, "timeouts": timeouts}, supplied
+    guarded = [profile, *(name for name in used if name != profile)]
+    limits = [specs[name]["output-limit"] for name in guarded if specs[name].get("output-limit")]
+    return {
+        **spec,
+        "commands": commands,
+        "entries": entries,
+        "parameters": kept,
+        "timeouts": timeouts,
+        "clean-tree": any(specs[name].get("clean-tree") for name in guarded),
+        "output-limit": min(limits) if limits else None,
+    }, supplied
 
 
 def write_plan_evidence(project: Path, evidence_id: str, plan: dict[str, Any]) -> str:
