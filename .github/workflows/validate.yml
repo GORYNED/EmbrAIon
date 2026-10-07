@@ -43,12 +43,12 @@ jobs:
         run: python tools/source.py validate
 
       - name: Unit tests
-        run: python tools/source.py test unit
+        run: python tools/source.py test unit --jobs auto
 
       - name: Integration tests
         env:
           EMBRAION_PROJECTION_EVIDENCE_DIR: build/projection-evidence
-        run: python tools/source.py test integration
+        run: python tools/source.py test integration --jobs auto
 
       - name: Security scan
         run: python tools/source.py security scan --path . --fail-on high
@@ -245,10 +245,10 @@ jobs:
         run: python tools/source.py validate
 
       - name: Unit tests
-        run: python tools/source.py test unit
+        run: python tools/source.py test unit --jobs auto
 
       - name: Integration tests
-        run: python tools/source.py test integration
+        run: python tools/source.py test integration --jobs auto
 
       - name: Project resolver E2E
         if: matrix.python == '3.14'

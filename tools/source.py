@@ -37,9 +37,32 @@ def main(argv: list[str] | None = None) -> int:
     os.environ.update(environment)
 
     if arguments[:1] == ["test"]:
-        if len(arguments) != 2 or arguments[1] not in {"unit", "integration"}:
-            raise SystemExit("Usage: python tools/source.py test {unit,integration}")
-        suite = unittest.defaultTestLoader.discover(str(ROOT / "tests" / arguments[1]))
+        usage = "Usage: python tools/source.py test {unit,integration} [--jobs {N,auto}]"
+        options = arguments[1:]
+        jobs = None
+        if len(options) == 3 and options[1] == "--jobs":
+            jobs = options[2]
+            options = options[:1]
+        elif len(options) == 2 and options[1].startswith("--jobs="):
+            jobs = options[1].partition("=")[2]
+            options = options[:1]
+        if len(options) != 1 or options[0] not in {"unit", "integration"}:
+            raise SystemExit(usage)
+        suite_dir = ROOT / "tests" / options[0]
+        if jobs is not None:
+            # The parallel runner is loaded only on request: the default run stays unchanged.
+            tools = str(Path(__file__).resolve().parent)
+            if tools not in sys.path:
+                sys.path.insert(0, tools)
+            import parallel_tests
+
+            try:
+                count = parallel_tests.resolve_jobs(jobs)
+            except ValueError as error:
+                raise SystemExit(f"{error}\n{usage}") from None
+            if count > 1:
+                return parallel_tests.run_parallel(options[0], suite_dir, count)
+        suite = unittest.defaultTestLoader.discover(str(suite_dir))
         return 0 if unittest.TextTestRunner().run(suite).wasSuccessful() else 1
 
     # CLI development is an explicit checkout override; project commands retain
