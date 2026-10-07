@@ -23,8 +23,8 @@ import sys
 import tempfile
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from typing import Callable, Iterable, Iterator, Mapping, Sequence
 import unittest
 
@@ -81,8 +81,9 @@ def count_by_module(suite: unittest.TestSuite) -> dict[str, int]:
     """Count the discovered tests per module, in discovery order."""
     counts: dict[str, int] = {}
     for test in _walk(suite):
-        if type(test).__name__ == "_FailedTest":
-            # A module that fails to import is reported by name; rerunning it reports it again.
+        if type(test).__name__ in ("_FailedTest", "ModuleSkipped"):
+            # A module that fails to import, or skips itself on import, is reported by name
+            # under the loader's own module; rerunning that module reports it again.
             module = test._testMethodName
         else:
             module = type(test).__module__
@@ -125,15 +126,23 @@ def execute_modules(suite_dir: Path, modules: Sequence[str]) -> dict[str, object
     path = str(suite_dir)
     if path not in sys.path:
         sys.path.insert(0, path)
-    suite = unittest.defaultTestLoader.loadTestsFromNames(list(modules))
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    skipped_on_import = 0
+    for module in modules:
+        try:
+            suite.addTests(loader.loadTestsFromName(module))
+        except unittest.SkipTest:
+            # Discovery counts a module that skips itself on import as one skipped test.
+            skipped_on_import += 1
     stream = io.StringIO()
     started = time.perf_counter()
     result = unittest.TextTestRunner(stream=stream).run(suite)
     return {
-        "ran": result.testsRun,
+        "ran": result.testsRun + skipped_on_import,
         "failures": len(result.failures),
         "errors": len(result.errors),
-        "skipped": len(result.skipped),
+        "skipped": len(result.skipped) + skipped_on_import,
         "expected_failures": len(result.expectedFailures),
         "unexpected_successes": len(result.unexpectedSuccesses),
         "seconds": time.perf_counter() - started,
@@ -204,8 +213,13 @@ Launcher = Callable[[int, str], ModuleResult]
 
 
 def run_pool(modules: Sequence[str], jobs: int, launch: Launcher,
-             report: Callable[[ModuleResult], None] | None = None) -> list[ModuleResult]:
-    """Run each module once on a pool of ``jobs`` slots numbered 1..jobs."""
+             report: Callable[[ModuleResult], None] | None = None,
+             on_abort: Callable[[], None] | None = None) -> list[ModuleResult]:
+    """Run each module once on a pool of ``jobs`` slots numbered 1..jobs.
+
+    When a launch raises or the run is interrupted, ``on_abort`` is called and the pool
+    does not wait for the modules still running; pending modules never start.
+    """
     slots: queue.Queue[int] = queue.Queue()
     for slot in range(1, jobs + 1):
         slots.put(slot)
@@ -220,14 +234,25 @@ def run_pool(modules: Sequence[str], jobs: int, launch: Launcher,
             report(result)
         return result
 
-    with ThreadPoolExecutor(max_workers=jobs) as pool:
-        return list(pool.map(task, modules))
+    pool = ThreadPoolExecutor(max_workers=jobs)
+    try:
+        futures = [pool.submit(task, module) for module in modules]
+        for future in as_completed(futures):
+            future.result()  # the first failure ends the run at once, whatever the order
+        results = [future.result() for future in futures]
+    except BaseException:
+        if on_abort is not None:
+            on_abort()
+        pool.shutdown(wait=False, cancel_futures=True)
+        raise
+    pool.shutdown()
+    return results
 
 
 def _launch_process(suite_dir: Path, work: Path, environment: Mapping[str, str],
                     active: set, guard: threading.Lock) -> Launcher:
     def launch(slot: int, module: str) -> ModuleResult:
-        temporary = work / f"slot-{slot}"
+        temporary = work / f"s{slot}"
         temporary.mkdir(exist_ok=True)
         stem = f"{slot}-{module}"
         result_path = work / f"{stem}.json"
@@ -257,7 +282,12 @@ def _launch_process(suite_dir: Path, work: Path, environment: Mapping[str, str],
                                 report=f"Worker exited with status {code} without a result.",
                                 log=_tail(text))
         result = result_from_payload(module, slot, payload)
-        if not result.successful or code:
+        if code:
+            # A worker that exits non-zero is never trusted, even with a written result.
+            result.crashed = True
+            result.report = (f"Worker exited with status {code} after writing a result.\n"
+                             + result.report).strip()
+        if not result.successful:
             result.log = _tail(text)
         return result
 
@@ -283,7 +313,7 @@ def run_parallel(suite_name: str, suite_dir: Path, jobs: int) -> int:
           flush=True)
 
     started = time.perf_counter()
-    work = Path(tempfile.mkdtemp(prefix="embraion-tests-"))
+    work = Path(tempfile.mkdtemp(prefix="et-"))
     active: set = set()
     guard = threading.Lock()
     printed = threading.Lock()
@@ -301,13 +331,12 @@ def run_parallel(suite_name: str, suite_dir: Path, jobs: int) -> int:
     results: list[ModuleResult] = []
     try:
         launch = _launch_process(suite_dir, work, os.environ, active, guard)
-        try:
-            results.extend(run_pool(parallel, jobs, launch, progress))
-        except BaseException:
+        def abort() -> None:
             with guard:
                 for process in list(active):
                     process.kill()
-            raise
+
+        results.extend(run_pool(parallel, jobs, launch, progress, abort))
         for module in pinned:
             try:
                 payload = execute_modules(suite_dir, [module])

@@ -35,6 +35,8 @@ def write_suite(directory: Path, prefix: str) -> None:
         encoding="utf-8",
     )
     (directory / f"{prefix}_broken.py").write_text("raise ImportError('missing dependency')\n", encoding="utf-8")
+    (directory / f"{prefix}_optional.py").write_text(
+        "import unittest\nraise unittest.SkipTest('optional dependency missing')\n", encoding="utf-8")
 
 
 class SuiteFixture(unittest.TestCase):
@@ -75,7 +77,7 @@ class PlanningTests(SuiteFixture):
         directory = self.make_suite("test_plan")
         suite = unittest.defaultTestLoader.discover(str(directory))
         counts = parallel.count_by_module(suite)
-        self.assertEqual({"test_plan_alpha": 3, "test_plan_beta": 3, "test_plan_broken": 1}, counts)
+        self.assertEqual({"test_plan_alpha": 3, "test_plan_beta": 3, "test_plan_broken": 1, "test_plan_optional": 1}, counts)
         self.assertEqual(suite.countTestCases(), sum(counts.values()))
 
     def test_order_is_largest_first_with_name_ties(self) -> None:
@@ -103,9 +105,10 @@ class PlanningTests(SuiteFixture):
 class ExecutionTests(SuiteFixture):
     def test_execute_modules_reports_counts_and_only_failure_details(self) -> None:
         directory = self.make_suite("test_exec")
-        payload = parallel.execute_modules(directory, ["test_exec_alpha", "test_exec_beta", "test_exec_broken"])
+        payload = parallel.execute_modules(directory, ["test_exec_alpha", "test_exec_beta", "test_exec_broken",
+                                                      "test_exec_optional"])
         self.assertEqual(
-            {"ran": 7, "failures": 1, "errors": 2, "skipped": 1, "expected_failures": 0, "unexpected_successes": 0},
+            {"ran": 8, "failures": 1, "errors": 2, "skipped": 2, "expected_failures": 0, "unexpected_successes": 0},
             {key: payload[key] for key in ("ran", "failures", "errors", "skipped", "expected_failures",
                                            "unexpected_successes")},
         )
@@ -220,6 +223,28 @@ class PoolTests(unittest.TestCase):
 
         parallel.run_pool([f"m{index}" for index in range(20)], 4, launch)
         self.assertEqual([], clashes)
+
+    def test_a_failing_launch_aborts_without_waiting_for_running_modules(self) -> None:
+        release = threading.Event()
+        started = threading.Event()
+        aborted: list[bool] = []
+
+        def launch(slot: int, module: str):
+            if module == "bad":
+                started.wait(5)
+                raise RuntimeError("launch failed")
+            started.set()
+            release.wait(10)
+            return parallel.ModuleResult(module=module, slot=slot, ran=1)
+
+        begun = time.perf_counter()
+        try:
+            with self.assertRaises(RuntimeError):
+                parallel.run_pool(["blocked", "bad", "never"], 2, launch, on_abort=lambda: aborted.append(True))
+            self.assertLess(time.perf_counter() - begun, 5)
+            self.assertEqual([True], aborted)
+        finally:
+            release.set()
 
     def test_total_ran_equals_the_sum_of_modules(self) -> None:
         counts = {"a": 5, "b": 7, "c": 1}
