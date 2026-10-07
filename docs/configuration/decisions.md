@@ -26,7 +26,12 @@ triggers:                 # optional; replaces the default trigger when present
     patterns: ['"references"']
   - id: persisted-format
     paths: ["src/storage/format/**"]
+extra-triggers:           # optional; appended to the default or declared triggers
+  - id: public-contract
+    paths: ["src/api/**"]
 ```
+
+`extra-triggers` has the same item shape as `triggers`. It adds triggers to whatever `triggers` resolves to, which is the default trigger when `triggers` is absent, so a project that wants one more rule need not copy the default. Trigger ids must be unique across the default trigger, `triggers` and `extra-triggers`; a duplicate id is an error. Without `extra-triggers`, nothing changes.
 
 A trigger fires for a changed file when all of these hold:
 
