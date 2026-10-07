@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.33.0 - 2026-10-07
+
+### Fixed
+
+- Security and organization scans apply declared roots and ignored/generated file boundaries before reading content or applying scan limits. Scans keep reporting findings in retained evidence rather than changing policy or limits to obtain a pass.
+- Validation fails closed when a command's process container or output drain cannot be confirmed or when a root exits with live contained processes. An enabled clean-tree guard also fails when its baseline or exact HEAD cannot be established. Windows commands enter a kill-on-close Job Object before release; POSIX commands are supervised within their process group. POSIX children that deliberately create a new session remain outside that group.
+
+### Added
+
+- `embraion worktree lfs-preflight --path ... --expected-head ...` verifies a registered feature worktree's exact commit, clean and unlocked state, installed LFS filter, committed LFS attributes, hydrated file hashes, and unchanged state before and after hydration. It accepts an optional remote.
+- `embraion policy show --ref ... --json` reads a strictly validated project policy from one resolved Git commit, allowing consumers to inspect historical policy without their own YAML parser.
+
+### Changed
+
+- Project bootstrap instructions cover first installation, stale launcher upgrade, partial installation repair, and no-op repeat requests through agent-owned steps, including fresh host activation checks.
+
 ## 0.32.0 - 2026-10-07
 
 ### Fixed
