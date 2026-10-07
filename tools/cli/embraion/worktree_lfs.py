@@ -12,6 +12,7 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,8 @@ def lfs_mode(repo: Path | None = None) -> str:
 def _run(args: list[str], cwd: Path, data: bytes | None = None,
          timeout: int = _GIT_TIMEOUT) -> subprocess.CompletedProcess[bytes]:
     environment = child_environment()
+    for name in _GIT_LOCATION_VARIABLES:
+        environment.pop(name, None)
     # Git does not prompt on the terminal for credentials; a credential helper or an
     # askpass program that the user configured can still run.
     environment["GIT_TERMINAL_PROMPT"] = "0"
@@ -138,7 +141,13 @@ def _uses_lfs_attributes(worktree: Path) -> bool:
 
 def _tracked_lfs_files(worktree: Path) -> list[tuple[str, str, int]]:
     """List (path, oid, size) for committed pointer files that an LFS attribute covers."""
-    tree = _git(worktree, "ls-tree", "-r", "-l", "-z", "HEAD")
+    head = _git(worktree, "rev-parse", "--verify", "HEAD")
+    if head.returncode:
+        raise RuntimeError("cannot resolve committed LFS attributes")
+    commit = head.stdout.decode("ascii", "replace").strip()
+    if not _HEAD.fullmatch(commit):
+        raise RuntimeError("cannot resolve committed LFS attributes")
+    tree = _git(worktree, "ls-tree", "-r", "-l", "-z", commit)
     if tree.returncode:
         raise RuntimeError(_safe_reason("cannot list HEAD", tree))
     candidates: list[tuple[str, str]] = []
@@ -151,13 +160,44 @@ def _tracked_lfs_files(worktree: Path) -> list[tuple[str, str, int]]:
             candidates.append((raw_path.decode("utf-8", "surrogateescape"), fields[2].decode("ascii")))
     if not candidates:
         return []
-    attributes = _git(worktree, "check-attr", "-z", "--stdin", "filter",
-                      data=b"".join(path.encode("utf-8", "surrogateescape") + b"\0" for path, _ in candidates))
+    # Git check-attr reads .git/info/attributes even with --source=HEAD. A
+    # sterile bare view and temporary index apply only committed rules.
+    objects = _git(worktree, "rev-parse", "--path-format=absolute", "--git-path", "objects")
+    if objects.returncode:
+        raise RuntimeError("cannot resolve committed LFS attributes")
+    object_path = objects.stdout.decode("utf-8", "surrogateescape").strip()
+    if not Path(object_path).is_dir() or "\n" in object_path:
+        raise RuntimeError("cannot resolve committed LFS attributes")
+    with tempfile.TemporaryDirectory(prefix="embraion-lfs-attributes-") as scratch:
+        bare = Path(scratch) / "repository.git"
+        empty_template = Path(scratch) / "empty-template"
+        empty_template.mkdir()
+        init_args = ["git", "init", "--bare", "-q", f"--template={empty_template}"]
+        if len(commit) == 64:
+            init_args.append("--object-format=sha256")
+        init = _run([*init_args, str(bare)], worktree)
+        if init.returncode:
+            raise RuntimeError("cannot initialize committed LFS attribute view")
+        (bare / "objects" / "info" / "alternates").write_bytes(os.fsencode(object_path) + b"\n")
+        indexed = _run(["git", "-C", str(bare), "read-tree", commit], bare)
+        if indexed.returncode:
+            raise RuntimeError("cannot read committed LFS attribute tree")
+        attributes = _run(
+            ["git", "-c", f"core.attributesFile={os.devnull}", "-C", str(bare),
+             "check-attr", "--cached", "-z", "--stdin", "filter"],
+            bare, data=b"".join(path.encode("utf-8", "surrogateescape") + b"\0"
+                                for path, _ in candidates),
+        )
     if attributes.returncode:
         raise RuntimeError(_safe_reason("cannot read attributes", attributes))
     parts = attributes.stdout.split(b"\0")
-    lfs_paths = {parts[index].decode("utf-8", "surrogateescape")
-                 for index in range(0, len(parts) - 2, 3) if parts[index + 2] == b"lfs"}
+    if (len(parts) != 3 * len(candidates) + 1 or parts[-1] != b""
+            or any(parts[3 * index] != path.encode("utf-8", "surrogateescape")
+                   or parts[3 * index + 1] != b"filter"
+                   for index, (path, _) in enumerate(candidates))):
+        raise RuntimeError("incomplete committed LFS attribute inventory")
+    lfs_paths = {path for index, (path, _) in enumerate(candidates)
+                 if parts[3 * index + 2] == b"lfs"}
     covered = [(path, blob) for path, blob in candidates if path in lfs_paths]
     if not covered:
         return []
@@ -343,6 +383,13 @@ def _preflight_state(worktree: Path, expected_head: str,
         raise ValueError("worktree index lock state could not be read")
     if Path(lock.stdout.decode("utf-8", "surrogateescape").strip()).exists():
         raise ValueError("worktree index is locked")
+    index_flags = _git(worktree, "--no-optional-locks", "ls-files", "-v", "-z")
+    if index_flags.returncode:
+        raise ValueError("worktree index flags could not be read")
+    if any(entry and entry[:2] != b"H " for entry in index_flags.stdout.split(b"\0")):
+        # skip-worktree may hide an absent LFS file, and assume-unchanged may
+        # hide local edits from both status and diff. Neither is clean proof.
+        raise ValueError("worktree has hidden or skipped index entries")
     status = _git(worktree, "--no-optional-locks", "-c", "core.fsmonitor=false", "status",
                   "--porcelain=v1", "-z", "--untracked-files=all")
     if status.returncode:

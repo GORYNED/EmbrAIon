@@ -371,6 +371,25 @@ class HydrationDetectionTests(unittest.TestCase):
         self.assertEqual("failed", result["state"])
         self.assertIn("overridden", result["reason"])
 
+    def test_preflight_rejects_assume_unchanged_and_skipped_index_entries(self) -> None:
+        target, head = self._preflight_worktree()
+        git(target, "update-index", "--assume-unchanged", ".gitattributes")
+        (target / ".gitattributes").write_text("*.bin -filter\n", encoding="utf-8")
+        self.assertIn("hidden or skipped", self.preflight(target, head)["reason"])
+        git(target, "update-index", "--no-assume-unchanged", ".gitattributes")
+        (target / ".gitattributes").write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n", encoding="utf-8")
+        git(target, "update-index", "--skip-worktree", "assets/model.bin")
+        (target / "assets/model.bin").unlink()
+        self.assertIn("hidden or skipped", self.preflight(target, head)["reason"])
+
+    def test_committed_attributes_ignore_info_override_for_all_pointers(self) -> None:
+        repo = make_repo(self.sandbox, {
+            "assets/one.bin": pointer(b"one"), "assets/two.bin": pointer(b"two"),
+        }, "*.bin filter=lfs -text\n")
+        (repo / ".git/info/attributes").write_text("assets/two.bin -filter\n", encoding="utf-8")
+        self.assertEqual({"assets/one.bin", "assets/two.bin"},
+                         {path for path, _, _ in worktree_lfs._tracked_lfs_files(repo)})
+
     def test_preflight_rejects_unregistered_worktree(self) -> None:
         target, head = self._preflight_worktree()
         with patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
