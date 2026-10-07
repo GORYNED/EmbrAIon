@@ -418,11 +418,10 @@ def _cmd_projection_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_policy_show(args: argparse.Namespace) -> int:
-    project = project_root(Path(args.path) if args.path else None)
-    if args.ref:
+    if args.ref is not None:
         from .policy import read_policy_config_at_ref
 
-        result = read_policy_config_at_ref(project, args.ref)
+        result = read_policy_config_at_ref(Path(args.path) if args.path else Path.cwd(), args.ref)
         if args.json:
             _print_json(result)
         else:
@@ -430,6 +429,7 @@ def _cmd_policy_show(args: argparse.Namespace) -> int:
             for category, patterns in result["policy"].get("sources", {}).items():
                 print(f"Sources {category}: {len(patterns)} pattern(s)")
         return 0
+    project = project_root(Path(args.path) if args.path else None)
     policy = effective_policy(project)
     if args.json:
         _print_json(policy)

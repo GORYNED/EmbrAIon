@@ -6,7 +6,7 @@ import os
 import subprocess
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -84,6 +84,39 @@ class PolicyRefTests(unittest.TestCase):
         invalid = self.commit()
         with self.assertRaisesRegex(RuntimeError, "policy schema"):
             read_policy_config_at_ref(self.root, invalid)
+
+    def test_git_location_environment_cannot_redirect_project_policy(self) -> None:
+        self.write_policy(["Assets/Actual/*.cs"])
+        expected = self.commit()
+        other = self.root / "other"
+        other.mkdir()
+        subprocess.run(["git", "-C", str(other), "init", "-q"], check=True, env=self.env)
+        subprocess.run(["git", "-C", str(other), "config", "user.name", "Fixture"], check=True, env=self.env)
+        subprocess.run(["git", "-C", str(other), "config", "user.email", "fixture@example.invalid"], check=True, env=self.env)
+        (other / ".embraion").mkdir()
+        (other / ".embraion/policy.yaml").write_text(
+            (self.root / ".embraion/policy.yaml").read_text(encoding="utf-8").replace(
+                "Assets/Actual/*.cs", "Assets/Other/*.cs"), encoding="utf-8")
+        subprocess.run(["git", "-C", str(other), "add", "-A"], check=True, env=self.env)
+        subprocess.run(["git", "-C", str(other), "commit", "-qm", "other"], check=True, env=self.env)
+        with patch.dict(os.environ, {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other)}):
+            result = read_policy_config_at_ref(self.root, "HEAD")
+            self.assertEqual(expected, result["commit"])
+            self.assertEqual(["Assets/Actual/*.cs"], result["policy"]["sources"]["protected"])
+            output = io.StringIO()
+            with redirect_stdout(output), patch("embraion.cli.resolve_project_runtime", return_value=None):
+                self.assertEqual(0, main(["policy", "show", "--path", str(self.root), "--ref", "HEAD", "--json"]))
+            self.assertEqual(result, json.loads(output.getvalue()))
+
+    def test_explicit_empty_ref_fails_closed(self) -> None:
+        self.write_policy([])
+        self.commit()
+        output = io.StringIO()
+        error = io.StringIO()
+        with redirect_stdout(output), redirect_stderr(error), patch("embraion.cli.resolve_project_runtime", return_value=None):
+            self.assertEqual(2, main(["policy", "show", "--path", str(self.root), "--ref", "", "--json"]))
+        self.assertEqual("", output.getvalue())
+        self.assertIn("nonempty Git commit ref", error.getvalue())
 
     def test_symlinked_policy_is_not_read(self) -> None:
         outside = self.root / "outside.yaml"

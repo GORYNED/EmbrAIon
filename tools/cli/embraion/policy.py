@@ -185,13 +185,27 @@ def read_policy_config_at_ref(project: Path, ref: str) -> dict[str, Any]:
     The working tree and projection ledgers do not affect this result. Missing,
     symlinked, malformed or ambiguous policy entries fail closed.
     """
-    root = project_root(project)
     if not ref or "\x00" in ref or "\n" in ref or "\r" in ref:
         raise RuntimeError("A nonempty Git commit ref is required.")
+    # Git's repository-location variables take precedence over -C. A caller's
+    # environment must not change which project's committed policy is returned.
+    git_location_variables = {
+        "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+        "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_NAMESPACE", "GIT_PREFIX",
+    }
+    environment = child_environment()
+    for name in git_location_variables:
+        environment.pop(name, None)
+    requested = project.resolve()
 
     def git(*args: str) -> subprocess.CompletedProcess[bytes]:
-        return subprocess.run(["git", "-C", str(root), *args], capture_output=True,
-                              env=child_environment(), check=False)
+        return subprocess.run(["git", "-C", str(requested), *args], capture_output=True,
+                              env=environment, check=False)
+
+    repository = git("rev-parse", "--show-toplevel")
+    if repository.returncode:
+        raise RuntimeError("Cannot find the requested project's Git repository.")
 
     resolved = git("rev-parse", "--verify", "--quiet", "--end-of-options", f"{ref}^{{commit}}")
     if resolved.returncode or not re.fullmatch(rb"[0-9a-f]{40}|[0-9a-f]{64}", resolved.stdout.strip()):
