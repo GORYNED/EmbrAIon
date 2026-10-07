@@ -175,8 +175,8 @@ class CoreSkillPackageTests(unittest.TestCase):
                     with self.subTest(host=host, skill=skill):
                         matches = [path for path in output.rglob("SKILL.md") if path.parent.name == skill]
                         self.assertEqual(1, len(matches))
-                        canonical = (self.candidate / "core/skills" / skill / "SKILL.md").read_text()
-                        self.assertIn(canonical.strip(), matches[0].read_text())
+                        canonical = (self.candidate / "core/skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+                        self.assertIn(canonical.strip(), matches[0].read_text(encoding="utf-8"))
 
     def test_scenario_references_and_calibrated_oracle_boundaries(self) -> None:
         scenarios = self.package["registered-scenarios"]
