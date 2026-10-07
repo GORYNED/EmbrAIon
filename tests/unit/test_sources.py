@@ -231,5 +231,79 @@ class ValidateWiringTests(unittest.TestCase):
         self.assertIn("sources-invalid", {item["code"] for item in issues if item["severity"] == "error"})
 
 
+class SourcesCommandTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name) / "consumer"
+        self.project.mkdir()
+        init_project(self.project, name="Consumer")
+        write(self.project / ".embraion" / "sources.yaml", {"schema-version": 1, "sources": [
+            entry("App", role="canonical-code", write="workspace-write", description="Main code"),
+            entry("Docs")]})
+        self.checkout = Path(temporary.name) / LOCAL_PATH_MARKER / "docs"
+        self.checkout.mkdir(parents=True)
+
+    def run_cli(self, *arguments: str) -> tuple[int, str, str]:
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+            code = main(["sources", *arguments, "--path", str(self.project)])
+        return code, stdout.getvalue(), stderr.getvalue()
+
+    def test_list_json_and_text(self) -> None:
+        code, out, _ = self.run_cli("list", "--json")
+        data = json.loads(out)
+        self.assertEqual((0, 2), (code, data["count"]))
+        self.assertEqual("Main code", data["sources"][0]["description"])
+        code, out, _ = self.run_cli("list")
+        self.assertEqual(0, code)
+        self.assertIn("canonical-code", out)
+
+    def test_status_without_a_local_file_is_all_unset(self) -> None:
+        code, out, _ = self.run_cli("status", "--json")
+        self.assertEqual(0, code)
+        self.assertEqual({"unset"}, {row["availability"] for row in json.loads(out)["sources"]})
+
+    def test_set_roundtrip_never_echoes_the_path(self) -> None:
+        outputs = []
+        code, out, err = self.run_cli("set", "Docs", str(self.checkout), "--json")
+        outputs += [out, err]
+        self.assertEqual((0, {"id": "Docs", "recorded": True}), (code, json.loads(out)))
+        for flags in ((), ("--json",)):
+            code, out, err = self.run_cli("status", *flags)
+            outputs += [out, err]
+            self.assertEqual(0, code)
+        code, out, _ = self.run_cli("status", "--json")
+        self.assertEqual({"App": "unset", "Docs": "available"},
+                         {row["id"]: row["availability"] for row in json.loads(out)["sources"]})
+        code, out, err = self.run_cli("set", "Docs", str(self.checkout))
+        outputs += [out, err]
+        code, out, err = self.run_cli("set", "Docs", str(self.checkout / "absent"))
+        outputs += [out, err]
+        self.assertEqual(2, code)
+        self.assertNotIn(LOCAL_PATH_MARKER, "".join(outputs))
+        local = self.project / ".embraion" / "state" / "sources-local.yaml"
+        self.assertIn(LOCAL_PATH_MARKER, local.read_text(encoding="utf-8"))
+
+    def test_set_refuses_unknown_ids(self) -> None:
+        code, _, err = self.run_cli("set", "Nope", str(self.checkout))
+        self.assertEqual(2, code)
+        self.assertIn("Unknown source id", err)
+
+    def test_commands_need_a_registry(self) -> None:
+        (self.project / ".embraion" / "sources.yaml").unlink()
+        for command in ("list", "status"):
+            code, _, err = self.run_cli(command)
+            self.assertEqual(2, code)
+            self.assertIn("Missing .embraion/sources.yaml", err)
+
+    def test_invalid_registry_is_refused(self) -> None:
+        write(self.project / ".embraion" / "sources.yaml", {"schema-version": 1, "sources": [entry("App", role="x")]})
+        code, _, err = self.run_cli("status")
+        self.assertEqual(2, code)
+        self.assertIn("Invalid .embraion/sources.yaml", err)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -139,6 +139,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
         "  capabilities Diagnose declared external and selected built-in capabilities",
+        "  sources    List the project source registry or show local availability",
         "  organization Check configured namespace, assembly, and Unity metadata rules",
         "  decisions  Check that architectural changes carry a decision record or waiver",
         "  adr        Create the next numbered architecture decision record",
@@ -262,6 +263,36 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         print("PASS: no validation issues.")
 
     return 1 if any(item["severity"] == "error" for item in issues) else 0
+
+
+def _cmd_sources(args: argparse.Namespace) -> int:
+    from .sources import list_sources, set_local_path, source_status
+
+    root = project_root(Path(args.path))
+    command = args.sources_command
+    if command == "set":
+        source_id = set_local_path(root, args.id, args.source_path)
+        if args.json:
+            _print_json({"id": source_id, "recorded": True})
+        else:
+            print(f"Recorded the local path for source '{source_id}'.")
+        return 0
+    if command == "list":
+        rows = list_sources(root)
+        if args.json:
+            _print_json({"sources": rows, "count": len(rows)})
+            return 0
+        for row in rows:
+            suffix = f"  {row['description']}" if row.get("description") else ""
+            print(f"{row['id']:24} {row['role']:18} {row['write']:16}{suffix}")
+        return 0
+    rows = source_status(root)
+    if args.json:
+        _print_json({"sources": rows, "count": len(rows)})
+        return 0
+    for row in rows:
+        print(f"{row['id']:24} {row['role']:18} {row['write']:16} {row['availability']}")
+    return 0
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
@@ -2706,6 +2737,20 @@ def build_parser() -> argparse.ArgumentParser:
                                     help="Fail instead of skipping when the organization configuration is missing")
     organization_check.add_argument("--json", action="store_true")
     organization_check.set_defaults(func=_cmd_organization_check)
+
+    sources_parser = sub.add_parser("sources", help="Inspect the project source registry and local availability")
+    sources_sub = sources_parser.add_subparsers(dest="sources_command", required=True)
+    sources_list = sources_sub.add_parser("list", help="List the sources declared in .embraion/sources.yaml")
+    sources_status = sources_sub.add_parser(
+        "status", help="Show each source's role, write policy, and local availability (available, missing, unset)")
+    sources_set = sources_sub.add_parser(
+        "set", help="Record the path of a declared source on this machine in ignored local state")
+    sources_set.add_argument("id")
+    sources_set.add_argument("source_path", metavar="path")
+    for sources_command in (sources_list, sources_status, sources_set):
+        sources_command.add_argument("--path", default=".", help="Project root (default: current directory)")
+        sources_command.add_argument("--json", action="store_true")
+        sources_command.set_defaults(func=_cmd_sources)
 
     decisions_parser = sub.add_parser("decisions", help="Check that architectural changes carry a decision record")
     decisions_sub = decisions_parser.add_subparsers(dest="decisions_command", required=True)
