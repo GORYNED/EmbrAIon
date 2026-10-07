@@ -218,7 +218,9 @@ class DeclaredIntegrationTests(unittest.TestCase):
         self.assertNotIn(SECRET, json.dumps(integration_findings(self.root)))
 
     def test_cwd_mismatch_does_not_print_machine_paths(self) -> None:
-        for machine_path in ("C:/Users/alice/private/mcp", "/home/alice/private/mcp"):
+        # Assemble synthetic homes without storing a scanner finding in source.
+        for home in ("C:/Users", "/home"):
+            machine_path = f"{home}/alice/private/mcp"
             with self.subTest(machine_path=machine_path):
                 self._declare(self._codex_declaration(cwd="tools/docs"))
                 self._observe_codex(

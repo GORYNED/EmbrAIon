@@ -564,6 +564,11 @@ def plan_spec(
     entries: list[dict[str, Any]] = []
     timeouts: list[float | None] = []
     owners: list[tuple[str | None, int]] = []
+    # Profile safeguards apply to the entire planned run, independently of the
+    # owner that supplies each command's timeout and parameters.
+    guarded = [profile]
+    if plan.get("escalation") is not None and FULL_PROFILE not in guarded:
+        guarded.append(FULL_PROFILE)
     for item in plan["selected-commands"]:
         command = item["command"]
         sources = item.get("sources")
@@ -571,6 +576,11 @@ def plan_spec(
             raise RuntimeError(f"Validation plan selects '{command}' without a source.")
         parsed = [parse_source(source)[1] for source in sources]
         profile_sources = [name for name in dict.fromkeys(parsed) if name is not None]
+        for name in profile_sources:
+            if name not in specs or command not in specs[name]["commands"]:
+                raise RuntimeError(f"Validation plan selects '{command}' from profile '{name}', which does not declare it.")
+            if name not in guarded:
+                guarded.append(name)
         owner = profile if profile in profile_sources else (profile_sources[0] if profile_sources else None)
         entry: dict[str, Any] = {"required": True, "requires": {}}
         timeout: float | None = None
@@ -626,7 +636,6 @@ def plan_spec(
     supplied = None if parameters is None else {
         key: value for key, value in parameters.items() if key in kept or key not in known
     }
-    guarded = [profile, *(name for name in used if name != profile)]
     limits = [specs[name]["output-limit"] for name in guarded if specs[name].get("output-limit")]
     return {
         **spec,

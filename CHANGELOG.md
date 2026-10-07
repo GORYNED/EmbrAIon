@@ -6,7 +6,7 @@
 
 ### Fixed
 
-- Stored validation plans must match the complete recomputed selection and provenance. Deduplicated area commands retain their documented absence of profile timeouts and parameters.
+- Stored validation plans must match the complete recomputed selection and provenance. Deduplicated area commands retain their documented absence of profile timeouts and parameters; every selected or escalated profile still contributes its clean-tree and output-limit safeguards.
 - Implicit protected-source mode selection rejects schema-invalid merge-base enforcement blocks. Validation rejects dangling source-registry symlinks, and Codex working-directory drift findings omit local path values.
 
 ### Added

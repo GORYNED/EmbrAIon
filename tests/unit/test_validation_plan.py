@@ -689,6 +689,32 @@ class PlanRunSemanticsTests(RepoCase, unittest.TestCase):
         self.assertIn("generated.txt", record["clean-tree"]["changed-paths"])
         self.assertEqual(2048, record["output-limit-bytes"])
 
+    def test_profile_safeguards_survive_area_command_deduplication_and_empty_escalation(self) -> None:
+        for profile_sources in ("full", "full-and-affected", "empty-full", "profiles-only"):
+            with self.subTest(profile_sources=profile_sources):
+                config = run_config()
+                command = f'"{sys.executable}" -c "open(\'generated.txt\', \'w\').write(\'x\'); print(\'x\' * 5000)"'
+                config["areas"]["library"]["commands"] = [command]
+                config["profiles"]["full"] = {
+                    "commands": [] if profile_sources == "empty-full" else [command],
+                    "clean-tree": True, "output-limit-bytes": 2048,
+                }
+                if profile_sources in ("full-and-affected", "profiles-only"):
+                    config["profiles"]["affected"] = {"commands": [command]}
+                    config["areas"]["library"]["profiles"] = ["affected"]
+                if profile_sources == "profiles-only":
+                    del config["areas"]["library"]["commands"]
+                repo = self._repo(config)
+                self._change(repo, "src/schema/model.sql")
+                plan = resolve_run_plan("affected", project=repo, base_ref="main")
+                record = run_validation_profile("affected", project=repo, plan=plan)
+                self.assertEqual("failed", record["status"])
+                self.assertEqual("failed", record["clean-tree"]["status"])
+                self.assertIn("generated.txt", record["clean-tree"]["changed-paths"])
+                self.assertEqual(2048, record["output-limit-bytes"])
+                self.assertIsNone(record["commands"][0]["timeout-seconds"])
+                self.assertTrue(record["commands"][0]["output"]["stdout"]["log-truncated"])
+
     def test_fail_fast_stops_a_planned_run_on_a_required_failure(self) -> None:
         config = run_config()
         config["profiles"]["full"] = {"commands": [failing("first"), marker("lint")]}
