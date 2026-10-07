@@ -113,7 +113,12 @@ class ClaudeNativeTests(unittest.TestCase):
         path.unlink()
         outside = self.project / "outside.yaml"
         outside.write_text("bindings: {}\nassignments: []\n", encoding="utf-8")
-        path.symlink_to(outside)
+        try:
+            path.symlink_to(outside)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         with self.assertRaisesRegex(RuntimeError, "nested symlink"):
             read_config(self.project)
 
@@ -183,7 +188,12 @@ class ClaudeNativeTests(unittest.TestCase):
         evidence.unlink()
         external = self.project / "unrelated.txt"
         external.write_text("preserve", encoding="utf-8")
-        evidence.symlink_to(external)
+        try:
+            evidence.symlink_to(external)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         self.assertEqual("unverified", observe(self.hook(entry["name"]), self.project)["status"])
         self.assertEqual("preserve", external.read_text())
         evidence.unlink()
@@ -284,6 +294,14 @@ class ClaudeNativeTests(unittest.TestCase):
         # Match project_root's canonical path (macOS /var resolves to /private/var).
         state = self.project.resolve() / ".embraion/state"
         state.mkdir(parents=True, exist_ok=True)
+        probe = state / "symlink-probe"
+        try:
+            probe.symlink_to(self.project / "symlink-target")
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
+        probe.unlink()
         real_open = os.open
         nofollow = getattr(os, "O_NOFOLLOW", 0)
         for filename, reason, original in (

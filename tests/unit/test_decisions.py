@@ -376,7 +376,12 @@ class ScaffoldTests(DecisionFixture):
         folder = self.root / "docs/architecture/decisions"
         folder.mkdir(parents=True)
         (self.root / "elsewhere.md").write_text("| a | b |\n", encoding="utf-8")
-        (folder / "README.md").symlink_to(self.root / "elsewhere.md")
+        try:
+            (folder / "README.md").symlink_to(self.root / "elsewhere.md")
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         with self.assertRaises(RuntimeError):
             self.new()
 

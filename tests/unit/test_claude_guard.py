@@ -69,7 +69,12 @@ class ClaudeGuardTests(unittest.TestCase):
         self.assertEqual({}, guard(self.payload("Read", {"file_path": "docs/safe.txt"}), self.project))
         self.assert_denied(self.payload("Read", {"file_path": "/etc/passwd"}))
         with tempfile.TemporaryDirectory() as outside:
-            (self.project / "docs/outside").symlink_to(Path(outside), target_is_directory=True)
+            try:
+                (self.project / "docs/outside").symlink_to(Path(outside), target_is_directory=True)
+            except OSError as error:
+                if getattr(error, "winerror", None) != 1314:
+                    raise
+                self.skipTest("Windows symlink privilege unavailable")
             self.assert_denied(self.payload("Read", {"file_path": "docs/outside/private.txt"}))
         self.assert_denied(self.payload("Read", {"file_path": "../secret/key.txt"}))
 
@@ -117,7 +122,12 @@ class ClaudeGuardTests(unittest.TestCase):
         self.assertEqual({}, guard(self.payload("Glob", {"pattern": ".codex/**/*.toml"}),
                                     self.project))
         with tempfile.TemporaryDirectory() as outside:
-            (self.project / "docs/outside").symlink_to(Path(outside), target_is_directory=True)
+            try:
+                (self.project / "docs/outside").symlink_to(Path(outside), target_is_directory=True)
+            except OSError as error:
+                if getattr(error, "winerror", None) != 1314:
+                    raise
+                self.skipTest("Windows symlink privilege unavailable")
             self.assert_denied(self.payload("Grep", {"pattern": "x", "path": "docs/outside"}))
 
     def test_only_exact_scoped_read_identity_is_guarded_and_stale_is_denied(self) -> None:

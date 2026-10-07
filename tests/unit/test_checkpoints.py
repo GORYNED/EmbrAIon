@@ -87,7 +87,12 @@ class CheckpointTests(unittest.TestCase):
         private = self.root / "private"
         private.mkdir()
         (private / "secret").write_text("token=" + "not-a-real-secret-" * 2)
-        (self.root / "linked").symlink_to(private, target_is_directory=True)
+        try:
+            (self.root / "linked").symlink_to(private, target_is_directory=True)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         with self.assertRaises(RuntimeError):
             create_checkpoint("cp1", task_id="T1", phase="planning", acceptance_path="linked/secret",
                               project=self.root)
