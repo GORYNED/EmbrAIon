@@ -27,6 +27,7 @@
 ### Fixed
 
 - Cross-platform tests construct quoted Git paths in the index without changing repository configuration, and tolerate Git maintenance removing a lock during test cleanup on Python 3.11.
+- Protected-source mode selection fails closed when the merge base cannot be proven or its existing policy is unreadable or malformed, preventing a policy downgrade to `name`. A proven legacy base without a policy or mode keeps the default; the explicit CLI override remains supported. Implicit mode selection now requires full Git history even for `name`.
 
 ## 0.31.0 - 2026-10-07
 

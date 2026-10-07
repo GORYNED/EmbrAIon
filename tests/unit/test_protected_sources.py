@@ -543,7 +543,7 @@ class EnforcementWiringTests(ProtectedSourcesTestCase):
         check = self.protected_check(record)
         self.assertEqual({"id", "status", "changed-paths"}, set(check))
 
-    def test_unusable_base_policy_leaves_the_default_mode_alone(self) -> None:
+    def test_proven_base_without_a_legacy_policy_keeps_the_default_mode(self) -> None:
         project, _ = self.make_repo(mode=None)
         self.enable_validation(project)
         self.git(project, "rm", "-q", ".embraion/policy.yaml")
@@ -552,6 +552,33 @@ class EnforcementWiringTests(ProtectedSourcesTestCase):
         self.commit(project, "policy back")
         record = check_enforcement(base_ref=no_policy, project=project)
         self.assertEqual({"id", "status", "changed-paths"}, set(self.protected_check(record)))
+
+    def test_shallow_clone_cannot_downgrade_the_base_policy(self) -> None:
+        project, base = self.make_repo()
+        self.enable_validation(project)
+        self.set_policy(project, [], mode=None)
+        self.commit(project, "drop protection and the option")
+        with tempfile.TemporaryDirectory() as temporary:
+            clone = Path(temporary) / "clone"
+            self.git(Path(temporary), "clone", "-q", "--depth", "2",
+                     project.resolve().as_uri(), str(clone))
+            self.assertEqual("true", self.git(clone, "rev-parse", "--is-shallow-repository"))
+            with self.assertRaisesRegex(RuntimeError, "shallow"):
+                check_enforcement(base_ref=base, project=clone)
+            # A deliberate operator override remains supported.
+            record = check_enforcement(base_ref=base, project=clone, protected_sources="name")
+            self.assertEqual("passed", self.protected_check(record)["status"])
+
+    def test_malformed_existing_base_policy_cannot_select_the_default_mode(self) -> None:
+        project, _ = self.make_repo(mode=None)
+        self.enable_validation(project)
+        policy = read_yaml(project / ".embraion/policy.yaml")
+        self.write(project, ".embraion/policy.yaml", "enforcement: [\n")
+        malformed = self.commit(project, "malformed policy")
+        write_yaml(project / ".embraion/policy.yaml", policy)
+        self.commit(project, "restore policy")
+        with self.assertRaisesRegex(RuntimeError, "cannot be parsed"):
+            check_enforcement(base_ref=malformed, project=project)
 
     def test_unknown_mode_is_rejected(self) -> None:
         project, base = self.make_repo()

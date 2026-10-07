@@ -112,6 +112,8 @@ The default is `name`, which keeps the behavior described above. Any other value
 
 The mode is also read from the policy at the merge base, and the stricter mode wins (`base-tree` is stricter than `name`). So once the base branch has `protected-sources: base-tree`, a change cannot turn it off by editing the policy. The first pull request that enables the mode relies on the policy at HEAD, because the base does not have the key yet. From the next pull request on, the base pins it. The evidence record then shows `mode-source: merge-base-policy` when only the base policy asked for it. A flag still overrides both, including `--protected-sources name`.
 
+Without an explicit mode flag, an unprovable merge base or an unreadable or malformed existing base policy stops the gate before the weaker `name` mode can be selected. This includes shallow clones; fetch the full history. A proven legacy base with no policy file or mode still uses `name`.
+
 In `base-tree` mode the gate does this:
 
 1. It finds the merge base with `git merge-base <base-ref> HEAD`.

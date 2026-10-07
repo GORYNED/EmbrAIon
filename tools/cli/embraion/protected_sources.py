@@ -92,17 +92,29 @@ def _base_policy(root: Path, merge_base: str) -> dict[str, Any]:
 
 
 def base_policy_mode(root: Path, base_ref: str) -> str | None:
-    """Return `enforcement.protected-sources` from the policy at the merge base, if usable.
+    """Read the proven base mode; only a missing legacy policy or mode returns None.
 
-    Any problem returns None: the default mode must not start failing because of this lookup.
+    An unprovable base or malformed existing policy must not silently select the weaker mode.
     """
     try:
-        data = _base_policy(root, _merge_base(root, base_ref))
-    except _Failure:
-        return None
-    enforcement = data.get("enforcement")
-    mode = enforcement.get("protected-sources") if isinstance(enforcement, dict) else None
-    return mode if mode in PROTECTED_SOURCE_MODES else None
+        merge_base = _merge_base(root, base_ref)
+        entry = _git(root, "ls-tree", "-z", merge_base, "--", f"./{_POLICY_PATH}")
+        if entry.returncode != 0:
+            raise _Failure("Cannot inspect the policy entry at the merge base.")
+        if not entry.stdout:
+            return None
+        data = _base_policy(root, merge_base)
+        enforcement = data.get("enforcement")
+        if enforcement is None:
+            return None
+        if not isinstance(enforcement, dict):
+            raise _Failure("The policy at the merge base has an unparsable 'enforcement' block.")
+        mode = enforcement.get("protected-sources")
+        if mode is not None and mode not in PROTECTED_SOURCE_MODES:
+            raise _Failure("The policy at the merge base has an unknown protected-sources mode.")
+        return mode
+    except _Failure as error:
+        raise RuntimeError(f"Cannot determine the protected-sources mode: {error}") from error
 
 
 def _base_protected_list(root: Path, merge_base: str) -> list[str]:

@@ -1,6 +1,6 @@
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.31.0
+  version: 0.32.0
 
 project:
   name: MinimalReference
