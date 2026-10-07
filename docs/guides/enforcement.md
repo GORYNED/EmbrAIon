@@ -102,13 +102,15 @@ enforcement:
   protected-sources: base-tree
 ```
 
-Or pin it for one run, independent of the checked-out policy:
+Or pin it for one run. The flag wins over every policy:
 
 ```bash
 embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
 
 The default is `name`, which keeps the behavior described above. Any other value is an error.
+
+The mode is also read from the policy at the merge base, and the stricter mode wins (`base-tree` is stricter than `name`). So once the base branch has `protected-sources: base-tree`, a change cannot turn it off by editing the policy. The first pull request that enables the mode relies on the policy at HEAD, because the base does not have the key yet. From the next pull request on, the base pins it. The evidence record then shows `mode-source: merge-base-policy` when only the base policy asked for it. A flag still overrides both, including `--protected-sources name`.
 
 In `base-tree` mode the gate does this:
 
@@ -123,29 +125,34 @@ Any modification, addition, or deletion is a violation. There is one exception: 
 
 - the entry has the form `<literal-directory>/**`;
 - nothing is left under the old directory;
+- the new location is new: it did not exist at the merge base, so a directory that already had an identical copy elsewhere cannot turn a deletion into a move;
 - the tree ID at the new location is identical, so every byte, name, and mode matches;
 - every file at the new location is covered by the head policy list.
 
 The check is all-or-nothing. A partial move, a move with one changed byte, or a move to an unprotected location is a violation. A relocated entry may leave the head list because its new location must be listed.
 
+Overlapping entries need care. If a moved directory is also matched by another entry that is not of the form `<literal-directory>/**` (for example `**/*.dll`), that other entry sees its files disappear from the old path and appear at the new one. It reports them as changed, so the move fails. Avoid such overlaps, or do not move that directory.
+
 Uncommitted edits to protected paths are reported by name, because they are not in HEAD. Commit first.
+
+Symlinks and Git submodule entries (gitlinks) are compared by their object IDs like files. Paths are read with NUL-separated Git output, so spaces, quotes, and non-ASCII characters are safe.
 
 The check fails closed. It never passes when it cannot decide. These cases fail with a message:
 
 | Message starts with | Cause |
 | --- | --- |
 | `Cannot resolve the base ref` | The base ref is not a commit. |
-| `No single merge base exists` | There is no merge base. For a shallow clone the message asks for the full history, for example `fetch-depth: 0` in CI. |
-| `The merge base is a shallow-history boundary` | The merge base is the cut-off of a shallow clone, so the real one is unknown. |
+| `The repository is shallow` | The clone is shallow. A merge base found in a shallow clone may be older than the real one, so the check never trusts it. Fetch the full history, for example `fetch-depth: 0` in CI. |
+| `No single merge base exists` | There is no merge base, or the history has several equally good ones (a criss-cross merge). Merge the base ref into the branch first. |
 | `The policy at the merge base is unreadable` | `.embraion/policy.yaml` is not committed at the merge base. |
 | `The policy at the merge base cannot be parsed` / `... has an unparsable ...` | The base policy is not valid YAML, or `sources.protected` is not a list of non-empty strings. |
 | `Protected entry '<entry>' was removed or narrowed` | The head list lacks a base entry. |
 | `Protected entry '<entry>' differs from the merge base` | A protected path was modified, added, or deleted, or a relocation was not complete. |
 | `Uncommitted change to protected path` | The working tree has an uncommitted change to a protected path. |
 
-The evidence record keeps the existing `protected-sources` check and adds `mode`, `merge-base`, `findings`, and, after a relocation, `relocated`.
+The evidence record keeps the existing `protected-sources` check and adds `mode`, `merge-base`, `findings`, and, after a relocation, `relocated`. `mode-source` appears when the base policy chose the mode.
 
-To keep a project from switching the mode off in the same change, use the `--protected-sources` flag in CI. `embraion enforcement install` keeps a mode that is already set in the policy.
+`embraion enforcement install` keeps a mode that is already set in the policy. When the mode is `base-tree`, the generated workflow passes `--protected-sources base-tree`, so the mode does not depend on any policy. A workflow generated before the mode was set has no flag; regenerate it with `--force` after you approve the replacement.
 
 ## Make it a mandatory merge gate
 
