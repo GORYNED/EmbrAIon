@@ -48,6 +48,21 @@ def write_config(project: Path, config: dict[str, Any]) -> None:
     write_yaml(project / ".embraion" / "validation.yaml", config)
 
 
+class PlanDocsTests(unittest.TestCase):
+    def test_worked_example_in_both_pages_is_valid_configuration(self) -> None:
+        root = Path(__file__).resolve().parents[2] / "docs" / "configuration"
+        for name, heading in (("validation.md", "## Validation plan"), ("validation.ru.md", "## План validation")):
+            with self.subTest(page=name):
+                text = (root / name).read_text(encoding="utf-8").split(heading, 1)[1]
+                block = text.split("```yaml\n", 1)[1].split("```", 1)[0]
+                with tempfile.TemporaryDirectory() as temporary:
+                    project = Path(temporary)
+                    init_project(project, name="Consumer")
+                    (project / ".embraion" / "validation.yaml").write_text(block, encoding="utf-8")
+                    config = read_validation_config(project)
+                self.assertEqual(["library", "docs", "packaging"], list(config["areas"]))
+
+
 class PlanConfigTests(unittest.TestCase):
     def _project(self, config: dict[str, Any]) -> Path:
         temporary = tempfile.TemporaryDirectory()

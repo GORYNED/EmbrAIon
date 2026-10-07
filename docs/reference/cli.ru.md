@@ -325,6 +325,17 @@ Unknown parameters и missing required parameters fail-closed. Parameters мог
 
 `--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в собственной process group; timeout или прерывание завершают всё дерево. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
+Plan options для проектов, которые объявляют `areas` в `.embraion/validation.yaml` (см. [План validation](../configuration/validation.ru.md#план-validation)):
+
+```bash
+embraion validation plan affected --base-ref origin/main [--head-ref REF] [--include-worktree] [--full-justification REASON] [--json] [--output FILE]
+embraion validation explain affected --base-ref origin/main
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan plan.json
+```
+
+`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json`), `explain` печатает решение простым языком. Обоим нужен `--base-ref` или `--include-worktree`. `run` использует plan только с `--plan`, `--base-ref` или `--include-worktree`; иначе выполняет весь profile. Plan, который ничего не выбрал, сообщает `skipped`. `--full-justification` вне `full-reasons`, неверная конфигурация, устаревший или чужой файл `--plan` и plan options в проекте без areas fail-closed с exit code 2. `list` также показывает areas.
+
 ### `embraion cache`
 
 Посмотреть или очистить isolated project runtimes.

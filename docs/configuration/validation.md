@@ -82,6 +82,80 @@ profiles:
 
 Without the key, commands run without a timeout, as before. `--timeout SECONDS` on the command line overrides the configured value for every command of that run. A list whose length differs from the command count, or a value that is not a positive number, fails closed.
 
+## Validation plan
+
+A project can describe which checks prove which part of the code. This is optional. A project without these keys behaves exactly as before.
+
+```yaml
+profiles:
+  affected:
+    - python -m unittest discover -s tests -p "test_*.py"
+  full:
+    - python -m compileall src
+    - python -m unittest discover -s tests -p "test_*.py"
+    - python tools/package.py
+
+areas:
+  library:
+    paths: [src/**]
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+  docs:
+    paths: [docs/**, "*.md"]
+    commands:
+      - python tools/check-links.py
+  packaging:
+    paths: [tools/package.py]
+    profiles: [full]
+
+impact:
+  - id: data-format
+    paths: [src/schema/**]
+    areas: [docs]
+    full: data-migration
+
+full-reasons: [data-migration, release-gate]
+default-area: library
+```
+
+Keys:
+
+- `areas` maps an area name to `paths` (globs) and to the proof: `commands` (command lines) and/or `profiles` (every command of those profiles). At least one proof is required.
+- `impact` is an ordered list of rules. Each rule has an `id`, `paths` (globs), and `areas` and/or `full`. Every rule that matches a changed path applies, in the order written. `full` names a reason from `full-reasons` and escalates the plan to the `full` profile. If several rules escalate, the first one in the list names the reason.
+- `full-reasons` is a closed list of reason ids. A rule or a `--full-justification` value outside the list is an error. Declaring a reason or a `full` rule requires a `full` profile.
+- `default-area` is optional. A changed path that matches no area and no rule selects this area. Without it, such a path selects the whole planned profile, so the project checks more instead of less.
+
+Globs use the same matcher as the source policy in `policy.yaml`. A glob that is empty, absolute, contains `..`, has an unbalanced bracket, or is too complex is an error. An unknown area, profile, or reason is an error. Shape errors fail against the schema.
+
+Compute and read a plan:
+
+```bash
+embraion validation plan affected --base-ref origin/main
+embraion validation explain affected --base-ref origin/main --include-worktree
+```
+
+`plan` writes a deterministic `plan.json` (default `.embraion/state/validation/plan.json`, or `--output FILE`). `explain` prints why each area and command was or was not selected and writes nothing. Changed paths come from Git: the diff between the merge base of `--base-ref` and `--head-ref` (default `HEAD`). `--include-worktree` adds staged, unstaged, and untracked files that Git does not ignore. Files under `.embraion/state/` are ignored.
+
+The plan file has `schema-version: 1` and these fields: `profile`, `config-digest`, `inputs` (refs and resolved SHAs), `changed-paths`, `matched-rules`, `selected-areas`, `skipped-areas` (with reasons), `escalation`, `fallback`, `selected-commands` (with their sources), `skipped-commands`, `status` (`selected` or `skipped`), and `skip-reason`.
+
+Run with a plan:
+
+```bash
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan .embraion/state/validation/plan.json
+embraion validation run full --base-ref origin/main --full-justification release-gate
+```
+
+- `validation run <profile>` without `--base-ref`, `--include-worktree`, or `--plan` runs every command of the profile, as before.
+- A plan selects commands from areas, from the area `profiles`, and, on escalation or fallback, from the whole profile. Duplicates run once.
+- A plan that selects nothing, for example because nothing changed, ends as `skipped` with its reason. It is never a pass.
+- `--plan` accepts only a plan for the same profile that matches the current configuration and selects only declared commands. Otherwise the run fails closed.
+- Timeouts and parameters of the profile still apply to the commands they target.
+- The run evidence contains the plan (`plan`) and a copy at `.embraion/state/validation/<evidence-id>/plan.json` (`plan-path`).
+- Plan options on a project without `areas` are an error.
+
+`validation list` also lists the areas when they exist.
+
 ## Choosing profiles
 
 A useful convention:
