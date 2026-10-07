@@ -330,6 +330,14 @@ embraion validation run full --run-id task-001
 
 `validation run` executes commands from the project root, persists redacted evidence under `.embraion/state/validation/`, and exits non-zero when the profile fails. Empty profiles report `skipped`. Use `--fail-fast` to stop after the first failing command and `--timeout SECONDS` for a per-command timeout.
 
+`validation command` runs one exact executable and argument vector supplied as a JSON object on stdin. It emits one lifecycle JSON object on stdout; child output goes only to optional logs. This API does not create profile evidence. Example request:
+
+```json
+{"executable":"C:\\Python314\\python.exe","argv":["-c","print('ok')"],"cwd":"C:\\work\\project","timeout_seconds":30,"output_limit_bytes":1048576,"stdout_path":"C:\\work\\logs\\stdout.log","stderr_path":"C:\\work\\logs\\stderr.log"}
+```
+
+`executable` must resolve to a file; relative PATH entries are resolved before changing to `cwd`. Windows batch files (`.bat` and `.cmd`) are rejected because they cannot preserve exact argv without a command shell. `argv` is a string array, `cwd` is an existing absolute directory, and `timeout_seconds` is required (greater than zero, at most 86400). Optional `env` maps names to string values or `null` to remove a variable. Log paths are optional absolute paths with existing parents; parent aliases are canonicalized before creation, while existing targets, target links, collisions, and links in the canonical parent chain are rejected. Each stream captures at most `output_limit_bytes` of child output (default 1 MiB, maximum 16 MiB), while the runner drains all output; a short marker can make the log slightly larger than that limit. If a stream exceeds the limit, its log contains only a truncation marker and byte count to avoid leaking a partial secret. Other logs redact all nonempty inherited environment values, environment delta values, executable and argv values, and known sensitive patterns; this can also hide harmless matching text. The request and environment values are never stored as evidence. The CLI exits 0 on success, 1 on a confirmed child failure, and 2 when continuation is unsafe or the request or infrastructure fails. The JSON includes `safe-to-continue`, `failure-kind`, exit, timeout, containment, root/tree termination, stream drain, recovery, descendant, byte count, and truncation fields. On Windows, containment uses a pre-launch Job Object; on POSIX, it uses a process group, so children must not detach into a new session.
+
 Structured validation profiles can declare runtime parameters. Supply them with repeatable `--param NAME=VALUE`:
 
 ```bash
