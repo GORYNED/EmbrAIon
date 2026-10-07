@@ -293,6 +293,18 @@ Inside a project, `validate` also checks the project's `.embraion/*.yaml` struct
 
 Warnings keep the exit code at 0; `--strict` reports them as errors. Without findings the output stays `PASS: no validation issues.`. Full schema conformance remains with the commands that load each file, and the policy-ceiling check stays an error.
 
+### `embraion check`
+
+Run every check the project configuration selects, from the project root wherever it is started, so consumer CI needs one step:
+
+```bash
+embraion check
+embraion check --base-ref origin/main --fail-on medium --all-files
+embraion check --json
+```
+
+It always runs `validate --strict`, `route --validate`, `route --audit-authority` and `security scan` (with `--fail-on`, default `high`, and `--all-files` passed through). It adds `projection verify` for each host whose components `.embraion/policy.yaml` declares under `projection`, `claude-native status --require` when Claude Code `scoped-agents` or `hooks` are declared, and `organization check --require-config` when `.embraion/organization.yaml` exists. Without `--base-ref` the organization check audits the whole structure; with it, the check compares against that ref, so only findings the ref does not have fail, together with moves and GUID changes. The ref must be fetched, so a CI checkout needs its history. Each check prints `PASS` or `FAIL`, a failed check also prints its output, and an error in one check fails only that check. The command exits 1 when any check fails, and 2 when `.embraion/policy.yaml` cannot be read. See [Policy](../configuration/policy.md#projection-root-checks).
+
 ### `embraion validation`
 
 List or execute project validation profiles from `.embraion/validation.yaml`:

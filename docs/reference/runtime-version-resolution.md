@@ -77,12 +77,16 @@ GitHub Actions workflows can use the reusable setup action instead of their own 
 ```yaml
 steps:
   - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0  # history for --base-ref
   - uses: GORYNED/EmbrAIon/actions/setup@v<release>
     with:
       python-version: "3.13"  # optional, the default
       project-path: .         # optional, a directory at or below the project root
-  - run: embraion validate --strict
+  - run: embraion check --base-ref origin/main
 ```
+
+`embraion check` runs every check the project configuration selects; see the [CLI reference](cli.md#embraion-check).
 
 The action sets up Python, reads `.embraion/project.yaml` with the same reader as `embraion framework pin`, and installs exactly the pinned release. With an artifact lock it downloads the canonical release wheel and verifies its SHA-256 before pip installs it; without a lock it installs `embraion==<version>`. It then confirms the installed version. A missing or inexact pin, a mismatched lock, or a digest mismatch fails the step. Outputs: `version` and `digest` (empty without a lock).
 

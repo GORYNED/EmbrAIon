@@ -58,6 +58,20 @@
             "PRIVATE",
             "CONFIDENTIAL"
           ]
+        },
+        "sources": {
+          "type": "object",
+          "description": "Optional data class of each stable source ID. When declared, an execution request may name only listed sources, and its data class must be at least the highest class of the sources it names.",
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "enum": [
+              "PUBLIC",
+              "PRIVATE",
+              "CONFIDENTIAL"
+            ]
+          }
         }
       },
       "additionalProperties": false
@@ -102,7 +116,7 @@
     },
     "projection": {
       "type": "object",
-      "description": "Optional checks for projected host configuration outside EmbrAIon-managed blocks.",
+      "description": "Optional checks for projected host configuration. Declared components are verified by `embraion check`.",
       "properties": {
         "codex": {
           "type": "object",
@@ -118,6 +132,64 @@
             "allowed-root-keys": {
               "$ref": "#/$defs/keyPatterns",
               "description": "Optional allowlist of top-level keys; developer_instructions and agents are always allowed."
+            },
+            "components": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "config",
+                  "agents",
+                  "skills"
+                ]
+              },
+              "description": "Codex projection components that `embraion check` verifies."
+            },
+            "config-mode": {
+              "enum": [
+                "replace",
+                "merge"
+              ],
+              "description": "Config mode used to verify the Codex config component; defaults to replace."
+            }
+          },
+          "additionalProperties": false
+        },
+        "copilot": {
+          "type": "object",
+          "properties": {
+            "components": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "agents",
+                  "skills"
+                ]
+              },
+              "description": "Copilot projection components that `embraion check` verifies."
+            }
+          },
+          "additionalProperties": false
+        },
+        "claude-code": {
+          "type": "object",
+          "properties": {
+            "components": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "agents",
+                  "skills",
+                  "scoped-agents",
+                  "hooks"
+                ]
+              },
+              "description": "Claude Code projection components that `embraion check` verifies; scoped-agents and hooks also gate `claude-native status`."
             }
           },
           "additionalProperties": false

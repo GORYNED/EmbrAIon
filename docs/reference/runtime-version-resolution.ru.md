@@ -77,12 +77,16 @@ Workflow GitHub Actions может использовать переисполь
 ```yaml
 steps:
   - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0  # история для --base-ref
   - uses: GORYNED/EmbrAIon/actions/setup@v<release>
     with:
       python-version: "3.13"  # необязательно, значение по умолчанию
       project-path: .         # необязательно, папка в корне проекта или ниже
-  - run: embraion validate --strict
+  - run: embraion check --base-ref origin/main
 ```
+
+`embraion check` запускает все проверки, которые выбирает конфигурация проекта; см. [справочник CLI](cli.md#embraion-check).
 
 Action настраивает Python, читает `.embraion/project.yaml` тем же кодом, что и `embraion framework pin`, и устанавливает ровно закреплённую release. При artifact lock он скачивает canonical release wheel и проверяет SHA-256 до установки через pip; без lock устанавливает `embraion==<version>`. Затем проверяется установленная версия. Отсутствующий или неточный pin, несовпадающий lock или несовпадение digest завершают шаг с ошибкой. Outputs: `version` и `digest` (пустой без lock).
 

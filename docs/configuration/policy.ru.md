@@ -70,6 +70,19 @@ privacy:
 
 Допустимые классы: `PUBLIC`, `PRIVATE` и `CONFIDENTIAL`.
 
+Необязательная секция `sources` задаёт data class каждого стабильного source ID:
+
+```yaml
+privacy:
+  default-class: PRIVATE
+  sources:
+    PublicDocs: PUBLIC
+    App: PRIVATE
+    VendorSdk: CONFIDENTIAL
+```
+
+Когда `sources` объявлена, execution request может называть только перечисленные source IDs, а его data class должен быть не ниже самого высокого класса этих sources; иначе request отклоняется до выбора provider. Без `sources` requests проверяются как раньше.
+
 Выбор модели не может расширить эти границы.
 
 ## Enforcement policy
@@ -167,6 +180,21 @@ projection:
 - `allowed-root-keys` — необязательный allowlist ключей верхнего уровня. `developer_instructions` и `agents` разрешены всегда, потому что EmbrAIon управляет блоками внутри них.
 - Текст корневых `developer_instructions` вне managed orchestration block сообщается всегда.
 - `strict-root: true` превращает эти findings в ошибки проверки, так же как `--strict-root`. Без него это предупреждения, и результат verify зависит только от projection drift.
+
+`components` объявляет, какие установленные projection components [`embraion check`](../reference/cli.md#embraion-check) проверяет для каждого host; host без `components` там не проверяется. Для Codex есть ещё `config-mode` (`replace` по умолчанию или `merge`) для component `config`:
+
+```yaml
+projection:
+  codex:
+    components: [config, agents, skills]
+    config-mode: merge
+  copilot:
+    components: [agents, skills]
+  claude-code:
+    components: [agents, skills, scoped-agents, hooks]
+```
+
+Объявленные Claude Code `scoped-agents` и `hooks` также заставляют `embraion check` требовать их через `claude-native status --require`.
 
 ## Посмотреть effective policy
 

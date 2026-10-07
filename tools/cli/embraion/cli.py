@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import subprocess
 import sys
@@ -116,6 +117,7 @@ def _print_main_help(file: object | None = None) -> None:
         "  doctor     Run framework and project diagnostics",
         "  status     Show launcher, project pin, active runtime, cache, and host projections",
         "  validate   Validate the framework, schemas, catalog, and localization",
+        "  check      Run every check the project configuration selects, for CI",
         "  cache      Inspect or clean cached project-pinned EmbrAIon runtimes",
         "",
         "AI execution",
@@ -1351,6 +1353,30 @@ def _cmd_organization_check(args: argparse.Namespace) -> int:
         for finding in report.get("findings", []):
             print(f"{finding.get('status', '')}: {finding.get('path', '')}: {finding.get('code', '')}: {finding.get('message', '')}")
     return 0 if report["passed"] else 1
+
+
+def _cmd_check(args: argparse.Namespace) -> int:
+    from .check import planned_checks, run_check
+
+    project = project_root()
+    checks = planned_checks(project, base_ref=args.base_ref, fail_on=args.fail_on, all_files=args.all_files)
+    parser = build_parser()
+    results = []
+    with contextlib.chdir(project):
+        for check in checks:
+            code, output = run_check(parser, check["argv"])
+            results.append({**check, "exit": code, "passed": code == 0, "output": output})
+    failed = [item["id"] for item in results if not item["passed"]]
+    if args.json:
+        _print_json({"passed": not failed, "failed": failed, "checks": results})
+    else:
+        for item in results:
+            print(f"{'PASS' if item['passed'] else 'FAIL'}  {item['id']:18} embraion {' '.join(item['argv'])}")
+            if not item["passed"]:
+                for line in item["output"].rstrip().splitlines():
+                    print(f"      {line}")
+        print(f"Check: {'passed' if not failed else 'failed (' + ', '.join(failed) + ')'}")
+    return 1 if failed else 0
 
 
 def _cmd_checkpoint(args: argparse.Namespace) -> int:
@@ -2638,6 +2664,20 @@ def build_parser() -> argparse.ArgumentParser:
                                     help="Fail instead of skipping when the organization configuration is missing")
     organization_check.add_argument("--json", action="store_true")
     organization_check.set_defaults(func=_cmd_organization_check)
+
+    check_parser = sub.add_parser(
+        "check",
+        help="Run every check the project configuration selects",
+        description="Run, from the project root, the configuration, routing, declared projection, Claude native, "
+        "organization, and security checks that the project configuration selects, and fail if any fails.",
+    )
+    check_parser.add_argument("--base-ref", help="Base ref for the organization check, for example origin/main")
+    check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER), default="high",
+                              help="Lowest security finding severity that fails the check")
+    check_parser.add_argument("--all-files", action="store_true",
+                              help="Pass --all-files to the security scan")
+    check_parser.add_argument("--json", action="store_true")
+    check_parser.set_defaults(func=_cmd_check)
 
     checkpoint_parser = sub.add_parser("checkpoint", help="Record or inspect local task continuity metadata")
     checkpoint_sub = checkpoint_parser.add_subparsers(dest="checkpoint_command", required=True)
