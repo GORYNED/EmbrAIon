@@ -32,6 +32,10 @@
               "clean-tree": {
                 "type": "boolean"
               },
+              "output-limit-bytes": {
+                "type": "integer",
+                "minimum": 1024
+              },
               "timeout-seconds": {
                 "oneOf": [
                   {

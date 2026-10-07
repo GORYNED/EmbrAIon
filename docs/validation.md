@@ -49,6 +49,7 @@ Commands execute sequentially from the project root. Each result records:
 - exit code;
 - duration;
 - redacted stdout/stderr tails of at most 8000 characters each;
+- for output longer than that tail, the head and the total size and line count (see [output limit](configuration/validation.md#output-limit));
 - the effective timeout and the path of the command's full log;
 - optional attached execution run;
 - evidence ID/path.

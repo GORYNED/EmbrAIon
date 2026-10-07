@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import shutil
 import subprocess
@@ -12,7 +13,9 @@ from unittest import mock
 from embraion.common import read_yaml, write_yaml
 from embraion.project import init_project
 from embraion import project_validation
+from embraion.validation_output import capture_stream, render_output, truncation_marker
 from embraion.project_validation import (
+    MAX_CAPTURE_CHARS,
     MAX_CLEAN_TREE_PATHS,
     run_validation_profile,
     validation_profile_specs,
@@ -365,6 +368,116 @@ class StatusParsingTests(unittest.TestCase):
                 snapshot = project_validation._tree_snapshot(project)
             self.assertEqual({"new name.txt", "other.txt"}, set(snapshot))
             self.assertTrue(snapshot["new name.txt"].startswith("R |old name.txt|"))
+
+
+class BoundedOutputTests(unittest.TestCase):
+    def test_capture_without_a_limit_or_within_it_keeps_everything(self) -> None:
+        for limit in (None, 100, 12):
+            with self.subTest(limit=limit):
+                captured = capture_stream(io.BytesIO(b"one\ntwo\nlast"), limit, "utf-8")
+                self.assertFalse(captured.truncated)
+                self.assertEqual("one\ntwo\nlast", captured.head)
+                self.assertEqual("", captured.tail)
+                self.assertEqual((12, 3), (captured.total_bytes, captured.total_lines))
+
+    def test_empty_stream(self) -> None:
+        captured = capture_stream(io.BytesIO(b""), 10, "utf-8")
+        self.assertEqual(("", "", 0, 0), (captured.head, captured.tail, captured.total_bytes, captured.total_lines))
+
+    def test_capture_cuts_head_and_tail_on_line_boundaries_and_counts_the_rest(self) -> None:
+        lines = [f"line-{number:03}\n" for number in range(100)]
+        data = "".join(lines).encode("utf-8")
+        captured = capture_stream(io.BytesIO(data), 100, "utf-8")
+        self.assertTrue(captured.truncated)
+        self.assertEqual((len(data), 100), (captured.total_bytes, captured.total_lines))
+        self.assertTrue(captured.head.startswith("line-000\n"))
+        self.assertTrue(captured.head.endswith("\n"))
+        self.assertTrue(captured.tail.startswith("line-"))
+        self.assertTrue(captured.tail.endswith("line-099\n"))
+        self.assertLessEqual(len(captured.head), 50)
+        self.assertLessEqual(len(captured.tail), 50)
+        kept = captured.head.count("\n") + captured.tail.count("\n")
+        self.assertEqual(100 - kept, captured.omitted_lines)
+        self.assertEqual(len(data) - len(captured.head) - len(captured.tail), captured.omitted_bytes)
+
+    def test_capture_of_a_single_long_line_still_bounds_memory(self) -> None:
+        captured = capture_stream(io.BytesIO(b"x" * 10_000), 100, "utf-8")
+        self.assertTrue(captured.truncated)
+        self.assertEqual(100, len(captured.head) + len(captured.tail))
+        self.assertEqual((10_000, 1), (captured.total_bytes, captured.total_lines))
+
+    def test_render_marks_the_cut_and_scrubs_each_part(self) -> None:
+        data = ("secret-a\n" + "filler\n" * 200 + "secret-b\n").encode("utf-8")
+        captured = capture_stream(io.BytesIO(data), 200, "utf-8")
+        text = render_output(captured, lambda value: value.replace("secret", "gone"))
+        self.assertTrue(text.startswith("gone-a\n"))
+        self.assertTrue(text.endswith("gone-b\n"))
+        self.assertIn(truncation_marker(captured), text)
+        self.assertNotIn("secret", text)
+
+    def test_default_run_keeps_the_full_log_and_reports_totals_for_long_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            statement = f"print('x' * {MAX_CAPTURE_CHARS * 2})"
+            project = _project(temporary, [_python(statement)])
+            record = run_validation_profile("gate", project=project)
+            row = record["commands"][0]
+            self.assertIn("...<truncated>", row["stdout"])
+            self.assertEqual(MAX_CAPTURE_CHARS, len(row["stdout-head"]))
+            self.assertEqual(
+                {"stdout": {"bytes": MAX_CAPTURE_CHARS * 2 + 1, "lines": 1, "log-truncated": False}},
+                row["output"],
+            )
+            self.assertNotIn("stderr-head", row)
+            self.assertNotIn("output-limit-bytes", record)
+            log = (project / row["log-path"]).read_text(encoding="utf-8")
+            self.assertIn("x" * (MAX_CAPTURE_CHARS * 2), log)
+
+    def test_short_output_adds_no_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, [_python("print('short')")])
+            row = run_validation_profile("gate", project=project)["commands"][0]
+            self.assertEqual(
+                {"index", "command", "status", "exit-code", "duration-ms", "timeout-seconds",
+                 "log-path", "stdout", "stderr"},
+                set(row),
+            )
+
+    def test_output_limit_bounds_the_log_and_keeps_head_tail_marker_and_redaction(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            body = (
+                "print('first token=' + 'abcdefgh' + '12345678')\n"
+                "for n in range(20000):\n"
+                "    print(f'filler line {n}')\n"
+                "print('last token=' + 'abcdefgh' + '12345678')\n"
+            )
+            (Path(temporary) / "emit.py").write_text(body, encoding="utf-8")
+            project = _project(
+                temporary,
+                {"commands": [f'"{sys.executable}" {Path(temporary) / "emit.py"}'], "output-limit-bytes": 4096},
+            )
+            record = run_validation_profile("gate", project=project)
+            row = record["commands"][0]
+            self.assertEqual("passed", record["status"])
+            self.assertEqual(4096, record["output-limit-bytes"])
+            log = (project / row["log-path"]).read_text(encoding="utf-8")
+            self.assertLess(len(log), 4096 + 512)
+            self.assertIn("first token=<REDACTED>", log)
+            self.assertIn("last token=<REDACTED>", log)
+            self.assertNotIn("abcdefgh" + "12345678", log)
+            self.assertIn("[... output truncated:", log)
+            self.assertIn("filler line 19999", log)
+            self.assertNotIn("filler line 10000", log)
+            summary = row["output"]["stdout"]
+            self.assertTrue(summary["log-truncated"])
+            self.assertEqual(20002, summary["lines"])
+            self.assertIn("[... output truncated:", row["stdout"])
+
+    def test_invalid_output_limit_fails_closed(self) -> None:
+        for value in (0, 1023, -5, 1.5, "big", True):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temporary:
+                project = _project(temporary, {"commands": [_python("print(1)")], "output-limit-bytes": value})
+                with self.assertRaisesRegex(RuntimeError, "Invalid .embraion/validation.yaml"):
+                    run_validation_profile("gate", project=project)
 
 
 if __name__ == "__main__":

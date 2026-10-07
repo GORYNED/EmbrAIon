@@ -127,6 +127,28 @@ profiles:
 
 В записи появляется объект `clean-tree` с полями `status` (`passed`, `failed` или `blocked`), `baseline-dirty`, `changed-count` и `changed-paths`. Profile без команд получает `skipped` и не проверяется.
 
+## Output limit
+
+По умолчанию полный redacted output каждой команды хранится в её log, а запись содержит tail не более 8000 символов на поток. Очень большой вывод может сделать log огромным. Structured profile может ограничить его ключом `output-limit-bytes` (целое число не менее 1024):
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    output-limit-bytes: 1048576
+```
+
+Если поток больше лимита, EmbrAIon оставляет только первую и последнюю половину лимита, обрезанные по границам строк, и ставит между ними маркер в log:
+
+```text
+[... output truncated: 9400000 bytes (210000 lines) omitted; total 9500000 bytes, 211000 lines ...]
+```
+
+В память читаются только сохранённые части. Каждая часть проходит redaction отдельно. Без ключа log не обрезается.
+
+В обоих случаях, если поток длиннее tail записи, строка команды получает `stdout-head` или `stderr-head` (первые 8000 символов) и объект `output` с итогами `bytes` и `lines` по каждому потоку и `log-truncated`. Короткий вывод не добавляет полей. Запись показывает `output-limit-bytes`, если profile его задаёт.
+
 ## Выбор profiles
 
 Полезная конвенция:

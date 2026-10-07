@@ -21,11 +21,13 @@ from .evidence import attach_validation_evidence, read_run
 from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
-from .security import redact_child_output, redact_text, redact_value
+from .security import redact_text, redact_value
+from .validation_output import CapturedOutput, capture_stream, render_output
 
 
 MAX_CAPTURE_CHARS = 8000
 MAX_CLEAN_TREE_PATHS = 20
+MIN_OUTPUT_LIMIT_BYTES = 1024
 MAX_FINGERPRINT_BYTES = 64 * 1024 * 1024
 RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
 TERMINATION_GRACE_SECONDS = 2.0
@@ -84,6 +86,7 @@ def _normalize_validation_profile(
             "parameters": {},
             "timeouts": [None] * len(value),
             "clean-tree": False,
+            "output-limit": None,
         }
     if not isinstance(value, dict):
         raise RuntimeError(
@@ -97,10 +100,19 @@ def _normalize_validation_profile(
     clean_tree = value.get("clean-tree", False)
     if not isinstance(clean_tree, bool):
         raise RuntimeError(f"Invalid validation profile '{name}': clean-tree must be true or false.")
+    output_limit = value.get("output-limit-bytes")
+    if output_limit is not None and (
+        isinstance(output_limit, bool) or not isinstance(output_limit, int) or output_limit < MIN_OUTPUT_LIMIT_BYTES
+    ):
+        raise RuntimeError(
+            f"Invalid validation profile '{name}': output-limit-bytes must be an integer "
+            f"of at least {MIN_OUTPUT_LIMIT_BYTES}."
+        )
     return {
         "commands": commands,
         "entries": [entry for _, entry in parsed],
         "clean-tree": clean_tree,
+        "output-limit": output_limit,
         "parameters": {
             str(parameter): dict(definition or {})
             for parameter, definition in (value.get("parameters") or {}).items()
@@ -472,8 +484,13 @@ def _run_contained(
     cwd: Path,
     environment: dict[str, str],
     timeout: float | None,
-) -> tuple[int | None, str, str]:
-    """Run one command; return its exit code (``None`` after a timeout) and full output."""
+    output_limit: int | None = None,
+) -> tuple[int | None, CapturedOutput, CapturedOutput]:
+    """Run one command; return its exit code (``None`` after a timeout) and its output.
+
+    Without an ``output_limit`` the output is kept whole; with one, only a head and a
+    tail of at most that many bytes per stream are read into memory.
+    """
     # Anonymous temporary files keep raw output out of the project state and do
     # not block when a descendant keeps an inherited output handle open.
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
@@ -488,11 +505,8 @@ def _run_contained(
             raise
         # Text-mode subprocess output used the locale encoding; keep that decoding.
         encoding = locale.getpreferredencoding(False)
-        texts = []
-        for handle in (stdout, stderr):
-            handle.seek(0)
-            texts.append(handle.read().decode(encoding, errors="replace"))
-    return returncode, texts[0], texts[1]
+        captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
+    return returncode, captured[0], captured[1]
 
 
 def _log_path(project: Path, evidence_id: str, index: int) -> Path:
@@ -520,6 +534,30 @@ def _captured_tail(value: str, limit: int = MAX_CAPTURE_CHARS) -> str:
     if len(value) <= limit:
         return value
     return "...<truncated>\n" + value[-limit:]
+
+
+def _output_details(
+    stdout: str,
+    stderr: str,
+    raw_stdout: CapturedOutput,
+    raw_stderr: CapturedOutput,
+) -> dict[str, Any]:
+    """Describe output that did not fit; empty when nothing was cut, so records stay as before."""
+    details: dict[str, Any] = {}
+    summary: dict[str, Any] = {}
+    for name, text, raw in (("stdout", stdout, raw_stdout), ("stderr", stderr, raw_stderr)):
+        record_truncated = len(text) > MAX_CAPTURE_CHARS
+        if not record_truncated and not raw.truncated:
+            continue
+        details[f"{name}-head"] = text[:MAX_CAPTURE_CHARS]
+        summary[name] = {
+            "bytes": raw.total_bytes,
+            "lines": raw.total_lines,
+            "log-truncated": raw.truncated,
+        }
+    if summary:
+        details["output"] = summary
+    return details
 
 
 def _validation_path(project: Path, evidence_id: str) -> Path:
@@ -626,11 +664,15 @@ def run_validation_profile(
                 root,
                 command_environment,
                 command_timeout,
+                spec.get("output-limit"),
             )
             duration_ms = int((time.monotonic() - began) * 1000)
-            output = redact_child_output(raw_stdout, raw_stderr)
-            stdout = _redact_validation_parameter_values(output["stdout"], resolved_parameters)
-            stderr = _redact_validation_parameter_values(output["stderr"], resolved_parameters)
+
+            def scrub(text: str) -> str:
+                return _redact_validation_parameter_values(redact_text(text), resolved_parameters)
+
+            stdout = render_output(raw_stdout, scrub)
+            stderr = render_output(raw_stderr, scrub)
             _write_command_log(log_path, command, stdout, stderr)
             if exit_code is None:
                 status = "timed-out"
@@ -647,6 +689,7 @@ def run_validation_profile(
                 "stdout": _captured_tail(stdout),
                 "stderr": _captured_tail(stderr),
             }
+            row.update(_output_details(stdout, stderr, raw_stdout, raw_stderr))
         if not entry["required"]:
             row["required"] = False
         command_results.append(row)
@@ -679,6 +722,8 @@ def run_validation_profile(
     extra: dict[str, Any] = {}
     if extended:
         extra["warnings"] = warnings
+    if spec.get("output-limit"):
+        extra["output-limit-bytes"] = spec["output-limit"]
     if clean_tree_block is not None:
         extra["clean-tree"] = clean_tree_block
     if failure_reasons:

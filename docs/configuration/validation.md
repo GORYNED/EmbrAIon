@@ -128,6 +128,28 @@ Without the key, nothing is checked, as before. With `clean-tree: true`, EmbrAIo
 
 The record gets a `clean-tree` object with `status` (`passed`, `failed`, or `blocked`), `baseline-dirty`, `changed-count`, and `changed-paths`. A profile without commands is `skipped` and is not checked.
 
+## Output limit
+
+By default each command's full redacted output is kept in its log, and the record keeps a tail of at most 8000 characters per stream. A very large output can make the log huge. A structured profile can bound it with `output-limit-bytes` (an integer of at least 1024):
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    output-limit-bytes: 1048576
+```
+
+When a stream is larger than the limit, EmbrAIon keeps only the first and the last half of the limit, cut on line boundaries, and puts a marker between them in the log:
+
+```text
+[... output truncated: 9400000 bytes (210000 lines) omitted; total 9500000 bytes, 211000 lines ...]
+```
+
+Only the kept parts are read into memory. Each part is redacted on its own. Without the key, the log is not cut.
+
+In both cases, when a stream is longer than the record tail, the command row gets `stdout-head` or `stderr-head` (the first 8000 characters) and an `output` object with the `bytes` and `lines` totals per stream and `log-truncated`. Short output adds no fields. The record shows `output-limit-bytes` when the profile sets it.
+
 ## Choosing profiles
 
 A useful convention:

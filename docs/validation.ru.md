@@ -49,6 +49,7 @@ Commands выполняются последовательно из project root
 - exit code;
 - duration;
 - redacted stdout/stderr tails длиной не больше 8000 символов каждый;
+- для вывода длиннее этого tail: head, общий размер и число строк (см. [output limit](configuration/validation.ru.md#output-limit));
 - действующий timeout и путь к полному log command;
 - optional attached execution run;
 - evidence ID/path.
