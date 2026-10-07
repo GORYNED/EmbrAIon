@@ -287,6 +287,8 @@ embraion validate --strict
 - `roles` в knowledge, которые не совпадают ни с ролью Core, ни с агентом из `.embraion/agents.yaml` (`config-role`);
 - пустые файлы, пустые секции, где ожидается значение, и YAML-файлы в `.embraion`, которые EmbrAIon не читает (`config-inert`), а также нечитаемый YAML (`config-parse`).
 
+Если есть `.embraion/sources.yaml`, `validate` проверяет и его и сообщает каждую проблему как ошибку (`sources-invalid`) независимо от `--strict`. См. [Реестр источников](../configuration/sources.md).
+
 Предупреждения не меняют код выхода 0; `--strict` превращает их в ошибки. Без находок вывод остаётся `PASS: no validation issues.`. Полную проверку по схеме по-прежнему выполняют команды, которые загружают каждый файл; проверка policy ceilings остаётся ошибкой.
 
 ### `embraion check`
@@ -299,7 +301,7 @@ embraion check --base-ref origin/main --fail-on medium --all-files
 embraion check --json
 ```
 
-Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on`, по умолчанию `high`, и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, `organization check --require-config`, когда есть `.embraion/organization.yaml`, и `decisions check --require-config`, когда есть `.embraion/decisions.yaml` и передан `--base-ref`; без `--base-ref` эта проверка отмечается как `NOT RUN` и не роняет команду. Без `--base-ref` organization check проверяет всю структуру; с ним проверка сравнивает с этим ref, поэтому падают только findings, которых нет в ref, а также перемещения и смена GUID. Секция `check` в `.embraion/policy.yaml` может вместо этого объявить, какие режимы organization check запускаются (`full`, `compare` или оба, под именами `organization-full` и `organization-compare`; без base ref `compare` отмечается как `NOT RUN`), а также значения по умолчанию для `--fail-on` и `--all-files`; эти флаги их переопределяют. См. [Параметры check](../configuration/policy.md#check-options). Ref должен быть получен, поэтому checkout в CI нужен с историей. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, а ошибка в одной проверке роняет только её. Команда завершается с кодом 1, если упала хотя бы одна проверка, и с кодом 2, если `.embraion/policy.yaml` не читается. См. [Policy](../configuration/policy.md#projection-root-checks).
+Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on`, по умолчанию `high`, и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, `organization check --require-config`, когда есть `.embraion/organization.yaml`, и `decisions check --require-config`, когда есть `.embraion/decisions.yaml` и передан `--base-ref`; без `--base-ref` эта проверка отмечается как `NOT RUN` и не роняет команду. Без `--base-ref` organization check проверяет всю структуру; с ним проверка сравнивает с этим ref, поэтому падают только findings, которых нет в ref, а также перемещения и смена GUID. Секция `check` в `.embraion/policy.yaml` может вместо этого объявить, какие режимы organization check запускаются (`full`, `compare` или оба, под именами `organization-full` и `organization-compare`; без base ref `compare` отмечается как `NOT RUN`), а также значения по умолчанию для `--fail-on` и `--all-files`; эти флаги их переопределяют. `validation-profiles` в той же секции добавляет по одному шагу `validation-<profile>` на каждый указанный validation profile проекта после всех остальных проверок; профиль запускается так же, как `validation run`, его evidence сохраняется, а шаг падает, если результат не `passed` (пустой или неизвестный профиль тоже его проваливает). С `--json` у такого шага есть также `validation-profile` и `evidence` (`profile`, `status`, `evidence-path`). См. [Параметры check](../configuration/policy.md#check-options). Ref должен быть получен, поэтому checkout в CI нужен с историей. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, а ошибка в одной проверке роняет только её. Команда завершается с кодом 1, если упала хотя бы одна проверка, и с кодом 2, если `.embraion/policy.yaml` не читается. См. [Policy](../configuration/policy.md#projection-root-checks).
 
 ### `embraion validation`
 
@@ -321,9 +323,28 @@ Structured validation profiles могут объявлять runtime parameters.
 embraion validation run affected   --param base-ref=origin/main   --param head-ref=HEAD
 ```
 
+Команда profile может быть mapping с `required: false` и `requires` (`executables`, `env`, `platforms`). Команда с отсутствующим prerequisite не запускается и получает статус `blocked` с причиной. Blocked или failed обязательная команда проваливает profile; необязательная лишь увеличивает счётчик `warnings` записи. Если все команды необязательные и ни одна не прошла, profile получает `skipped` с `skip-reason`. Текстовый вывод показывает `[BLOCKED]`, причину и строки `Failure:` и `Warnings:`. Обычные строковые commands работают как раньше. См. [необязательные команды и prerequisites](../configuration/validation.ru.md#optional-commands-and-prerequisites).
+
+Вывод длиннее tail в 8000 символов добавляет `stdout-head`/`stderr-head` и объект `output` с общим числом байт и строк; `output-limit-bytes` ограничивает полный log головой и хвостом с маркером обрезки. См. [output limit](../configuration/validation.ru.md#output-limit).
+
+После timeout всё дерево завершается и проверяется; строка команды получает `termination: confirmed` или `unconfirmed`, а `unconfirmed` проваливает profile и останавливает следующие команды. См. [Валидация и evidence](../validation.ru.md).
+
+Structured profile с `clean-tree: true` сравнивает `git status` перед первой и после последней команды. Новое различие или guard, который не может выполниться (нет Git work tree), проваливает profile с причиной в `failure-reasons`; см. [clean-tree guard](../configuration/validation.ru.md#clean-tree-guard).
+
 Unknown parameters и missing required parameters fail-closed. Parameters могут проецироваться в command-line argument или environment child validation process согласно `.embraion/validation.yaml`.
 
 `--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в собственной process group; timeout или прерывание завершают всё дерево. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
+
+Plan options для проектов, которые объявляют `areas` в `.embraion/validation.yaml` (см. [План validation](../configuration/validation.ru.md#validation-plan)):
+
+```bash
+embraion validation plan affected --base-ref origin/main [--head-ref REF] [--include-worktree] [--full-justification REASON] [--json] [--output FILE]
+embraion validation explain affected --base-ref origin/main
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan plan.json
+```
+
+`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json`), `explain` печатает решение простым языком. Обоим нужен `--base-ref` или `--include-worktree`; `--head-ref` нельзя сочетать с `--include-worktree`. `run` использует plan только с `--plan`, `--base-ref` или `--include-worktree`; иначе выполняет весь profile. Plan, который ничего не выбрал, сообщает `skipped`. `--full-justification` вне `full-reasons`, неверная конфигурация, файл `--plan`, устаревший (изменились конфигурация или состояние Git) или для другого profile, и plan options в проекте без areas fail-closed с exit code 2. `list` также показывает areas.
 
 ### `embraion cache`
 
@@ -456,6 +477,18 @@ embraion organization check --path . --require-config --json
 
 Базовая ссылка отделяет старый долг и не освобождает новый код от правил. Без конфигурации проверка возвращает `skipped`; с `--require-config` она завершается ошибкой. См. [Организация кода](../configuration/organization.md).
 
+### `embraion sources`
+
+Показать необязательный реестр источников и записать, где источник лежит на этой машине:
+
+```bash
+embraion sources list [--path .] [--json]
+embraion sources status [--path .] [--json]
+embraion sources set <id> <path> [--path .] [--json]
+```
+
+`list` показывает `id`, `role`, политику `write` и `description` каждого источника. `status` показывает `id`, `role`, `write` и `availability`: `available`, если записанный локальный путь существует, `missing`, если не существует, и `unset`, если путь не записан. `set` записывает абсолютный путь объявленного источника в игнорируемый `.embraion/state/sources-local.yaml`; путь должен существовать. Ни одна команда не печатает локальный путь. Команды завершаются с кодом 2, если `.embraion/sources.yaml` отсутствует или некорректен, а также если `set` получает неизвестный ID. См. [Реестр источников](../configuration/sources.md).
+
 ### `embraion decisions`
 
 Проверить, что изменение, принимающее решение уровня архитектуры, содержит запись о решении:
@@ -478,6 +511,17 @@ embraion adr new "Move parsing into its own package" --locale ru --status Propos
 ```
 
 `adr new` пишет запись из шаблона проекта, добавляет строку в индекс, а с `--locale <код>` (можно повторять) пишет рядом локализованную копию. Если в проекте нет папки, шаблона и индекса, команда их создаёт. `--slug` задаёт имя файла, когда в заголовке нет ASCII-слов. См. [Записи об архитектурных решениях](../configuration/decisions.md).
+
+### `embraion pr-template`
+
+Установите опциональный проектно-нейтральный шаблон pull request:
+
+```bash
+embraion pr-template
+embraion pr-template --path ../service --json
+```
+
+Команда пишет `.github/pull_request_template.md` из `templates/pull-request/pull-request-template.md`. В шаблоне есть разделы: что изменилось, архитектура, совместимость (source и API отдельно от persisted data), validation, непроведённые проверки, риски, workers и независимое ревью с точным final head SHA. Команда никогда не перезаписывает: если в проекте уже есть шаблон pull request (в корне, `docs/` или `.github/`, включая папку `PULL_REQUEST_TEMPLATE/`) или ссылка по этому пути, она сообщает об этом и ничего не меняет. `embraion init` её не запускает. `--path` задаёт каталог проекта, а `--json` выводит `status` (`created` или `exists`) и `path`.
 
 ### `embraion checkpoint`
 
@@ -515,7 +559,10 @@ embraion enforcement status --json
 ```bash
 embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
+embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
+
+`--protected-sources {name,base-tree}` переопределяет `enforcement.protected-sources` из policy для этого запуска. Без флага решает более строгий режим из policy head и policy merge base, по умолчанию `name`. В режиме `base-tree` список protected читается на merge base, а защищённые пути сравниваются по ID объектов Git; если policy base или merge base недоступны, проверка не проходит (fail-closed). См. [Enforcement](../guides/enforcement.ru.md#protect-sources-by-git-object-identity).
 
 С `--run-id` active runs получают validation evidence. Завершение run с passed review фиксирует HEAD, index и содержимое, modes и symlink targets tracked/nonignored untracked файлов. Gate требует совпадения снимка до и после validation; новый commit, staging или working edit требуют нового reviewed run. Legacy review без снимка не проходит gate. Нечитаемое состояние, submodules и неоднозначные directory aliases приводят к отказу. Завершённый run не изменяется и не завершается повторно. Все gates, включая external-review, отклоняют изменения Git-снимка во время validation; ignored runtime/build output в него не входит.
 
@@ -577,6 +624,8 @@ embraion worktree salvage /path/to/worktree
 ```
 
 GC удаляет только worktrees, созданные через `embraion worktree create`, с соответствующей записью ownership в Git-каталоге worktree. Требуются завершённые локальные run/session evidence, чистый интегрированный checkout, отсутствие блокировок и незавершённых Git-операций. Отсутствующее, повреждённое, активное, blocked или иное недоказанное состояние сохраняется. Старые и созданные вручную worktrees не удаляются.
+
+Hydration Git LFS по умолчанию выключена. При `worktree.lfs: hydrate` в `.embraion/project.yaml` команды `worktree create` (checkout и `--detach`) и `worktree register` загружают LFS-содержимое точного HEAD нового worktree из собственного LFS-remote репозитория, делают checkout и проверяют каждый LFS-файл по размеру и SHA-256. `create` печатает `LFS hydrated: <n> of <n> files verified`; `register` добавляет в JSON объект `lfs` (`state`, `files`, `verified`, `missing`, `reason`, а также `modified`, если LFS-файлы изменены локально). Локально изменённые LFS-файлы только отражаются в отчёте, не перезаписываются и не считаются ошибкой. Использование LFS определяется только по файлам `.gitattributes`, закоммиченным в HEAD; `.git/info/attributes` и глобальные атрибуты не читаются. Репозиторий без remote даёт понятную ошибку, а fetch и checkout прерываются по таймауту через 1800 секунд. Неудачная hydration, включая отсутствие `git lfs` при наличии LFS-файлов, завершает команду с кодом 1 и сохраняет worktree. `prepare` выполняется до появления checkout и не делает hydration. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
 
 ### `embraion learning`
 

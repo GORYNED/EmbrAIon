@@ -14,8 +14,7 @@
           {
             "type": "array",
             "items": {
-              "type": "string",
-              "minLength": 1
+              "$ref": "#/$defs/command"
             }
           },
           {
@@ -27,9 +26,15 @@
               "commands": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "minLength": 1
+                  "$ref": "#/$defs/command"
                 }
+              },
+              "clean-tree": {
+                "type": "boolean"
+              },
+              "output-limit-bytes": {
+                "type": "integer",
+                "minimum": 1024
               },
               "timeout-seconds": {
                 "oneOf": [
@@ -105,7 +110,187 @@
           }
         ]
       }
+    },
+    "areas": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "paths"
+        ],
+        "properties": {
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "commands": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "profiles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "commands"
+            ]
+          },
+          {
+            "required": [
+              "profiles"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "impact": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "paths"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "areas": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "full": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "areas"
+            ]
+          },
+          {
+            "required": [
+              "full"
+            ]
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "full-reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      }
+    },
+    "default-area": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "command": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "requires": {
+              "type": "object",
+              "properties": {
+                "executables": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "env": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  },
+                  "uniqueItems": true
+                },
+                "platforms": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "linux",
+                      "macos",
+                      "windows"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
 }

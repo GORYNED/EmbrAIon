@@ -13,6 +13,7 @@ from .capabilities import diagnose_external_capabilities
 from .checkpoints import create_checkpoint, resume_checkpoint
 from .knowledge_audit import audit_knowledge, snapshot_knowledge
 from .decisions import check_decisions, new_decision
+from .pr_template import install_pr_template
 from .organization import check_organization
 from .skill_evals import run_suite
 from .artifacts import read_framework_pin, read_project_artifact_lock, verify_project_artifact
@@ -67,6 +68,7 @@ from .worktree import (
     create_branch, create_detached_worktree, create_worktree, gc_report, list_worktrees, prepare_task,
     publish_branch, register_worktree, restore_cleanup, salvage_worktree,
 )
+from .worktree_lfs import hydrate_lfs, lfs_mode
 from .versioning import (
     cache_home,
     find_project_manifest,
@@ -139,9 +141,11 @@ def _print_main_help(file: object | None = None) -> None:
         "  mcp        Inspect and record privacy-safe MCP configuration",
         "  harness    Audit host agents, skills, and native enforcement surfaces",
         "  capabilities Diagnose declared external and selected built-in capabilities",
+        "  sources    List the project source registry or show local availability",
         "  organization Check configured namespace, assembly, and Unity metadata rules",
         "  decisions  Check that architectural changes carry a decision record or waiver",
         "  adr        Create the next numbered architecture decision record",
+        "  pr-template Install the optional pull request template, never overwriting",
         "  checkpoint Record or inspect local task continuity anchors",
         "  knowledge  Snapshot or audit declared documentation/source relationships",
         "  claude-native Inspect scoped Claude agents and install guard/observer hooks",
@@ -231,6 +235,13 @@ def _cmd_validate(args: argparse.Namespace) -> int:
              "message": f"{item['code']}: {item['message']}"}
             for item in findings
         ]
+    if project is not None and (
+        (project / ".embraion" / "sources.yaml").exists()
+        or (project / ".embraion" / "sources.yaml").is_symlink()
+    ):
+        from .sources import registry_errors
+        issues += [{"severity": "error", "code": "sources-invalid", "path": ".embraion/sources.yaml",
+                    "message": message} for message in registry_errors(project)]
     if project is not None:
         from .project import ignored_projection_outputs
 
@@ -258,6 +269,36 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         print("PASS: no validation issues.")
 
     return 1 if any(item["severity"] == "error" for item in issues) else 0
+
+
+def _cmd_sources(args: argparse.Namespace) -> int:
+    from .sources import list_sources, set_local_path, source_status
+
+    root = project_root(Path(args.path))
+    command = args.sources_command
+    if command == "set":
+        source_id = set_local_path(root, args.id, args.source_path)
+        if args.json:
+            _print_json({"id": source_id, "recorded": True})
+        else:
+            print(f"Recorded the local path for source '{source_id}'.")
+        return 0
+    if command == "list":
+        rows = list_sources(root)
+        if args.json:
+            _print_json({"sources": rows, "count": len(rows)})
+            return 0
+        for row in rows:
+            suffix = f"  {row['description']}" if row.get("description") else ""
+            print(f"{row['id']:24} {row['role']:18} {row['write']:16}{suffix}")
+        return 0
+    rows = source_status(root)
+    if args.json:
+        _print_json({"sources": rows, "count": len(rows)})
+        return 0
+    for row in rows:
+        print(f"{row['id']:24} {row['role']:18} {row['write']:16} {row['availability']}")
+    return 0
 
 
 def _cmd_init(args: argparse.Namespace) -> int:
@@ -1007,20 +1048,24 @@ def _named_values(
 
 
 def _cmd_validation_list(args: argparse.Namespace) -> int:
+    from .policy import read_validation_config
+
     specs = validation_profile_specs()
+    areas = read_validation_config().get("areas") or {}
     if args.json:
-        _print_json(
-            {
-                "profiles": {
-                    name: {
-                        "commands": list(spec["commands"]),
-                        "command-count": len(spec["commands"]),
-                        "parameters": spec.get("parameters") or {},
-                    }
-                    for name, spec in specs.items()
+        listing: dict[str, Any] = {
+            "profiles": {
+                name: {
+                    "commands": list(spec["commands"]),
+                    "command-count": len(spec["commands"]),
+                    "parameters": spec.get("parameters") or {},
                 }
+                for name, spec in specs.items()
             }
-        )
+        }
+        if areas:
+            listing["areas"] = areas
+        _print_json(listing)
         return 0
 
     print("EmbrAIon Project Validation Profiles")
@@ -1046,16 +1091,72 @@ def _cmd_validation_list(args: argparse.Namespace) -> int:
             )
             required = "required" if definition.get("required") else "optional"
             print(f"  param {parameter}: {target} ({required})")
+    if areas:
+        print()
+        print("Areas:")
+        for name, area in areas.items():
+            print(f"{name}: paths {', '.join(area['paths'])}")
+            for command in area.get("commands") or []:
+                print(f"  {command}")
+            for profile in area.get("profiles") or []:
+                print(f"  profile {profile}")
+    return 0
+
+
+def _plan_for_cli(args: argparse.Namespace) -> dict[str, Any]:
+    from .validation_plan import build_plan
+
+    return build_plan(
+        args.profile,
+        base_ref=args.base_ref,
+        head_ref=args.head_ref,
+        include_worktree=args.include_worktree,
+        full_justification=args.full_justification,
+    )
+
+
+def _cmd_validation_plan(args: argparse.Namespace) -> int:
+    from .common import project_root
+    from .validation_plan import default_plan_path, explain_plan, write_plan
+
+    plan = _plan_for_cli(args)
+    output = Path(args.output) if args.output else default_plan_path(project_root())
+    write_plan(plan, output)
+    if args.json:
+        from .security import redact_value
+
+        _print_json(redact_value(plan))
+    else:
+        print(explain_plan(plan))
+        print(f"Plan: {output}")
+    return 0
+
+
+def _cmd_validation_explain(args: argparse.Namespace) -> int:
+    from .validation_plan import explain_plan
+
+    print(explain_plan(_plan_for_cli(args)))
     return 0
 
 
 def _cmd_validation_run(args: argparse.Namespace) -> int:
+    from .validation_plan import resolve_run_plan
+
+    plan = resolve_run_plan(
+        args.profile,
+        plan_file=args.plan,
+        base_ref=args.base_ref,
+        head_ref=args.head_ref,
+        include_worktree=args.include_worktree,
+        full_justification=args.full_justification,
+    )
     record = run_validation_profile(
         args.profile,
         run_id=args.run_id,
         fail_fast=args.fail_fast,
         timeout=args.timeout,
         parameters=_named_values(args.param, option="--param"),
+        plan=plan,
     )
 
     if args.json:
@@ -1064,12 +1165,18 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
         print(f"Validation profile: {record['profile']}")
         print(f"Status: {record['status']}")
         if record["status"] == "skipped":
-            print("No commands are configured for this profile.")
+            if record.get("plan") and record["plan"].get("skip-reason"):
+                print(f"The plan selects no commands: {record['plan']['skip-reason']}.")
+            elif record.get("skip-reason"):
+                print(f"Nothing proved: {record['skip-reason']}.")
+            else:
+                print("No commands are configured for this profile.")
         for item in record["commands"]:
             label = {
                 "passed": "PASS",
                 "failed": "FAIL",
                 "timed-out": "TIMEOUT",
+                "blocked": "BLOCKED",
             }[item["status"]]
             exit_code = (
                 "-"
@@ -1081,11 +1188,23 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 f"exit={exit_code} {item['duration-ms']}ms"
             )
             print(f"  {item['command']}")
+            if item.get("reason"):
+                print(f"  reason: {item['reason']}")
+            if item.get("termination"):
+                print(f"  termination: {item['termination']}")
+            if item.get("required") is False:
+                print("  optional: a failure here is a warning")
             print(f"  log: {item['log-path']}")
             if item["stdout"]:
                 print(item["stdout"].rstrip())
             if item["stderr"]:
                 print(item["stderr"].rstrip(), file=sys.stderr)
+        if record.get("clean-tree"):
+            print(f"Clean tree: {record['clean-tree']['status']}")
+        for reason in record.get("failure-reasons") or []:
+            print(f"Failure: {reason}")
+        if record.get("warnings"):
+            print(f"Warnings: {record['warnings']} optional command(s) did not pass")
         print(f"Evidence: {record['evidence-path']}")
         if record.get("run-id"):
             print(f"Attached run: {record['run-id']}")
@@ -1105,6 +1224,8 @@ def _cmd_enforcement_status(args: argparse.Namespace) -> int:
         print(f"Enabled: {policy['enabled']}")
         print(f"Validation profile: {policy['validation-profile']}")
         print(f"Review required: {policy['require-review']}")
+        if "protected-sources" in policy:
+            print(f"Protected sources: {policy['protected-sources']}")
         print(
             "GitHub Actions gate: "
             + ("present" if surface["present"] else "not installed")
@@ -1117,6 +1238,7 @@ def _cmd_enforcement_check(args: argparse.Namespace) -> int:
         base_ref=args.base_ref,
         run_id=args.run_id,
         external_review_gate=args.external_review_gate,
+        protected_sources=args.protected_sources,
     )
     if args.json:
         _print_json(record)
@@ -1129,6 +1251,8 @@ def _cmd_enforcement_check(args: argparse.Namespace) -> int:
             print(f"{item['id']}: {item['status']}")
             for path in item.get("changed-paths") or []:
                 print(f"  {path}")
+            for finding in item.get("findings") or []:
+                print(f"  {finding}")
         print(f"Evidence: {record['evidence-path']}")
         print("PASS" if record["passed"] else "FAIL")
     return 0 if record["passed"] else 1
@@ -1206,7 +1330,23 @@ def _cmd_worktree_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def _hydrate_new_worktree(path: Path, hydrate: bool) -> int:
+    """Hydrate Git LFS content for a new checkout when the project opted in."""
+    if not hydrate:
+        return 0
+    lfs = hydrate_lfs(path)
+    if lfs["state"] == "hydrated":
+        print(f"LFS {lfs['state']}: {lfs['verified']} of {lfs['files']} files verified")
+        return 0
+    if lfs["state"] == "failed":
+        print(f"LFS failed: {lfs['missing']} of {lfs['files']} files missing ({lfs['reason']}); "
+              f"the worktree was kept at {path}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _cmd_worktree_create(args: argparse.Namespace) -> int:
+    hydrate = lfs_mode() == "hydrate"  # Fails before creating anything when the setting is invalid.
     destination = (
         Path(args.path).resolve()
         if args.path
@@ -1219,7 +1359,7 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
                                             task_id=args.task_id, host=args.host,
                                             independent=args.independent_task)
         print(f"Created {created}")
-        return 0
+        return _hydrate_new_worktree(created, hydrate)
     if not args.branch:
         raise ValueError("A branch name is required unless --detach is selected.")
     if args.branch_only:
@@ -1239,7 +1379,7 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
         independent=args.independent_task,
     )
     print(f"Created {created}")
-    return 0
+    return _hydrate_new_worktree(created, hydrate)
 
 
 def _cmd_worktree_gc(args: argparse.Namespace) -> int:
@@ -1275,10 +1415,16 @@ def _cmd_worktree_prepare(args: argparse.Namespace) -> int:
 
 
 def _cmd_worktree_register(args: argparse.Namespace) -> int:
-    _print_json(register_worktree(args.task_id, args.host,
-                                  path=Path(args.path).resolve() if args.path else None,
-                                  receipt_id=args.receipt_id))
-    return 0
+    hydrate = lfs_mode() == "hydrate"
+    path = Path(args.path).resolve() if args.path else None
+    resource = register_worktree(args.task_id, args.host, path=path, receipt_id=args.receipt_id)
+    if not hydrate:
+        _print_json(resource)
+        return 0
+    lfs = hydrate_lfs(path) if path is not None else {
+        "state": "skipped", "files": 0, "verified": 0, "missing": 0, "reason": "no-checkout"}
+    _print_json(resource | {"lfs": lfs})
+    return int(lfs["state"] == "failed")
 
 
 def _cmd_worktree_publish(args: argparse.Namespace) -> int:
@@ -1387,8 +1533,19 @@ def _cmd_adr_new(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_pr_template(args: argparse.Namespace) -> int:
+    report = install_pr_template(Path(args.path))
+    if args.json:
+        _print_json(report)
+    elif report["status"] == "created":
+        print(f"Created {report['path']}")
+    else:
+        print(f"{report['path']} already exists; left unchanged.")
+    return 0
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
-    from .check import planned_checks, run_check
+    from .check import planned_checks, run_check, run_validation_step
 
     project = project_root()
     checks = planned_checks(project, base_ref=args.base_ref, fail_on=args.fail_on, all_files=args.all_files)
@@ -1398,6 +1555,11 @@ def _cmd_check(args: argparse.Namespace) -> int:
         for check in checks:
             if check["argv"] is None:
                 results.append({**check, "exit": None, "passed": None, "output": check["not-run"]})
+                continue
+            if check.get("validation-profile"):
+                code, output, evidence = run_validation_step(project, check["validation-profile"])
+                results.append({**check, "exit": code, "passed": code == 0, "output": output,
+                                "evidence": evidence})
                 continue
             code, output = run_check(parser, check["argv"])
             results.append({**check, "exit": code, "passed": code == 0, "output": output})
@@ -2025,6 +2187,35 @@ def build_parser() -> argparse.ArgumentParser:
     validation_list.add_argument("--json", action="store_true")
     validation_list.set_defaults(func=_cmd_validation_list)
 
+    def add_plan_options(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--base-ref", help="Compare changes since the merge base with this Git ref")
+        command.add_argument("--head-ref", help="Compare up to this Git ref (default: HEAD)")
+        command.add_argument("--include-worktree", action="store_true", help="Also include uncommitted and untracked changes")
+        command.add_argument("--full-justification", help="Escalate to the full profile with one reason from full-reasons")
+
+    validation_plan = validation_sub.add_parser(
+        "plan",
+        help="Compute which areas and commands a change needs",
+        description=(
+            "Apply the areas and impact rules from .embraion/validation.yaml to the paths "
+            "changed in Git and write a deterministic plan file."
+        ),
+    )
+    validation_plan.add_argument("profile")
+    add_plan_options(validation_plan)
+    validation_plan.add_argument("--output", help="Plan file (default: .embraion/state/validation/plan.json)")
+    validation_plan.add_argument("--json", action="store_true")
+    validation_plan.set_defaults(func=_cmd_validation_plan)
+
+    validation_explain = validation_sub.add_parser(
+        "explain",
+        help="Explain in plain language why areas and commands are selected",
+        description="Print the validation plan decision without writing a file.",
+    )
+    validation_explain.add_argument("profile")
+    add_plan_options(validation_explain)
+    validation_explain.set_defaults(func=_cmd_validation_explain)
+
     validation_run = validation_sub.add_parser(
         "run",
         help="Execute one validation profile",
@@ -2046,6 +2237,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Unknown or missing required parameters fail closed."
         ),
     )
+    add_plan_options(validation_run)
+    validation_run.add_argument("--plan", help="Run the commands of a stored plan file; it must match the current configuration")
     validation_run.add_argument("--json", action="store_true")
     validation_run.set_defaults(func=_cmd_validation_run)
 
@@ -2495,6 +2688,14 @@ def build_parser() -> argparse.ArgumentParser:
             "surface such as the generated GitHub Actions approval gate."
         ),
     )
+    enforcement_check_parser.add_argument(
+        "--protected-sources",
+        choices=["name", "base-tree"],
+        help=(
+            "Override the protected-sources mode of the policy. 'base-tree' compares "
+            "protected paths with the merge base by Git object ID."
+        ),
+    )
     enforcement_check_parser.add_argument("--json", action="store_true")
     enforcement_check_parser.set_defaults(func=_cmd_enforcement_check)
 
@@ -2703,6 +2904,20 @@ def build_parser() -> argparse.ArgumentParser:
     organization_check.add_argument("--json", action="store_true")
     organization_check.set_defaults(func=_cmd_organization_check)
 
+    sources_parser = sub.add_parser("sources", help="Inspect the project source registry and local availability")
+    sources_sub = sources_parser.add_subparsers(dest="sources_command", required=True)
+    sources_list = sources_sub.add_parser("list", help="List the sources declared in .embraion/sources.yaml")
+    sources_status = sources_sub.add_parser(
+        "status", help="Show each source's role, write policy, and local availability (available, missing, unset)")
+    sources_set = sources_sub.add_parser(
+        "set", help="Record the path of a declared source on this machine in ignored local state")
+    sources_set.add_argument("id")
+    sources_set.add_argument("source_path", metavar="path")
+    for sources_command in (sources_list, sources_status, sources_set):
+        sources_command.add_argument("--path", default=".", help="Project root (default: current directory)")
+        sources_command.add_argument("--json", action="store_true")
+        sources_command.set_defaults(func=_cmd_sources)
+
     decisions_parser = sub.add_parser("decisions", help="Check that architectural changes carry a decision record")
     decisions_sub = decisions_parser.add_subparsers(dest="decisions_command", required=True)
     decisions_check = decisions_sub.add_parser("check")
@@ -2727,11 +2942,22 @@ def build_parser() -> argparse.ArgumentParser:
     adr_new.add_argument("--json", action="store_true")
     adr_new.set_defaults(func=_cmd_adr_new)
 
+    pr_template_parser = sub.add_parser(
+        "pr-template",
+        help="Install the optional pull request template",
+        description="Write .github/pull_request_template.md from the project-neutral EmbrAIon template. "
+        "Never overwrites an existing pull request template; init does not run this.",
+    )
+    pr_template_parser.add_argument("--path", default=".", help="Project directory (default: current directory)")
+    pr_template_parser.add_argument("--json", action="store_true")
+    pr_template_parser.set_defaults(func=_cmd_pr_template)
+
     check_parser = sub.add_parser(
         "check",
         help="Run every check the project configuration selects",
         description="Run, from the project root, the configuration, routing, declared projection, Claude native, "
-        "organization, and security checks that the project configuration selects, and fail if any fails.",
+        "organization, security, and declared validation profile checks that the project configuration selects, "
+        "and fail if any fails.",
     )
     check_parser.add_argument("--base-ref", help="Base ref for the organization check, for example origin/main")
     check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER),

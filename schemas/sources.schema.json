@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/sources.schema.json",
+  "title": "EmbrAIon Project Source Registry",
+  "description": "Optional registry of the stable source IDs a project uses: role, write policy, documentation, and an optional raised data class. Machine-local paths never belong here.",
+  "type": "object",
+  "required": ["schema-version", "sources"],
+  "properties": {
+    "schema-version": {"const": 1},
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/source"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["id", "role", "write"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 128},
+        "role": {
+          "enum": ["canonical-code", "shared-library", "reference", "external-upstream", "application-data"],
+          "description": "canonical-code: the project's own authoritative code. shared-library: a first-party library several projects reuse. reference: a read-only example or earlier implementation. external-upstream: a vendor or third-party source the project does not own. application-data: runtime or user data."
+        },
+        "write": {
+          "enum": ["read-only", "workspace-write", "forbidden"],
+          "description": "read-only: agents read it and never write it. workspace-write: agents may write it in an authorized task. forbidden: agents neither write it nor treat it as writable under any task."
+        },
+        "description": {"type": "string", "minLength": 1, "maxLength": 512},
+        "doc": {"type": "string", "minLength": 1, "maxLength": 512, "description": "Repository-relative path of the documentation that governs this source. The file must exist."},
+        "data-class": {
+          "enum": ["PUBLIC", "PRIVATE", "CONFIDENTIAL"],
+          "description": "May only raise the class declared for this ID in privacy.sources (or the privacy default class when privacy.sources is not declared)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

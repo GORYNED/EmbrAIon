@@ -56,11 +56,11 @@ class ProjectionDestinationTests(unittest.TestCase):
         other = _projection_state_path(self.project, "codex", alternate)
         originals = (root.read_bytes(), other.read_bytes())
         generated = alternate / ".codex/agents/reviewer.toml"
-        generated.write_text(generated.read_text() + "# local edit\n")
+        generated.write_text(generated.read_text(encoding="utf-8") + "# local edit\n", encoding="utf-8")
         self.assertFalse(projection_is_verified(projection_plan("codex", alternate, components=["agents"])))
         self.assertTrue(projection_is_verified(projection_plan("codex", self.project, config_mode="merge")))
         generated = self.project / ".agents/skills/routing-configuration/SKILL.md"
-        generated.write_text(generated.read_text() + "\n```yaml\nmodel: example-basic-v1\n```\n")
+        generated.write_text(generated.read_text(encoding="utf-8") + "\n```yaml\nmodel: example-basic-v1\n```\n", encoding="utf-8")
         self.assertFalse(projection_is_verified(projection_plan("codex", self.project, config_mode="merge")))
         self.assertTrue(audit_routing_authority(self.project))
         self.assertEqual(originals, (root.read_bytes(), other.read_bytes()))
@@ -204,7 +204,7 @@ class ProjectionDestinationTests(unittest.TestCase):
         scoped.replace(self.legacy())
         original = self.legacy().read_bytes()
         generated = self.project / ".codex/agents/reviewer.toml"
-        generated.write_text(generated.read_text() + "# modified\n")
+        generated.write_text(generated.read_text(encoding="utf-8") + "# modified\n", encoding="utf-8")
         with self.assertRaises(RuntimeError):
             install("codex", self.project, components=["agents"])
         self.assertEqual(original, self.legacy().read_bytes())

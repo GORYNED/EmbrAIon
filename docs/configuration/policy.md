@@ -83,6 +83,8 @@ privacy:
 
 When `sources` is declared, an execution request may name only listed source IDs, and its data class must be at least the highest class of the sources it names; otherwise the request fails before any provider is selected. Without `sources` requests are checked as before.
 
+An optional [source registry](sources.md) adds a role and a write policy for each ID, and a `data-class` that can only raise the class declared here.
+
 Model choice cannot widen these boundaries.
 
 ## Enforcement policy
@@ -95,6 +97,16 @@ enforcement:
   validation-profile: affected
   require-review: false
 ```
+
+The optional `protected-sources` key selects how protected paths are checked:
+
+```yaml
+enforcement:
+  protected-sources: base-tree
+```
+
+- `name` (the default when the key is omitted): match the names of changed files against the protected list of the checked-out policy.
+- `base-tree`: read the protected list from the merge base and compare protected paths by Git object ID. Any other value fails validation. The stricter mode of the head policy and the merge-base policy wins, so a change cannot turn `base-tree` off once the base has it; the first pull request that enables it relies on the head policy. See [Protect sources by Git object identity](../guides/enforcement.md#protect-sources-by-git-object-identity).
 
 Do not manually flip this block and assume CI is installed. Use the explicit command when you are ready to add the GitHub Actions surface:
 
@@ -207,11 +219,13 @@ check:
   organization: [full, compare]
   fail-on: medium
   all-files: true
+  validation-profiles: [affected]
 ```
 
 - `organization` lists the organization-check modes. `full` audits the whole structure. `compare` compares against `--base-ref`, so only new findings, moves and GUID changes fail, and it is reported as `NOT RUN` without a base ref. Omitted, `embraion check` runs `full` without `--base-ref` and `compare` with it. Declared modes appear as `organization-full` and `organization-compare` and apply only when `.embraion/organization.yaml` exists.
 - `fail-on` is the lowest security finding severity that fails the check (`info`, `low`, `medium`, `high` or `critical`); the default is `high`.
 - `all-files` also scans every other text file for private keys, tokens and machine paths, as `--all-files` does in [`security scan`](../security.md#scan-findings); the default is `false`.
+- `validation-profiles` lists project [validation profiles](../reference/cli.md#embraion-validation) from `.embraion/validation.yaml`. `embraion check` runs each one after all other checks, as the step `validation-<profile>`, the same way `embraion validation run <profile>` does, and records the same evidence under `.embraion/state/validation/`. A step passes only when the profile result is `passed`. Failed and timed-out profiles fail it. A declared profile must prove something, so an unknown profile, an empty profile (`skipped`), and a profile with a required parameter that has no default also fail it. Omitted, no profile runs.
 
 The `--fail-on` flag overrides `fail-on`, and `--all-files` turns the full scan on; the other values have no flag. A project without the section behaves as before. Pass a `base-ref` (or declare `full`) for runs without a pull request base, such as a push, where `compare` is not run. Only a release that contains the section accepts it, so move the project pin to such a release first.
 

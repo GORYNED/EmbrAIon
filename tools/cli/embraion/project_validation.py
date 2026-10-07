@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import locale
 import os
 import re
 import shlex
+import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -18,12 +21,58 @@ from .evidence import attach_validation_evidence, read_run
 from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
-from .security import redact_child_output, redact_text, redact_value
+from .security import redact_text, redact_value
+from .validation_process import GRACE_SECONDS, terminate_tree
+from .validation_output import CapturedOutput, capture_stream, render_output
 
 
 MAX_CAPTURE_CHARS = 8000
+MAX_CLEAN_TREE_PATHS = 20
+MIN_OUTPUT_LIMIT_BYTES = 1024
+MAX_FINGERPRINT_BYTES = 64 * 1024 * 1024
 RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
-TERMINATION_GRACE_SECONDS = 2.0
+TERMINATION_GRACE_SECONDS = GRACE_SECONDS
+
+
+_PLATFORMS = ("linux", "macos", "windows")
+
+
+def _command_entry(name: str, index: int, item: Any) -> tuple[str, dict[str, Any]]:
+    """Return a command string and its run semantics.
+
+    A plain string keeps the previous behavior: required, with no prerequisites.
+    """
+    if not isinstance(item, dict):
+        return str(item), {"required": True, "requires": {}}
+    location = f"Invalid validation profile '{name}': command {index}"
+    unknown = sorted(set(item) - {"command", "required", "requires"})
+    if unknown or not isinstance(item.get("command"), str) or not item["command"]:
+        raise RuntimeError(
+            f"{location} must be a string or a mapping with a 'command' and optional "
+            "'required' and 'requires'."
+        )
+    required = item.get("required", True)
+    if not isinstance(required, bool):
+        raise RuntimeError(f"{location} has a non-boolean 'required'.")
+    declared = item.get("requires") or {}
+    if not isinstance(declared, dict) or set(declared) - {"executables", "env", "platforms"}:
+        raise RuntimeError(
+            f"{location} has invalid 'requires'; allowed keys are executables, env, platforms."
+        )
+    requires: dict[str, list[str]] = {}
+    for key in ("executables", "env", "platforms"):
+        values = declared.get(key)
+        if values is None:
+            continue
+        if not isinstance(values, list) or not all(isinstance(value, str) and value for value in values):
+            raise RuntimeError(f"{location} requires.{key} must be a list of non-empty strings.")
+        if key == "platforms" and (not values or set(values) - set(_PLATFORMS)):
+            raise RuntimeError(
+                f"{location} requires.platforms must be a non-empty list of: "
+                + ", ".join(_PLATFORMS) + "."
+            )
+        requires[key] = list(values)
+    return item["command"], {"required": required, "requires": requires}
 
 
 def _normalize_validation_profile(
@@ -31,18 +80,40 @@ def _normalize_validation_profile(
     value: Any,
 ) -> dict[str, Any]:
     if isinstance(value, list):
+        parsed = [_command_entry(name, index, item) for index, item in enumerate(value, start=1)]
         return {
-            "commands": [str(command) for command in value],
+            "commands": [command for command, _ in parsed],
+            "entries": [entry for _, entry in parsed],
             "parameters": {},
             "timeouts": [None] * len(value),
+            "clean-tree": False,
+            "output-limit": None,
         }
     if not isinstance(value, dict):
         raise RuntimeError(
             f"Invalid validation profile '{name}': expected a command list or mapping."
         )
-    commands = [str(command) for command in (value.get("commands") or [])]
+    parsed = [
+        _command_entry(name, index, item)
+        for index, item in enumerate(value.get("commands") or [], start=1)
+    ]
+    commands = [command for command, _ in parsed]
+    clean_tree = value.get("clean-tree", False)
+    if not isinstance(clean_tree, bool):
+        raise RuntimeError(f"Invalid validation profile '{name}': clean-tree must be true or false.")
+    output_limit = value.get("output-limit-bytes")
+    if output_limit is not None and (
+        isinstance(output_limit, bool) or not isinstance(output_limit, int) or output_limit < MIN_OUTPUT_LIMIT_BYTES
+    ):
+        raise RuntimeError(
+            f"Invalid validation profile '{name}': output-limit-bytes must be an integer "
+            f"of at least {MIN_OUTPUT_LIMIT_BYTES}."
+        )
     return {
         "commands": commands,
+        "entries": [entry for _, entry in parsed],
+        "clean-tree": clean_tree,
+        "output-limit": output_limit,
         "parameters": {
             str(parameter): dict(definition or {})
             for parameter, definition in (value.get("parameters") or {}).items()
@@ -202,6 +273,163 @@ def _prepare_validation_command(
     return prepared, environment
 
 
+def _current_platform() -> str:
+    if sys.platform.startswith("win"):
+        return "windows"
+    if sys.platform == "darwin":
+        return "macos"
+    return "linux"
+
+
+def _find_executable(name: str, root: Path, environment: dict[str, str]) -> bool:
+    search = next((value for key, value in environment.items() if key.upper() == "PATH"), None)
+    if "/" in name or "\\" in name:
+        # A path-like name is relative to the project root, where the command runs.
+        candidate = Path(name)
+        candidate = candidate if candidate.is_absolute() else root / candidate
+        return shutil.which(str(candidate), path=search) is not None
+    return shutil.which(name, path=search) is not None
+
+
+def _blocked_reason(
+    requires: dict[str, list[str]],
+    root: Path,
+    environment: dict[str, str],
+) -> str | None:
+    """Return why a command cannot run in this environment, or ``None`` when it can."""
+    reasons: list[str] = []
+    platforms = requires.get("platforms")
+    if platforms and _current_platform() not in platforms:
+        reasons.append(
+            f"platform '{_current_platform()}' is not one of: " + ", ".join(platforms)
+        )
+    for name in requires.get("executables") or []:
+        if not _find_executable(name, root, environment):
+            reasons.append(f"executable '{name}' was not found on PATH")
+    for name in requires.get("env") or []:
+        if not environment.get(name):
+            reasons.append(f"environment variable '{name}' is not set")
+    return "; ".join(reasons) if reasons else None
+
+
+def _git_output(root: Path, *arguments: str) -> bytes:
+    environment = child_environment()
+    # A read-only status must not take the index lock or rewrite the index.
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    try:
+        completed = subprocess.run(
+            ["git", *arguments],
+            cwd=str(root),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=120,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        raise _TreeUnavailable("the git executable was not found") from error
+    except subprocess.TimeoutExpired as error:
+        raise _TreeUnavailable("git status did not finish within 120 seconds") from error
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip().splitlines()
+        suffix = f": {detail[0]}" if detail else ""
+        raise _TreeUnavailable(
+            "the project is not inside a Git work tree, or Git refused to read it" + suffix
+            if arguments[:1] == ("rev-parse",)
+            else "git status failed" + suffix
+        )
+    return completed.stdout
+
+
+class _TreeUnavailable(Exception):
+    """The clean-tree guard cannot observe the working tree."""
+
+
+def _path_fingerprint(path: Path) -> str:
+    """Return a stable content fingerprint so a re-edit of a dirty file is still seen."""
+    try:
+        if path.is_symlink():
+            return "link:" + os.readlink(path)
+        if path.is_dir():
+            return "dir"
+        size = path.stat().st_size
+        if size > MAX_FINGERPRINT_BYTES:
+            return f"size:{size}"
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return "sha256:" + digest.hexdigest()
+    except OSError:
+        return "absent"
+
+
+def _tree_snapshot(root: Path) -> dict[str, str]:
+    """Map every path that Git reports as changed or untracked to its status and content."""
+    top = Path(
+        _git_output(root, "rev-parse", "--show-toplevel").decode("utf-8", errors="replace").strip()
+    )
+    try:
+        # Validation writes its own evidence here, so that state is not a tree change.
+        ignored = state_root(root).resolve().relative_to(top.resolve()).as_posix() + "/"
+    except ValueError:
+        ignored = None
+    output = _git_output(
+        root, "status", "--porcelain=v1", "-z", "--untracked-files=all"
+    )
+    tokens = output.decode("utf-8", errors="replace").split("\0")
+    snapshot: dict[str, str] = {}
+    position = 0
+    while position < len(tokens):
+        token = tokens[position]
+        position += 1
+        if len(token) < 4:
+            continue
+        code, relative = token[:2], token[3:]
+        origin = ""
+        if "R" in code or "C" in code:
+            origin = tokens[position] if position < len(tokens) else ""
+            position += 1
+        if ignored and (relative + "/").startswith(ignored):
+            continue
+        snapshot[relative] = f"{code}|{origin}|{_path_fingerprint(top / relative)}"
+    return snapshot
+
+
+def _evaluate_clean_tree(
+    root: Path,
+    baseline: dict[str, str] | None,
+    baseline_reason: str | None,
+) -> tuple[dict[str, Any], str | None]:
+    """Compare the tree after the run with the baseline; return the record block and a failure."""
+    if baseline is None:
+        reason = baseline_reason or "the working tree could not be read"
+        return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
+    try:
+        after = _tree_snapshot(root)
+    except _TreeUnavailable as error:
+        reason = f"the working tree could not be read after the run: {error}"
+        return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
+    changed = sorted(
+        path for path in set(baseline) | set(after) if baseline.get(path) != after.get(path)
+    )
+    block: dict[str, Any] = {
+        "status": "failed" if changed else "passed",
+        "baseline-dirty": bool(baseline),
+        "changed-count": len(changed),
+        "changed-paths": changed[:MAX_CLEAN_TREE_PATHS],
+    }
+    if not changed:
+        return block, None
+    named = ", ".join(changed[:MAX_CLEAN_TREE_PATHS])
+    more = len(changed) - MAX_CLEAN_TREE_PATHS
+    return block, (
+        f"clean-tree guard failed: {len(changed)} path(s) changed during validation: {named}"
+        + (f" (and {more} more)" if more > 0 else "")
+    )
+
+
 def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
     """Start a shell command as the leader of its own process group."""
     options: dict[str, Any] = {}
@@ -224,33 +452,9 @@ def _wait_for(process: subprocess.Popen, timeout: float | None) -> int:
     return process.wait(timeout=timeout)
 
 
-def _terminate_tree(process: subprocess.Popen) -> None:
-    """Terminate the command and every descendant that stayed in its process group."""
-    if os.name == "nt":
-        subprocess.run(
-            ["taskkill", "/T", "/F", "/PID", str(process.pid)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-        if process.poll() is None:
-            process.kill()
-        process.wait()
-        return
-    try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except (ProcessLookupError, PermissionError):
-        pass
-    try:
-        process.wait(timeout=TERMINATION_GRACE_SECONDS)
-    except subprocess.TimeoutExpired:
-        pass
-    # Descendants that ignore SIGTERM or outlive the leader are killed as well.
-    try:
-        os.killpg(process.pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        pass
-    process.wait()
+def _terminate_tree(process: subprocess.Popen) -> bool:
+    """End the command's whole process tree; return whether its end is confirmed."""
+    return terminate_tree(process)
 
 
 def _run_contained(
@@ -258,27 +462,33 @@ def _run_contained(
     cwd: Path,
     environment: dict[str, str],
     timeout: float | None,
-) -> tuple[int | None, str, str]:
-    """Run one command; return its exit code (``None`` after a timeout) and full output."""
+    output_limit: int | None = None,
+) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None]:
+    """Run one command; return its exit code (``None`` after a timeout) and its output.
+
+    The last item is ``None`` unless the command timed out; then it is ``confirmed`` or
+    ``unconfirmed``, telling whether the whole process tree was shown to be gone.
+
+    Without an ``output_limit`` the output is kept whole; with one, only a head and a
+    tail of at most that many bytes per stream are read into memory.
+    """
     # Anonymous temporary files keep raw output out of the project state and do
     # not block when a descendant keeps an inherited output handle open.
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
         process = _spawn_contained(command, cwd, environment, stdout, stderr)
         try:
             returncode: int | None = _wait_for(process, timeout)
+            termination: str | None = None
         except subprocess.TimeoutExpired:
-            _terminate_tree(process)
+            termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
             returncode = None
         except BaseException:
             _terminate_tree(process)
             raise
         # Text-mode subprocess output used the locale encoding; keep that decoding.
         encoding = locale.getpreferredencoding(False)
-        texts = []
-        for handle in (stdout, stderr):
-            handle.seek(0)
-            texts.append(handle.read().decode(encoding, errors="replace"))
-    return returncode, texts[0], texts[1]
+        captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
+    return returncode, captured[0], captured[1], termination
 
 
 def _log_path(project: Path, evidence_id: str, index: int) -> Path:
@@ -294,10 +504,42 @@ def _write_command_log(path: Path, command: str, stdout: str, stderr: str) -> No
     path.write_text(text, encoding="utf-8")
 
 
+def _write_blocked_log(path: Path, command: str, reason: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"$ {redact_text(command)}\n--- blocked ---\nNot run: {reason}\n",
+        encoding="utf-8",
+    )
+
+
 def _captured_tail(value: str, limit: int = MAX_CAPTURE_CHARS) -> str:
     if len(value) <= limit:
         return value
     return "...<truncated>\n" + value[-limit:]
+
+
+def _output_details(
+    stdout: str,
+    stderr: str,
+    raw_stdout: CapturedOutput,
+    raw_stderr: CapturedOutput,
+) -> dict[str, Any]:
+    """Describe output that did not fit; empty when nothing was cut, so records stay as before."""
+    details: dict[str, Any] = {}
+    summary: dict[str, Any] = {}
+    for name, text, raw in (("stdout", stdout, raw_stdout), ("stderr", stderr, raw_stderr)):
+        record_truncated = len(text) > MAX_CAPTURE_CHARS
+        if not record_truncated and not raw.truncated:
+            continue
+        details[f"{name}-head"] = text[:MAX_CAPTURE_CHARS]
+        summary[name] = {
+            "bytes": raw.total_bytes,
+            "lines": raw.total_lines,
+            "log-truncated": raw.truncated,
+        }
+    if summary:
+        details["output"] = summary
+    return details
 
 
 def _validation_path(project: Path, evidence_id: str) -> Path:
@@ -325,6 +567,7 @@ def run_validation_profile(
     fail_fast: bool = False,
     timeout: float | None = None,
     parameters: dict[str, str] | None = None,
+    plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     specs = validation_profile_specs(root)
@@ -345,8 +588,16 @@ def run_validation_profile(
                 f"Validation evidence can only attach to an active run: {run_id}"
             )
 
+    if plan is not None:
+        # A plan restricts the run to its selected commands; see validation_plan.
+        from .validation_plan import plan_spec
+
+        specs[profile], parameters = plan_spec(specs, profile, plan, parameters)
     spec = specs[profile]
     commands = list(spec["commands"])
+    entries = list(spec["entries"])
+    clean_tree = bool(spec.get("clean-tree"))
+    extended = clean_tree or any(not entry["required"] or entry["requires"] for entry in entries)
     resolved_parameters, parameter_definitions = _resolve_validation_parameters(
         profile,
         spec,
@@ -355,6 +606,15 @@ def run_validation_profile(
     evidence_id = f"{profile}-{uuid.uuid4().hex[:12]}"
     started = datetime.now(timezone.utc).isoformat()
     command_results: list[dict[str, Any]] = []
+    failure_reasons: list[str] = []
+    warnings = 0
+    baseline: dict[str, str] | None = None
+    baseline_reason: str | None = None
+    if clean_tree and commands:
+        try:
+            baseline = _tree_snapshot(root)
+        except _TreeUnavailable as error:
+            baseline_reason = str(error)
 
     for index, command in enumerate(commands, start=1):
         prepared_command, command_environment = _prepare_validation_command(
@@ -368,49 +628,116 @@ def run_validation_profile(
         if run_id:
             command_environment[RUN_ID_ENVIRONMENT] = run_id
         command_timeout = timeout if timeout is not None else spec["timeouts"][index - 1]
-        began = time.monotonic()
-        exit_code, raw_stdout, raw_stderr = _run_contained(
-            prepared_command,
-            root,
-            command_environment,
-            command_timeout,
-        )
-        duration_ms = int((time.monotonic() - began) * 1000)
-        output = redact_child_output(raw_stdout, raw_stderr)
-        stdout = _redact_validation_parameter_values(output["stdout"], resolved_parameters)
-        stderr = _redact_validation_parameter_values(output["stderr"], resolved_parameters)
+        entry = entries[index - 1]
+        blocked_reason = _blocked_reason(entry["requires"], root, command_environment)
         log_path = _log_path(root, evidence_id, index)
-        _write_command_log(log_path, command, stdout, stderr)
-        if exit_code is None:
-            status = "timed-out"
+        if blocked_reason is not None:
+            _write_blocked_log(log_path, command, blocked_reason)
+            row = {
+                "index": index,
+                "command": command,
+                "status": "blocked",
+                "exit-code": None,
+                "duration-ms": 0,
+                "timeout-seconds": command_timeout,
+                "log-path": log_path.relative_to(root).as_posix(),
+                "stdout": "",
+                "stderr": "",
+                "reason": blocked_reason,
+            }
         else:
-            status = "passed" if exit_code == 0 else "failed"
-        row = {
-            "index": index,
-            "command": command,
-            "status": status,
-            "exit-code": exit_code,
-            "duration-ms": duration_ms,
-            "timeout-seconds": command_timeout,
-            "log-path": log_path.relative_to(root).as_posix(),
-            "stdout": _captured_tail(stdout),
-            "stderr": _captured_tail(stderr),
-        }
+            began = time.monotonic()
+            exit_code, raw_stdout, raw_stderr, termination = _run_contained(
+                prepared_command,
+                root,
+                command_environment,
+                command_timeout,
+                spec.get("output-limit"),
+            )
+            duration_ms = int((time.monotonic() - began) * 1000)
 
+            def scrub(text: str) -> str:
+                return _redact_validation_parameter_values(redact_text(text), resolved_parameters)
+
+            stdout = render_output(raw_stdout, scrub)
+            stderr = render_output(raw_stderr, scrub)
+            _write_command_log(log_path, command, stdout, stderr)
+            if exit_code is None:
+                status = "timed-out"
+            else:
+                status = "passed" if exit_code == 0 else "failed"
+            row = {
+                "index": index,
+                "command": command,
+                "status": status,
+                "exit-code": exit_code,
+                "duration-ms": duration_ms,
+                "timeout-seconds": command_timeout,
+                "log-path": log_path.relative_to(root).as_posix(),
+                "stdout": _captured_tail(stdout),
+                "stderr": _captured_tail(stderr),
+            }
+            row.update(_output_details(stdout, stderr, raw_stdout, raw_stderr))
+            if termination is not None:
+                row["termination"] = termination
+        if not entry["required"]:
+            row["required"] = False
         command_results.append(row)
-        if fail_fast and row["status"] != "passed":
+        if row.get("termination") == "unconfirmed":
+            # Stray processes may still run, so the profile fails and nothing else starts.
+            failure_reasons.append(
+                f"command {index} timed out and its process tree could not be confirmed "
+                "terminated; processes may still be running"
+            )
             break
+        if row["status"] != "passed":
+            if entry["required"]:
+                if row["status"] == "blocked":
+                    failure_reasons.append(f"command {index} is blocked: {row['reason']}")
+                if fail_fast:
+                    break
+            else:
+                warnings += 1
 
+    clean_tree_block: dict[str, Any] | None = None
+    if clean_tree and commands:
+        clean_tree_block, clean_tree_failure = _evaluate_clean_tree(root, baseline, baseline_reason)
+        if clean_tree_failure:
+            failure_reasons.append(clean_tree_failure)
+
+    skip_reason: str | None = None
     if not commands:
         status = "skipped"
-    elif all(item["status"] == "passed" for item in command_results) and (
-        len(command_results) == len(commands)
-    ):
+    elif len(command_results) == len(commands) and all(
+        item["status"] == "passed" or item.get("required") is False
+        for item in command_results
+    ) and not failure_reasons:
         status = "passed"
+        if not any(item["status"] == "passed" for item in command_results):
+            # Optional commands that were blocked or failed prove nothing: never a pass.
+            status = "skipped"
+            skip_reason = "every command is optional and none passed"
     else:
         status = "failed"
 
     completed = datetime.now(timezone.utc).isoformat()
+    extra: dict[str, Any] = {}
+    if extended:
+        extra["warnings"] = warnings
+    if spec.get("output-limit"):
+        extra["output-limit-bytes"] = spec["output-limit"]
+    if clean_tree_block is not None:
+        extra["clean-tree"] = clean_tree_block
+    if failure_reasons:
+        extra["failure-reasons"] = failure_reasons
+    if skip_reason:
+        extra["skip-reason"] = skip_reason
+    if plan is not None:
+        from .validation_plan import write_plan_evidence
+
+        plan_path = write_plan_evidence(root, evidence_id, plan)
+        extra["plan"] = plan
+        extra["plan-path"] = plan_path
     record = redact_value(
         {
             "schema-version": 1,
@@ -429,6 +756,7 @@ def run_validation_profile(
             "commands": command_results,
             "started-utc": started,
             "completed-utc": completed,
+            **extra,
         }
     )
     write_json(_validation_path(root, evidence_id), record)

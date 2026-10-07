@@ -291,6 +291,8 @@ Inside a project, `validate` also checks the project's `.embraion/*.yaml` struct
 - knowledge `roles` that match no Core role or agent declared in `.embraion/agents.yaml` (`config-role`);
 - empty files, empty sections that expect a value, and `.embraion` YAML files EmbrAIon does not read (`config-inert`), plus unreadable YAML (`config-parse`).
 
+When `.embraion/sources.yaml` exists, `validate` also checks it and reports each problem as an error (`sources-invalid`), whether or not `--strict` is set. See [Source registry](../configuration/sources.md).
+
 Warnings keep the exit code at 0; `--strict` reports them as errors. Without findings the output stays `PASS: no validation issues.`. Full schema conformance remains with the commands that load each file, and the policy-ceiling check stays an error.
 
 ### `embraion check`
@@ -303,7 +305,7 @@ embraion check --base-ref origin/main --fail-on medium --all-files
 embraion check --json
 ```
 
-It always runs `validate --strict`, `route --validate`, `route --audit-authority` and `security scan` (with `--fail-on`, default `high`, and `--all-files` passed through). It adds `projection verify` for each host whose components `.embraion/policy.yaml` declares under `projection`, `claude-native status --require` when Claude Code `scoped-agents` or `hooks` are declared, `organization check --require-config` when `.embraion/organization.yaml` exists, and `decisions check --require-config` when `.embraion/decisions.yaml` exists and `--base-ref` is given; without `--base-ref` that check is reported as `NOT RUN` and does not fail the command. Without `--base-ref` the organization check audits the whole structure; with it, the check compares against that ref, so only findings the ref does not have fail, together with moves and GUID changes. The `check` section of `.embraion/policy.yaml` can instead declare which organization modes run (`full`, `compare` or both, reported as `organization-full` and `organization-compare`; `compare` is `NOT RUN` without a base ref), and the default of `--fail-on` and `--all-files`; those flags override it. See [Check options](../configuration/policy.md#check-options). The ref must be fetched, so a CI checkout needs its history. Each check prints `PASS` or `FAIL`, a failed check also prints its output, and an error in one check fails only that check. The command exits 1 when any check fails, and 2 when `.embraion/policy.yaml` cannot be read. See [Policy](../configuration/policy.md#projection-root-checks).
+It always runs `validate --strict`, `route --validate`, `route --audit-authority` and `security scan` (with `--fail-on`, default `high`, and `--all-files` passed through). It adds `projection verify` for each host whose components `.embraion/policy.yaml` declares under `projection`, `claude-native status --require` when Claude Code `scoped-agents` or `hooks` are declared, `organization check --require-config` when `.embraion/organization.yaml` exists, and `decisions check --require-config` when `.embraion/decisions.yaml` exists and `--base-ref` is given; without `--base-ref` that check is reported as `NOT RUN` and does not fail the command. Without `--base-ref` the organization check audits the whole structure; with it, the check compares against that ref, so only findings the ref does not have fail, together with moves and GUID changes. The `check` section of `.embraion/policy.yaml` can instead declare which organization modes run (`full`, `compare` or both, reported as `organization-full` and `organization-compare`; `compare` is `NOT RUN` without a base ref), and the default of `--fail-on` and `--all-files`; those flags override it. `validation-profiles` in the same section adds one `validation-<profile>` step per listed project validation profile after every other check; it runs the profile as `validation run` does, keeps its evidence, and fails unless the result is `passed` (an empty or unknown profile fails too). With `--json`, such a step also has `validation-profile` and `evidence` (`profile`, `status`, `evidence-path`). See [Check options](../configuration/policy.md#check-options). The ref must be fetched, so a CI checkout needs its history. Each check prints `PASS` or `FAIL`, a failed check also prints its output, and an error in one check fails only that check. The command exits 1 when any check fails, and 2 when `.embraion/policy.yaml` cannot be read. See [Policy](../configuration/policy.md#projection-root-checks).
 
 ### `embraion validation`
 
@@ -327,9 +329,28 @@ embraion validation run affected \
   --param head-ref=HEAD
 ```
 
+A profile command can be a mapping with `required: false` and `requires` (`executables`, `env`, `platforms`). A command with a missing prerequisite is not started and is reported `blocked` with a reason. A blocked or failed required command fails the profile; an optional one only adds to the `warnings` count of the record. If every command is optional and none passed, the profile is `skipped` with a `skip-reason`. The text output shows `[BLOCKED]`, the reason, and `Failure:` and `Warnings:` lines. Plain string commands behave as before. See [optional commands and prerequisites](../configuration/validation.md#optional-commands-and-prerequisites).
+
+Output longer than the 8000-character tail adds `stdout-head`/`stderr-head` and an `output` object with total bytes and lines; `output-limit-bytes` bounds the full log to a head and a tail with a truncation marker. See [output limit](../configuration/validation.md#output-limit).
+
+After a timeout the whole tree is ended and checked; the command row records `termination: confirmed` or `unconfirmed`, and `unconfirmed` fails the profile and stops later commands. See [Validation & Evidence](../validation.md#evidence-behavior).
+
+A structured profile with `clean-tree: true` compares `git status` before the first and after the last command. A new difference, or a guard that cannot run (no Git work tree), fails the profile with a reason in `failure-reasons`; see [clean-tree guard](../configuration/validation.md#clean-tree-guard).
+
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
 `--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
+
+Plan options for projects that declare `areas` in `.embraion/validation.yaml` (see [Validation plan](../configuration/validation.md#validation-plan)):
+
+```bash
+embraion validation plan affected --base-ref origin/main [--head-ref REF] [--include-worktree] [--full-justification REASON] [--json] [--output FILE]
+embraion validation explain affected --base-ref origin/main
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan plan.json
+```
+
+`plan` writes a deterministic `plan.json` (default `.embraion/state/validation/plan.json`) and `explain` prints the decision in plain language. Both need `--base-ref` or `--include-worktree`; `--head-ref` cannot be combined with `--include-worktree`. `run` uses a plan only with `--plan`, `--base-ref`, or `--include-worktree`; otherwise it runs the whole profile. A plan that selects nothing reports `skipped`. A `--full-justification` outside `full-reasons`, an invalid configuration, a `--plan` file that is stale (configuration or Git state changed) or for another profile, and plan options on a project without areas fail closed with exit code 2. `list` also lists the areas.
 
 ### `embraion cache`
 
@@ -493,6 +514,18 @@ embraion organization check --path . --require-config --json
 
 The base reference identifies existing debt; it is not a waiver for violations added by the change. Without a configuration the check is `skipped`; `--require-config` makes it fail. See [Code organization](../configuration/organization.md).
 
+### `embraion sources`
+
+Inspect the optional source registry and record where a source lives on this machine:
+
+```bash
+embraion sources list [--path .] [--json]
+embraion sources status [--path .] [--json]
+embraion sources set <id> <path> [--path .] [--json]
+```
+
+`list` shows each source's `id`, `role`, `write` policy, and `description`. `status` shows `id`, `role`, `write`, and `availability`: `available` when the recorded local path exists, `missing` when it does not, and `unset` when none is recorded. `set` records the absolute path of a declared source in the ignored `.embraion/state/sources-local.yaml`; the path must exist. No command prints a local path. The commands exit 2 when `.embraion/sources.yaml` is missing or invalid, or when `set` names an unknown ID. See [Source registry](../configuration/sources.md).
+
 ### `embraion decisions`
 
 Check that a change that makes an architecture-level decision carries a decision record:
@@ -515,6 +548,17 @@ embraion adr new "Move parsing into its own package" --locale ru --status Propos
 ```
 
 `adr new` writes the record from the project template, adds the index row, and with `--locale <code>` (repeatable) writes a localized copy next to it. It creates the folder, template, and index when the project has none. `--slug` names the file when the title has no ASCII words. See [Architecture decision records](../configuration/decisions.md#scaffold).
+
+### `embraion pr-template`
+
+Install the optional, project-neutral pull request template:
+
+```bash
+embraion pr-template
+embraion pr-template --path ../service --json
+```
+
+The command writes `.github/pull_request_template.md` from `templates/pull-request/pull-request-template.md`. The template has sections for what changed, architecture, compatibility (source and API separate from persisted data), validation, checks that were not run, risks, workers, and the independent review with the exact final head SHA. It never overwrites: if the project already has a pull request template (in the root, `docs/`, or `.github/`, including a `PULL_REQUEST_TEMPLATE/` folder) or a link at that path, the command reports it and leaves everything unchanged. `embraion init` does not run it. `--path` selects the project directory, and `--json` prints `status` (`created` or `exists`) and `path`.
 
 ### `embraion checkpoint`
 
@@ -552,7 +596,10 @@ Evaluate the enabled gate against a Git base ref:
 ```bash
 embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
+embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
+
+`--protected-sources {name,base-tree}` overrides `enforcement.protected-sources` of the policy for this run. Without it, the stricter of the head policy and the merge-base policy decides, and the default is `name`. In `base-tree` mode the protected list is read at the merge base and protected paths are compared by Git object ID; the check fails closed when the base policy or merge base is unavailable. See [Enforcement](../guides/enforcement.md#protect-sources-by-git-object-identity).
 
 With `--run-id`, active runs receive validation evidence. Completing a run with passed review binds it to HEAD, index entries, and tracked/nonignored untracked file contents, modes and symlink targets. Enforcement requires that snapshot to match both before and after validation; commits, staging changes and working edits require a new reviewed run. Legacy review records without a snapshot cannot satisfy the gate. Unreadable state, submodules and ambiguous directory aliases fail closed. Completed runs are not modified or recompleted. All gates, including external-review gates, reject validation-time changes to the inspected Git snapshot. Ignored runtime/build output is outside that snapshot.
 
@@ -622,6 +669,8 @@ embraion worktree salvage /path/to/worktree
 ```
 
 See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md) and [canonical workflow](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; subsequent task commits use the same command with an exact prior-SHA lease and verified update receipt. External pushes do not register ownership or updates. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
+
+Git LFS hydration is off by default. With `worktree.lfs: hydrate` in `.embraion/project.yaml`, `worktree create` (checkout and `--detach`) and `worktree register` fetch the LFS content of the new worktree's exact HEAD from the repository's own LFS remote, check it out, and verify every LFS file by size and SHA-256. `create` prints `LFS hydrated: <n> of <n> files verified`; `register` adds an `lfs` object (`state`, `files`, `verified`, `missing`, `reason`, and `modified` when LFS files were edited locally) to its JSON. Locally edited LFS files are reported, never overwritten, and are not a failure. LFS use is detected only from `.gitattributes` files committed at HEAD; `.git/info/attributes` and global attributes are not read. A repository without a remote fails with a clear reason, and fetch and checkout time out after 1800 seconds. A failed hydration, including a missing `git lfs` when LFS files exist, exits with code 1 and keeps the worktree. `prepare` runs before any checkout exists and does not hydrate. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
 
 ### `embraion learning`
 

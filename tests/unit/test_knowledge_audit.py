@@ -46,7 +46,12 @@ class KnowledgeAuditTests(unittest.TestCase):
                               f"    sources: [{path}]\n")
             with self.assertRaises(RuntimeError):
                 snapshot_knowledge(project=self.root)
-        (self.root / "linked.py").symlink_to(self.root / "src/app.py")
+        try:
+            (self.root / "linked.py").symlink_to(self.root / "src/app.py")
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         config.write_text("documents:\n  - id: architecture\n    path: docs/architecture.md\n"
                           "    sources: [linked.py]\n")
         with self.assertRaises(RuntimeError):

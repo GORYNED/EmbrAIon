@@ -10,6 +10,30 @@
       "maxLength": 255,
       "pattern": "^[^/\\\\\\x00]+$",
       "not": {"enum": [".", ".."]}
+    },
+    "trigger": {
+      "type": "object",
+      "required": ["paths"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 80},
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 512}
+        },
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["added", "deleted", "modified", "renamed"]}
+        },
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      },
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -17,30 +41,13 @@
     "template": {"$ref": "#/$defs/file-name"},
     "triggers": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["paths"],
-        "properties": {
-          "id": {"type": "string", "minLength": 1, "maxLength": 80},
-          "paths": {
-            "type": "array",
-            "minItems": 1,
-            "items": {"type": "string", "minLength": 1, "maxLength": 512}
-          },
-          "changes": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": {"enum": ["added", "deleted", "modified", "renamed"]}
-          },
-          "patterns": {
-            "type": "array",
-            "minItems": 1,
-            "items": {"type": "string", "minLength": 1, "maxLength": 512}
-          }
-        },
-        "additionalProperties": false
-      }
+      "items": {"$ref": "#/$defs/trigger"},
+      "description": "Triggers that replace the built-in default trigger."
+    },
+    "extra-triggers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/trigger"},
+      "description": "Triggers appended to the effective triggers (the built-in default when `triggers` is absent). Ids must be unique across both lists."
     }
   },
   "additionalProperties": false

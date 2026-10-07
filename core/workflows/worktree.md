@@ -1,6 +1,6 @@
 # Worktree
 
-Independent writable tasks should use isolated task worktrees when the host repository supports them.
+Independent writable tasks should use isolated task worktrees when the host repository supports them. Git is a stated prerequisite of EmbrAIon; the Git and GitHub mechanics behind this workflow are in [Git and GitHub mechanics](git.md).
 
 Cleanup is fail-closed: preserve dirty, locked, active, divergent, ambiguous, or unproven worktrees. Never use a stable main checkout as an unsafe fallback runtime.
 
@@ -21,12 +21,9 @@ registration afterwards; an existing user branch cannot be adopted implicitly. S
 registry records retain resource identity and lifecycle evidence across worktrees.
 
 Remote ownership requires positive creation evidence from a supported adapter. The
-portable `worktree publish --task-id <id> --branch <branch>` explicitly creates an absent
-remote ref with a create-only lease and records its verified creation. A local receipt or
+portable `worktree publish` explicitly creates a remote ref and later updates it only under
+exact-state leases, as described in [publication](git.md#publication). A local receipt or
 an external push never grants remote deletion authority; existing remote refs are preserved.
-After further task commits, the same command updates the previously published ref only
-when its recorded SHA still matches. Retain the original creation receipt and the verified
-update chain; an external push cannot substitute for a supported publication update.
 
 Keep the stable task identity in normalized session state: start the independent writable
 Lead session with `session start --session-id <session-id> --task <task-id> --role lead
@@ -37,10 +34,10 @@ the task is actually finished. Review, blocked and incomplete work remains nonte
 cancelled or failed tasks are not new automatic cleanup candidates. Native host callbacks
 are lifecycle authority only when their provenance and delivery have been verified.
 
-For a merged PR, verify the repository, head branch and SHA, target branch, merge commit
-ancestry, and absence of open PRs using the branch as head or base. Preserve divergent,
-reused, protected, default, explicitly preserved, and unknown resources. Squash integration
-requires exact PR head evidence; patch similarity is insufficient. Legacy markers retain
+For a merged change, verify the evidence listed in
+[merged pull request evidence](git.md#merged-pull-request-evidence). Preserve divergent,
+reused, protected, default, explicitly preserved, and unknown resources. Integration proof
+is evidence tied to the exact resource HEAD, never similarity of content. Legacy markers retain
 their conservative local direct-ancestry worktree behavior. A legacy marker alone never
 grants local or remote branch deletion rights. Legacy compatibility cleanup releases
 worktrees and preserves their branch refs.
@@ -51,10 +48,10 @@ files and unsupported filesystem state. Host-managed resources require a support
 archive operation; lack of it is a preservation reason, not a raw filesystem fallback.
 
 Before destructive operations, retain verified commit and local-state recovery evidence
-outside the removable checkout. Serialize mutation per Git common directory and repeat
-eligibility checks before each operation. Delete a remote ref only when its expected SHA
-still matches, and a local ref only after associated worktrees are released. A proved squash
-merge is the only exception to ordinary local branch deletion. Retain operation journals
+outside the removable checkout. Serialize mutation per repository (the Git common directory; see [repository scope](git.md#repository-scope)) and repeat
+eligibility checks before each operation.
+Delete a remote ref only when its expected SHA still matches, and a local ref only after associated
+worktrees are released; [refs](git.md#refs) gives the Git conditions and the one squash-merge exception. Retain operation journals
 and backups on partial failure; never overwrite conflicting paths or refs during restore.
 
 Dry-run must not fetch, prune, write refs, create registry state, locks, or backups.

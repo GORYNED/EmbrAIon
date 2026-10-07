@@ -244,7 +244,12 @@ class RoutingAuthorityTests(unittest.TestCase):
         relative = projected.relative_to(self.project).as_posix()
         manual = self._write_case("manual-projection.md", projected.read_text(encoding="utf-8"))
         projected.unlink()
-        projected.symlink_to(manual)
+        try:
+            projected.symlink_to(manual)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         self.assertNotIn(relative, _verified_projection_files(self.project))
 
     def test_scoped_claude_profile_matches_canonical_bytes_without_ledger(self) -> None:

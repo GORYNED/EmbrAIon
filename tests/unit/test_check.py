@@ -243,6 +243,131 @@ class CheckTests(unittest.TestCase):
         self.assertIn("KeyError", output)
 
 
+class ValidationProfileStepTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.project = Path(temporary.name).resolve()
+        init_project(self.project, name="Profiles")
+        self.policy = self.project / ".embraion/policy.yaml"
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+
+    def declare(self, profiles: object) -> None:
+        data = read_yaml(self.policy)
+        data["check"] = {"validation-profiles": profiles}
+        write_yaml(self.policy, data)
+
+    def set_profiles(self, profiles: dict) -> None:
+        write_yaml(self.project / ".embraion/validation.yaml", {"profiles": profiles})
+
+    def record(self, status: str, **extra: object) -> dict:
+        return {"profile": "smoke", "status": status, "command-count": 1,
+                "evidence-path": ".embraion/state/validation/smoke-1.json",
+                "commands": [{"index": 1, "command": "tool", "status": status, "exit-code": 0,
+                              "log-path": "log", "stdout": "out\n", "stderr": ""}], **extra}
+
+    def test_without_the_key_no_validation_step_is_planned(self) -> None:
+        self.assertNotIn("validation-smoke", [item["id"] for item in planned_checks(self.project)])
+
+    def test_declared_profiles_are_planned_after_every_other_check(self) -> None:
+        self.declare(["smoke", "extra"])
+        (self.project / ".embraion/decisions.yaml").write_text("{}\n", encoding="utf-8")
+        checks = planned_checks(self.project, base_ref="origin/main")
+        self.assertEqual(["validate", "routes", "routing-authority", "decisions", "security",
+                          "validation-smoke", "validation-extra"], [item["id"] for item in checks])
+        self.assertEqual(["validation", "run", "smoke"], checks[-2]["argv"])
+        self.assertEqual("smoke", checks[-2]["validation-profile"])
+        self.assertNotIn("validation-profile", checks[0])
+
+    def test_invalid_declaration_fails_closed(self) -> None:
+        for declaration in ([], ["a", "a"], [""], [1], "smoke", {"smoke": True}):
+            with self.subTest(profiles=declaration):
+                self.declare(declaration)
+                with self.assertRaises(RuntimeError):
+                    read_policy_config(self.project)
+
+    def test_status_maps_to_the_step_outcome(self) -> None:
+        from embraion.check import run_validation_step
+
+        cases = [("passed", 0), ("failed", 1), ("timed-out", 1), ("skipped", 1), ("future-status", 1)]
+        for status, code in cases:
+            with self.subTest(status=status), \
+                    patch("embraion.project_validation.run_validation_profile",
+                          return_value=self.record(status)) as run:
+                exit_code, output, evidence = run_validation_step(self.project, "smoke")
+                run.assert_called_once_with("smoke", project=self.project)
+                self.assertEqual(code, exit_code)
+                self.assertIn(f"Status: {status}", output)
+                self.assertIn("Evidence: .embraion/state/validation/smoke-1.json", output)
+                self.assertEqual({"profile": "smoke", "status": status,
+                                  "evidence-path": ".embraion/state/validation/smoke-1.json"}, evidence)
+        with patch("embraion.project_validation.run_validation_profile", return_value=self.record("skipped")):
+            self.assertIn("must run commands", run_validation_step(self.project, "smoke")[1])
+
+    def test_unknown_empty_and_parameterized_profiles_fail_with_a_message(self) -> None:
+        from embraion.check import run_validation_step
+
+        self.set_profiles({"empty": [], "needs": {"commands": ["tool"], "parameters": {
+            "scope": {"argument": "--scope", "required": True}}}})
+        code, output, _ = run_validation_step(self.project, "missing")
+        self.assertEqual(2, code)
+        self.assertIn("Unknown validation profile 'missing'", output)
+        code, output, evidence = run_validation_step(self.project, "empty")
+        self.assertEqual(1, code)
+        self.assertEqual("skipped", evidence["status"])
+        code, output, _ = run_validation_step(self.project, "needs")
+        self.assertEqual(2, code)
+        self.assertIn("Missing required validation parameter 'scope'", output)
+
+    def test_failed_step_reports_command_output(self) -> None:
+        from embraion.check import run_validation_step
+
+        record = self.record("failed")
+        record["commands"][0].update({"exit-code": 3, "stdout": "boom\n"})
+        with patch("embraion.project_validation.run_validation_profile", return_value=record):
+            code, output, _ = run_validation_step(self.project, "smoke")
+        self.assertEqual(1, code)
+        self.assertIn("[FAILED] 1/1 exit=3 tool", output)
+        self.assertIn("  boom", output)
+
+    def test_command_runs_profile_steps_last_and_keeps_json_additive(self) -> None:
+        self.declare(["smoke"])
+        order: list[str] = []
+
+        def fake_run(parser, argv):
+            order.append(argv[0])
+            return 0, "ok\n"
+
+        def fake_profile(profile, *, project):
+            order.append("profile")
+            return self.record("failed")
+
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", side_effect=fake_run), \
+                patch("embraion.project_validation.run_validation_profile", side_effect=fake_profile), \
+                redirect_stdout(output):
+            self.assertEqual(1, main(["check", "--json"]))
+        self.assertEqual(["validate", "route", "route", "security", "profile"], order)
+        report = json.loads(output.getvalue())
+        self.assertEqual(["validation-smoke"], report["failed"])
+        step = report["checks"][-1]
+        self.assertEqual("failed", step["evidence"]["status"])
+        self.assertEqual(["validation", "run", "smoke"], step["argv"])
+        self.assertNotIn("evidence", report["checks"][0])
+        order.clear()
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", side_effect=fake_run), \
+                patch("embraion.project_validation.run_validation_profile", return_value=self.record("passed")), \
+                redirect_stdout(output):
+            self.assertEqual(0, main(["check"]))
+        self.assertIn("PASS  validation-smoke", output.getvalue())
+        self.assertIn("Check: passed", output.getvalue())
+
+
 class SourceClassTests(unittest.TestCase):
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()

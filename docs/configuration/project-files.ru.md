@@ -44,6 +44,36 @@ capabilities:
 
 Эти metadata отличаются от необязательного [инвентаря внешних возможностей](capabilities.md) со строгой schema. Декларация в нём не устанавливает интеграцию и не доказывает загрузку возможности хостом.
 
+### `housekeeping`
+
+`housekeeping` необязателен. Он управляет автоматической уборкой веток и worktrees, которые создали агенты. Каждый переключатель по умолчанию сохраняет прежнее поведение:
+
+```yaml
+housekeeping:
+  on-task-start: false
+  local-branches: true
+  remote-branches: false
+  worktrees: true
+  preserve-branches: []
+```
+
+- `on-task-start` (по умолчанию `false`) запускает уборку перед независимой задачей с записью. Пока значение не `true`, ничего не удаляется.
+- `local-branches`, `remote-branches` и `worktrees` определяют, что уборка может удалять. Удаление удалённых веток выключено по умолчанию.
+- `preserve-branches` перечисляет имена веток или шаблоны, которые никогда не удаляются, например `main` или `release/*`.
+
+Удаляются только ресурсы, которые EmbrAIon записал как созданные агентом и которые прошли проверки завершения и интеграции. Неизвестные ветки и worktrees попадают в отчёт и сохраняются. Переключатели должны быть boolean, а `preserve-branches` — списком имён; иначе это ошибка. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md).
+
+### `worktree`
+
+`worktree.lfs` необязателен. Значение по умолчанию — `none`: новые worktrees создаются как раньше. Для репозитория с Git LFS задайте `hydrate`:
+
+```yaml
+worktree:
+  lfs: hydrate
+```
+
+Новый checkout такого репозитория содержит текстовые pointer-файлы, пока содержимое не загружено. При `hydrate` команда `embraion worktree create` (и `worktree register` для worktree, созданного вашим host) загружает LFS-содержимое точного HEAD из собственного LFS-remote репозитория, делает checkout и проверяет каждый LFS-файл по размеру и SHA-256. Если проверка не прошла, команда завершается с ненулевым кодом, но worktree сохраняется. Любое другое значение и неизвестный ключ в `worktree` — ошибка. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ## `.embraion/knowledge.yaml`
 
 Указывает EmbrAIon на project-owned knowledge.
@@ -276,7 +306,7 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 
 ## Опциональный `.embraion/integrations.yaml`
 
-Строгий версионированный файл объявляет MCP servers, которые должна содержать host configuration проекта: `id`, `host`, `command`, `args`, `transport`, `access`, **имена** environment variables и опциональный `portable`. По умолчанию файла нет, и сравнение integrations не выполняется. Если файл есть, `embraion security scan` сообщает об отсутствующих, неожиданных, расходящихся и непереносимых servers как о high-severity findings `integration-drift`. См. [Объявленные integrations](../security.ru.md#integrations).
+Строгий версионированный файл объявляет MCP servers, которые должна содержать host configuration проекта: `id`, `host`, `command`, `args`, `transport`, `access`, **имена** environment variables и опциональные `portable`, `cwd` и `required` (`cwd` и `required` только для записей Codex). По умолчанию файла нет, и сравнение integrations не выполняется. Если файл есть, `embraion security scan` сообщает об отсутствующих, неожиданных, расходящихся и непереносимых servers как о high-severity findings `integration-drift`. См. [Объявленные integrations](../security.ru.md#integrations).
 
 ## Опциональный `.embraion/knowledge-maintenance.yaml`
 
@@ -285,6 +315,10 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 ## Опциональный `.embraion/organization.yaml`
 
 Проект может задать ограничения на организацию кода. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` проверяет изменения постепенно. Старые нарушения не освобождают новый код от правил. См. [Организация кода](organization.md).
+
+## Опциональный `.embraion/sources.yaml`
+
+Этот строгий версионируемый файл перечисляет стабильные source ID с `role`, политикой записи `write` (`read-only`, `workspace-write` или `forbidden`) и необязательными `description`, `doc` и повышенным `data-class`. Путей машины в нём нет. По умолчанию файла нет, и тогда ничего не меняется. Если он есть, `embraion validate` его проверяет, `embraion sources` его показывает, а execution request с `workspace-write` может называть только источники, в которые разрешена запись. См. [Реестр источников](sources.md).
 
 ## Опциональный `.embraion/skills/`
 

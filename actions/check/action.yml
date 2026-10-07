@@ -16,6 +16,21 @@ inputs:
       run. The ref must be fetched, so the checkout needs its history.
     required: false
     default: ""
+  upload-evidence:
+    description: >-
+      Set to true to upload the structured evidence of the validation profiles that
+      `embraion check` ran (.embraion/state/validation/) as a workflow artifact, also when a check
+      fails. Warns when no profile ran. The artifact carries the full output of the profile
+      commands, so it can contain anything those commands print; keep it off for projects whose
+      command output is sensitive. The project root is resolved like `embraion check` resolves it.
+    required: false
+    default: "false"
+  evidence-retention-days:
+    description: >-
+      Days to keep the evidence artifact. The repository or organization maximum still applies.
+      The artifact carries command output; lower this value for sensitive projects.
+    required: false
+    default: "14"
 
 runs:
   using: composite
@@ -43,3 +58,43 @@ runs:
         else
           embraion check
         fi
+
+    # This step must never turn a passing check red: it fails soft and the upload then skips.
+    - name: Locate and name the evidence artifact
+      id: evidence
+      if: always() && inputs.upload-evidence == 'true'
+      continue-on-error: true
+      shell: bash
+      env:
+        EMBRAION_PROJECT_PATH: ${{ inputs.project-path }}
+        EMBRAION_CI_RUN: ${{ github.run_id }}
+        EMBRAION_CI_ATTEMPT: ${{ github.run_attempt }}
+        EMBRAION_CI_JOB: ${{ github.job }}
+      run: |
+        # Resolve the project root as `embraion check` does: the Git top level, else the
+        # nearest directory above that holds .embraion/project.yaml, else the given path.
+        start="$(cd "$EMBRAION_PROJECT_PATH" && pwd)" || exit 0
+        root="$(git -C "$start" rev-parse --show-toplevel 2>/dev/null)" || root=""
+        if [ -z "$root" ]; then
+          candidate="$start"
+          while [ ! -f "$candidate/.embraion/project.yaml" ] && [ "$candidate" != "/" ] && [ "$(dirname "$candidate")" != "$candidate" ]; do
+            candidate="$(dirname "$candidate")"
+          done
+          if [ -f "$candidate/.embraion/project.yaml" ]; then root="$candidate"; else root="$start"; fi
+        fi
+        # A random suffix keeps matrix jobs and repeated uses of the action apart.
+        suffix="$(od -An -N6 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')" || suffix=""
+        if [ -z "$suffix" ]; then suffix="$(date +%s)$$"; fi
+        echo "path=$root/.embraion/state/validation/" >> "$GITHUB_OUTPUT"
+        echo "name=embraion-check-evidence-$EMBRAION_CI_RUN-$EMBRAION_CI_ATTEMPT-$EMBRAION_CI_JOB-$suffix" >> "$GITHUB_OUTPUT"
+
+    - name: Upload the validation evidence
+      if: always() && inputs.upload-evidence == 'true' && steps.evidence.outputs.name != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.evidence.outputs.name }}
+        path: ${{ steps.evidence.outputs.path }}
+        # The state directory is hidden, and an empty upload must be visible.
+        include-hidden-files: true
+        if-no-files-found: warn
+        retention-days: ${{ inputs.evidence-retention-days }}

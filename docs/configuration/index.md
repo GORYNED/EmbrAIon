@@ -4,7 +4,7 @@ After `embraion init` and installing your host projection, ask:
 
 > Configure EmbrAIon for this project.
 
-Lead uses the canonical Core [Project Bootstrap](bootstrap.md) skill: inspect the repository, bind existing sources of truth, preserve safety policy, and discover real validation commands. You do not need to know every YAML file manually. Routing and custom agents stay optional.
+Lead uses the canonical Core [Project Bootstrap](bootstrap.md) skill: inspect the repository, bind existing sources of truth, preserve safety policy, and discover real validation commands. You do not need to know every YAML file manually. [Configure by asking](configure-by-asking.md) maps each kind of request to the file it fills and the check that proves it. Routing and custom agents stay optional.
 
 For explicit model tuning, use the full request on the Bootstrap page. Manual editing remains available; the table below is an ownership reference.
 
@@ -26,6 +26,7 @@ For explicit model tuning, use the full request on the Bootstrap page. Manual ed
 | Which MCP servers should the project's host configuration contain? | optional `integrations.yaml` |
 | Which files should trigger knowledge review when changed? | optional `knowledge-maintenance.yaml` |
 | Which incremental code structure limits apply? | optional `organization.yaml` |
+| What role and write policy does each source have? | optional `sources.yaml` |
 | Which architectural changes need a decision record? | optional `decisions.yaml` |
 
 ![Project configuration map](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
@@ -89,5 +90,6 @@ embraion projection diff --host codex --destination .
 - [Conversational configuration](ai-hosts.md)
 - [External capabilities](capabilities.md)
 - [Code organization](organization.md)
+- [Source registry](sources.md)
 - [Architecture decision records](decisions.md)
 - [Knowledge maintenance](../guides/knowledge-maintenance.md)

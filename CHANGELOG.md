@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+## 0.32.0 - 2026-10-07
+
+### Fixed
+
+- Stored validation plans must match the complete recomputed selection and provenance. Deduplicated area commands retain their documented absence of profile timeouts and parameters; every selected or escalated profile still contributes its clean-tree and output-limit safeguards.
+- Implicit protected-source mode selection rejects schema-invalid merge-base enforcement blocks. Validation rejects dangling source-registry symlinks, and Codex working-directory drift findings omit local path values.
+
+### Added
+
+- `embraion check` and `actions/check` can run project validation profiles: the new `check.validation-profiles` list in `.embraion/policy.yaml` adds a `validation-<profile>` step per profile. Each step runs the profile as `embraion validation run` does and keeps its evidence. A profile that is not `passed`, is empty, is unknown, or needs a missing required parameter fails the step. The action gains an optional `upload-evidence` input (default `false`) that uploads `.embraion/state/validation/` as an artifact.
+- `.embraion/decisions.yaml` accepts `extra-triggers`, appended to `triggers` or to the default trigger. Trigger ids must be unique across the lists.
+- The security scan compares the optional `cwd` and `required` of a Codex MCP declaration in `.embraion/integrations.yaml` with the observed server and reports a mismatch as `integration-mismatch`; values are redacted and the keys are valid only for `host: codex`.
+- `embraion pr-template` writes the shipped, project-neutral `.github/pull_request_template.md` and never overwrites an existing one. `embraion init` does not create it.
+- The `compatibility-migration` skill states four general compatibility rules: do not reuse retired identifiers, deprecate before removal with a stated period, readers tolerate unknown fields, a failed migration leaves source data recoverable.
+- Validation runner: command entries may be mappings with `required: false` and `requires` (executables, env, platforms); unmet prerequisites report `blocked` and optional failures become warnings. Profiles gain an optional `clean-tree` guard (Git status before and after, a dirty baseline is tolerated, blocked outside Git) and an opt-in `output-limit-bytes` that keeps head and tail of long output with a truncation marker. Timeouts record `termination: confirmed|unconfirmed`; an unconfirmed termination fails the profile and stops later commands.
+- Optional declarative validation plan in `.embraion/validation.yaml` (`areas`, `impact`, `full-reasons`, `default-area`) with `embraion validation plan` and `validation explain`, and `validation run --base-ref/--head-ref/--include-worktree/--plan/--full-justification`. The plan is stored with the run evidence as `plan.json`. Projects without the new keys are unchanged.
+- Opt-in `enforcement.protected-sources: base-tree` (and `embraion enforcement check --protected-sources`) reads the protected list from the policy at the merge base, rejects removed or narrowed entries, compares protected paths by Git object ID, and allows only a complete byte-identical directory relocation to another protected location. It fails closed on a missing policy, merge base or shallow history. The default `name` mode is unchanged.
+- Optional project source registry `.embraion/sources.yaml` (role, write policy, doc and raised data class per source id) with `embraion sources list|status|set`; machine-local availability stays in ignored state and is never printed. `embraion validate` checks the registry, a `workspace-write` execution request that names a source without write permission is refused, and the security scan reports a tracked file that contains a recorded local source path.
+- Opt-in `worktree.lfs: hydrate` in `.embraion/project.yaml` (default `none`): `embraion worktree create` and `worktree register` fetch the exact HEAD's Git LFS content from the repository's own LFS remote, check it out and verify every LFS file by size and SHA-256; failure exits 1 and keeps the worktree.
+- Every `.embraion/` file and key, including `sources.yaml`, validation areas and guards, `worktree.lfs`, `check.validation-profiles`, `enforcement.protected-sources`, `extra-triggers` and `embraion pr-template`, can be filled from a plain request in any language. The project-bootstrap, routing-configuration and architecture-decision skills ship a configuration matrix and recipes. New page "Configure by asking" (en/ru). A unit test fails when a new file or key has no matrix entry.
+- `python tools/source.py test unit|integration` accepts `--jobs N|auto` to run test modules in parallel processes with isolated temporary directories, combined totals and a discovery-count check; the default is unchanged and the repository's own CI uses `--jobs auto` with the same job names.
+
+### Changed
+
+- Git is a stated prerequisite and GitHub the supported delivery surface (ADR 0001, issue #86). The Git and GitHub mechanics of the worktree and delivery workflows now live in `core/workflows/git.md`; the workflows keep the universal rules. The installation requirements state the Git prerequisite. The decision itself changes no command behavior.
+- Compatibility: `project.yaml` now validates a top-level `worktree` object (`lfs: none|hydrate`, unknown keys rejected), so a project that already keeps its own top-level `worktree` key there must rename it; every command that reads the project overlay reports the error. Evidence records written by the validation runner can gain keys without any new option: `termination` on a timed-out command, `stdout-head`/`stderr-head` and `output` when a stream exceeds the 8000-character tail, and an unconfirmed termination now stops later commands even without `--fail-fast`.
+
+### Fixed
+
+- Cross-platform tests construct quoted Git paths in the index without changing repository configuration, and tolerate Git maintenance removing a lock during test cleanup on Python 3.11.
+- Protected-source mode selection fails closed when the merge base cannot be proven or its existing policy is unreadable or malformed, preventing a policy downgrade to `name`. A proven legacy base without a policy or mode keeps the default; the explicit CLI override remains supported. Implicit mode selection now requires full Git history even for `name`.
+
 ## 0.31.0 - 2026-10-07
 
 ### Changed

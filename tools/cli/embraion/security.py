@@ -180,6 +180,44 @@ def _declared_confidential_aliases(root: Path) -> set[str]:
     return aliases
 
 
+def _local_source_paths(root: Path) -> dict[str, re.Pattern[str]]:
+    """Patterns for the machine-local source paths, keyed by source ID.
+
+    The paths come from the ignored `.embraion/state/sources-local.yaml`. A path with fewer than two
+    segments is skipped because it would match unrelated text. A match must end at a path boundary.
+    """
+    from .sources import local_path_values
+
+    patterns: dict[str, re.Pattern[str]] = {}
+    for source_id, value in local_path_values(root).items():
+        normalized = value.replace("\\", "/").rstrip("/")
+        if len([part for part in normalized.split("/") if part and not part.endswith(":")]) < 2:
+            continue
+        variants = {value.rstrip("/\\"), normalized}
+        patterns[source_id] = re.compile(
+            "(?:" + "|".join(re.escape(item) for item in sorted(variants, key=len, reverse=True)) + r")(?![A-Za-z0-9_-]|\.[A-Za-z0-9_-])"
+        )
+    return patterns
+
+
+def _local_path_findings(relative: str, text: str, patterns: dict[str, re.Pattern[str]],
+                         categories: frozenset[str] | None) -> list[dict[str, str]]:
+    """Flag tracked content that contains a recorded local source path; the path itself is never reported."""
+    if categories is not None and "machine-path" not in categories:
+        return []
+    return [
+        {
+            "schema-version": 1,
+            "id": f"source-path-leak:{source_id}:{relative}",
+            "severity": "medium",
+            "category": "machine-path",
+            "message": f"Content contains the local path recorded for source '{source_id}'",
+            "path": relative,
+        }
+        for source_id, pattern in sorted(patterns.items()) if pattern.search(text)
+    ]
+
+
 def _pattern_findings(relative: str, text: str, categories: frozenset[str] | None) -> list[dict[str, str]]:
     return [
         {
@@ -214,6 +252,7 @@ def collect_findings(root: Path, all_files: bool = False,
     declared_aliases = _declared_confidential_aliases(root)
     seen: set[str] = set()
     sources = _policy_sources(root) if all_files else None
+    local_paths = _local_source_paths(root)
 
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
@@ -226,6 +265,7 @@ def collect_findings(root: Path, all_files: bool = False,
             if skipped is not None:
                 skipped.append(relative)
         findings.extend(_pattern_findings(relative, text, categories))
+        findings.extend(_local_path_findings(relative, text, local_paths, categories))
 
         if legacy_data_class in text and legacy_data_class not in declared_aliases:
             findings.append(
@@ -248,6 +288,7 @@ def collect_findings(root: Path, all_files: bool = False,
                 if skipped is not None:
                     skipped.append(relative)
             findings.extend(_pattern_findings(relative, text, categories))
+            findings.extend(_local_path_findings(relative, text, local_paths, categories))
 
     findings.extend(integration_findings(root))
     return findings
@@ -352,7 +393,14 @@ def _observed_shape(config: dict[str, Any]) -> dict[str, Any]:
         "args": [str(item) for item in args] if isinstance(args, list) else [],
         "transport": transport,
         "env-vars": sorted(str(key) for key in environment) if isinstance(environment, dict) else [],
+        # Only Codex carries these keys; a declaration may set them for Codex alone.
+        "cwd": config.get("cwd"),
+        "required": config.get("required", False),
     }
+
+
+# Optional declaration fields compared only when the declaration sets them.
+_OPTIONAL_FIELDS = ("cwd", "required")
 
 
 def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
@@ -361,10 +409,14 @@ def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
         "args": list(entry.get("args") or []),
         "transport": entry["transport"],
         "env-vars": sorted(entry["env-vars"]),
+        **{field: entry[field] for field in _OPTIONAL_FIELDS if field in entry},
     }
 
 
 def _difference(field: str, expected: Any, actual: Any) -> str:
+    if field == "cwd":
+        # Local working directories can contain private machine paths or credentials.
+        return "cwd: declared working directory differs from observed configuration"
     if field == "args":
         # Argument values can carry credentials in any form, so only their shape is reported.
         position = next((index for index, pair in enumerate(zip(expected, actual), start=1) if pair[0] != pair[1]),
@@ -411,13 +463,16 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
         if key in declared:
             findings.extend(invalid(f"Integration {key[1]} is declared twice for host {key[0]}"))
         declared[key] = entry
-        if entry.get("portable", True) and any(
-            _ABSOLUTE_PATH.search(value) for value in [entry.get("command") or "", *(entry.get("args") or [])]
-        ):
-            findings.append(_integration_finding(
-                "non-portable", key[0], key[1],
-                "Portable integration declares a machine-absolute path in its command or arguments", relative,
-            ))
+        if entry.get("portable", True):
+            where = [name for name, values in (
+                ("command or arguments", [entry.get("command") or "", *(entry.get("args") or [])]),
+                ("working directory", [entry.get("cwd") or ""]),
+            ) if any(_ABSOLUTE_PATH.search(value) for value in values)]
+            if where:
+                findings.append(_integration_finding(
+                    "non-portable", key[0], key[1],
+                    f"Portable integration declares a machine-absolute path in its {' and '.join(where)}", relative,
+                ))
 
     try:
         observed = _mcp_server_configs(project)
@@ -440,7 +495,8 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
             ))
             continue
         expected, actual = _declared_shape(entry), _observed_shape(config)
-        fields = [field for field in ("command", "args", "transport", "env-vars") if expected[field] != actual[field]]
+        fields = [field for field in ("command", "args", "transport", "env-vars", *_OPTIONAL_FIELDS)
+                  if field in expected and expected[field] != actual[field]]
         if fields:
             details = "; ".join(_difference(field, expected[field], actual[field]) for field in fields)
             findings.append(_integration_finding(

@@ -70,6 +70,7 @@ plugins:
             Glossary: Глоссарий
             Configure: Настройка
             Project Bootstrap: Начальная настройка проекта
+            Configure by asking: Настройка через запрос
             Overview: Обзор
             Basics: Основы
             Project knowledge: Знания проекта
@@ -79,6 +80,7 @@ plugins:
             Project agents: Агенты проекта
             External capabilities: Внешние возможности
             Code organization: Организация кода
+            Source registry: Реестр источников
             Architecture decision records: Записи об архитектурных решениях
             Conversational configuration: Разговорная настройка
             Advanced: Расширенная настройка
@@ -106,6 +108,7 @@ plugins:
             Security & data flow: Безопасность и поток данных
             Security model: Модель безопасности
             Architecture: Архитектура
+            Architecture decisions: Архитектурные решения
             Capability model: Модель возможностей
             Updating safely: Безопасное обновление
             Project: Проект
@@ -163,6 +166,7 @@ nav:
   - Configure:
       - Overview: configuration/index.md
       - Project Bootstrap: configuration/bootstrap.md
+      - Configure by asking: configuration/configure-by-asking.md
       - Basics:
           - Project knowledge: configuration/knowledge.md
           - Policy & protected paths: configuration/policy.md
@@ -171,6 +175,7 @@ nav:
           - Project agents: configuration/agents.md
           - External capabilities: configuration/capabilities.md
           - Code organization: configuration/organization.md
+          - Source registry: configuration/sources.md
           - Architecture decision records: configuration/decisions.md
           - Conversational configuration: configuration/ai-hosts.md
       - Advanced:
@@ -208,6 +213,7 @@ nav:
       - Security & data flow: security-data-flow.md
       - Security model: security.md
       - Architecture: architecture.md
+      - Architecture decisions: architecture/decisions/README.md
       - Capability model: capability-model.md
       - Updating safely: getting-started/updating.md
       - Spec Kit: spec-kit.md

@@ -74,7 +74,44 @@ def planned_checks(
     if all_files:
         argv.append("--all-files")
     checks.append({"id": "security", "argv": argv})
+    # Project validation profiles run last, so the cheap configuration checks report first.
+    for profile in options.get("validation-profiles") or []:
+        checks.append({"id": f"validation-{profile}", "argv": ["validation", "run", profile],
+                       "validation-profile": profile})
     return checks
+
+
+def run_validation_step(project: Path, profile: str) -> tuple[int, str, dict[str, Any]]:
+    """Run one declared validation profile as `embraion validation run` does.
+
+    Only a `passed` result passes the step. A declared profile must prove something, so `skipped`
+    (no commands), failures, timeouts, any other status, and errors such as an unknown profile or a
+    required parameter without a default all fail it. Returns the exit code, a text report, and
+    the evidence summary for the JSON report.
+    """
+    from .project_validation import run_validation_profile
+
+    try:
+        record = run_validation_profile(profile, project=project)
+    except Exception as error:  # noqa: BLE001 - one broken profile must not stop the other checks
+        return 2, f"ERROR: {type(error).__name__}: {error}\n", {}
+    status = record.get("status")
+    lines = [f"Validation profile: {record.get('profile', profile)}", f"Status: {status}"]
+    for item in record.get("commands") or []:
+        exit_code = "-" if item.get("exit-code") is None else str(item["exit-code"])
+        lines.append(f"[{str(item.get('status')).upper()}] {item.get('index')}/{record.get('command-count')} "
+                     f"exit={exit_code} {item.get('command')}")
+        lines.append(f"  log: {item.get('log-path')}")
+        for stream in ("stdout", "stderr"):
+            if item.get(stream) and item.get("status") != "passed":
+                lines.extend(f"  {line}" for line in item[stream].rstrip().splitlines())
+    lines.append(f"Evidence: {record.get('evidence-path')}")
+    if status == "skipped":
+        lines.append(f"A declared validation profile must run commands, and '{profile}' has none.")
+    elif status != "passed":
+        lines.append(f"A declared validation profile must pass, and '{profile}' did not.")
+    evidence = {"profile": profile, "status": status, "evidence-path": record.get("evidence-path")}
+    return (0 if status == "passed" else 1), "\n".join(lines) + "\n", evidence
 
 
 def run_check(parser: argparse.ArgumentParser, argv: list[str]) -> tuple[int, str]:

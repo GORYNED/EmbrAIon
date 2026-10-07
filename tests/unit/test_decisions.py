@@ -133,6 +133,67 @@ class DetectionTests(DecisionFixture):
                           ("declared", "formats/b.txt", "renamed")},
                          {(item["trigger"], item["path"], item["change"]) for item in self.check()["triggers"]})
 
+    def test_extra_triggers_are_appended_to_the_default_trigger(self) -> None:
+        self.config({"extra-triggers": [{"id": "storage-format", "paths": ["src/storage/**"]}]})
+        self.start()
+        self.write("pkg/package.json", "{}\n")  # the default trigger still applies
+        self.write("src/storage/a.txt", "x\n")
+        self.commit()
+        self.assertEqual({("package-added-or-removed", "pkg/package.json", "added"),
+                          ("storage-format", "src/storage/a.txt", "added")},
+                         {(item["trigger"], item["path"], item["change"]) for item in self.check()["triggers"]})
+
+    def test_extra_triggers_are_appended_to_declared_triggers(self) -> None:
+        self.config({"triggers": [{"id": "formats", "paths": ["formats/**"]}],
+                     "extra-triggers": [{"id": "storage-format", "paths": ["src/storage/**"]}]})
+        self.start()
+        self.write("pkg/package.json", "{}\n")  # the default trigger is replaced by `triggers`
+        self.write("formats/a.txt", "x\n")
+        self.write("src/storage/a.txt", "x\n")
+        self.commit()
+        self.assertEqual({("formats", "formats/a.txt", "added"), ("storage-format", "src/storage/a.txt", "added")},
+                         {(item["trigger"], item["path"], item["change"]) for item in self.check()["triggers"]})
+
+    def test_extra_triggers_alone_with_empty_triggers_and_an_empty_list(self) -> None:
+        self.config({"triggers": [], "extra-triggers": [{"id": "storage-format", "paths": ["src/**"]}]})
+        self.start()
+        self.write("pkg/package.json", "{}\n")
+        self.write("src/a.txt", "x\n")
+        self.commit()
+        self.assertEqual(["storage-format"], [item["trigger"] for item in self.check()["triggers"]])
+        self.config({"extra-triggers": []})
+        self.assertEqual(["package-added-or-removed"], [item["trigger"] for item in self.check()["triggers"]])
+
+    def test_duplicate_trigger_ids_fail_closed_only_with_extra_triggers(self) -> None:
+        self.start()
+        item = {"id": "same", "paths": ["a"]}
+        for config in ({"triggers": [item], "extra-triggers": [item]},
+                       {"extra-triggers": [{"id": "package-added-or-removed", "paths": ["a"]}]},
+                       {"extra-triggers": [item, item]}):
+            with self.subTest(config=config):
+                self.write(".embraion/decisions.yaml", yaml.safe_dump(config))
+                with self.assertRaisesRegex(RuntimeError, "must be unique"):
+                    self.check()
+        # Declared triggers alone keep their previous behavior, including repeated ids.
+        self.write(".embraion/decisions.yaml", yaml.safe_dump({"triggers": [item, item]}))
+        self.assertTrue(self.check()["passed"])
+        # Triggers without ids never collide.
+        self.write(".embraion/decisions.yaml", yaml.safe_dump(
+            {"triggers": [{"paths": ["a"]}], "extra-triggers": [{"paths": ["b"]}]}))
+        self.assertTrue(self.check()["passed"])
+
+    def test_invalid_extra_triggers_fail_closed(self) -> None:
+        self.start()
+        for extra in ({"id": "x"}, {"paths": []}, {"paths": ["a"], "patterns": ["("]},
+                      {"paths": ["a"], "changes": ["moved"]}, {"paths": ["a"], "other": 1}, "a"):
+            with self.subTest(extra=extra):
+                self.write(".embraion/decisions.yaml", yaml.safe_dump({"extra-triggers": [extra]}))
+                with self.assertRaises(RuntimeError):
+                    self.check()
+        self.write(".embraion/decisions.yaml", yaml.safe_dump({"extra-triggers": {"paths": ["a"]}}))
+        with self.assertRaises(RuntimeError):
+            self.check()
+
     def test_pattern_ignores_unrelated_changed_lines(self) -> None:
         self.write("Packages/manifest.json", '{\n  "dependencies": {"a": "1"},\n  "scopedRegistries": []\n}\n')
         self.config({"triggers": [{"paths": ["Packages/manifest.json"], "patterns": ['^\\s*"[a-z.]+": "\\d']}]})
@@ -315,7 +376,12 @@ class ScaffoldTests(DecisionFixture):
         folder = self.root / "docs/architecture/decisions"
         folder.mkdir(parents=True)
         (self.root / "elsewhere.md").write_text("| a | b |\n", encoding="utf-8")
-        (folder / "README.md").symlink_to(self.root / "elsewhere.md")
+        try:
+            (folder / "README.md").symlink_to(self.root / "elsewhere.md")
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         with self.assertRaises(RuntimeError):
             self.new()
 

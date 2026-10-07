@@ -124,11 +124,16 @@ def read_validation_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "validation.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-    return _validated_config_mapping(
+    config = _validated_config_mapping(
         path,
         schema_name="validation.schema.json",
         label=".embraion/validation.yaml",
     )
+    # Optional plan keys (areas, impact, full-reasons, default-area) fail closed on bad references.
+    from .validation_plan import validate_plan_config
+
+    validate_plan_config(config)
+    return config
 
 
 def read_agents_config(project: Path | None = None) -> dict[str, Any]:
@@ -225,8 +230,16 @@ def source_data_classes(project: Path | None = None) -> dict[str, str] | None:
 def check_source_classes(data_class: str, source_ids: list[str], project: Path | None = None) -> None:
     """Fail closed when a request names an undeclared source or a class below its sources."""
     declared = source_data_classes(project)
+    from .sources import effective_data_classes, registry_data_classes
+    root = project_root(project)
     if declared is None:
-        return
+        # Without privacy.sources only the registry's raised classes apply; other IDs stay unchecked.
+        declared = registry_data_classes(root)
+        if not declared:
+            return
+        source_ids = [source for source in source_ids if source in declared]
+    else:
+        declared = effective_data_classes(root, declared)
     unknown = sorted(set(source_ids) - set(declared))
     if unknown:
         raise RuntimeError(

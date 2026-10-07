@@ -78,6 +78,11 @@ class ProjectConfigCheckTests(unittest.TestCase):
             "transport": "stdio", "access": "read-only", "env-vars": []}]})
         self.assertEqual(set(), self.issues())
 
+        write_yaml(self.config / "integrations.yaml", {"schema-version": 1, "servers": [{
+            "id": "docs", "host": "codex", "command": "docs-server", "args": ["--stdio"],
+            "transport": "stdio", "access": "read-only", "env-vars": [], "cwd": "tools/docs", "required": True}]})
+        self.assertEqual(set(), self.issues())
+
         write_yaml(self.config / "integrations.yaml", {"schema-version": 1, "servers": [], "extra": True})
         self.assertIn(("config-unknown-key", ".embraion/integrations.yaml", "'extra' is not a known key here"),
                       {(code, path, message) for code, path, message in self.issues()})

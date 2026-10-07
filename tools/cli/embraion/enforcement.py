@@ -19,6 +19,13 @@ from .policy import (
     read_policy_config,
 )
 from .project_validation import run_validation_profile
+from .protected_sources import (
+    BASE_TREE_MODE,
+    NAME_MODE,
+    PROTECTED_SOURCE_MODES,
+    base_policy_mode,
+    check_base_tree,
+)
 from .runtime import _append_event
 from .security import redact_value
 
@@ -133,16 +140,31 @@ def check_enforcement(
     project: Path | None = None,
     run_id: str | None = None,
     external_review_gate: bool = False,
+    protected_sources: str | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     policy = effective_policy(root)
     config = policy["enforcement"]
+    # An explicit argument wins so CI can pin the mode independently of the checked-out policy.
+    protected_mode = protected_sources or str(config.get("protected-sources") or NAME_MODE)
+    if protected_mode not in PROTECTED_SOURCE_MODES:
+        raise RuntimeError(
+            "Unknown protected-sources mode: "
+            f"{protected_mode}. Supported: {', '.join(PROTECTED_SOURCE_MODES)}."
+        )
 
     if not config.get("enabled", False):
         raise RuntimeError(
             "Project enforcement is disabled. Enable an explicit enforcement "
             "surface before using the gate."
         )
+
+    mode_source = None
+    if protected_sources is None and protected_mode != BASE_TREE_MODE:
+        # The policy at the merge base pins the stricter mode: a change cannot turn it off.
+        if base_policy_mode(root, base_ref) == BASE_TREE_MODE:
+            protected_mode = BASE_TREE_MODE
+            mode_source = "merge-base-policy"
 
     run_record = read_run(run_id, root) if run_id else None
     if run_record is not None and run_record.get("state") not in {"active", "completed", "blocked", "failed", "cancelled"}:
@@ -155,16 +177,21 @@ def check_enforcement(
     checks: list[dict[str, Any]] = []
 
     protected = list(policy["sources"].get("protected") or [])
-    protected_changes = [
-        path for path in changed_paths if path_matches(path, protected)
-    ]
-    checks.append(
-        {
+
+    def protected_check(paths: list[str]) -> dict[str, Any]:
+        if protected_mode == BASE_TREE_MODE:
+            result = check_base_tree(root, base_ref, protected)
+            if mode_source:
+                result["mode-source"] = mode_source
+            return result
+        changes = [path for path in paths if path_matches(path, protected)]
+        return {
             "id": "protected-sources",
-            "status": "failed" if protected_changes else "passed",
-            "changed-paths": protected_changes,
+            "status": "failed" if changes else "passed",
+            "changed-paths": changes,
         }
-    )
+
+    checks.append(protected_check(changed_paths))
 
     profile = str(config.get("validation-profile") or "").strip()
     if not profile:
@@ -197,9 +224,7 @@ def check_enforcement(
 
     final_snapshot = review_snapshot(root)
     changed_paths = sorted(set(changed_paths) | set(_git_changed_paths(root, base_ref)))
-    protected_changes = [path for path in changed_paths if path_matches(path, protected)]
-    checks[0].update({"status": "failed" if protected_changes else "passed",
-                      "changed-paths": protected_changes})
+    checks[0] = protected_check(changed_paths)
     checks.append({
         "id": "workspace-stability",
         "status": "passed" if initial_snapshot and initial_snapshot == final_snapshot else "failed",
@@ -283,6 +308,7 @@ def _github_actions_content(
     *,
     action_version: str,
     require_review: bool,
+    protected_sources: str | None = None,
 ) -> str:
     """Reference the setup action; it reads and installs the pin, so pin updates need no edit."""
     review_step = ""
@@ -303,6 +329,13 @@ def _github_actions_content(
             exit 1
           fi
 """
+
+    # Only a non-default mode adds a flag, so the default workflow text is unchanged.
+    protected_flag = (
+        f"\n          --protected-sources {protected_sources}"
+        if protected_sources == BASE_TREE_MODE
+        else ""
+    )
 
     return f"""name: EmbrAIon Enforcement
 
@@ -339,7 +372,7 @@ jobs:
         run: >-
           embraion enforcement check
           --base-ref "${{{{ github.event.pull_request.base.sha }}}}"
-          {"--external-review-gate" if require_review else ""}
+          {"--external-review-gate" if require_review else ""}{protected_flag}
 {review_step}"""
 
 
@@ -368,16 +401,20 @@ def install_enforcement_surface(
 
     policy_path = root / ".embraion" / "policy.yaml"
     policy = read_policy_config(root)
+    kept_mode = (policy.get("enforcement") or {}).get("protected-sources")
     policy["enforcement"] = {
         "enabled": True,
         "validation-profile": validation_profile,
         "require-review": require_review,
     }
+    if kept_mode is not None:
+        policy["enforcement"]["protected-sources"] = kept_mode
 
     workflow = root / GITHUB_ACTIONS_PATH
     content = _github_actions_content(
         action_version=__version__,
         require_review=require_review,
+        protected_sources=kept_mode,
     )
     if workflow.exists():
         existing = workflow.read_text(encoding="utf-8")

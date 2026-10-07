@@ -160,7 +160,12 @@ class ExternalCapabilitiesTests(unittest.TestCase):
     def test_config_symlink_is_rejected(self) -> None:
         other = self.project / "other.yaml"
         self._yaml(other, {"schema-version": 1, "capabilities": []})
-        (self.project / ".embraion/external-capabilities.yaml").symlink_to(other)
+        try:
+            (self.project / ".embraion/external-capabilities.yaml").symlink_to(other)
+        except OSError as error:
+            if getattr(error, "winerror", None) != 1314:
+                raise
+            self.skipTest("Windows symlink privilege unavailable")
         with self.assertRaisesRegex(RuntimeError, "symbolic link"):
             read_external_capabilities(self.root, self.project)
 

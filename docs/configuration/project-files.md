@@ -44,6 +44,36 @@ At the current contract level, EmbrAIon does not use arbitrary `capabilities` va
 
 This metadata is separate from the optional, schema-checked [external capability inventory](capabilities.md). A declaration there records requirements and lifecycle evidence; it does not install an integration or prove that a host loaded it.
 
+### `housekeeping`
+
+`housekeeping` is optional. It controls automatic cleanup of the branches and worktrees that agents created. Every switch defaults to the previous behavior:
+
+```yaml
+housekeeping:
+  on-task-start: false
+  local-branches: true
+  remote-branches: false
+  worktrees: true
+  preserve-branches: []
+```
+
+- `on-task-start` (default `false`) runs cleanup before an independent writable task. Nothing is removed unless it is `true`.
+- `local-branches`, `remote-branches`, and `worktrees` choose what cleanup may remove. Remote deletion is off by default.
+- `preserve-branches` lists branch names or patterns that are never removed, such as `main` or `release/*`.
+
+Only resources that EmbrAIon recorded as agent-created, and that pass the completion and integration checks, are removed. Unknown branches and worktrees are reported and kept. The switches must be booleans and `preserve-branches` a list of names; anything else is an error. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md).
+
+### `worktree`
+
+`worktree.lfs` is optional. The default is `none`: new worktrees are created exactly as before. Set it to `hydrate` for a repository that uses Git LFS:
+
+```yaml
+worktree:
+  lfs: hydrate
+```
+
+A new checkout of such a repository holds pointer text files until the content is fetched. With `hydrate`, `embraion worktree create` (and `worktree register` for a worktree your host created) fetches the LFS content of the exact worktree HEAD from the repository's own LFS remote, checks it out, and verifies every LFS file by size and SHA-256. A failed check makes the command exit non-zero, but the worktree is kept. Any other value, or an unknown key under `worktree`, is an error. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ## `.embraion/knowledge.yaml`
 
 This file points EmbrAIon at project-owned knowledge.
@@ -379,7 +409,7 @@ Schema v1 can read legacy `builtin:unity` declarations for diagnostics, but the 
 
 ## Optional `.embraion/integrations.yaml`
 
-This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`. The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
+This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`, `cwd`, and `required` (`cwd` and `required` for Codex entries only). The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
 
 ## Optional `.embraion/knowledge-maintenance.yaml`
 
@@ -388,6 +418,10 @@ Declare which project document depends on which source files, then explicitly ru
 ## Optional `.embraion/organization.yaml`
 
 Project-owned code organization limits can supplement the Core procedure. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` checks changed files incrementally. Existing debt does not waive a new violation. See [Code organization](organization.md).
+
+## Optional `.embraion/sources.yaml`
+
+This strict, versioned file lists the stable source IDs with a `role`, a `write` policy (`read-only`, `workspace-write`, or `forbidden`), and optional `description`, `doc`, and a raised `data-class`. It never holds machine paths. The file is absent by default; then nothing changes. When it exists, `embraion validate` checks it, `embraion sources` reports it, and a `workspace-write` execution request may name only sources that allow writing. See [Source registry](sources.md).
 
 ## Optional `.embraion/skills/`
 

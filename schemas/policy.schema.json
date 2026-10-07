@@ -93,6 +93,13 @@
         },
         "require-review": {
           "type": "boolean"
+        },
+        "protected-sources": {
+          "description": "Optional. 'name' (default) matches changed file names; 'base-tree' compares protected paths with the merge base by Git object ID.",
+          "enum": [
+            "name",
+            "base-tree"
+          ]
         }
       },
       "additionalProperties": false
@@ -226,6 +233,16 @@
         "all-files": {
           "type": "boolean",
           "description": "Also scan every other text file in the security scan, as `security scan --all-files`; defaults to false."
+        },
+        "validation-profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Project validation profiles from .embraion/validation.yaml that `embraion check` runs as `validation run` does, after the other checks. Each must exist, have commands, and pass; omitted runs none."
         }
       },
       "additionalProperties": false

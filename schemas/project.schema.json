@@ -96,6 +96,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "worktree": {
+      "type": "object",
+      "properties": {
+        "lfs": {"enum": ["none", "hydrate"], "default": "none"}
+      },
+      "additionalProperties": false
     }
   },
   "$defs": {},

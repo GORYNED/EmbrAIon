@@ -250,6 +250,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         "external-capabilities.yaml": root / "schemas/external-capabilities.schema.json",
         "integrations.yaml": root / "schemas/integrations.schema.json",
         "organization.yaml": root / "schemas/organization.schema.json",
+        "sources.yaml": root / "schemas/sources.schema.json",
         "decisions.yaml": root / "schemas/decisions.schema.json",
         "knowledge-maintenance.yaml": root / "schemas/knowledge-audit.schema.json",
     }
@@ -644,6 +645,7 @@ PROJECT_CONFIG_SCHEMAS = {
     "claude-native.yaml": "claude-native",
     "report.yaml": "report",
     "integrations.yaml": "integrations",
+    "sources.yaml": "sources",
 }
 _ORGANIZATION_ROOT_SECTIONS = ("assemblies", "unity_meta", "filenames")
 
