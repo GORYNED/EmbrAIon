@@ -276,7 +276,7 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 
 ## Опциональный `.embraion/integrations.yaml`
 
-Строгий версионированный файл объявляет MCP servers, которые должна содержать host configuration проекта: `id`, `host`, `command`, `args`, `transport`, `access`, **имена** environment variables и опциональный `portable`. По умолчанию файла нет, и сравнение integrations не выполняется. Если файл есть, `embraion security scan` сообщает об отсутствующих, неожиданных, расходящихся и непереносимых servers как о high-severity findings `integration-drift`. См. [Объявленные integrations](../security.ru.md#integrations).
+Строгий версионированный файл объявляет MCP servers, которые должна содержать host configuration проекта: `id`, `host`, `command`, `args`, `transport`, `access`, **имена** environment variables и опциональные `portable`, `cwd` и `required` (`cwd` и `required` только для записей Codex). По умолчанию файла нет, и сравнение integrations не выполняется. Если файл есть, `embraion security scan` сообщает об отсутствующих, неожиданных, расходящихся и непереносимых servers как о high-severity findings `integration-drift`. См. [Объявленные integrations](../security.ru.md#integrations).
 
 ## Опциональный `.embraion/knowledge-maintenance.yaml`
 

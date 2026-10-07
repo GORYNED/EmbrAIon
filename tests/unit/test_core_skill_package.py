@@ -41,6 +41,14 @@ LATER_FILE_EDITS = {
          "part of the change, not as a follow-up.\n6. Define observable", "5. Define observable"),
         ("7. Return a compact execution plan", "6. Return a compact execution plan"),
     ),
+    "core/skills/compatibility-migration/SKILL.md": (
+        ("   - Never reuse a retired identifier, number, or name for a different meaning. A rename is a removal "
+         "plus an addition.\n   - Deprecate before removing: mark the old surface, name its replacement, and "
+         "state how long it keeps working.\n   - Readers tolerate unknown fields, so a newer writer does not "
+         "break an older reader.\n", ""),
+        (" A failed migration must leave the source data intact and recoverable: keep the original until the "
+         "new form is verified.", ""),
+    ),
     "core/skills/review/SKILL.md": (
         ("especially architecture, decisions, source authority,", "especially architecture, source authority,"),
         ("For a change that makes an architecture-level decision, check that the decision is recorded in the "

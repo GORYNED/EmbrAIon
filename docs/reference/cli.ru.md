@@ -479,6 +479,17 @@ embraion adr new "Move parsing into its own package" --locale ru --status Propos
 
 `adr new` пишет запись из шаблона проекта, добавляет строку в индекс, а с `--locale <код>` (можно повторять) пишет рядом локализованную копию. Если в проекте нет папки, шаблона и индекса, команда их создаёт. `--slug` задаёт имя файла, когда в заголовке нет ASCII-слов. См. [Записи об архитектурных решениях](../configuration/decisions.md).
 
+### `embraion pr-template`
+
+Установите опциональный проектно-нейтральный шаблон pull request:
+
+```bash
+embraion pr-template
+embraion pr-template --path ../service --json
+```
+
+Команда пишет `.github/pull_request_template.md` из `templates/pull-request/pull-request-template.md`. В шаблоне есть разделы: что изменилось, архитектура, совместимость (source и API отдельно от persisted data), validation, непроведённые проверки, риски, workers и независимое ревью с точным final head SHA. Команда никогда не перезаписывает: если в проекте уже есть шаблон pull request (в корне, `docs/` или `.github/`, включая папку `PULL_REQUEST_TEMPLATE/`) или ссылка по этому пути, она сообщает об этом и ничего не меняет. `embraion init` её не запускает. `--path` задаёт каталог проекта, а `--json` выводит `status` (`created` или `exists`) и `path`.
+
 ### `embraion checkpoint`
 
 Сохранить локальные ссылки для продолжения задачи и позже проверить их актуальность:
