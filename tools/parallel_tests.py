@@ -43,6 +43,15 @@ SEQUENTIAL_MODULES: dict[str, dict[str, str]] = {
         # build/, while other modules create and delete temporary directories there.
         "test_core": "test_framework_validation_is_clean scans the entire checkout, so it must not "
                      "run while other processes create and delete directories under build/",
+        # These modules invoke project validation, which also runs the checkout-wide framework scan.
+        "test_config_checks": "project validation runs the checkout-wide framework scan, so it must not "
+                              "run while other processes create and delete directories under build/",
+        "test_derived_generated": "project validation runs the checkout-wide framework scan, so it must not "
+                                 "run while other processes create and delete directories under build/",
+        "test_sources": "project validation runs the checkout-wide framework scan, so it must not "
+                        "run while other processes create and delete directories under build/",
+        "test_policy_ceilings": "project validation runs the checkout-wide framework scan, so it must not "
+                                "run while other processes create and delete directories under build/",
     },
 }
 
