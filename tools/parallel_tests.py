@@ -37,7 +37,14 @@ LOG_TAIL_LINES = 40
 # other in the parent process, after the parallel phase. Keep this empty unless a module
 # cannot be made isolated; name each module and say why. Keys are suite names
 # ("unit", "integration"), values map a module name to its reason.
-SEQUENTIAL_MODULES: dict[str, dict[str, str]] = {}
+SEQUENTIAL_MODULES: dict[str, dict[str, str]] = {
+    "unit": {
+        # Found by a flaky run on Python 3.11: the scan walks the whole checkout, including
+        # build/, while other modules create and delete temporary directories there.
+        "test_core": "test_framework_validation_is_clean scans the entire checkout, so it must not "
+                     "run while other processes create and delete directories under build/",
+    },
+}
 
 
 @dataclass

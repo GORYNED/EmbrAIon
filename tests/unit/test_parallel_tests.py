@@ -96,6 +96,11 @@ class PlanningTests(SuiteFixture):
             for module, reason in modules.items():
                 self.assertTrue(module.startswith("test_") and reason.strip(), module)
 
+    def test_allowlisted_modules_exist_in_their_suite(self) -> None:
+        for suite, modules in parallel.SEQUENTIAL_MODULES.items():
+            for module in modules:
+                self.assertTrue((ROOT / "tests" / suite / f"{module}.py").is_file(), (suite, module))
+
     def test_module_size_reads_the_file_and_tolerates_missing_files(self) -> None:
         directory = self.make_suite("test_size")
         self.assertGreater(parallel.module_size(directory, "test_size_alpha"), 0)
