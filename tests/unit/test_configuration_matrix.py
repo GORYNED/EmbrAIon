@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import re
 import unittest
 from pathlib import Path
@@ -10,7 +11,8 @@ from typing import Any
 import yaml
 
 from embraion.cli import build_parser
-from embraion.common import framework_root, read_json
+from embraion.common import framework_root, read_json, read_yaml
+from embraion.evals import evaluate_case
 from embraion.project import PROJECT_SKILLS
 from embraion.validation import PROJECT_CONFIG_SCHEMAS
 
@@ -195,6 +197,23 @@ class ConfigurationMatrixTests(unittest.TestCase):
         text = MATRIX.read_text(encoding="utf-8")
         for forbidden in ("SensorEdge", "Unity-SDK", "MeasureX", "/home/", "/tmp/"):
             self.assertNotIn(forbidden, text)
+
+    def test_behavioral_case_rejects_each_violated_property(self) -> None:
+        case = read_yaml(ROOT / "evals/cases/configure-by-request.yaml")
+        record = read_json(ROOT / "tests/fixtures/evals/configure-by-request.json")
+        self.assertEqual((True, []), evaluate_case(case, record))
+        self.assertFalse(case["context"]["live-host-execution"])
+        for check in case["checks"]:
+            with self.subTest(field=check["field"]):
+                broken = copy.deepcopy(record)
+                target = broken
+                parts = check["field"].split(".")
+                for part in parts[:-1]:
+                    target = target[part]
+                expected = check["value"]
+                target[parts[-1]] = not expected if isinstance(expected, bool) else "unsupported"
+                self.assertFalse(evaluate_case(case, broken)[0])
+        self.assertFalse(evaluate_case(case, {})[0])
 
 
 if __name__ == "__main__":
