@@ -1084,6 +1084,8 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
             print(f"  {item['command']}")
             if item.get("reason"):
                 print(f"  reason: {item['reason']}")
+            if item.get("termination"):
+                print(f"  termination: {item['termination']}")
             if item.get("required") is False:
                 print("  optional: a failure here is a warning")
             print(f"  log: {item['log-path']}")

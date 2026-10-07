@@ -12,7 +12,7 @@ from unittest import mock
 
 from embraion.common import read_yaml, write_yaml
 from embraion.project import init_project
-from embraion import project_validation
+from embraion import project_validation, validation_process
 from embraion.validation_output import capture_stream, render_output, truncation_marker
 from embraion.project_validation import (
     MAX_CAPTURE_CHARS,
@@ -478,6 +478,157 @@ class BoundedOutputTests(unittest.TestCase):
                 project = _project(temporary, {"commands": [_python("print(1)")], "output-limit-bytes": value})
                 with self.assertRaisesRegex(RuntimeError, "Invalid .embraion/validation.yaml"):
                     run_validation_profile("gate", project=project)
+
+
+class FakeProcess:
+    pid = 4242
+
+    def __init__(self) -> None:
+        self.killed = False
+        self.returncode = None
+
+    def poll(self):
+        return self.returncode
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = 1
+
+    def wait(self, timeout=None):
+        self.returncode = 1 if self.returncode is None else self.returncode
+        return self.returncode
+
+
+class WindowsTerminationLogicTests(unittest.TestCase):
+    """The Windows branch is exercised with fake process tables on every platform."""
+
+    def _completed(self, output: str, returncode: int = 0) -> subprocess.CompletedProcess:
+        return subprocess.CompletedProcess([], returncode, stdout=output.encode("utf-8"))
+
+    def test_descendants_are_found_from_the_process_table(self) -> None:
+        table = "10,1\n11,10\n12,11\n13,1\nnoise\n4242,1\n"
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(table)):
+            self.assertEqual([11, 12], validation_process.windows_descendants(10))
+            self.assertEqual([], validation_process.windows_descendants(12))
+
+    def test_unreadable_process_table_is_none(self) -> None:
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("", 1)):
+            self.assertIsNone(validation_process.windows_descendants(10))
+        with mock.patch.object(validation_process.subprocess, "run", side_effect=FileNotFoundError):
+            self.assertIsNone(validation_process.windows_descendants(10))
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("garbage\n")):
+            self.assertIsNone(validation_process.windows_descendants(10))
+
+    def test_tasklist_answer_decides_whether_a_pid_is_alive(self) -> None:
+        listed = '"python.exe","11","Console","1","10,000 K"\n'
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(listed)):
+            self.assertTrue(validation_process.windows_pid_alive(11))
+            self.assertFalse(validation_process.windows_pid_alive(12))
+        none = "INFO: No tasks are running which match the specified criteria.\n"
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(none)):
+            self.assertFalse(validation_process.windows_pid_alive(11))
+        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("", 1)):
+            self.assertTrue(validation_process.windows_pid_alive(11))
+        with mock.patch.object(validation_process.subprocess, "run", side_effect=OSError):
+            self.assertTrue(validation_process.windows_pid_alive(11))
+
+    def _terminate(self, descendants, alive_answers) -> bool:
+        answers = iter(alive_answers)
+        calls: list[list[str]] = []
+
+        def run(command, **options):
+            calls.append(command)
+            return self._completed("")
+
+        process = FakeProcess()
+        with mock.patch.object(validation_process, "windows_descendants", return_value=descendants), \
+             mock.patch.object(validation_process, "windows_pid_alive", side_effect=lambda pid: next(answers, False)), \
+             mock.patch.object(validation_process.subprocess, "run", side_effect=run), \
+             mock.patch.object(validation_process, "POLL_SECONDS", 0.01), \
+             mock.patch.object(validation_process, "VERIFY_SECONDS", 0.2):
+            confirmed = validation_process._terminate_windows(process)
+        self.assertEqual(["taskkill", "/T", "/F", "/PID", "4242"], calls[0])
+        self.assertTrue(process.killed)
+        return confirmed
+
+    def test_termination_is_confirmed_when_every_descendant_is_gone(self) -> None:
+        self.assertTrue(self._terminate([11, 12], [True, True, False, False]))
+        self.assertTrue(self._terminate([], []))
+
+    def test_termination_is_unconfirmed_for_a_surviving_or_unlisted_tree(self) -> None:
+        self.assertFalse(self._terminate([11], [True] * 1000))
+        self.assertFalse(self._terminate(None, []))
+
+
+@unittest.skipUnless(os.name == "posix", "process groups are checked with POSIX signals")
+class PosixGroupTests(unittest.TestCase):
+    def test_group_membership_is_seen_and_a_reaped_group_is_gone(self) -> None:
+        process = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"],
+            start_new_session=True,
+        )
+        try:
+            self.assertTrue(validation_process.group_has_live_members(process.pid))
+        finally:
+            self.assertTrue(validation_process.terminate_tree(process))
+        self.assertFalse(validation_process.group_has_live_members(process.pid))
+
+    def test_a_member_that_keeps_running_leaves_termination_unconfirmed(self) -> None:
+        process = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"],
+            start_new_session=True,
+        )
+        try:
+            with mock.patch.object(validation_process, "group_has_live_members", return_value=True), \
+                 mock.patch.object(validation_process, "VERIFY_SECONDS", 0.2), \
+                 mock.patch.object(validation_process, "POLL_SECONDS", 0.02):
+                self.assertFalse(validation_process.terminate_tree(process))
+        finally:
+            validation_process._kill_group(process.pid)
+            process.wait()
+
+
+class TerminationRecordTests(unittest.TestCase):
+    def _slow(self) -> str:
+        return _python("import time; time.sleep(5)")
+
+    def test_a_timeout_records_confirmed_termination(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, {"commands": [self._slow()], "timeout-seconds": 0.5})
+            record = run_validation_profile("gate", project=project)
+            row = record["commands"][0]
+            self.assertEqual("timed-out", row["status"])
+            self.assertEqual("confirmed", row["termination"])
+            self.assertEqual("failed", record["status"])
+            self.assertNotIn("failure-reasons", record)
+
+    def test_commands_that_finish_in_time_record_no_termination(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, [_python("print(1)")])
+            self.assertNotIn("termination", run_validation_profile("gate", project=project)["commands"][0])
+
+    def test_unconfirmed_termination_fails_the_profile_even_for_an_optional_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(
+                temporary,
+                {
+                    "commands": [{"command": self._slow(), "required": False}, _python("print('later')")],
+                    "timeout-seconds": [0.5, None],
+                },
+            )
+
+            def ended_but_unproven(process: object) -> bool:
+                validation_process.terminate_tree(process)
+                return False
+
+            with mock.patch.object(project_validation, "_terminate_tree", side_effect=ended_but_unproven):
+                record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("unconfirmed", record["commands"][0]["termination"])
+            self.assertEqual(1, len(record["commands"]))
+            self.assertEqual(2, record["command-count"])
+            self.assertIn("could not be confirmed terminated", record["failure-reasons"][0])
+            self.assertIn("command 1", record["failure-reasons"][0])
 
 
 if __name__ == "__main__":

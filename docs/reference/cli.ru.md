@@ -325,6 +325,8 @@ embraion validation run affected   --param base-ref=origin/main   --param head-r
 
 Вывод длиннее tail в 8000 символов добавляет `stdout-head`/`stderr-head` и объект `output` с общим числом байт и строк; `output-limit-bytes` ограничивает полный log головой и хвостом с маркером обрезки. См. [output limit](../configuration/validation.ru.md#output-limit).
 
+После timeout всё дерево завершается и проверяется; строка команды получает `termination: confirmed` или `unconfirmed`, а `unconfirmed` проваливает profile и останавливает следующие команды. См. [Валидация и evidence](../validation.ru.md).
+
 Structured profile с `clean-tree: true` сравнивает `git status` перед первой и после последней команды. Новое различие или guard, который не может выполниться (нет Git work tree), проваливает profile с причиной в `failure-reasons`; см. [clean-tree guard](../configuration/validation.ru.md#clean-tree-guard).
 
 Unknown parameters и missing required parameters fail-closed. Parameters могут проецироваться в command-line argument или environment child validation process согласно `.embraion/validation.yaml`.

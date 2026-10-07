@@ -22,6 +22,7 @@ from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
 from .security import redact_text, redact_value
+from .validation_process import GRACE_SECONDS, terminate_tree
 from .validation_output import CapturedOutput, capture_stream, render_output
 
 
@@ -30,7 +31,7 @@ MAX_CLEAN_TREE_PATHS = 20
 MIN_OUTPUT_LIMIT_BYTES = 1024
 MAX_FINGERPRINT_BYTES = 64 * 1024 * 1024
 RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
-TERMINATION_GRACE_SECONDS = 2.0
+TERMINATION_GRACE_SECONDS = GRACE_SECONDS
 
 
 _PLATFORMS = ("linux", "macos", "windows")
@@ -450,33 +451,9 @@ def _wait_for(process: subprocess.Popen, timeout: float | None) -> int:
     return process.wait(timeout=timeout)
 
 
-def _terminate_tree(process: subprocess.Popen) -> None:
-    """Terminate the command and every descendant that stayed in its process group."""
-    if os.name == "nt":
-        subprocess.run(
-            ["taskkill", "/T", "/F", "/PID", str(process.pid)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-        if process.poll() is None:
-            process.kill()
-        process.wait()
-        return
-    try:
-        os.killpg(process.pid, signal.SIGTERM)
-    except (ProcessLookupError, PermissionError):
-        pass
-    try:
-        process.wait(timeout=TERMINATION_GRACE_SECONDS)
-    except subprocess.TimeoutExpired:
-        pass
-    # Descendants that ignore SIGTERM or outlive the leader are killed as well.
-    try:
-        os.killpg(process.pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        pass
-    process.wait()
+def _terminate_tree(process: subprocess.Popen) -> bool:
+    """End the command's whole process tree; return whether its end is confirmed."""
+    return terminate_tree(process)
 
 
 def _run_contained(
@@ -485,8 +462,11 @@ def _run_contained(
     environment: dict[str, str],
     timeout: float | None,
     output_limit: int | None = None,
-) -> tuple[int | None, CapturedOutput, CapturedOutput]:
+) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None]:
     """Run one command; return its exit code (``None`` after a timeout) and its output.
+
+    The last item is ``None`` unless the command timed out; then it is ``confirmed`` or
+    ``unconfirmed``, telling whether the whole process tree was shown to be gone.
 
     Without an ``output_limit`` the output is kept whole; with one, only a head and a
     tail of at most that many bytes per stream are read into memory.
@@ -497,8 +477,9 @@ def _run_contained(
         process = _spawn_contained(command, cwd, environment, stdout, stderr)
         try:
             returncode: int | None = _wait_for(process, timeout)
+            termination: str | None = None
         except subprocess.TimeoutExpired:
-            _terminate_tree(process)
+            termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
             returncode = None
         except BaseException:
             _terminate_tree(process)
@@ -506,7 +487,7 @@ def _run_contained(
         # Text-mode subprocess output used the locale encoding; keep that decoding.
         encoding = locale.getpreferredencoding(False)
         captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
-    return returncode, captured[0], captured[1]
+    return returncode, captured[0], captured[1], termination
 
 
 def _log_path(project: Path, evidence_id: str, index: int) -> Path:
@@ -659,7 +640,7 @@ def run_validation_profile(
             }
         else:
             began = time.monotonic()
-            exit_code, raw_stdout, raw_stderr = _run_contained(
+            exit_code, raw_stdout, raw_stderr, termination = _run_contained(
                 prepared_command,
                 root,
                 command_environment,
@@ -690,9 +671,18 @@ def run_validation_profile(
                 "stderr": _captured_tail(stderr),
             }
             row.update(_output_details(stdout, stderr, raw_stdout, raw_stderr))
+            if termination is not None:
+                row["termination"] = termination
         if not entry["required"]:
             row["required"] = False
         command_results.append(row)
+        if row.get("termination") == "unconfirmed":
+            # Stray processes may still run, so the profile fails and nothing else starts.
+            failure_reasons.append(
+                f"command {index} timed out and its process tree could not be confirmed "
+                "terminated; processes may still be running"
+            )
+            break
         if row["status"] != "passed":
             if entry["required"]:
                 if row["status"] == "blocked":

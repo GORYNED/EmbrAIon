@@ -331,6 +331,8 @@ A profile command can be a mapping with `required: false` and `requires` (`execu
 
 Output longer than the 8000-character tail adds `stdout-head`/`stderr-head` and an `output` object with total bytes and lines; `output-limit-bytes` bounds the full log to a head and a tail with a truncation marker. See [output limit](../configuration/validation.md#output-limit).
 
+After a timeout the whole tree is ended and checked; the command row records `termination: confirmed` or `unconfirmed`, and `unconfirmed` fails the profile and stops later commands. See [Validation & Evidence](../validation.md#evidence-behavior).
+
 A structured profile with `clean-tree: true` compares `git status` before the first and after the last command. A new difference, or a guard that cannot run (no Git work tree), fails the profile with a reason in `failure-reasons`; see [clean-tree guard](../configuration/validation.md#clean-tree-guard).
 
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
