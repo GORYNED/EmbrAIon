@@ -412,7 +412,13 @@ class CleanTreeGuardTests(unittest.TestCase):
 
     def test_head_change_is_detected_with_a_clean_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            project = self._repository(temporary, "import subprocess; subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'advance'], check=True)")
+            project = self._repository(
+                temporary,
+                "import subprocess; subprocess.run(["
+                "'git', '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', "
+                "'-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-qm', 'advance'"
+                "], check=True)",
+            )
             record = run_validation_profile("gate", project=project)
             self.assertEqual("failed", record["status"])
             self.assertTrue(record["clean-tree"]["head-changed"])
