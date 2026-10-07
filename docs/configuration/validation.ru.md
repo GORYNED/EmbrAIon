@@ -92,10 +92,10 @@ profiles:
       - python -m unittest discover -s tests -p "test_*.py"
       - command: ./tools/lint.sh
         required: false
-      - command: ./tools/device-check.sh
+      - command: ./tools/extra-check.sh
         requires:
-          executables: [adb]
-          env: [DEVICE_ID]
+          executables: [example-tool]
+          env: [EXAMPLE_TARGET]
           platforms: [linux, macos]
 ```
 
