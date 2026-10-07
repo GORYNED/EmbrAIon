@@ -279,7 +279,9 @@ class ScaffoldTests(DecisionFixture):
                       "| [`0002-b.md`](0002-b.md) | B | 2026-10-07 | Proposed |  |\n\nTrailing notes.", text)
 
     def test_pipe_in_title_and_crlf_index_are_preserved(self) -> None:
-        self.write("docs/architecture/decisions/README.md", "# D\r\n\r\n| ADR | Decision |\r\n| --- | --- |\r\n")
+        index = self.root / "docs/architecture/decisions/README.md"
+        index.parent.mkdir(parents=True)
+        index.write_bytes(b"# D\r\n\r\n| ADR | Decision |\r\n| --- | --- |\r\n")  # bytes: write_text would translate on Windows
         self.new("A | B")
         data = (self.root / "docs/architecture/decisions/README.md").read_bytes()
         self.assertEqual(b"# D\r\n\r\n| ADR | Decision |\r\n| --- | --- |\r\n| [`0001-a-b.md`](0001-a-b.md) | A \\| B |\r\n", data)
