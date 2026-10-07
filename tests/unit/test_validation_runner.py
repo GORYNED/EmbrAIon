@@ -515,7 +515,7 @@ class BoundedOutputTests(unittest.TestCase):
             self.assertIn("[... output truncated:", row["stdout"])
 
     def test_output_limit_never_keeps_half_of_a_private_key_block(self) -> None:
-        begin, end = "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----"
+        begin, end = "-----BEGIN " + "PRIVATE KEY-----", "-----END " + "PRIVATE KEY-----"
         data = (
             "lead\n" * 20 + begin + "\n" + "KEYBODYAAAA\n" * 50
             + "filler\n" * 400
@@ -530,10 +530,11 @@ class BoundedOutputTests(unittest.TestCase):
         self.assertIn(truncation_marker(captured), text)
 
     def test_complete_key_block_inside_the_kept_head_is_left_for_redaction(self) -> None:
-        block = "-----BEGIN PRIVATE KEY-----\nKEYBODY\n-----END PRIVATE KEY-----\n"
+        begin, end = "-----BEGIN " + "PRIVATE KEY-----", "-----END " + "PRIVATE KEY-----"
+        block = f"{begin}\nKEYBODY\n{end}\n"
         data = (block + "filler\n" * 500).encode("utf-8")
         captured = capture_stream(io.BytesIO(data), 600, "utf-8")
-        self.assertIn("-----END PRIVATE KEY-----", captured.head)
+        self.assertIn(end, captured.head)
         self.assertNotIn("KEYBODY", render_output(captured, redact_text))
 
     def test_invalid_output_limit_fails_closed(self) -> None:
