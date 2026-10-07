@@ -164,12 +164,12 @@ class PlanRuleTests(unittest.TestCase):
     def test_area_profiles_expand_to_profile_commands(self) -> None:
         plan = plan_for("affected", ["tools/build/make.py"])
         self.assertEqual(["echo lint", "echo unit", "echo package"], commands_of(plan))
-        self.assertEqual(["area:build"], plan["selected-commands"][0]["sources"])
+        self.assertEqual(["area:build>profile:full"], plan["selected-commands"][0]["sources"])
 
     def test_commands_are_deduplicated_in_area_order(self) -> None:
         plan = plan_for("affected", ["tools/build/make.py", "src/a.py", "README.md"])
         self.assertEqual(["echo unit", "echo docs", "echo lint", "echo package"], commands_of(plan))
-        self.assertEqual(["area:library", "area:build"], plan["selected-commands"][0]["sources"])
+        self.assertEqual(["area:library", "area:build>profile:full"], plan["selected-commands"][0]["sources"])
 
     def test_rule_adds_areas_and_records_matches_in_declared_order(self) -> None:
         plan = plan_for("affected", ["pyproject.toml", "src/schema/x.sql"], justification=None)
@@ -362,7 +362,11 @@ def run_config() -> dict[str, Any]:
     }
 
 
-class PlanRunTests(unittest.TestCase):
+class RepoCase:
+    """Helpers that build a temporary Git project for planned runs."""
+
+    addCleanup: Any
+
     def _repo(self, config: dict[str, Any] | None = None) -> Path:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -386,10 +390,18 @@ class PlanRunTests(unittest.TestCase):
         git(repo, "add", "-A")
         git(repo, "commit", "-qm", f"change {relative}")
 
+    def _plan_path(self) -> Path:
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        return Path(outside.name) / "plan.json"
+
     def _ran(self, repo: Path) -> list[str]:
         path = repo / "ran.txt"
         return path.read_text(encoding="utf-8").split() if path.is_file() else []
 
+
+
+class PlanRunTests(RepoCase, unittest.TestCase):
     def test_base_ref_runs_only_the_selected_commands_and_stores_the_plan(self) -> None:
         repo = self._repo()
         self._change(repo, "docs/guide.md")
@@ -510,6 +522,240 @@ class PlanRunTests(unittest.TestCase):
         )
         self.assertEqual(["fast"], self._ran(repo))
         self.assertEqual("skipped", run_validation_profile("empty", project=repo)["status"])
+
+
+def env_marker(name: str, variable: str = "PLAN_MODE") -> str:
+    """A command that records its name and the value of one environment variable."""
+    code = f"import os; open('ran.txt', 'a').write('{name}=' + os.environ.get('{variable}', '-') + '\\n')"
+    return f'"{sys.executable}" -c "{code}"'
+
+
+def failing(name: str) -> str:
+    return f'"{sys.executable}" -c "import sys; sys.exit(3)  # {name}"'
+
+
+class PlanRunSemanticsTests(RepoCase, unittest.TestCase):
+    """Planned runs keep the semantics of the place each command was selected from."""
+
+    def test_area_command_is_required_even_when_a_profile_lists_it_as_optional(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"] = {"commands": [
+            {"command": marker("unit"), "required": False, "requires": {"env": ["PLAN_ABSENT_VARIABLE"]}},
+        ]}
+        repo = self._repo(config)
+        self._change(repo, "src/a.py")
+        os.environ.pop("PLAN_ABSENT_VARIABLE", None)
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        self.assertEqual(["area:library"], plan["selected-commands"][0]["sources"])
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["unit"], self._ran(repo))
+        self.assertNotIn("required", record["commands"][0])
+
+    def test_profile_command_uses_the_entry_of_the_profile_it_was_selected_from(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"] = {"commands": [
+            {"command": marker("lint"), "required": False, "requires": {"env": ["PLAN_ABSENT_VARIABLE"]}},
+        ]}
+        config["areas"]["build"] = {"paths": ["tools/build/**"], "profiles": ["full"]}
+        repo = self._repo(config)
+        self._change(repo, "tools/build/make.py")
+        os.environ.pop("PLAN_ABSENT_VARIABLE", None)
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["lint", "unit", "package"], self._ran(repo))
+        self.assertEqual("passed", record["commands"][0]["status"])
+
+    def test_parameters_apply_only_to_commands_of_their_own_profile(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"] = {
+            "commands": [env_marker("own")],
+            "parameters": {"mode": {"environment": "PLAN_MODE", "default": "set"}},
+        }
+        config["profiles"]["full"] = {"commands": [env_marker("foreign")]}
+        config["areas"]["library"] = {"paths": ["src/**"], "commands": [env_marker("literal")]}
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        self.assertEqual("data-migration", plan["escalation"]["reason"])
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["foreign=-", "literal=-"], self._ran(repo))
+        self.assertEqual([], record["parameters"])
+
+    def test_own_profile_parameter_still_reaches_its_commands_in_a_plan(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"] = {
+            "commands": [env_marker("own")],
+            "parameters": {"mode": {"environment": "PLAN_MODE", "default": "set"}},
+        }
+        repo = self._repo(config)
+        self._change(repo, "misc/new.bin")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual(["own=set"], self._ran(repo))
+
+    def test_escalation_fails_closed_without_the_full_profiles_required_parameter(self) -> None:
+        config = run_config()
+        config["profiles"]["full"] = {
+            "commands": [marker("lint")],
+            "parameters": {"note": {"environment": "PLAN_NOTE", "required": True}},
+        }
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        with self.assertRaises(RuntimeError) as caught:
+            run_validation_profile("affected", project=repo, plan=plan)
+        self.assertIn("profile 'full', which requires parameter 'note'", str(caught.exception))
+        self.assertEqual([], self._ran(repo))
+        record = run_validation_profile("affected", project=repo, plan=plan, parameters={"note": "x"})
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["lint", "unit"], self._ran(repo))
+
+    def test_conflicting_parameter_definitions_across_profiles_fail_closed(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"] = {"commands": [marker("own")],
+                                          "parameters": {"mode": {"environment": "A_MODE", "default": "a"}}}
+        config["profiles"]["full"] = {"commands": [marker("lint")],
+                                      "parameters": {"mode": {"environment": "B_MODE", "default": "b"}}}
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = build_plan("affected", project=repo, base_ref="main")
+        plan["selected-commands"].append({"command": marker("own"), "sources": ["profile:affected"]})
+        with self.assertRaises(RuntimeError) as caught:
+            run_validation_profile("affected", project=repo, plan=plan)
+        self.assertIn("declared differently", str(caught.exception))
+
+    def test_planned_run_applies_optional_blocked_and_required_entries(self) -> None:
+        config = run_config()
+        config["profiles"]["full"] = {"commands": [
+            {"command": marker("skipme"), "required": False, "requires": {"env": ["PLAN_ABSENT_VARIABLE"]}},
+            marker("lint"),
+        ]}
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        os.environ.pop("PLAN_ABSENT_VARIABLE", None)
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(1, record["warnings"])
+        self.assertEqual("blocked", record["commands"][0]["status"])
+        self.assertEqual(["lint", "unit"], self._ran(repo))
+
+    def test_planned_run_of_only_optional_commands_is_skipped(self) -> None:
+        config = run_config()
+        config["profiles"]["full"] = {"commands": [
+            {"command": marker("skipme"), "required": False, "requires": {"env": ["PLAN_ABSENT_VARIABLE"]}},
+        ]}
+        config["areas"]["library"] = {"paths": ["src/**"], "profiles": ["full"]}
+        repo = self._repo(config)
+        self._change(repo, "src/a.py")
+        os.environ.pop("PLAN_ABSENT_VARIABLE", None)
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("skipped", record["status"])
+
+    def test_escalation_applies_the_full_profiles_clean_tree_guard_and_output_limit(self) -> None:
+        config = run_config()
+        config["profiles"]["full"] = {
+            "commands": [f'"{sys.executable}" -c "open(\'generated.txt\', \'w\').write(\'x\')"'],
+            "clean-tree": True,
+            "output-limit-bytes": 2048,
+        }
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("failed", record["status"])
+        self.assertEqual("failed", record["clean-tree"]["status"])
+        self.assertIn("generated.txt", record["clean-tree"]["changed-paths"])
+        self.assertEqual(2048, record["output-limit-bytes"])
+
+    def test_fail_fast_stops_a_planned_run_on_a_required_failure(self) -> None:
+        config = run_config()
+        config["profiles"]["full"] = {"commands": [failing("first"), marker("lint")]}
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan, fail_fast=True)
+        self.assertEqual("failed", record["status"])
+        self.assertEqual(1, record["executed-command-count"])
+        self.assertEqual([], self._ran(repo))
+        everything = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual(3, everything["executed-command-count"])
+        self.assertEqual(["lint", "unit"], self._ran(repo))
+
+
+class PlanFreshnessTests(RepoCase, unittest.TestCase):
+    def test_stored_plan_is_stale_when_a_ref_moves(self) -> None:
+        repo = self._repo()
+        self._change(repo, "src/b.py")
+        path = self._plan_path()
+        write_plan(build_plan("affected", project=repo, base_ref="main"), path)
+        self.assertIsNotNone(resolve_run_plan("affected", project=repo, plan_file=str(path)))
+        self._change(repo, "src/c.py")
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("head ref 'HEAD' now resolves", str(caught.exception))
+        self.assertIn("Run 'validation plan' again", str(caught.exception))
+
+        write_plan(build_plan("affected", project=repo, base_ref="main"), path)
+        git(repo, "checkout", "-q", "main")
+        self._change(repo, "src/main-only.py")
+        git(repo, "checkout", "-q", "topic")
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("base ref 'main' now resolves", str(caught.exception))
+
+    def test_worktree_plan_is_stale_when_the_changed_files_differ(self) -> None:
+        repo = self._repo()
+        (repo / "src" / "local.py").write_text("x\n", encoding="utf-8")
+        path = self._plan_path()
+        write_plan(build_plan("affected", project=repo, base_ref="main", include_worktree=True), path)
+        self.assertIsNotNone(resolve_run_plan("affected", project=repo, plan_file=str(path)))
+        (repo / "docs").mkdir()
+        (repo / "docs" / "new.md").write_text("x\n", encoding="utf-8")
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("changed files differ", str(caught.exception))
+
+    def test_plan_without_git_inputs_is_rejected(self) -> None:
+        repo = self._repo()
+        self._change(repo, "src/b.py")
+        plan = build_plan("affected", project=repo, base_ref="main")
+        del plan["inputs"]["head-sha"]
+        path = self._plan_path()
+        write_plan(plan, path)
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("no usable Git inputs", str(caught.exception))
+
+    def test_forged_command_source_is_rejected(self) -> None:
+        repo = self._repo()
+        self._change(repo, "docs/guide.md")
+        plan = build_plan("affected", project=repo, base_ref="main")
+        plan["selected-commands"][0]["sources"] = ["profile:full"]
+        path = self._plan_path()
+        write_plan(plan, path)
+        with self.assertRaises(RuntimeError):
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+
+    def test_head_ref_with_worktree_is_a_usage_error(self) -> None:
+        repo = self._repo()
+        with self.assertRaises(RuntimeError) as caught:
+            collect_changed_paths(repo, base_ref="main", head_ref="topic", include_worktree=True)
+        self.assertIn("--head-ref cannot be combined with --include-worktree", str(caught.exception))
+
+    def test_stored_plan_is_redacted(self) -> None:
+        secret = "abcdefgh" + "12345678"
+        label = "to" + "ken"
+        plan = plan_for("affected", [f"docs/{label}={secret}.md"])
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "plan.json"
+            write_plan(plan, path)
+            self.assertNotIn(secret, path.read_text(encoding="utf-8"))
+            self.assertIn("<REDACTED>", path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

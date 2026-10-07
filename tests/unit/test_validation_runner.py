@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -12,6 +13,7 @@ from unittest import mock
 
 from embraion.common import read_yaml, write_yaml
 from embraion.project import init_project
+from embraion.security import redact_text
 from embraion import project_validation, validation_process
 from embraion.validation_output import capture_stream, render_output, truncation_marker
 from embraion.project_validation import (
@@ -24,6 +26,18 @@ from embraion.project_validation import (
 
 def _python(statement: str) -> str:
     return f'"{sys.executable}" -c "{statement}"'
+
+
+def _remove_tree(path: Path) -> None:
+    """Remove a tree whose files may be read-only, as Git object files are on Windows."""
+    def make_writable_and_retry(function, target, _error):  # noqa: ANN001
+        os.chmod(target, stat.S_IWRITE)
+        function(target)
+
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=make_writable_and_retry)
+    else:
+        shutil.rmtree(path, onerror=make_writable_and_retry)
 
 
 def _project(temporary: str, profile: object) -> Path:
@@ -94,7 +108,9 @@ class BlockedAndOptionalCommandTests(unittest.TestCase):
             self.assertIs(False, record["commands"][0]["required"])
             self.assertNotIn("failure-reasons", record)
 
-    def test_every_optional_command_blocked_does_not_fail_the_profile(self) -> None:
+    def test_every_optional_command_blocked_is_skipped_never_a_pass(self) -> None:
+        # Changed with the lead's approval: a profile whose commands are all optional
+        # and none passed used to be "passed"; it now proves nothing and is "skipped".
         with tempfile.TemporaryDirectory() as temporary:
             project = _project(
                 temporary,
@@ -103,8 +119,34 @@ class BlockedAndOptionalCommandTests(unittest.TestCase):
             with mock.patch.dict(os.environ, {}, clear=False):
                 os.environ.pop("EMBRAION_ABSENT_VARIABLE", None)
                 record = run_validation_profile("gate", project=project)
-            self.assertEqual("passed", record["status"])
+            self.assertEqual("skipped", record["status"])
             self.assertEqual(1, record["warnings"])
+            self.assertEqual("every command is optional and none passed", record["skip-reason"])
+            self.assertNotIn("failure-reasons", record)
+
+    def test_all_optional_profile_passes_when_one_command_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(
+                temporary,
+                [
+                    {"command": "x", "required": False, "requires": {"env": ["EMBRAION_ABSENT_VARIABLE"]}},
+                    {"command": _python("print(1)"), "required": False},
+                ],
+            )
+            os.environ.pop("EMBRAION_ABSENT_VARIABLE", None)
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("passed", record["status"])
+            self.assertNotIn("skip-reason", record)
+
+    def test_all_optional_profile_with_only_failures_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(
+                temporary,
+                [{"command": _python("import sys; sys.exit(3)"), "required": False}],
+            )
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("skipped", record["status"])
+            self.assertEqual("failed", record["commands"][0]["status"])
 
     def test_missing_environment_variable_blocks_and_present_variable_runs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -326,7 +368,7 @@ class CleanTreeGuardTests(unittest.TestCase):
     def test_outside_a_git_work_tree_the_guard_is_blocked(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = self._repository(temporary, "print('ok')")
-            shutil.rmtree(project / ".git")
+            _remove_tree(project / ".git")
             with mock.patch.dict(os.environ, {"GIT_CEILING_DIRECTORIES": str(Path(temporary).parent)}):
                 record = run_validation_profile("gate", project=project)
             self.assertEqual("blocked", record["clean-tree"]["status"])
@@ -424,7 +466,7 @@ class BoundedOutputTests(unittest.TestCase):
             self.assertIn("...<truncated>", row["stdout"])
             self.assertEqual(MAX_CAPTURE_CHARS, len(row["stdout-head"]))
             self.assertEqual(
-                {"stdout": {"bytes": MAX_CAPTURE_CHARS * 2 + 1, "lines": 1, "log-truncated": False}},
+                {"stdout": {"bytes": MAX_CAPTURE_CHARS * 2 + len(os.linesep), "lines": 1, "log-truncated": False}},
                 row["output"],
             )
             self.assertNotIn("stderr-head", row)
@@ -471,6 +513,29 @@ class BoundedOutputTests(unittest.TestCase):
             self.assertTrue(summary["log-truncated"])
             self.assertEqual(20002, summary["lines"])
             self.assertIn("[... output truncated:", row["stdout"])
+
+    def test_output_limit_never_keeps_half_of_a_private_key_block(self) -> None:
+        begin, end = "-----BEGIN " + "PRIVATE KEY-----", "-----END " + "PRIVATE KEY-----"
+        data = (
+            "lead\n" * 20 + begin + "\n" + "KEYBODYAAAA\n" * 50
+            + "filler\n" * 400
+            + "KEYBODYZZZZ\n" * 50 + end + "\n" + "trail\n" * 20
+        ).encode("utf-8")
+        captured = capture_stream(io.BytesIO(data), 600, "utf-8")
+        self.assertTrue(captured.truncated)
+        text = render_output(captured, redact_text)
+        self.assertNotIn("KEYBODY", text)
+        self.assertIn("lead\n", text)
+        self.assertTrue(text.endswith("trail\n"))
+        self.assertIn(truncation_marker(captured), text)
+
+    def test_complete_key_block_inside_the_kept_head_is_left_for_redaction(self) -> None:
+        begin, end = "-----BEGIN " + "PRIVATE KEY-----", "-----END " + "PRIVATE KEY-----"
+        block = f"{begin}\nKEYBODY\n{end}\n"
+        data = (block + "filler\n" * 500).encode("utf-8")
+        captured = capture_stream(io.BytesIO(data), 600, "utf-8")
+        self.assertIn(end, captured.head)
+        self.assertNotIn("KEYBODY", render_output(captured, redact_text))
 
     def test_invalid_output_limit_fails_closed(self) -> None:
         for value in (0, 1023, -5, 1.5, "big", True):

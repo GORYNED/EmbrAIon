@@ -329,7 +329,7 @@ embraion validation run affected \
   --param head-ref=HEAD
 ```
 
-A profile command can be a mapping with `required: false` and `requires` (`executables`, `env`, `platforms`). A command with a missing prerequisite is not started and is reported `blocked` with a reason. A blocked or failed required command fails the profile; an optional one only adds to the `warnings` count of the record. The text output shows `[BLOCKED]`, the reason, and `Failure:` and `Warnings:` lines. Plain string commands behave as before. See [optional commands and prerequisites](../configuration/validation.md#optional-commands-and-prerequisites).
+A profile command can be a mapping with `required: false` and `requires` (`executables`, `env`, `platforms`). A command with a missing prerequisite is not started and is reported `blocked` with a reason. A blocked or failed required command fails the profile; an optional one only adds to the `warnings` count of the record. If every command is optional and none passed, the profile is `skipped` with a `skip-reason`. The text output shows `[BLOCKED]`, the reason, and `Failure:` and `Warnings:` lines. Plain string commands behave as before. See [optional commands and prerequisites](../configuration/validation.md#optional-commands-and-prerequisites).
 
 Output longer than the 8000-character tail adds `stdout-head`/`stderr-head` and an `output` object with total bytes and lines; `output-limit-bytes` bounds the full log to a head and a tail with a truncation marker. See [output limit](../configuration/validation.md#output-limit).
 
@@ -350,7 +350,7 @@ embraion validation run affected --base-ref origin/main
 embraion validation run affected --plan plan.json
 ```
 
-`plan` writes a deterministic `plan.json` (default `.embraion/state/validation/plan.json`) and `explain` prints the decision in plain language. Both need `--base-ref` or `--include-worktree`. `run` uses a plan only with `--plan`, `--base-ref`, or `--include-worktree`; otherwise it runs the whole profile. A plan that selects nothing reports `skipped`. A `--full-justification` outside `full-reasons`, an invalid configuration, a stale or foreign `--plan` file, and plan options on a project without areas fail closed with exit code 2. `list` also lists the areas.
+`plan` writes a deterministic `plan.json` (default `.embraion/state/validation/plan.json`) and `explain` prints the decision in plain language. Both need `--base-ref` or `--include-worktree`; `--head-ref` cannot be combined with `--include-worktree`. `run` uses a plan only with `--plan`, `--base-ref`, or `--include-worktree`; otherwise it runs the whole profile. A plan that selects nothing reports `skipped`. A `--full-justification` outside `full-reasons`, an invalid configuration, a `--plan` file that is stale (configuration or Git state changed) or for another profile, and plan options on a project without areas fail closed with exit code 2. `list` also lists the areas.
 
 ### `embraion cache`
 

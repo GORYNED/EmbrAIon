@@ -323,7 +323,7 @@ Structured validation profiles могут объявлять runtime parameters.
 embraion validation run affected   --param base-ref=origin/main   --param head-ref=HEAD
 ```
 
-Команда profile может быть mapping с `required: false` и `requires` (`executables`, `env`, `platforms`). Команда с отсутствующим prerequisite не запускается и получает статус `blocked` с причиной. Blocked или failed обязательная команда проваливает profile; необязательная лишь увеличивает счётчик `warnings` записи. Текстовый вывод показывает `[BLOCKED]`, причину и строки `Failure:` и `Warnings:`. Обычные строковые commands работают как раньше. См. [необязательные команды и prerequisites](../configuration/validation.ru.md#optional-commands-and-prerequisites).
+Команда profile может быть mapping с `required: false` и `requires` (`executables`, `env`, `platforms`). Команда с отсутствующим prerequisite не запускается и получает статус `blocked` с причиной. Blocked или failed обязательная команда проваливает profile; необязательная лишь увеличивает счётчик `warnings` записи. Если все команды необязательные и ни одна не прошла, profile получает `skipped` с `skip-reason`. Текстовый вывод показывает `[BLOCKED]`, причину и строки `Failure:` и `Warnings:`. Обычные строковые commands работают как раньше. См. [необязательные команды и prerequisites](../configuration/validation.ru.md#optional-commands-and-prerequisites).
 
 Вывод длиннее tail в 8000 символов добавляет `stdout-head`/`stderr-head` и объект `output` с общим числом байт и строк; `output-limit-bytes` ограничивает полный log головой и хвостом с маркером обрезки. См. [output limit](../configuration/validation.ru.md#output-limit).
 
@@ -344,7 +344,7 @@ embraion validation run affected --base-ref origin/main
 embraion validation run affected --plan plan.json
 ```
 
-`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json`), `explain` печатает решение простым языком. Обоим нужен `--base-ref` или `--include-worktree`. `run` использует plan только с `--plan`, `--base-ref` или `--include-worktree`; иначе выполняет весь profile. Plan, который ничего не выбрал, сообщает `skipped`. `--full-justification` вне `full-reasons`, неверная конфигурация, устаревший или чужой файл `--plan` и plan options в проекте без areas fail-closed с exit code 2. `list` также показывает areas.
+`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json`), `explain` печатает решение простым языком. Обоим нужен `--base-ref` или `--include-worktree`; `--head-ref` нельзя сочетать с `--include-worktree`. `run` использует plan только с `--plan`, `--base-ref` или `--include-worktree`; иначе выполняет весь profile. Plan, который ничего не выбрал, сообщает `skipped`. `--full-justification` вне `full-reasons`, неверная конфигурация, файл `--plan`, устаревший (изменились конфигурация или состояние Git) или для другого profile, и plan options в проекте без areas fail-closed с exit code 2. `list` также показывает areas.
 
 ### `embraion cache`
 
