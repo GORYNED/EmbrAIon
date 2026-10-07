@@ -1072,6 +1072,7 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 "passed": "PASS",
                 "failed": "FAIL",
                 "timed-out": "TIMEOUT",
+                "blocked": "BLOCKED",
             }[item["status"]]
             exit_code = (
                 "-"
@@ -1083,11 +1084,23 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 f"exit={exit_code} {item['duration-ms']}ms"
             )
             print(f"  {item['command']}")
+            if item.get("reason"):
+                print(f"  reason: {item['reason']}")
+            if item.get("termination"):
+                print(f"  termination: {item['termination']}")
+            if item.get("required") is False:
+                print("  optional: a failure here is a warning")
             print(f"  log: {item['log-path']}")
             if item["stdout"]:
                 print(item["stdout"].rstrip())
             if item["stderr"]:
                 print(item["stderr"].rstrip(), file=sys.stderr)
+        if record.get("clean-tree"):
+            print(f"Clean tree: {record['clean-tree']['status']}")
+        for reason in record.get("failure-reasons") or []:
+            print(f"Failure: {reason}")
+        if record.get("warnings"):
+            print(f"Warnings: {record['warnings']} optional command(s) did not pass")
         print(f"Evidence: {record['evidence-path']}")
         if record.get("run-id"):
             print(f"Attached run: {record['run-id']}")

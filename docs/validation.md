@@ -49,6 +49,7 @@ Commands execute sequentially from the project root. Each result records:
 - exit code;
 - duration;
 - redacted stdout/stderr tails of at most 8000 characters each;
+- for output longer than that tail, the head and the total size and line count (see [output limit](configuration/validation.md#output-limit));
 - the effective timeout and the path of the command's full log;
 - optional attached execution run;
 - evidence ID/path.
@@ -63,9 +64,11 @@ That is local runtime state and is ignored by the project-local `.gitignore`. Ea
 
 Each command starts in its own process group (a new session on POSIX, a new process group on Windows). When a command times out, or the run is interrupted, EmbrAIon terminates the whole tree, including processes the command started: on POSIX it signals the group with `SIGTERM` and then `SIGKILL`; on Windows it ends the tree with `taskkill /T /F`. An interrupted run stops and records no evidence. Timeouts come from `--timeout` or the profile's [`timeout-seconds`](configuration/validation.md#timeouts).
 
+After a timeout, EmbrAIon also checks that the tree is really gone, for up to 5 seconds. On POSIX it asks whether the process group still has a running member (zombies do not count) and sends `SIGKILL` again while it waits. On Windows it lists the descendants before ending the tree and then asks `tasklist` whether any of them remains. The timed-out command row records `termination: confirmed` or `termination: unconfirmed`. `unconfirmed` fails the profile, even for an optional command, with a `failure-reasons` entry, and no later command is started, because stray processes may still be running. If Windows cannot list the process table, the result is `unconfirmed`. A process that leaves the group on purpose (for example a daemon that starts its own session) cannot be seen by this check. Commands that finish in time record no `termination` field.
+
 With `--run-id`, every command receives the run ID in the `EMBRAION_RUN_ID` environment variable, so tools it starts can label their own artifacts. Without `--run-id`, the variable is removed from the command environment.
 
-An empty profile reports `skipped`. A failed or timed-out command makes the profile fail. Use `--fail-fast` only when later commands are not useful after the first failure.
+An empty profile reports `skipped`. A failed or timed-out command makes the profile fail, unless the command is declared `required: false`. A required command that is `blocked` (a declared prerequisite is missing) also makes the profile fail; see [optional commands and prerequisites](configuration/validation.md#optional-commands-and-prerequisites). Optional entries that do not pass add to the `warnings` count of the record. Use `--fail-fast` only when later commands are not useful after the first failure; it ignores optional entries.
 
 ## Validation is evidence, not a policy override
 

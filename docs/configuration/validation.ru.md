@@ -81,6 +81,74 @@ profiles:
 
 Без ключа commands выполняются без timeout, как раньше. `--timeout SECONDS` в командной строке заменяет настроенное значение для каждой command этого запуска. Список, длина которого не совпадает с числом commands, или значение, не являющееся положительным числом, fail-closed.
 
+## Optional commands and prerequisites
+
+Команда может остаться обычной строкой. Она также может быть mapping, в том же списке `commands` или в простом списке profile:
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+      - command: ./tools/lint.sh
+        required: false
+      - command: ./tools/device-check.sh
+        requires:
+          executables: [adb]
+          env: [DEVICE_ID]
+          platforms: [linux, macos]
+```
+
+- `required` необязателен, по умолчанию `true`.
+- `requires` необязателен. `executables` ищутся в `PATH` (имя с разделителем пути разрешается от корня проекта), переменные `env` должны быть заданы и не пусты в окружении команды, `platforms` — список из `linux`, `macos`, `windows`.
+
+Команда с отсутствующим prerequisite не запускается. Она получает статус `blocked` с причиной, а не `failed`. Blocked обязательная команда проваливает profile. Blocked необязательная — нет.
+
+Команда с `required: false` всё равно запускается, её сбой или timeout записываются в evidence. Profile из-за них не падает: он остаётся `passed`, а в записи появляется счётчик `warnings`. Команда без `required` и `requires` ведёт себя как раньше. Неизвестные ключи, не-boolean `required`, неизвестная платформа или пустое имя fail-closed.
+
+## Clean-tree guard
+
+Structured profile может требовать, чтобы validation не меняла рабочее дерево:
+
+```yaml
+profiles:
+  gate:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    clean-tree: true
+```
+
+Без ключа ничего не проверяется, как раньше. При `clean-tree: true` EmbrAIon читает `git status --porcelain=v1 -z --untracked-files=all` перед первой командой и после последней и сравнивает результаты.
+
+- Дерево, которое уже было грязным, допустимо. Его состояние становится baseline, и падают только новые различия. Файл, который уже был изменён и правится снова, считается различием, потому что сравнивается и содержимое.
+- Каталог `.embraion/state/` игнорируется, потому что validation пишет туда собственное evidence.
+- При сбое называются до 20 изменённых путей, а profile падает с записью в `failure-reasons`, которая начинается с `clean-tree guard failed`.
+- Вне Git work tree или без `git` guard получает статус `blocked`, и profile падает. Команды всё равно запускаются, их результаты остаются в evidence.
+
+В записи появляется объект `clean-tree` с полями `status` (`passed`, `failed` или `blocked`), `baseline-dirty`, `changed-count` и `changed-paths`. Profile без команд получает `skipped` и не проверяется.
+
+## Output limit
+
+По умолчанию полный redacted output каждой команды хранится в её log, а запись содержит tail не более 8000 символов на поток. Очень большой вывод может сделать log огромным. Structured profile может ограничить его ключом `output-limit-bytes` (целое число не менее 1024):
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    output-limit-bytes: 1048576
+```
+
+Если поток больше лимита, EmbrAIon оставляет только первую и последнюю половину лимита, обрезанные по границам строк, и ставит между ними маркер в log:
+
+```text
+[... output truncated: 9400000 bytes (210000 lines) omitted; total 9500000 bytes, 211000 lines ...]
+```
+
+В память читаются только сохранённые части. Каждая часть проходит redaction отдельно. Без ключа log не обрезается.
+
+В обоих случаях, если поток длиннее tail записи, строка команды получает `stdout-head` или `stderr-head` (первые 8000 символов) и объект `output` с итогами `bytes` и `lines` по каждому потоку и `log-truncated`. Короткий вывод не добавляет полей. Запись показывает `output-limit-bytes`, если profile его задаёт.
+
 ## Выбор profiles
 
 Полезная конвенция:

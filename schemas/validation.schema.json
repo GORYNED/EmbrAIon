@@ -14,8 +14,7 @@
           {
             "type": "array",
             "items": {
-              "type": "string",
-              "minLength": 1
+              "$ref": "#/$defs/command"
             }
           },
           {
@@ -27,9 +26,15 @@
               "commands": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "minLength": 1
+                  "$ref": "#/$defs/command"
                 }
+              },
+              "clean-tree": {
+                "type": "boolean"
+              },
+              "output-limit-bytes": {
+                "type": "integer",
+                "minimum": 1024
               },
               "timeout-seconds": {
                 "oneOf": [
@@ -107,5 +112,65 @@
       }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "command": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "requires": {
+              "type": "object",
+              "properties": {
+                "executables": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "env": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  },
+                  "uniqueItems": true
+                },
+                "platforms": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "linux",
+                      "macos",
+                      "windows"
+                    ]
+                  },
+                  "uniqueItems": true,
+                  "minItems": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
 }

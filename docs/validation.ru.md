@@ -49,6 +49,7 @@ Commands выполняются последовательно из project root
 - exit code;
 - duration;
 - redacted stdout/stderr tails длиной не больше 8000 символов каждый;
+- для вывода длиннее этого tail: head, общий размер и число строк (см. [output limit](configuration/validation.ru.md#output-limit));
 - действующий timeout и путь к полному log command;
 - optional attached execution run;
 - evidence ID/path.
@@ -63,9 +64,11 @@ Evidence хранится в:
 
 Каждая command запускается в собственной process group (новая session на POSIX, новая process group в Windows). При timeout command или прерывании запуска EmbrAIon завершает всё дерево, включая процессы, запущенные command: на POSIX группа получает `SIGTERM`, затем `SIGKILL`; в Windows дерево завершается через `taskkill /T /F`. Прерванный запуск останавливается и не записывает evidence. Timeouts задаются `--timeout` или ключом profile [`timeout-seconds`](configuration/validation.ru.md#timeouts).
 
+После timeout EmbrAIon дополнительно проверяет, что дерево действительно исчезло, до 5 секунд. На POSIX он спрашивает, остался ли у process group работающий участник (zombie не считаются), и повторно шлёт `SIGKILL`, пока ждёт. В Windows он перечисляет потомков до завершения дерева и затем спрашивает `tasklist`, остался ли кто-то из них. Строка timed-out команды получает `termination: confirmed` или `termination: unconfirmed`. `unconfirmed` проваливает profile, даже для необязательной команды, с записью в `failure-reasons`, и следующие команды не запускаются, потому что посторонние процессы могут всё ещё работать. Если Windows не может перечислить таблицу процессов, результат `unconfirmed`. Процесс, который намеренно покидает группу (например, daemon с собственной session), эта проверка не видит. Команды, завершившиеся вовремя, не получают поле `termination`.
+
 С `--run-id` каждая command получает ID run в environment variable `EMBRAION_RUN_ID`, чтобы запущенные ею tools могли помечать свои artifacts. Без `--run-id` эта variable удаляется из environment command.
 
-Empty profile возвращает `skipped`. Failed/timed-out command делает profile failed. `--fail-fast` используйте только когда дальнейшие commands бессмысленны.
+Empty profile возвращает `skipped`. Failed/timed-out command делает profile failed, если команда не объявлена `required: false`. Обязательная команда со статусом `blocked` (не хватает объявленного prerequisite) тоже проваливает profile; см. [необязательные команды и prerequisites](configuration/validation.ru.md#optional-commands-and-prerequisites). Необязательные записи, которые не прошли, увеличивают счётчик `warnings`. `--fail-fast` используйте только когда дальнейшие commands бессмысленны; он игнорирует необязательные записи.
 
 ## Validation — evidence, а не обход policy
 
