@@ -88,8 +88,11 @@ class ParallelRunnerTests(unittest.TestCase):
 
     def test_a_worker_that_exits_non_zero_after_writing_a_result_fails_the_run(self) -> None:
         (self.suite / "test_late.py").write_text(
-            "import atexit, os, unittest\n"
-            "atexit.register(os._exit, 5)\n"
+            "import atexit, os, sys, unittest\n"
+            "# Discovery imports this module in other processes too: only its own worker exits late.\n"
+            "here = os.path.dirname(os.path.abspath(__file__))\n"
+            "if sys.argv[1:2] == ['--worker'] and os.path.abspath(sys.argv[2]) == here:\n"
+            "    atexit.register(os._exit, 5)\n"
             "class Late(unittest.TestCase):\n    def test_passes(self): pass\n", encoding="utf-8")
         code, output = self.run_suite(2)
         self.assertEqual(1, code, output)
