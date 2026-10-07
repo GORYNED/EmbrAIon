@@ -180,6 +180,44 @@ def _declared_confidential_aliases(root: Path) -> set[str]:
     return aliases
 
 
+def _local_source_paths(root: Path) -> dict[str, re.Pattern[str]]:
+    """Patterns for the machine-local source paths, keyed by source ID.
+
+    The paths come from the ignored `.embraion/state/sources-local.yaml`. A path with fewer than two
+    segments is skipped because it would match unrelated text. A match must end at a path boundary.
+    """
+    from .sources import local_path_values
+
+    patterns: dict[str, re.Pattern[str]] = {}
+    for source_id, value in local_path_values(root).items():
+        normalized = value.replace("\\", "/").rstrip("/")
+        if len([part for part in normalized.split("/") if part and not part.endswith(":")]) < 2:
+            continue
+        variants = {value.rstrip("/\\"), normalized}
+        patterns[source_id] = re.compile(
+            "(?:" + "|".join(re.escape(item) for item in sorted(variants, key=len, reverse=True)) + r")(?![A-Za-z0-9_.-])"
+        )
+    return patterns
+
+
+def _local_path_findings(relative: str, text: str, patterns: dict[str, re.Pattern[str]],
+                         categories: frozenset[str] | None) -> list[dict[str, str]]:
+    """Flag tracked content that contains a recorded local source path; the path itself is never reported."""
+    if categories is not None and "machine-path" not in categories:
+        return []
+    return [
+        {
+            "schema-version": 1,
+            "id": f"source-path-leak:{source_id}:{relative}",
+            "severity": "medium",
+            "category": "machine-path",
+            "message": f"Content contains the local path recorded for source '{source_id}'",
+            "path": relative,
+        }
+        for source_id, pattern in sorted(patterns.items()) if pattern.search(text)
+    ]
+
+
 def _pattern_findings(relative: str, text: str, categories: frozenset[str] | None) -> list[dict[str, str]]:
     return [
         {
@@ -214,6 +252,7 @@ def collect_findings(root: Path, all_files: bool = False,
     declared_aliases = _declared_confidential_aliases(root)
     seen: set[str] = set()
     sources = _policy_sources(root) if all_files else None
+    local_paths = _local_source_paths(root)
 
     for path in iter_text_files(root):
         relative = str(path.relative_to(root))
@@ -226,6 +265,7 @@ def collect_findings(root: Path, all_files: bool = False,
             if skipped is not None:
                 skipped.append(relative)
         findings.extend(_pattern_findings(relative, text, categories))
+        findings.extend(_local_path_findings(relative, text, local_paths, categories))
 
         if legacy_data_class in text and legacy_data_class not in declared_aliases:
             findings.append(
@@ -248,6 +288,7 @@ def collect_findings(root: Path, all_files: bool = False,
                 if skipped is not None:
                     skipped.append(relative)
             findings.extend(_pattern_findings(relative, text, categories))
+            findings.extend(_local_path_findings(relative, text, local_paths, categories))
 
     findings.extend(integration_findings(root))
     return findings

@@ -389,6 +389,10 @@ Declare which project document depends on which source files, then explicitly ru
 
 Project-owned code organization limits can supplement the Core procedure. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` checks changed files incrementally. Existing debt does not waive a new violation. See [Code organization](organization.md).
 
+## Optional `.embraion/sources.yaml`
+
+This strict, versioned file lists the stable source IDs with a `role`, a `write` policy (`read-only`, `workspace-write`, or `forbidden`), and optional `description`, `doc`, and a raised `data-class`. It never holds machine paths. The file is absent by default; then nothing changes. When it exists, `embraion validate` checks it, `embraion sources` reports it, and a `workspace-write` execution request may name only sources that allow writing. See [Source registry](sources.md).
+
 ## Optional `.embraion/skills/`
 
 Project-owned skills use the Core skill layout: one directory per skill with `SKILL.md` as the entry point.

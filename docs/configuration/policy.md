@@ -83,6 +83,8 @@ privacy:
 
 When `sources` is declared, an execution request may name only listed source IDs, and its data class must be at least the highest class of the sources it names; otherwise the request fails before any provider is selected. Without `sources` requests are checked as before.
 
+An optional [source registry](sources.md) adds a role and a write policy for each ID, and a `data-class` that can only raise the class declared here.
+
 Model choice cannot widen these boundaries.
 
 ## Enforcement policy

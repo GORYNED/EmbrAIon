@@ -286,6 +286,10 @@ Runtime calculation использует validated local snapshot. Rates, URLs, 
 
 Проект может задать ограничения на организацию кода. `embraion organization check --path . --base-ref main --head-ref HEAD --include-worktree --json` проверяет изменения постепенно. Старые нарушения не освобождают новый код от правил. См. [Организация кода](organization.md).
 
+## Опциональный `.embraion/sources.yaml`
+
+Этот строгий версионируемый файл перечисляет стабильные source ID с `role`, политикой записи `write` (`read-only`, `workspace-write` или `forbidden`) и необязательными `description`, `doc` и повышенным `data-class`. Путей машины в нём нет. По умолчанию файла нет, и тогда ничего не меняется. Если он есть, `embraion validate` его проверяет, `embraion sources` его показывает, а execution request с `workspace-write` может называть только источники, в которые разрешена запись. См. [Реестр источников](sources.md).
+
 ## Опциональный `.embraion/skills/`
 
 Собственные skills проекта используют layout Core: один каталог на skill с entry point `SKILL.md`.

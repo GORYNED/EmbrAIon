@@ -287,6 +287,8 @@ embraion validate --strict
 - `roles` в knowledge, которые не совпадают ни с ролью Core, ни с агентом из `.embraion/agents.yaml` (`config-role`);
 - пустые файлы, пустые секции, где ожидается значение, и YAML-файлы в `.embraion`, которые EmbrAIon не читает (`config-inert`), а также нечитаемый YAML (`config-parse`).
 
+Если есть `.embraion/sources.yaml`, `validate` проверяет и его и сообщает каждую проблему как ошибку (`sources-invalid`) независимо от `--strict`. См. [Реестр источников](../configuration/sources.md).
+
 Предупреждения не меняют код выхода 0; `--strict` превращает их в ошибки. Без находок вывод остаётся `PASS: no validation issues.`. Полную проверку по схеме по-прежнему выполняют команды, которые загружают каждый файл; проверка policy ceilings остаётся ошибкой.
 
 ### `embraion check`
@@ -474,6 +476,18 @@ embraion organization check --path . --require-config --json
 ```
 
 Базовая ссылка отделяет старый долг и не освобождает новый код от правил. Без конфигурации проверка возвращает `skipped`; с `--require-config` она завершается ошибкой. См. [Организация кода](../configuration/organization.md).
+
+### `embraion sources`
+
+Показать необязательный реестр источников и записать, где источник лежит на этой машине:
+
+```bash
+embraion sources list [--path .] [--json]
+embraion sources status [--path .] [--json]
+embraion sources set <id> <path> [--path .] [--json]
+```
+
+`list` показывает `id`, `role`, политику `write` и `description` каждого источника. `status` показывает `id`, `role`, `write` и `availability`: `available`, если записанный локальный путь существует, `missing`, если не существует, и `unset`, если путь не записан. `set` записывает абсолютный путь объявленного источника в игнорируемый `.embraion/state/sources-local.yaml`; путь должен существовать. Ни одна команда не печатает локальный путь. Команды завершаются с кодом 2, если `.embraion/sources.yaml` отсутствует или некорректен, а также если `set` получает неизвестный ID. См. [Реестр источников](../configuration/sources.md).
 
 ### `embraion decisions`
 

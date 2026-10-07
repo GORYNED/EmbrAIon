@@ -80,7 +80,7 @@ def check_request_consistency(request: dict[str, Any], project: Path | None = No
     """Request checks shared by execution and preflight; returns the project root.
 
     Covers critical justification, repeated deployments, declared source data
-    classes, and, for a project task class, the effective route class and
+    classes, source write policy, and, for a project task class, the effective route class and
     candidate order.
     """
     if request["routeClass"] == "critical" and not (request.get("justification") or "").strip():
@@ -94,6 +94,8 @@ def check_request_consistency(request: dict[str, Any], project: Path | None = No
     root = project_root(project)
     from .policy import check_source_classes
     check_source_classes(request["dataClass"], list(request["sourceIds"]), root)
+    from .sources import check_source_writes
+    check_source_writes(request.get("access", ""), list(request["sourceIds"]), root)
     if request.get("taskClass"):
         from .runtime import resolve_task_route
         resolved = resolve_task_route(

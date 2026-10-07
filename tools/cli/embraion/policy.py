@@ -232,6 +232,8 @@ def check_source_classes(data_class: str, source_ids: list[str], project: Path |
     declared = source_data_classes(project)
     if declared is None:
         return
+    from .sources import effective_data_classes
+    declared = effective_data_classes(project_root(project), declared)
     unknown = sorted(set(source_ids) - set(declared))
     if unknown:
         raise RuntimeError(
