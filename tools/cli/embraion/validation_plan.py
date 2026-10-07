@@ -466,16 +466,23 @@ def resolve_run_plan(
 
 
 def plan_spec(
-    spec: dict[str, Any],
+    specs: dict[str, dict[str, Any]],
+    profile: str,
     plan: dict[str, Any],
     parameters: dict[str, str] | None,
 ) -> tuple[dict[str, Any], dict[str, str] | None]:
     """Return the profile spec restricted to the plan's commands, with parameters and timeouts remapped."""
+    spec = specs[profile]
     commands = [item["command"] for item in plan["selected-commands"]]
     original: dict[str, int] = {}
     for position, command in enumerate(spec["commands"], start=1):
         original.setdefault(command, position)
-    timeouts = [spec["timeouts"][original[command] - 1] if command in original else None for command in commands]
+    # A command keeps the timeout of the profile that declares it; the planned profile wins.
+    timeout_of: dict[str, float | None] = {}
+    for candidate in [spec, *(other for name, other in specs.items() if name != profile)]:
+        for command, timeout in zip(candidate["commands"], candidate["timeouts"]):
+            timeout_of.setdefault(command, timeout)
+    timeouts = [timeout_of.get(command) for command in commands]
     kept: dict[str, Any] = {}
     for name, definition in (spec.get("parameters") or {}).items():
         targets = definition.get("commands")

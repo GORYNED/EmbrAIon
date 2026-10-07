@@ -325,6 +325,7 @@ def run_validation_profile(
     fail_fast: bool = False,
     timeout: float | None = None,
     parameters: dict[str, str] | None = None,
+    plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     specs = validation_profile_specs(root)
@@ -345,6 +346,11 @@ def run_validation_profile(
                 f"Validation evidence can only attach to an active run: {run_id}"
             )
 
+    if plan is not None:
+        # A plan restricts the run to its selected commands; see validation_plan.
+        from .validation_plan import plan_spec
+
+        specs[profile], parameters = plan_spec(specs, profile, plan, parameters)
     spec = specs[profile]
     commands = list(spec["commands"])
     resolved_parameters, parameter_definitions = _resolve_validation_parameters(
@@ -411,6 +417,10 @@ def run_validation_profile(
         status = "failed"
 
     completed = datetime.now(timezone.utc).isoformat()
+    if plan is not None:
+        from .validation_plan import write_plan_evidence
+
+        plan_path = write_plan_evidence(root, evidence_id, plan)
     record = redact_value(
         {
             "schema-version": 1,
@@ -429,6 +439,7 @@ def run_validation_profile(
             "commands": command_results,
             "started-utc": started,
             "completed-utc": completed,
+            **({"plan": plan, "plan-path": plan_path} if plan is not None else {}),
         }
     )
     write_json(_validation_path(root, evidence_id), record)

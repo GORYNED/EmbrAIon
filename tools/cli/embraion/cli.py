@@ -1097,12 +1097,23 @@ def _cmd_validation_explain(args: argparse.Namespace) -> int:
 
 
 def _cmd_validation_run(args: argparse.Namespace) -> int:
+    from .validation_plan import resolve_run_plan
+
+    plan = resolve_run_plan(
+        args.profile,
+        plan_file=args.plan,
+        base_ref=args.base_ref,
+        head_ref=args.head_ref,
+        include_worktree=args.include_worktree,
+        full_justification=args.full_justification,
+    )
     record = run_validation_profile(
         args.profile,
         run_id=args.run_id,
         fail_fast=args.fail_fast,
         timeout=args.timeout,
         parameters=_named_values(args.param, option="--param"),
+        plan=plan,
     )
 
     if args.json:
@@ -1111,7 +1122,10 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
         print(f"Validation profile: {record['profile']}")
         print(f"Status: {record['status']}")
         if record["status"] == "skipped":
-            print("No commands are configured for this profile.")
+            if record.get("plan"):
+                print(f"The plan selects no commands: {record['plan']['skip-reason']}.")
+            else:
+                print("No commands are configured for this profile.")
         for item in record["commands"]:
             label = {
                 "passed": "PASS",
@@ -2122,6 +2136,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Unknown or missing required parameters fail closed."
         ),
     )
+    add_plan_options(validation_run)
+    validation_run.add_argument("--plan", help="Run the commands of a stored plan file; it must match the current configuration")
     validation_run.add_argument("--json", action="store_true")
     validation_run.set_defaults(func=_cmd_validation_run)
 

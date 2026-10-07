@@ -4,6 +4,7 @@ import copy
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,12 +13,14 @@ from typing import Any
 from embraion.common import read_yaml, write_yaml
 from embraion.policy import read_validation_config
 from embraion.project import init_project
-from embraion.project_validation import validation_profile_specs
+from embraion.project_validation import run_validation_profile, validation_profile_specs
 from embraion.validation_plan import (
     build_plan,
     collect_changed_paths,
     compute_plan,
     explain_plan,
+    resolve_run_plan,
+    write_plan,
 )
 
 
@@ -318,6 +321,180 @@ class PlanGitTests(unittest.TestCase):
         self.assertEqual(json.dumps(first, sort_keys=True), json.dumps(second, sort_keys=True))
         self.assertEqual(["echo unit"], commands_of(first))
         self.assertEqual(["src/a.py"], first["changed-paths"])
+
+
+def marker(name: str) -> str:
+    """A command that appends its name to a marker file in the project root."""
+    code = f"open('ran.txt', 'a').write('{name}\\n')"
+    return f'"{sys.executable}" -c "{code}"'
+
+
+def run_config() -> dict[str, Any]:
+    return {
+        "profiles": {
+            "affected": {
+                "commands": [marker("affected")],
+                "parameters": {"mode": {"environment": "PLAN_MODE", "default": "x"}},
+            },
+            "full": {"commands": [marker("lint"), marker("unit"), marker("package")], "timeout-seconds": [30, 40, 50]},
+        },
+        "areas": {
+            "library": {"paths": ["src/**"], "commands": [marker("unit")]},
+            "docs": {"paths": ["docs/**"], "commands": [marker("docs")]},
+        },
+        "impact": [{"id": "schema", "paths": ["src/schema/**"], "full": "data-migration"}],
+        "full-reasons": ["data-migration"],
+    }
+
+
+class PlanRunTests(unittest.TestCase):
+    def _repo(self, config: dict[str, Any] | None = None) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        repo = Path(temporary.name)
+        git(repo, "init", "-q", "-b", "main")
+        git(repo, "config", "commit.gpgsign", "false")
+        init_project(repo, name="Consumer")
+        write_config(repo, config or run_config())
+        (repo / ".gitignore").write_text(".embraion/state/\nran.txt\n", encoding="utf-8")
+        (repo / "src").mkdir()
+        (repo / "src" / "a.py").write_text("a\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "base")
+        git(repo, "checkout", "-qb", "topic")
+        return repo
+
+    def _change(self, repo: Path, relative: str) -> None:
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("changed\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", f"change {relative}")
+
+    def _ran(self, repo: Path) -> list[str]:
+        path = repo / "ran.txt"
+        return path.read_text(encoding="utf-8").split() if path.is_file() else []
+
+    def test_base_ref_runs_only_the_selected_commands_and_stores_the_plan(self) -> None:
+        repo = self._repo()
+        self._change(repo, "docs/guide.md")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["docs"], self._ran(repo))
+        self.assertEqual(1, record["command-count"])
+        self.assertEqual(plan, record["plan"])
+        stored = read_yaml(repo / record["plan-path"])
+        self.assertEqual(plan, stored)
+        self.assertTrue(record["plan-path"].endswith(f"{record['evidence-id']}/plan.json"))
+
+    def test_run_without_refs_keeps_the_full_profile_commands(self) -> None:
+        repo = self._repo()
+        self.assertIsNone(resolve_run_plan("affected", project=repo))
+        record = run_validation_profile("affected", project=repo, plan=None)
+        self.assertEqual(["affected"], self._ran(repo))
+        self.assertNotIn("plan", record)
+
+    def test_empty_plan_is_skipped_and_runs_nothing(self) -> None:
+        repo = self._repo()
+        plan = resolve_run_plan("affected", project=repo, base_ref="HEAD")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("skipped", record["status"])
+        self.assertEqual(0, record["executed-command-count"])
+        self.assertEqual([], self._ran(repo))
+        self.assertEqual("no changed paths", record["plan"]["skip-reason"])
+
+    def test_unknown_path_runs_the_whole_profile(self) -> None:
+        repo = self._repo()
+        self._change(repo, "misc/new.bin")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual(["affected"], self._ran(repo))
+
+    def test_escalation_runs_the_full_profile_with_its_timeouts(self) -> None:
+        repo = self._repo()
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual(["lint", "unit", "package"], self._ran(repo))
+        self.assertEqual([30, 40, 50], [item["timeout-seconds"] for item in record["commands"]])
+
+    def test_plan_file_round_trip_and_fail_closed_checks(self) -> None:
+        repo = self._repo()
+        self._change(repo, "src/b.py")
+        plan = build_plan("affected", project=repo, base_ref="main")
+        path = repo / "plan.json"
+        write_plan(plan, path)
+        self.assertEqual(plan, resolve_run_plan("affected", project=repo, plan_file=str(path)))
+
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("full", project=repo, plan_file=str(path))
+        self.assertIn("is for profile 'affected'", str(caught.exception))
+
+        forged = copy.deepcopy(plan)
+        forged["selected-commands"].append({"command": "echo injected", "sources": ["area:library"]})
+        write_plan(forged, path)
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("not declared", str(caught.exception))
+
+        write_plan(plan, path)
+        config = run_config()
+        config["areas"]["docs"]["paths"] = ["documents/**"]
+        write_config(repo, config)
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertIn("stale", str(caught.exception))
+
+    def test_plan_options_are_rejected_when_inputs_conflict(self) -> None:
+        repo = self._repo()
+        with self.assertRaises(RuntimeError):
+            resolve_run_plan("affected", project=repo, plan_file="x.json", base_ref="main")
+        with self.assertRaises(RuntimeError):
+            resolve_run_plan("affected", project=repo, head_ref="HEAD")
+
+    def test_parameters_are_remapped_to_the_selected_commands(self) -> None:
+        config = run_config()
+        config["profiles"]["full"]["parameters"] = {
+            "only-lint": {"argument": "--lint", "commands": [1]},
+            "everywhere": {"environment": "PLAN_ALL", "default": "1"},
+        }
+        repo = self._repo(config)
+        self._change(repo, "src/a.py")
+        plan = resolve_run_plan("full", project=repo, base_ref="main", full_justification="data-migration")
+        self.assertEqual(3, len(plan["selected-commands"]))
+        record = run_validation_profile("full", project=repo, plan=plan, parameters={"only-lint": "1"})
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["lint", "unit", "package"], self._ran(repo))
+
+    def test_parameter_for_an_unselected_command_is_ignored_not_an_error(self) -> None:
+        config = run_config()
+        config["profiles"]["affected"]["parameters"]["target"] = {"environment": "PLAN_TARGET", "commands": [1]}
+        repo = self._repo(config)
+        self._change(repo, "docs/guide.md")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan, parameters={"target": "1"})
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["docs"], self._ran(repo))
+        with self.assertRaises(RuntimeError):
+            run_validation_profile("affected", project=repo, plan=plan, parameters={"unknown": "1"})
+
+    def test_projects_without_plan_keys_keep_their_behavior(self) -> None:
+        config = {"profiles": {"fast": [marker("fast")], "empty": []}}
+        repo = self._repo(config)
+        with self.assertRaises(RuntimeError) as caught:
+            resolve_run_plan("fast", project=repo, base_ref="main")
+        self.assertIn("declares no validation areas", str(caught.exception))
+        self.assertIsNone(resolve_run_plan("fast", project=repo))
+        record = run_validation_profile("fast", project=repo)
+        self.assertEqual(
+            {"schema-version", "evidence-id", "evidence-path", "profile", "status", "command-count",
+             "executed-command-count", "fail-fast", "timeout-seconds", "run-id", "parameters", "commands",
+             "started-utc", "completed-utc"},
+            set(record),
+        )
+        self.assertEqual(["fast"], self._ran(repo))
+        self.assertEqual("skipped", run_validation_profile("empty", project=repo)["status"])
 
 
 if __name__ == "__main__":
