@@ -14,7 +14,7 @@ The folder holds one Markdown file per record named `NNNN-<kebab-title>.md`, an 
 
 ## Configuration
 
-`.embraion/decisions.yaml` selects the check and declares what counts as architectural. An empty file enables the check with the default trigger.
+`.embraion/decisions.yaml` selects the check and declares what counts as architectural. An empty file enables the check with the default trigger; `triggers: []` declares none. The file is read from the head of the change, so changes to it need the same review as any policy file.
 
 ```yaml
 index: README.md          # optional index file inside the folder

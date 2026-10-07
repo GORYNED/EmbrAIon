@@ -130,7 +130,7 @@ def check_decisions(project: Path | None = None, *, base_ref: str, head_ref: str
     head = _git(root, "rev-parse", "--verify", "--end-of-options", f"{head_ref}^{{commit}}").strip()
     origin = _git(root, "merge-base", base, head).strip()
     changes = _changes(root, origin, head)
-    fired = _fired(root, origin, head, changes, config.get("triggers") or DEFAULT_TRIGGERS)
+    fired = _fired(root, origin, head, changes, DEFAULT_TRIGGERS if config.get("triggers") is None else config["triggers"])
     excluded = {config.get("index", DEFAULT_INDEX), config.get("template", DEFAULT_TEMPLATE)}
     records = sorted(item["path"] for item in changes
                      if item["change"] != "deleted" and item["path"].endswith(".md")
@@ -226,7 +226,10 @@ def new_decision(title: str, project: Path | None = None, *, locales: list[str] 
     locales = list(dict.fromkeys(locales or []))
     if any(not LOCALE.match(locale) for locale in locales):
         raise RuntimeError("A locale must be a lowercase language code such as ru or pt-br")
-    day = date.fromisoformat(day).isoformat() if day else datetime.now(timezone.utc).date().isoformat()
+    try:
+        day = date.fromisoformat(day).isoformat() if day else datetime.now(timezone.utc).date().isoformat()
+    except ValueError:
+        raise RuntimeError("The date must be YYYY-MM-DD") from None
     name = _slug(title, slug)
     root = project_root(project)
     config = read_decisions_config(root) or {}
@@ -252,7 +255,7 @@ def new_decision(title: str, project: Path | None = None, *, locales: list[str] 
     for locale in [None, *locales]:
         source = template_path.with_name(f"{template_path.stem}-{locale}{template_path.suffix}") if locale else template_path
         text = (source if source.is_file() else template_path).read_text(encoding="utf-8")
-        values = {"number": number, "title": title, "status": status, "date": day}
+        values = {"number": number, "title": title, "status": status.replace("|", "\\|"), "date": day}
         text = re.sub(r"\{\{(number|title|status|date)\}\}", lambda match: values[match.group(1)], text)
         files[directory / (f"{stem}-{locale}.md" if locale else f"{stem}.md")] = text
     for path in files:

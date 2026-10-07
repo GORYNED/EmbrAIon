@@ -157,6 +157,13 @@ class DetectionTests(DecisionFixture):
         result = self.check()
         self.assertEqual(("recorded", "docs/adr"), (result["outcome"], result["folder"]))
 
+    def test_explicit_empty_triggers_declare_none(self) -> None:
+        self.config({"triggers": []})
+        self.start()
+        self.write("a/package.json", "{}\n")
+        self.commit()
+        self.assertEqual("no-trigger", self.check()["outcome"])
+
     def test_missing_configuration_is_skipped_or_failed_when_required(self) -> None:
         self.start()
         self.assertEqual(("skipped", True), (self.check()["status"], self.check()["passed"]))
@@ -309,6 +316,18 @@ class ScaffoldTests(DecisionFixture):
         (folder / "README.md").symlink_to(self.root / "elsewhere.md")
         with self.assertRaises(RuntimeError):
             self.new()
+
+    def test_folder_slot_does_not_break_checkpoints_or_context(self) -> None:
+        from embraion.checkpoints import create_checkpoint
+        from embraion.context import build_context
+        from embraion.project import init_project
+        init_project(self.root, name="Fixture")
+        (self.root / "docs/adr").mkdir(parents=True)
+        self.knowledge(decisions="docs/adr")
+        report = create_checkpoint("cp", task_id="t", phase="planning", project=self.root)
+        self.assertNotIn("docs/adr", str(report))
+        context = build_context("architecture decision", "lead", "PRIVATE", project=self.root, persist=False)
+        self.assertIn({"id": "slot:decisions", "reason": "directory"}, context["excluded"])
 
     def test_command_creates_a_record(self) -> None:
         output = io.StringIO()
