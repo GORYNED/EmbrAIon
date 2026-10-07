@@ -7,7 +7,7 @@ slots:
   engineering-workflow: AGENTS.md
   specification: null
   deferred-tasks: null
-  decisions: null
+  decisions: docs/architecture/decisions
 routing:
   path: docs/model-routing.md
   trust: project

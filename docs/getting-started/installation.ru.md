@@ -10,6 +10,15 @@ EmbrAIon использует один глобальный launcher на маш
 - Windows, macOS или Linux
 - Python 3.11 или новее
 - `pipx` для рекомендуемой изолированной установки CLI
+- Git в вашем `PATH`
+
+### Git и GitHub
+
+Git — заявленное предварительное требование EmbrAIon. Проверки проекта, worktree и записи решений читают и меняют состояние Git. Командам worktree нужен Git 2.36 или новее, потому что они читают `git worktree list --porcelain -z`. CLI не проверяет версию Git за вас.
+
+GitHub — поддерживаемая платформа хостинга и поставки. GitHub CLI `gh` с выполненным входом нужен только когда `embraion worktree gc` проверяет влитые pull request. Без него очистка сохраняет ресурсы, которые не может доказать.
+
+Универсальные правила остаются в workflow [worktree](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) и [delivery](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/delivery.md). Их механика Git и GitHub описана в [одном месте](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/git.md). Решение записано в [ADR 0001](../architecture/decisions/0001-git-is-a-prerequisite-git-mechanics-live-in-one-place.md).
 
 ## Установите launcher
 
