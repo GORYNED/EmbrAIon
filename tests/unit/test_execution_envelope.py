@@ -38,7 +38,7 @@ class Handler(BaseHTTPRequestHandler):
         envelope = json.loads(context)
         answer = envelope["boundary"] + " " + ",".join(item["path"] for item in envelope["context"])
         value = {"status": "completed", "correlationId": body["correlationId"], "callId": "call-1",
-                 "adapterVersion": "1.77.7", "observedProvider": "example",
+                 "adapterVersion": "1.88.6", "observedProvider": "example",
                  "observedModel": "example-model-a-2026-09-01", "outputText": answer,
                  "usage": {"input_tokens": 10, "output_tokens": 2}, "adapterCost": None}
         encoded = json.dumps(value).encode()

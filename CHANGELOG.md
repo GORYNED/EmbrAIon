@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The optional `litellm` extra and the LiteLLM execution adapter move from the exact version 1.77.7 to 1.88.6, which fixes CVE-2026-84377. The adapter still accepts only the exact reviewed version, so a usage-evidence file that names `adapterVersion` 1.77.7 no longer matches: usage semantics become unknown and snapshot-derived cost stays unknown until the evidence is re-recorded for 1.88.6. Execution is not blocked by stale evidence, but the host child rejects any installed LiteLLM other than 1.88.6, so reinstall `embraion[litellm]` after upgrading. The adapter's mocked tests pass; a live provider call with 1.88.6 was not run.
+
 ## 0.30.0 - 2026-10-07
 
 ### Added
