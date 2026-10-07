@@ -60,7 +60,7 @@ class LiteLLMHostTests(unittest.TestCase):
         environment = {"EMBRAION_SESSION_TOKEN": token, "EMBRAION_PROVENANCE_KEY": key,
                        "EMBRAION_UPSTREAM_MODEL": selector, "EMBRAION_PROVIDER_KEY": "scoped-key"}
         with (patch.dict(os.environ, environment), patch.dict(sys.modules, {"litellm": stub}),
-              patch.object(litellm_host.importlib.metadata, "version", return_value="1.77.7")):
+              patch.object(litellm_host.importlib.metadata, "version", return_value="1.88.6")):
             server = litellm_host._LoopbackServer(("127.0.0.1", 0), litellm_host._Handler)
             thread = threading.Thread(target=server.handle_request, daemon=True)
             thread.start()

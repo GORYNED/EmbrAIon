@@ -35,7 +35,7 @@ class Handler(BaseHTTPRequestHandler):
         assert self.headers["Authorization"] == "Bearer " + os.environ["EMBRAION_SESSION_TOKEN"]
         assert "SENTINEL_OTHER_PROVIDER_KEY" not in os.environ
         value = {"status": "completed", "correlationId": body["correlationId"], "callId": "call-1",
-                 "adapterVersion": "1.77.7",
+                 "adapterVersion": "1.88.6",
                  "observedProvider": "openai", "observedModel": os.environ.get("FIXTURE_MODEL", "gpt-6-luna-2026-09-01"),
                  "outputText": "worker answer", "usage": {"input_tokens": 100, "output_tokens": 20,
                      "input_tokens_details": {"cached_tokens": 10}}, "adapterCost": None}
@@ -107,7 +107,7 @@ class LiteLLMExecutionTests(unittest.TestCase):
         folder = self.project / ".embraion" / "usage-evidence"
         folder.mkdir(parents=True, exist_ok=True)
         now = datetime.now(timezone.utc)
-        evidence = {"schemaVersion": 1, "transport": "litellm-responses", "adapterVersion": "1.77.7",
+        evidence = {"schemaVersion": 1, "transport": "litellm-responses", "adapterVersion": "1.88.6",
                     "provider": "openai", "selector": "openai/gpt-6-luna",
                     "sourceUrl": "https://developers.openai.com/api/docs/pricing",
                     "verifiedUtc": (now - timedelta(days=1)).isoformat(),

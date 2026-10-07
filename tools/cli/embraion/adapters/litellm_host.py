@@ -86,7 +86,7 @@ class _Handler(BaseHTTPRequestHandler):
             expected = hmac.new(bytes.fromhex(os.environ["EMBRAION_PROVENANCE_KEY"]), message, hashlib.sha256).hexdigest()
             if not isinstance(data["provenanceMac"], str) or not hmac.compare_digest(expected, data["provenanceMac"]):
                 raise ValueError("context provenance")
-            if importlib.metadata.version("litellm") != "1.77.7":
+            if importlib.metadata.version("litellm") != "1.88.6":
                 raise RuntimeError("unsupported LiteLLM version")
             import litellm  # Optional dependency, loaded only by the selected child.
 
@@ -104,7 +104,7 @@ class _Handler(BaseHTTPRequestHandler):
             if not isinstance(reported, str) or reported != attempted:
                 raise ValueError("provider identity")
             result = {"status": "completed", "correlationId": data["correlationId"],
-                      "adapterVersion": "1.77.7",
+                      "adapterVersion": "1.88.6",
                       "callId": hidden.get("litellm_call_id") or hidden.get("response_cost_id"),
                       "observedProvider": reported, "observedModel": payload.get("model"),
                       "outputText": payload.get("output_text"), "usage": payload.get("usage"),
