@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import os
+import signal
 import shutil
 import stat
 import subprocess
@@ -767,6 +768,35 @@ class WindowsTerminationLogicTests(unittest.TestCase):
 
 @unittest.skipUnless(os.name == "posix", "process groups are checked with POSIX signals")
 class PosixGroupTests(unittest.TestCase):
+    def test_detached_session_is_outside_the_supported_group(self) -> None:
+        launcher = subprocess.Popen(
+            [sys.executable, "-c",
+             "import subprocess,sys; "
+             "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'],"
+             "start_new_session=True,stdin=subprocess.DEVNULL,"
+             "stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL); "
+             "print(child.pid,flush=True)"],
+            stdout=subprocess.PIPE, text=True, start_new_session=True,
+        )
+        child_pid = None
+        try:
+            child_pid = int(launcher.stdout.readline())
+            self.assertEqual(0, launcher.wait(timeout=5))
+            os.kill(child_pid, 0)  # The detached child is still running.
+            self.assertFalse(validation_process.group_has_live_members(launcher.pid))
+        finally:
+            validation_process._kill_group(launcher.pid)
+            if child_pid is not None:
+                try:
+                    os.kill(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if launcher.poll() is None:
+                launcher.kill()
+                launcher.wait()
+            if launcher.stdout is not None:
+                launcher.stdout.close()
+
     def test_group_membership_is_seen_and_a_reaped_group_is_gone(self) -> None:
         process = subprocess.Popen(
             [sys.executable, "-c", "import time; time.sleep(60)"],

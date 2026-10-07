@@ -1,4 +1,4 @@
-"""Ending a validation command's process tree and confirming that it is gone."""
+"""Contain validation commands in a Windows job or a POSIX process group."""
 
 from __future__ import annotations
 
@@ -180,7 +180,7 @@ def containment_has_live_members(process: subprocess.Popen) -> bool:
 
 
 def containment_quiescent(process: subprocess.Popen, timeout: float = 0.25) -> bool:
-    """Allow a just-exited root's ordinary children a brief bounded exit window."""
+    """Allow job members or same-group children a brief bounded exit window."""
     deadline = time.monotonic() + timeout
     while True:
         if not containment_has_live_members(process):
@@ -279,7 +279,7 @@ class _WindowsProcesses:
 
 
 def terminate_tree(process: subprocess.Popen) -> bool:
-    """End the command and its descendants; return whether the tree is confirmed gone."""
+    """End the Windows job or POSIX group; confirm that container is gone."""
     if os.name == "nt":
         if getattr(process, "_embraion_job", None) is not None:
             return _terminate_windows_job(process)

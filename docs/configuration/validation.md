@@ -130,7 +130,7 @@ Without the key, nothing is checked, as before. With `clean-tree: true`, EmbrAIo
 
 The record gets a `clean-tree` object with `status` (`passed`, `failed`, or `blocked`), `baseline-dirty`, `changed-count`, and `changed-paths`. A profile without commands is `skipped` and is not checked.
 
-Validation starts each command inside a process container. On Windows the target is held until a kill-on-close Job Object is assigned; on POSIX it starts in a new process group. A timeout, a root that exits with live descendants, failed containment, or output streams that do not close produce failure evidence. If termination or output drain cannot be confirmed, later commands do not start, including when the affected command is optional.
+Validation starts each command inside a process container. On Windows the target is held until a kill-on-close Job Object is assigned; on POSIX it starts in a new process group. A timeout, a root that exits with live members of that container, failed containment, or output streams that do not close produce failure evidence. If termination or output drain cannot be confirmed, later commands do not start, including when the affected command is optional. POSIX commands must keep their children in the assigned process group: a child that deliberately starts a new session (or daemonizes) leaves that group and cannot be detected or terminated by this mechanism. The Windows Job Object contains such children unless they are explicitly allowed to break away; EmbrAIon does not grant breakaway permission.
 
 ## Output limit
 
