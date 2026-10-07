@@ -91,6 +91,11 @@ Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
+## New in 0.28
+
+- [`embraion check`](docs/reference/cli.md#embraion-check) runs every check the project configuration selects, so [consumer CI](docs/reference/runtime-version-resolution.md#consumer-ci) needs one step; `projection.<host>.components` in [policy](docs/configuration/policy.md) declare the projections it verifies.
+- Optional [`privacy.sources`](docs/configuration/policy.md) gives each source ID its data class, and execution requests that name a source fail closed below that class.
+
 ## New in 0.27
 
 - [Consumer CI](docs/reference/runtime-version-resolution.md#consumer-ci) can install the pinned release with the reusable `GORYNED/EmbrAIon/actions/setup` action, and `embraion framework pin` prints the exact pin; [enforcement](docs/guides/enforcement.md) generates workflows that use the action.
@@ -130,4 +135,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-06 19:04 UTC</sub>
+<sub>Last updated: 2026-10-07 00:14 UTC</sub>

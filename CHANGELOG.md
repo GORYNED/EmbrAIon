@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.28.0 - 2026-10-07
+
 ### Added
 
 - `embraion check` runs, from the project root, every check the project configuration selects and exits 1 when any fails: `validate --strict`, `route --validate`, `route --audit-authority`, `security scan` (with `--fail-on` and `--all-files` passed through), `projection verify` for each host whose components `.embraion/policy.yaml` declares, `claude-native status --require` for declared Claude Code `scoped-agents` and `hooks`, and `organization check --require-config` when `.embraion/organization.yaml` exists (compared against `--base-ref` when given). Consumer CI needs one step instead of a list of internal commands.
