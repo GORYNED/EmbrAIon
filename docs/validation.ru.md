@@ -65,7 +65,7 @@ Evidence хранится в:
 
 С `--run-id` каждая command получает ID run в environment variable `EMBRAION_RUN_ID`, чтобы запущенные ею tools могли помечать свои artifacts. Без `--run-id` эта variable удаляется из environment command.
 
-Empty profile возвращает `skipped`. Failed/timed-out command делает profile failed. `--fail-fast` используйте только когда дальнейшие commands бессмысленны.
+Empty profile возвращает `skipped`. Failed/timed-out command делает profile failed, если команда не объявлена `required: false`. Обязательная команда со статусом `blocked` (не хватает объявленного prerequisite) тоже проваливает profile; см. [необязательные команды и prerequisites](configuration/validation.ru.md#optional-commands-and-prerequisites). Необязательные записи, которые не прошли, увеличивают счётчик `warnings`. `--fail-fast` используйте только когда дальнейшие commands бессмысленны; он игнорирует необязательные записи.
 
 ## Validation — evidence, а не обход policy
 

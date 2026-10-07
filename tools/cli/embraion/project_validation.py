@@ -4,8 +4,10 @@ import locale
 import os
 import re
 import shlex
+import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -26,13 +28,56 @@ RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
 TERMINATION_GRACE_SECONDS = 2.0
 
 
+_PLATFORMS = ("linux", "macos", "windows")
+
+
+def _command_entry(name: str, index: int, item: Any) -> tuple[str, dict[str, Any]]:
+    """Return a command string and its run semantics.
+
+    A plain string keeps the previous behavior: required, with no prerequisites.
+    """
+    if not isinstance(item, dict):
+        return str(item), {"required": True, "requires": {}}
+    location = f"Invalid validation profile '{name}': command {index}"
+    unknown = sorted(set(item) - {"command", "required", "requires"})
+    if unknown or not isinstance(item.get("command"), str) or not item["command"]:
+        raise RuntimeError(
+            f"{location} must be a string or a mapping with a 'command' and optional "
+            "'required' and 'requires'."
+        )
+    required = item.get("required", True)
+    if not isinstance(required, bool):
+        raise RuntimeError(f"{location} has a non-boolean 'required'.")
+    declared = item.get("requires") or {}
+    if not isinstance(declared, dict) or set(declared) - {"executables", "env", "platforms"}:
+        raise RuntimeError(
+            f"{location} has invalid 'requires'; allowed keys are executables, env, platforms."
+        )
+    requires: dict[str, list[str]] = {}
+    for key in ("executables", "env", "platforms"):
+        values = declared.get(key)
+        if values is None:
+            continue
+        if not isinstance(values, list) or not all(isinstance(value, str) and value for value in values):
+            raise RuntimeError(f"{location} requires.{key} must be a list of non-empty strings.")
+        if key == "platforms" and (not values or set(values) - set(_PLATFORMS)):
+            raise RuntimeError(
+                f"{location} requires.platforms must be a non-empty list of: "
+                + ", ".join(_PLATFORMS) + "."
+            )
+        requires[key] = list(values)
+    return item["command"], {"required": required, "requires": requires}
+
+
 def _normalize_validation_profile(
     name: str,
     value: Any,
 ) -> dict[str, Any]:
     if isinstance(value, list):
+        parsed = [_command_entry(name, index, item) for index, item in enumerate(value, start=1)]
         return {
-            "commands": [str(command) for command in value],
+            "commands": [command for command, _ in parsed],
+            "entries": [entry for _, entry in parsed],
             "parameters": {},
             "timeouts": [None] * len(value),
         }
@@ -40,9 +85,14 @@ def _normalize_validation_profile(
         raise RuntimeError(
             f"Invalid validation profile '{name}': expected a command list or mapping."
         )
-    commands = [str(command) for command in (value.get("commands") or [])]
+    parsed = [
+        _command_entry(name, index, item)
+        for index, item in enumerate(value.get("commands") or [], start=1)
+    ]
+    commands = [command for command, _ in parsed]
     return {
         "commands": commands,
+        "entries": [entry for _, entry in parsed],
         "parameters": {
             str(parameter): dict(definition or {})
             for parameter, definition in (value.get("parameters") or {}).items()
@@ -202,6 +252,45 @@ def _prepare_validation_command(
     return prepared, environment
 
 
+def _current_platform() -> str:
+    if sys.platform.startswith("win"):
+        return "windows"
+    if sys.platform == "darwin":
+        return "macos"
+    return "linux"
+
+
+def _find_executable(name: str, root: Path, environment: dict[str, str]) -> bool:
+    search = next((value for key, value in environment.items() if key.upper() == "PATH"), None)
+    if "/" in name or "\\" in name:
+        # A path-like name is relative to the project root, where the command runs.
+        candidate = Path(name)
+        candidate = candidate if candidate.is_absolute() else root / candidate
+        return shutil.which(str(candidate), path=search) is not None
+    return shutil.which(name, path=search) is not None
+
+
+def _blocked_reason(
+    requires: dict[str, list[str]],
+    root: Path,
+    environment: dict[str, str],
+) -> str | None:
+    """Return why a command cannot run in this environment, or ``None`` when it can."""
+    reasons: list[str] = []
+    platforms = requires.get("platforms")
+    if platforms and _current_platform() not in platforms:
+        reasons.append(
+            f"platform '{_current_platform()}' is not one of: " + ", ".join(platforms)
+        )
+    for name in requires.get("executables") or []:
+        if not _find_executable(name, root, environment):
+            reasons.append(f"executable '{name}' was not found on PATH")
+    for name in requires.get("env") or []:
+        if not environment.get(name):
+            reasons.append(f"environment variable '{name}' is not set")
+    return "; ".join(reasons) if reasons else None
+
+
 def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
     """Start a shell command as the leader of its own process group."""
     options: dict[str, Any] = {}
@@ -294,6 +383,14 @@ def _write_command_log(path: Path, command: str, stdout: str, stderr: str) -> No
     path.write_text(text, encoding="utf-8")
 
 
+def _write_blocked_log(path: Path, command: str, reason: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"$ {redact_text(command)}\n--- blocked ---\nNot run: {reason}\n",
+        encoding="utf-8",
+    )
+
+
 def _captured_tail(value: str, limit: int = MAX_CAPTURE_CHARS) -> str:
     if len(value) <= limit:
         return value
@@ -347,6 +444,8 @@ def run_validation_profile(
 
     spec = specs[profile]
     commands = list(spec["commands"])
+    entries = list(spec["entries"])
+    extended = any(not entry["required"] or entry["requires"] for entry in entries)
     resolved_parameters, parameter_definitions = _resolve_validation_parameters(
         profile,
         spec,
@@ -355,6 +454,8 @@ def run_validation_profile(
     evidence_id = f"{profile}-{uuid.uuid4().hex[:12]}"
     started = datetime.now(timezone.utc).isoformat()
     command_results: list[dict[str, Any]] = []
+    failure_reasons: list[str] = []
+    warnings = 0
 
     for index, command in enumerate(commands, start=1):
         prepared_command, command_environment = _prepare_validation_command(
@@ -368,49 +469,79 @@ def run_validation_profile(
         if run_id:
             command_environment[RUN_ID_ENVIRONMENT] = run_id
         command_timeout = timeout if timeout is not None else spec["timeouts"][index - 1]
-        began = time.monotonic()
-        exit_code, raw_stdout, raw_stderr = _run_contained(
-            prepared_command,
-            root,
-            command_environment,
-            command_timeout,
-        )
-        duration_ms = int((time.monotonic() - began) * 1000)
-        output = redact_child_output(raw_stdout, raw_stderr)
-        stdout = _redact_validation_parameter_values(output["stdout"], resolved_parameters)
-        stderr = _redact_validation_parameter_values(output["stderr"], resolved_parameters)
+        entry = entries[index - 1]
+        blocked_reason = _blocked_reason(entry["requires"], root, command_environment)
         log_path = _log_path(root, evidence_id, index)
-        _write_command_log(log_path, command, stdout, stderr)
-        if exit_code is None:
-            status = "timed-out"
+        if blocked_reason is not None:
+            _write_blocked_log(log_path, command, blocked_reason)
+            row = {
+                "index": index,
+                "command": command,
+                "status": "blocked",
+                "exit-code": None,
+                "duration-ms": 0,
+                "timeout-seconds": command_timeout,
+                "log-path": log_path.relative_to(root).as_posix(),
+                "stdout": "",
+                "stderr": "",
+                "reason": blocked_reason,
+            }
         else:
-            status = "passed" if exit_code == 0 else "failed"
-        row = {
-            "index": index,
-            "command": command,
-            "status": status,
-            "exit-code": exit_code,
-            "duration-ms": duration_ms,
-            "timeout-seconds": command_timeout,
-            "log-path": log_path.relative_to(root).as_posix(),
-            "stdout": _captured_tail(stdout),
-            "stderr": _captured_tail(stderr),
-        }
-
+            began = time.monotonic()
+            exit_code, raw_stdout, raw_stderr = _run_contained(
+                prepared_command,
+                root,
+                command_environment,
+                command_timeout,
+            )
+            duration_ms = int((time.monotonic() - began) * 1000)
+            output = redact_child_output(raw_stdout, raw_stderr)
+            stdout = _redact_validation_parameter_values(output["stdout"], resolved_parameters)
+            stderr = _redact_validation_parameter_values(output["stderr"], resolved_parameters)
+            _write_command_log(log_path, command, stdout, stderr)
+            if exit_code is None:
+                status = "timed-out"
+            else:
+                status = "passed" if exit_code == 0 else "failed"
+            row = {
+                "index": index,
+                "command": command,
+                "status": status,
+                "exit-code": exit_code,
+                "duration-ms": duration_ms,
+                "timeout-seconds": command_timeout,
+                "log-path": log_path.relative_to(root).as_posix(),
+                "stdout": _captured_tail(stdout),
+                "stderr": _captured_tail(stderr),
+            }
+        if not entry["required"]:
+            row["required"] = False
         command_results.append(row)
-        if fail_fast and row["status"] != "passed":
-            break
+        if row["status"] != "passed":
+            if entry["required"]:
+                if row["status"] == "blocked":
+                    failure_reasons.append(f"command {index} is blocked: {row['reason']}")
+                if fail_fast:
+                    break
+            else:
+                warnings += 1
 
     if not commands:
         status = "skipped"
-    elif all(item["status"] == "passed" for item in command_results) and (
-        len(command_results) == len(commands)
-    ):
+    elif len(command_results) == len(commands) and all(
+        item["status"] == "passed" or item.get("required") is False
+        for item in command_results
+    ) and not failure_reasons:
         status = "passed"
     else:
         status = "failed"
 
     completed = datetime.now(timezone.utc).isoformat()
+    extra: dict[str, Any] = {}
+    if extended:
+        extra["warnings"] = warnings
+    if failure_reasons:
+        extra["failure-reasons"] = failure_reasons
     record = redact_value(
         {
             "schema-version": 1,
@@ -429,6 +560,7 @@ def run_validation_profile(
             "commands": command_results,
             "started-utc": started,
             "completed-utc": completed,
+            **extra,
         }
     )
     write_json(_validation_path(root, evidence_id), record)

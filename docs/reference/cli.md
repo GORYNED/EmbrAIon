@@ -327,6 +327,8 @@ embraion validation run affected \
   --param head-ref=HEAD
 ```
 
+A profile command can be a mapping with `required: false` and `requires` (`executables`, `env`, `platforms`). A command with a missing prerequisite is not started and is reported `blocked` with a reason. A blocked or failed required command fails the profile; an optional one only adds to the `warnings` count of the record. The text output shows `[BLOCKED]`, the reason, and `Failure:` and `Warnings:` lines. Plain string commands behave as before. See [optional commands and prerequisites](../configuration/validation.md#optional-commands-and-prerequisites).
+
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
 `--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.

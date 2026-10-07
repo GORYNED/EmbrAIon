@@ -65,7 +65,7 @@ Each command starts in its own process group (a new session on POSIX, a new proc
 
 With `--run-id`, every command receives the run ID in the `EMBRAION_RUN_ID` environment variable, so tools it starts can label their own artifacts. Without `--run-id`, the variable is removed from the command environment.
 
-An empty profile reports `skipped`. A failed or timed-out command makes the profile fail. Use `--fail-fast` only when later commands are not useful after the first failure.
+An empty profile reports `skipped`. A failed or timed-out command makes the profile fail, unless the command is declared `required: false`. A required command that is `blocked` (a declared prerequisite is missing) also makes the profile fail; see [optional commands and prerequisites](configuration/validation.md#optional-commands-and-prerequisites). Optional entries that do not pass add to the `warnings` count of the record. Use `--fail-fast` only when later commands are not useful after the first failure; it ignores optional entries.
 
 ## Validation is evidence, not a policy override
 

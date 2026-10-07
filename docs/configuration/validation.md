@@ -82,6 +82,31 @@ profiles:
 
 Without the key, commands run without a timeout, as before. `--timeout SECONDS` on the command line overrides the configured value for every command of that run. A list whose length differs from the command count, or a value that is not a positive number, fails closed.
 
+## Optional commands and prerequisites
+
+A command can stay a plain string. It can also be a mapping, in the same `commands` list or in a simple profile list:
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+      - command: ./tools/lint.sh
+        required: false
+      - command: ./tools/device-check.sh
+        requires:
+          executables: [adb]
+          env: [DEVICE_ID]
+          platforms: [linux, macos]
+```
+
+- `required` is optional and defaults to `true`.
+- `requires` is optional. `executables` are looked up on `PATH` (a name with a path separator is resolved from the project root), `env` names must be set and not empty in the command environment, and `platforms` is a list of `linux`, `macos`, or `windows`.
+
+A command whose prerequisite is missing is not started. It is reported as `blocked` with a reason, not as `failed`. A blocked required command makes the profile fail. A blocked optional command does not.
+
+A command with `required: false` still runs, and its failure or timeout is recorded in the evidence. It does not fail the profile. The profile stays `passed` and the record gets a `warnings` count. A command that was never given `required` or `requires` behaves exactly as before. Unknown keys, a non-boolean `required`, an unknown platform, or an empty name fail closed.
+
 ## Choosing profiles
 
 A useful convention:

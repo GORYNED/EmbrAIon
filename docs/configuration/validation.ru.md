@@ -81,6 +81,31 @@ profiles:
 
 Без ключа commands выполняются без timeout, как раньше. `--timeout SECONDS` в командной строке заменяет настроенное значение для каждой command этого запуска. Список, длина которого не совпадает с числом commands, или значение, не являющееся положительным числом, fail-closed.
 
+## Optional commands and prerequisites
+
+Команда может остаться обычной строкой. Она также может быть mapping, в том же списке `commands` или в простом списке profile:
+
+```yaml
+profiles:
+  full:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+      - command: ./tools/lint.sh
+        required: false
+      - command: ./tools/device-check.sh
+        requires:
+          executables: [adb]
+          env: [DEVICE_ID]
+          platforms: [linux, macos]
+```
+
+- `required` необязателен, по умолчанию `true`.
+- `requires` необязателен. `executables` ищутся в `PATH` (имя с разделителем пути разрешается от корня проекта), переменные `env` должны быть заданы и не пусты в окружении команды, `platforms` — список из `linux`, `macos`, `windows`.
+
+Команда с отсутствующим prerequisite не запускается. Она получает статус `blocked` с причиной, а не `failed`. Blocked обязательная команда проваливает profile. Blocked необязательная — нет.
+
+Команда с `required: false` всё равно запускается, её сбой или timeout записываются в evidence. Profile из-за них не падает: он остаётся `passed`, а в записи появляется счётчик `warnings`. Команда без `required` и `requires` ведёт себя как раньше. Неизвестные ключи, не-boolean `required`, неизвестная платформа или пустое имя fail-closed.
+
 ## Выбор profiles
 
 Полезная конвенция:
