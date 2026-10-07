@@ -87,6 +87,27 @@ class ProtectedSourcesTestCase(unittest.TestCase):
 
 
 class PolicyAtBaseTests(ProtectedSourcesTestCase):
+    def test_explicit_null_base_protection_is_not_an_empty_legacy_list(self) -> None:
+        for null_block in (True, False):
+            with self.subTest(null_block=null_block):
+                project, _ = self.make_repo()
+                path = project / ".embraion/policy.yaml"
+                valid_policy = read_yaml(path)
+                policy = read_yaml(path)
+                if null_block:
+                    policy["sources"] = None
+                else:
+                    policy["sources"]["protected"] = None
+                write_yaml(path, policy)
+                base = self.commit(project, "null base protection")
+                write_yaml(path, valid_policy)
+                self.set_policy(project, [], mode="base-tree")
+                self.write(project, "vendor/lib/a.txt", "edited\n")
+                self.commit(project, "hide edit")
+                record = check_base_tree(project, base, [])
+                self.assertEqual("failed", record["status"])
+                self.assertIn("unparsable", " ".join(record["findings"]))
+
     def test_unchanged_policy_and_content_pass(self) -> None:
         project, base = self.make_repo()
         self.write(project, "src/app.py", "print('changed')\n")
@@ -584,6 +605,25 @@ class EnforcementWiringTests(ProtectedSourcesTestCase):
         project, base = self.make_repo()
         with self.assertRaisesRegex(RuntimeError, "Unknown protected-sources mode"):
             check_enforcement(base_ref=base, project=project, protected_sources="loose")
+
+    def test_null_base_enforcement_cannot_hide_a_protected_edit(self) -> None:
+        for null_block in (True, False):
+            with self.subTest(null_block=null_block):
+                project, _ = self.make_repo()
+                self.enable_validation(project)
+                path = project / ".embraion/policy.yaml"
+                policy = read_yaml(path)
+                if null_block:
+                    policy["enforcement"] = None
+                else:
+                    policy["enforcement"]["protected-sources"] = None
+                write_yaml(path, policy)
+                base = self.commit(project, "schema-invalid base")
+                self.set_policy(project, [], mode="name")
+                self.write(project, "vendor/lib/a.txt", "edited\n")
+                self.commit(project, "hide protected edit")
+                with self.assertRaisesRegex(RuntimeError, "invalid.*enforcement"):
+                    check_enforcement(base_ref=base, project=project)
 
     def test_policy_schema_rejects_an_unknown_value(self) -> None:
         project, _ = self.make_repo()

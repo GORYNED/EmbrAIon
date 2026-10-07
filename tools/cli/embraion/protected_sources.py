@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from jsonschema import Draft202012Validator
 
+from .common import framework_root, read_json
 from .environment import child_environment
 from .policy import normalize_project_path, path_matches
 
@@ -104,14 +106,13 @@ def base_policy_mode(root: Path, base_ref: str) -> str | None:
         if not entry.stdout:
             return None
         data = _base_policy(root, merge_base)
-        enforcement = data.get("enforcement")
-        if enforcement is None:
+        if "enforcement" not in data:
             return None
-        if not isinstance(enforcement, dict):
-            raise _Failure("The policy at the merge base has an unparsable 'enforcement' block.")
+        enforcement = data["enforcement"]
+        schema = read_json(framework_root() / "schemas" / "policy.schema.json")["properties"]["enforcement"]
+        if not Draft202012Validator(schema).is_valid(enforcement):
+            raise _Failure("The policy at the merge base has an invalid 'enforcement' block.")
         mode = enforcement.get("protected-sources")
-        if mode is not None and mode not in PROTECTED_SOURCE_MODES:
-            raise _Failure("The policy at the merge base has an unknown protected-sources mode.")
         return mode
     except _Failure as error:
         raise RuntimeError(f"Cannot determine the protected-sources mode: {error}") from error
@@ -119,14 +120,14 @@ def base_policy_mode(root: Path, base_ref: str) -> str | None:
 
 def _base_protected_list(root: Path, merge_base: str) -> list[str]:
     data = _base_policy(root, merge_base)
-    sources = data.get("sources")
-    if sources is None:
+    if "sources" not in data:
         return []
+    sources = data["sources"]
     if not isinstance(sources, dict):
         raise _Failure("The policy at the merge base has an unparsable 'sources' block.")
-    protected = sources.get("protected")
-    if protected is None:
+    if "protected" not in sources:
         return []
+    protected = sources["protected"]
     if not isinstance(protected, list) or not all(
         isinstance(item, str) and item.strip() for item in protected
     ):

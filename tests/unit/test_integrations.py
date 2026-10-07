@@ -188,7 +188,7 @@ class DeclaredIntegrationTests(unittest.TestCase):
                 self.assertEqual(["integration-mismatch:codex:docs"], [item["id"] for item in findings])
                 self.assertEqual("high", findings[0]["severity"])
                 self.assertEqual("integration-drift", findings[0]["category"])
-                self.assertIn('cwd: expected "tools/docs", observed', findings[0]["message"])
+                self.assertIn('cwd: declared working directory differs', findings[0]["message"])
                 self.assertNotIn("required:", findings[0]["message"])
 
     def test_codex_required_is_compared_when_declared(self) -> None:
@@ -216,6 +216,18 @@ class DeclaredIntegrationTests(unittest.TestCase):
             f'cwd = "token={SECRET}"\nenv = {{ DOCS_TOKEN = "x" }}\n'
         )
         self.assertNotIn(SECRET, json.dumps(integration_findings(self.root)))
+
+    def test_cwd_mismatch_does_not_print_machine_paths(self) -> None:
+        for machine_path in ("C:/Users/alice/private/mcp", "/home/alice/private/mcp"):
+            with self.subTest(machine_path=machine_path):
+                self._declare(self._codex_declaration(cwd="tools/docs"))
+                self._observe_codex(
+                    '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\n'
+                    f'cwd = "{machine_path}"\nenv = {{ DOCS_TOKEN = "x" }}\n'
+                )
+                findings = integration_findings(self.root)
+                self.assertEqual("integration-drift", findings[0]["category"])
+                self.assertNotIn(machine_path, json.dumps(findings))
 
     def test_disabled_codex_server_stays_skipped_with_cwd_and_required(self) -> None:
         self._observe_codex('[mcp_servers.docs]\nenabled = false\ncwd = "x"\nrequired = true\n')

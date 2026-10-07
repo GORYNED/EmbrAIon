@@ -285,6 +285,18 @@ class ValidateWiringTests(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("sources-invalid", {item["code"] for item in issues if item["severity"] == "error"})
 
+    def test_dangling_registry_symlink_fails_validation(self) -> None:
+        path = self.project / ".embraion/sources.yaml"
+        try:
+            path.symlink_to(self.project / "missing-registry.yaml")
+        except OSError as error:
+            if getattr(error, "winerror", None) == 1314:
+                self.skipTest("Windows symlink privilege unavailable")
+            raise
+        code, issues = self.validate()
+        self.assertEqual(1, code)
+        self.assertIn("sources-invalid", {item["code"] for item in issues if item["severity"] == "error"})
+
 
 class SourcesCommandTests(unittest.TestCase):
     def setUp(self) -> None:

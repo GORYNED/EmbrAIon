@@ -485,8 +485,30 @@ def load_plan_file(path: Path, profile: str, project: Path | None = None) -> dic
         raise RuntimeError(f"Validation plan {path} has an invalid selected-commands list.")
     if plan.get("status") != ("selected" if selected else "skipped"):
         raise RuntimeError(f"Validation plan {path} has an inconsistent status.")
-    _check_sources(path, selected, config, validation_profile_specs(root))
+    specs = validation_profile_specs(root)
+    _check_sources(path, selected, config, specs)
     _check_inputs_current(path, plan, root)
+    inputs = plan["inputs"]
+    include_worktree = inputs.get("include-worktree")
+    if not isinstance(include_worktree, bool):
+        raise RuntimeError(f"Validation plan {path} has invalid include-worktree input.")
+    changed, current_inputs = collect_changed_paths(
+        root, base_ref=inputs["base-ref"],
+        head_ref=None if include_worktree else inputs["head-ref"],
+        include_worktree=include_worktree,
+    )
+    escalation = plan.get("escalation")
+    justification = (
+        escalation.get("reason")
+        if isinstance(escalation, dict) and escalation.get("source") == "justification"
+        else None
+    )
+    expected = compute_plan(config, specs, profile, changed, current_inputs, justification)
+    if plan != expected:
+        raise RuntimeError(
+            f"Validation plan {path} does not match the current Git diff and configured selection. "
+            "Run 'validation plan' again."
+        )
     return plan
 
 
@@ -561,6 +583,8 @@ def plan_spec(
             timeout = specs[owner]["timeouts"][position]
         if None in parsed:
             entry = {"required": True, "requires": {}}
+            timeout = None
+            owner, position = None, -1
         commands.append(command)
         entries.append(entry)
         timeouts.append(timeout)

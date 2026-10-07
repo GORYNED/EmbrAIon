@@ -414,6 +414,9 @@ def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
 
 
 def _difference(field: str, expected: Any, actual: Any) -> str:
+    if field == "cwd":
+        # Local working directories can contain private machine paths or credentials.
+        return "cwd: declared working directory differs from observed configuration"
     if field == "args":
         # Argument values can carry credentials in any form, so only their shape is reported.
         position = next((index for index, pair in enumerate(zip(expected, actual), start=1) if pair[0] != pair[1]),

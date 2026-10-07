@@ -4,6 +4,11 @@
 
 ## 0.32.0 - 2026-10-07
 
+### Fixed
+
+- Stored validation plans must match the complete recomputed selection and provenance. Deduplicated area commands retain their documented absence of profile timeouts and parameters.
+- Implicit protected-source mode selection rejects schema-invalid merge-base enforcement blocks. Validation rejects dangling source-registry symlinks, and Codex working-directory drift findings omit local path values.
+
 ### Added
 
 - `embraion check` and `actions/check` can run project validation profiles: the new `check.validation-profiles` list in `.embraion/policy.yaml` adds a `validation-<profile>` step per profile. Each step runs the profile as `embraion validation run` does and keeps its evidence. A profile that is not `passed`, is empty, is unknown, or needs a missing required parameter fails the step. The action gains an optional `upload-evidence` input (default `false`) that uploads `.embraion/state/validation/` as an artifact.

@@ -438,13 +438,13 @@ class PlanRunTests(RepoCase, unittest.TestCase):
         run_validation_profile("affected", project=repo, plan=plan)
         self.assertEqual(["affected"], self._ran(repo))
 
-    def test_escalation_runs_the_full_profile_with_its_timeouts(self) -> None:
+    def test_escalation_keeps_profile_timeouts_except_for_area_commands(self) -> None:
         repo = self._repo()
         self._change(repo, "src/schema/model.sql")
         plan = resolve_run_plan("affected", project=repo, base_ref="main")
         record = run_validation_profile("affected", project=repo, plan=plan)
         self.assertEqual(["lint", "unit", "package"], self._ran(repo))
-        self.assertEqual([30, 40, 50], [item["timeout-seconds"] for item in record["commands"]])
+        self.assertEqual([30, None, 50], [item["timeout-seconds"] for item in record["commands"]])
 
     def test_plan_file_round_trip_and_fail_closed_checks(self) -> None:
         repo = self._repo()
@@ -536,6 +536,23 @@ def failing(name: str) -> str:
 
 class PlanRunSemanticsTests(RepoCase, unittest.TestCase):
     """Planned runs keep the semantics of the place each command was selected from."""
+
+    def test_deduplicated_area_command_has_no_profile_timeout_or_parameters(self) -> None:
+        config = run_config()
+        command = env_marker("area")
+        config["areas"]["library"]["commands"] = [command]
+        config["profiles"]["full"] = {
+            "commands": [command], "timeout-seconds": 0.001,
+            "parameters": {"mode": {"environment": "PLAN_MODE", "default": "profile"}},
+        }
+        repo = self._repo(config)
+        self._change(repo, "src/schema/model.sql")
+        plan = resolve_run_plan("affected", project=repo, base_ref="main")
+        record = run_validation_profile("affected", project=repo, plan=plan)
+        self.assertEqual("passed", record["status"])
+        self.assertEqual(["area=-"], self._ran(repo))
+        self.assertIsNone(record["commands"][0]["timeout-seconds"])
+        self.assertEqual([], record["parameters"])
 
     def test_area_command_is_required_even_when_a_profile_lists_it_as_optional(self) -> None:
         config = run_config()
@@ -688,6 +705,31 @@ class PlanRunSemanticsTests(RepoCase, unittest.TestCase):
 
 
 class PlanFreshnessTests(RepoCase, unittest.TestCase):
+    def test_stored_plan_cannot_change_the_required_selection_or_provenance(self) -> None:
+        repo = self._repo()
+        self._change(repo, "src/schema/model.sql")
+        original = build_plan("affected", project=repo, base_ref="main")
+        path = self._plan_path()
+        for change in ("omit", "add", "source", "escalation", "paths", "merge-base"):
+            with self.subTest(change=change):
+                plan = copy.deepcopy(original)
+                if change == "omit":
+                    plan["selected-commands"] = plan["selected-commands"][:1]
+                elif change == "add":
+                    plan["selected-commands"].append({"command": marker("docs"), "sources": ["area:docs"]})
+                elif change == "source":
+                    plan["selected-commands"][1]["sources"] = ["profile:full"]
+                elif change == "escalation":
+                    plan["escalation"] = None
+                elif change == "paths":
+                    plan["changed-paths"] = []
+                else:
+                    plan["inputs"]["merge-base-sha"] = "0" * 40
+                write_plan(plan, path)
+                with self.assertRaisesRegex(RuntimeError, "does not match"):
+                    resolve_run_plan("affected", project=repo, plan_file=str(path))
+        self.assertEqual([], self._ran(repo))
+
     def test_stored_plan_is_stale_when_a_ref_moves(self) -> None:
         repo = self._repo()
         self._change(repo, "src/b.py")
