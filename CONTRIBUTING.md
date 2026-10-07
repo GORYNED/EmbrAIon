@@ -36,6 +36,13 @@ python tools/source.py sync --host all --output build/generated --force
 
 The CI matrix also validates supported behavior on Linux, Windows, and macOS.
 
+The test commands accept `--jobs N` (or `--jobs auto`, which uses the CPU count up to 4) to run test modules in parallel processes. Each process gets its own temporary directory. The run prints one summary per process and a combined total, and it fails if the processes ran a different number of tests than discovery found. Without `--jobs`, the tests run one after the other in a single process. CI uses `--jobs auto`:
+
+```bash
+python tools/source.py test unit --jobs auto
+python tools/source.py test integration --jobs auto
+```
+
 Use a local `.venv` for development dependencies when the system Python is shared. The source runner selects that environment when present. `embraion validation run fast`, `affected`, and `full` use the same source entry point, even when the project runtime remains pinned to the previous stable release. Advance the self-host project pin and artifact lock only after the new release is published; the release workflow proposes that upgrade as a pull request (see the [release process](docs/release-process.md#self-host-upgrade)).
 
 ## Change expectations
