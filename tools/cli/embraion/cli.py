@@ -67,6 +67,7 @@ from .worktree import (
     create_branch, create_detached_worktree, create_worktree, gc_report, list_worktrees, prepare_task,
     publish_branch, register_worktree, restore_cleanup, salvage_worktree,
 )
+from .worktree_lfs import hydrate_lfs, lfs_mode
 from .versioning import (
     cache_home,
     find_project_manifest,
@@ -1206,7 +1207,23 @@ def _cmd_worktree_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def _hydrate_new_worktree(path: Path, hydrate: bool) -> int:
+    """Hydrate Git LFS content for a new checkout when the project opted in."""
+    if not hydrate:
+        return 0
+    lfs = hydrate_lfs(path)
+    if lfs["state"] == "hydrated":
+        print(f"LFS {lfs['state']}: {lfs['verified']} of {lfs['files']} files verified")
+        return 0
+    if lfs["state"] == "failed":
+        print(f"LFS failed: {lfs['missing']} of {lfs['files']} files missing ({lfs['reason']}); "
+              f"the worktree was kept at {path}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _cmd_worktree_create(args: argparse.Namespace) -> int:
+    hydrate = lfs_mode() == "hydrate"  # Fails before creating anything when the setting is invalid.
     destination = (
         Path(args.path).resolve()
         if args.path
@@ -1219,7 +1236,7 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
                                             task_id=args.task_id, host=args.host,
                                             independent=args.independent_task)
         print(f"Created {created}")
-        return 0
+        return _hydrate_new_worktree(created, hydrate)
     if not args.branch:
         raise ValueError("A branch name is required unless --detach is selected.")
     if args.branch_only:
@@ -1239,7 +1256,7 @@ def _cmd_worktree_create(args: argparse.Namespace) -> int:
         independent=args.independent_task,
     )
     print(f"Created {created}")
-    return 0
+    return _hydrate_new_worktree(created, hydrate)
 
 
 def _cmd_worktree_gc(args: argparse.Namespace) -> int:
@@ -1275,10 +1292,16 @@ def _cmd_worktree_prepare(args: argparse.Namespace) -> int:
 
 
 def _cmd_worktree_register(args: argparse.Namespace) -> int:
-    _print_json(register_worktree(args.task_id, args.host,
-                                  path=Path(args.path).resolve() if args.path else None,
-                                  receipt_id=args.receipt_id))
-    return 0
+    hydrate = lfs_mode() == "hydrate"
+    path = Path(args.path).resolve() if args.path else None
+    resource = register_worktree(args.task_id, args.host, path=path, receipt_id=args.receipt_id)
+    if not hydrate:
+        _print_json(resource)
+        return 0
+    lfs = hydrate_lfs(path) if path is not None else {
+        "state": "skipped", "files": 0, "verified": 0, "missing": 0, "reason": "no-checkout"}
+    _print_json(resource | {"lfs": lfs})
+    return int(lfs["state"] == "failed")
 
 
 def _cmd_worktree_publish(args: argparse.Namespace) -> int:

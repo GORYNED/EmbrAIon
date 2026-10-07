@@ -62,4 +62,4 @@ Report candidates, removals, preservation reasons, failures, and recovery identi
 Automatic deletion and remote deletion require explicit project enablement and never
 expand execution permissions or integration access. Unknown integration state fails closed.
 
-Repository-specific requirements such as Git LFS hydration remain project or tool configuration, not universal Core policy.
+Git LFS hydration is an opt-in project setting (`worktree.lfs`) of the worktree tool, not universal Core policy.
