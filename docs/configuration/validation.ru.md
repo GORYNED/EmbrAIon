@@ -149,6 +149,80 @@ profiles:
 
 В обоих случаях, если поток длиннее tail записи, строка команды получает `stdout-head` или `stderr-head` (первые 8000 символов) и объект `output` с итогами `bytes` и `lines` по каждому потоку и `log-truncated`. Короткий вывод не добавляет полей. Запись показывает `output-limit-bytes`, если profile его задаёт.
 
+## План validation
+
+Проект может описать, какие проверки подтверждают какую часть кода. Это опционально. Проект без этих ключей работает как раньше.
+
+```yaml
+profiles:
+  affected:
+    - python -m unittest discover -s tests -p "test_*.py"
+  full:
+    - python -m compileall src
+    - python -m unittest discover -s tests -p "test_*.py"
+    - python tools/package.py
+
+areas:
+  library:
+    paths: [src/**]
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+  docs:
+    paths: [docs/**, "*.md"]
+    commands:
+      - python tools/check-links.py
+  packaging:
+    paths: [tools/package.py]
+    profiles: [full]
+
+impact:
+  - id: data-format
+    paths: [src/schema/**]
+    areas: [docs]
+    full: data-migration
+
+full-reasons: [data-migration, release-gate]
+default-area: library
+```
+
+Ключи:
+
+- `areas` сопоставляет имя area с `paths` (globs) и с proof: `commands` (command lines) и/или `profiles` (все commands этих profiles). Нужен хотя бы один proof.
+- `impact` — упорядоченный список rules. У каждого rule есть `id`, `paths` (globs) и `areas` и/или `full`. Каждый rule, совпавший с изменённым path, применяется в записанном порядке. `full` называет причину из `full-reasons` и повышает plan до profile `full`. Если повышают несколько rules, причину называет первый в списке.
+- `full-reasons` — закрытый список id причин. Rule или значение `--full-justification` вне списка — ошибка. Для причины или rule с `full` нужен profile `full`.
+- `default-area` опционален. Изменённый path, не совпавший ни с area, ни с rule, выбирает эту area. Без неё такой path выбирает весь planned profile: проект проверяет больше, а не меньше.
+
+Globs используют тот же matcher, что и source policy в `policy.yaml`. Glob пустой, абсолютный, с `..`, с непарной скобкой или слишком сложный — ошибка. Неизвестные area, profile или причина — ошибка. Ошибки формы ловит schema.
+
+Вычислить и прочитать plan:
+
+```bash
+embraion validation plan affected --base-ref origin/main
+embraion validation explain affected --base-ref origin/main --include-worktree
+```
+
+`plan` пишет детерминированный `plan.json` (по умолчанию `.embraion/state/validation/plan.json` или `--output FILE`). `explain` печатает, почему каждая area и command выбраны или не выбраны, и ничего не пишет. Изменённые paths берутся из Git: diff между merge base для `--base-ref` и `--head-ref` (по умолчанию `HEAD`). `--include-worktree` добавляет staged, unstaged и untracked файлы, которые Git не игнорирует. Файлы в `.embraion/state/` игнорируются.
+
+Файл plan имеет `schema-version: 1` и поля: `profile`, `config-digest`, `inputs` (refs и resolved SHA), `changed-paths`, `matched-rules`, `selected-areas`, `skipped-areas` (с причинами), `escalation`, `fallback`, `selected-commands` (с источниками), `skipped-commands`, `status` (`selected` или `skipped`) и `skip-reason`.
+
+Запуск по plan:
+
+```bash
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan .embraion/state/validation/plan.json
+embraion validation run full --base-ref origin/main --full-justification release-gate
+```
+
+- `validation run <profile>` без `--base-ref`, `--include-worktree` и `--plan` выполняет все commands profile, как раньше.
+- Plan выбирает commands из areas, из `profiles` areas и, при повышении или fallback, из всего profile. Дубликаты выполняются один раз.
+- Plan, который ничего не выбрал, например потому что ничего не изменилось, завершается как `skipped` с причиной. Это никогда не pass.
+- `--plan` принимает только plan для того же profile, совпадающий с текущей конфигурацией и выбирающий только объявленные commands. Иначе запуск fail-closed.
+- Timeouts и parameters profile по-прежнему действуют для commands, к которым относятся.
+- Run evidence содержит plan (`plan`) и копию в `.embraion/state/validation/<evidence-id>/plan.json` (`plan-path`).
+- Plan options в проекте без `areas` — ошибка.
+
+`validation list` также показывает areas, если они есть.
+
 ## Выбор profiles
 
 Полезная конвенция:

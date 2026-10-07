@@ -566,6 +566,7 @@ def run_validation_profile(
     fail_fast: bool = False,
     timeout: float | None = None,
     parameters: dict[str, str] | None = None,
+    plan: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     specs = validation_profile_specs(root)
@@ -586,6 +587,11 @@ def run_validation_profile(
                 f"Validation evidence can only attach to an active run: {run_id}"
             )
 
+    if plan is not None:
+        # A plan restricts the run to its selected commands; see validation_plan.
+        from .validation_plan import plan_spec
+
+        specs[profile], parameters = plan_spec(specs, profile, plan, parameters)
     spec = specs[profile]
     commands = list(spec["commands"])
     entries = list(spec["entries"])
@@ -718,6 +724,12 @@ def run_validation_profile(
         extra["clean-tree"] = clean_tree_block
     if failure_reasons:
         extra["failure-reasons"] = failure_reasons
+    if plan is not None:
+        from .validation_plan import write_plan_evidence
+
+        plan_path = write_plan_evidence(root, evidence_id, plan)
+        extra["plan"] = plan
+        extra["plan-path"] = plan_path
     record = redact_value(
         {
             "schema-version": 1,

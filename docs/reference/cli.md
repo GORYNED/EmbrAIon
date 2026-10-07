@@ -339,6 +339,17 @@ Unknown parameters and missing required parameters fail closed. Parameters can b
 
 `--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
+Plan options for projects that declare `areas` in `.embraion/validation.yaml` (see [Validation plan](../configuration/validation.md#validation-plan)):
+
+```bash
+embraion validation plan affected --base-ref origin/main [--head-ref REF] [--include-worktree] [--full-justification REASON] [--json] [--output FILE]
+embraion validation explain affected --base-ref origin/main
+embraion validation run affected --base-ref origin/main
+embraion validation run affected --plan plan.json
+```
+
+`plan` writes a deterministic `plan.json` (default `.embraion/state/validation/plan.json`) and `explain` prints the decision in plain language. Both need `--base-ref` or `--include-worktree`. `run` uses a plan only with `--plan`, `--base-ref`, or `--include-worktree`; otherwise it runs the whole profile. A plan that selects nothing reports `skipped`. A `--full-justification` outside `full-reasons`, an invalid configuration, a stale or foreign `--plan` file, and plan options on a project without areas fail closed with exit code 2. `list` also lists the areas.
+
 ### `embraion cache`
 
 Inspect or clean isolated project runtimes.

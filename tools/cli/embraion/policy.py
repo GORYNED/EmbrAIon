@@ -124,11 +124,16 @@ def read_validation_config(project: Path | None = None) -> dict[str, Any]:
     path = root / ".embraion" / "validation.yaml"
     if not path.is_file():
         raise RuntimeError(f"Missing {path}; run 'embraion init' first.")
-    return _validated_config_mapping(
+    config = _validated_config_mapping(
         path,
         schema_name="validation.schema.json",
         label=".embraion/validation.yaml",
     )
+    # Optional plan keys (areas, impact, full-reasons, default-area) fail closed on bad references.
+    from .validation_plan import validate_plan_config
+
+    validate_plan_config(config)
+    return config
 
 
 def read_agents_config(project: Path | None = None) -> dict[str, Any]:
