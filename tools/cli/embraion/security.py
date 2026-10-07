@@ -352,7 +352,14 @@ def _observed_shape(config: dict[str, Any]) -> dict[str, Any]:
         "args": [str(item) for item in args] if isinstance(args, list) else [],
         "transport": transport,
         "env-vars": sorted(str(key) for key in environment) if isinstance(environment, dict) else [],
+        # Only Codex carries these keys; a declaration may set them for Codex alone.
+        "cwd": config.get("cwd"),
+        "required": config.get("required", False),
     }
+
+
+# Optional declaration fields compared only when the declaration sets them.
+_OPTIONAL_FIELDS = ("cwd", "required")
 
 
 def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
@@ -361,6 +368,7 @@ def _declared_shape(entry: dict[str, Any]) -> dict[str, Any]:
         "args": list(entry.get("args") or []),
         "transport": entry["transport"],
         "env-vars": sorted(entry["env-vars"]),
+        **{field: entry[field] for field in _OPTIONAL_FIELDS if field in entry},
     }
 
 
@@ -411,13 +419,16 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
         if key in declared:
             findings.extend(invalid(f"Integration {key[1]} is declared twice for host {key[0]}"))
         declared[key] = entry
-        if entry.get("portable", True) and any(
-            _ABSOLUTE_PATH.search(value) for value in [entry.get("command") or "", *(entry.get("args") or [])]
-        ):
-            findings.append(_integration_finding(
-                "non-portable", key[0], key[1],
-                "Portable integration declares a machine-absolute path in its command or arguments", relative,
-            ))
+        if entry.get("portable", True):
+            where = [name for name, values in (
+                ("command or arguments", [entry.get("command") or "", *(entry.get("args") or [])]),
+                ("working directory", [entry.get("cwd") or ""]),
+            ) if any(_ABSOLUTE_PATH.search(value) for value in values)]
+            if where:
+                findings.append(_integration_finding(
+                    "non-portable", key[0], key[1],
+                    f"Portable integration declares a machine-absolute path in its {' and '.join(where)}", relative,
+                ))
 
     try:
         observed = _mcp_server_configs(project)
@@ -440,7 +451,8 @@ def integration_findings(project: Path) -> list[dict[str, str]]:
             ))
             continue
         expected, actual = _declared_shape(entry), _observed_shape(config)
-        fields = [field for field in ("command", "args", "transport", "env-vars") if expected[field] != actual[field]]
+        fields = [field for field in ("command", "args", "transport", "env-vars", *_OPTIONAL_FIELDS)
+                  if field in expected and expected[field] != actual[field]]
         if fields:
             details = "; ".join(_difference(field, expected[field], actual[field]) for field in fields)
             findings.append(_integration_finding(

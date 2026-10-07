@@ -30,8 +30,12 @@
           "type": "array", "uniqueItems": true,
           "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "maxLength": 128}
         },
-        "portable": {"type": "boolean"}
+        "portable": {"type": "boolean"},
+        "cwd": {"type": "string", "minLength": 1, "maxLength": 512},
+        "required": {"type": "boolean"}
       },
+      "if": {"properties": {"host": {"not": {"const": "codex"}}}},
+      "then": {"properties": {"cwd": {"not": {}}, "required": {"not": {}}}},
       "additionalProperties": false
     }
   }

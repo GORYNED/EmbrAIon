@@ -156,6 +156,98 @@ class DeclaredIntegrationTests(unittest.TestCase):
         })
         self.assertEqual({("integration-unexpected", "high")}, self._kinds())
 
+    def _observe_codex(self, text: str) -> None:
+        (self.root / ".codex").mkdir(exist_ok=True)
+        (self.root / ".codex/config.toml").write_text(text, encoding="utf-8")
+
+    def _codex_declaration(self, **overrides: object) -> dict[str, object]:
+        return _declaration(host="codex", **overrides)
+
+    def test_omitted_cwd_and_required_are_not_compared(self) -> None:
+        self._observe_codex(
+            '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\ncwd = "tools/docs"\n'
+            'required = true\nenv = { DOCS_TOKEN = "x" }\n'
+        )
+        self._declare(self._codex_declaration())
+        self.assertEqual([], integration_findings(self.root))
+
+    def test_codex_cwd_is_compared_when_declared(self) -> None:
+        self._declare(self._codex_declaration(cwd="tools/docs"))
+        self._observe_codex(
+            '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\ncwd = "tools/docs"\n'
+            'env = { DOCS_TOKEN = "x" }\n'
+        )
+        self.assertEqual([], integration_findings(self.root))
+        for observed in ('cwd = "tools/other"\n', ""):
+            with self.subTest(observed=observed):
+                self._observe_codex(
+                    '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\n'
+                    + observed + 'env = { DOCS_TOKEN = "x" }\n'
+                )
+                findings = integration_findings(self.root)
+                self.assertEqual(["integration-mismatch:codex:docs"], [item["id"] for item in findings])
+                self.assertEqual("high", findings[0]["severity"])
+                self.assertEqual("integration-drift", findings[0]["category"])
+                self.assertIn('cwd: expected "tools/docs", observed', findings[0]["message"])
+                self.assertNotIn("required:", findings[0]["message"])
+
+    def test_codex_required_is_compared_when_declared(self) -> None:
+        base = '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\nenv = { DOCS_TOKEN = "x" }\n'
+        self._declare(self._codex_declaration(required=True))
+        self._observe_codex(base + "required = true\n")
+        self.assertEqual([], integration_findings(self.root))
+        for observed in ("required = false\n", ""):
+            with self.subTest(observed=observed):
+                self._observe_codex(base + observed)
+                findings = integration_findings(self.root)
+                self.assertEqual(["integration-mismatch:codex:docs"], [item["id"] for item in findings])
+                self.assertIn("required: expected true, observed false", findings[0]["message"])
+        # An absent key means not required, so declaring `required: false` matches it.
+        self._declare(self._codex_declaration(required=False))
+        self._observe_codex(base)
+        self.assertEqual([], integration_findings(self.root))
+        self._observe_codex(base + "required = true\n")
+        self.assertEqual({("integration-mismatch", "high")}, self._kinds())
+
+    def test_cwd_mismatch_does_not_print_credential_like_values(self) -> None:
+        self._declare(self._codex_declaration(cwd="tools/docs"))
+        self._observe_codex(
+            '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\n'
+            f'cwd = "token={SECRET}"\nenv = {{ DOCS_TOKEN = "x" }}\n'
+        )
+        self.assertNotIn(SECRET, json.dumps(integration_findings(self.root)))
+
+    def test_disabled_codex_server_stays_skipped_with_cwd_and_required(self) -> None:
+        self._observe_codex('[mcp_servers.docs]\nenabled = false\ncwd = "x"\nrequired = true\n')
+        self._declare(self._codex_declaration(cwd="tools/docs", required=True))
+        self.assertEqual({("integration-missing", "high")}, self._kinds())
+
+    def test_cwd_and_required_are_codex_only_and_validated(self) -> None:
+        self._observe({"docs": {"command": "npx", "args": ["-y", "docs-server"], "env": {"DOCS_TOKEN": "x"}}})
+        for host in ("generic", "vscode", "claude-code"):
+            for field, value in (("cwd", "tools/docs"), ("required", True)):
+                with self.subTest(host=host, field=field):
+                    self._declare(_declaration(host=host, **{field: value}))
+                    findings = integration_findings(self.root)
+                    self.assertEqual(["integration-declaration:project:integrations"], [item["id"] for item in findings])
+                    self.assertIn(f"servers.0.{field}", findings[0]["message"])
+        for field, value in (("cwd", ""), ("cwd", 7), ("required", "yes"), ("required", 1)):
+            with self.subTest(field=field, value=value):
+                self._declare(self._codex_declaration(**{field: value}))
+                findings = integration_findings(self.root)
+                self.assertEqual(["integration-declaration:project:integrations"], [item["id"] for item in findings])
+                self.assertIn(f"servers.0.{field}", findings[0]["message"])
+
+    def test_portable_declaration_rejects_machine_absolute_cwd(self) -> None:
+        self._observe_codex(
+            '[mcp_servers.docs]\ncommand = "npx"\nargs = ["-y", "docs-server"]\ncwd = "/opt/docs"\n'
+            'env = { DOCS_TOKEN = "x" }\n'
+        )
+        self._declare(self._codex_declaration(cwd="/opt/docs"))
+        self.assertEqual({("integration-non-portable", "high")}, self._kinds())
+        self._declare(self._codex_declaration(cwd="/opt/docs", portable=False))
+        self.assertEqual([], integration_findings(self.root))
+
     def test_security_scan_fails_on_drift_and_passes_when_aligned(self) -> None:
         self._observe({"docs": {"command": "npx", "args": ["-y", "docs-server"], "env": {"DOCS_TOKEN": "x"}}})
         self._declare(_declaration())

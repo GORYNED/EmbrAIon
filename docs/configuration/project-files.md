@@ -379,7 +379,7 @@ Schema v1 can read legacy `builtin:unity` declarations for diagnostics, but the 
 
 ## Optional `.embraion/integrations.yaml`
 
-This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`. The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
+This strict, versioned file declares the MCP servers the project's host configuration should contain: `id`, `host`, `command`, `args`, `transport`, `access`, environment-variable **names**, and optional `portable`, `cwd`, and `required` (`cwd` and `required` for Codex entries only). The file is absent by default; then no integration comparison runs. When it exists, `embraion security scan` reports missing, unexpected, mismatched, and non-portable servers as high-severity `integration-drift` findings. See [Declared integrations](../security.md#declared-integrations).
 
 ## Optional `.embraion/knowledge-maintenance.yaml`
 
