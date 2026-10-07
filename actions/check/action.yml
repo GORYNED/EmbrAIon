@@ -16,6 +16,13 @@ inputs:
       run. The ref must be fetched, so the checkout needs its history.
     required: false
     default: ""
+  upload-evidence:
+    description: >-
+      Set to true to upload the structured evidence of the validation profiles that
+      `embraion check` ran (.embraion/state/validation/) as a workflow artifact, also when a check
+      fails. Does nothing when no profile ran.
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -43,3 +50,25 @@ runs:
         else
           embraion check
         fi
+
+    - name: Name the evidence artifact
+      id: evidence
+      if: always() && inputs.upload-evidence == 'true'
+      shell: bash
+      env:
+        EMBRAION_CI_RUN: ${{ github.run_id }}
+        EMBRAION_CI_ATTEMPT: ${{ github.run_attempt }}
+        EMBRAION_CI_JOB: ${{ github.job }}
+      run: |
+        set -euo pipefail
+        # A random suffix keeps matrix jobs and repeated uses of the action apart.
+        suffix="$(python -c 'import uuid; print(uuid.uuid4().hex[:12])')"
+        echo "name=embraion-check-evidence-$EMBRAION_CI_RUN-$EMBRAION_CI_ATTEMPT-$EMBRAION_CI_JOB-$suffix" >> "$GITHUB_OUTPUT"
+
+    - name: Upload the validation evidence
+      if: always() && inputs.upload-evidence == 'true'
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.evidence.outputs.name }}
+        path: ${{ inputs.project-path }}/.embraion/state/validation/
+        if-no-files-found: ignore

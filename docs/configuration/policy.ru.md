@@ -205,11 +205,13 @@ check:
   organization: [full, compare]
   fail-on: medium
   all-files: true
+  validation-profiles: [affected]
 ```
 
 - `organization` перечисляет режимы organization check. `full` проверяет всю структуру. `compare` сравнивает с `--base-ref`, поэтому падают только новые findings, перемещения и смена GUID; без base ref он отмечается как `NOT RUN`. Без секции `embraion check` запускает `full` без `--base-ref` и `compare` с ним. Объявленные режимы называются `organization-full` и `organization-compare` и работают только при наличии `.embraion/organization.yaml`.
 - `fail-on` задаёт минимальную серьёзность находки security scan, при которой проверка падает (`info`, `low`, `medium`, `high` или `critical`); по умолчанию `high`.
 - `all-files` дополнительно сканирует все остальные текстовые файлы на приватные ключи, токены и машинные пути, как `--all-files` в [`security scan`](../security.md#scan-findings); по умолчанию `false`.
+- `validation-profiles` перечисляет [validation profiles](../reference/cli.md#embraion-validation) проекта из `.embraion/validation.yaml`. `embraion check` запускает каждый после всех остальных проверок как шаг `validation-<profile>` так же, как `embraion validation run <profile>`, и записывает то же evidence в `.embraion/state/validation/`. Шаг проходит, только если результат профиля `passed`. Профили со статусом failed и timed-out его проваливают. Объявленный профиль должен что-то доказывать, поэтому неизвестный профиль, пустой профиль (`skipped`) и профиль с обязательным параметром без значения по умолчанию тоже проваливают шаг. Без ключа ни один профиль не запускается.
 
 Флаг `--fail-on` переопределяет `fail-on`, а `--all-files` включает полное сканирование; у остальных значений флагов нет. Проект без секции ведёт себя как раньше. Для запусков без base pull request, например при push, передайте `base-ref` (или объявите `full`): `compare` там не запускается. Секцию принимает только release, который её содержит, поэтому сначала переведите pin проекта на такой release.
 

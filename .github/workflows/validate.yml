@@ -171,7 +171,7 @@ jobs:
           python -m build
           python -m pip install --force-reinstall dist/*.whl
 
-      - name: Write a consumer project that declares both organization modes
+      - name: Write a consumer project that declares both organization modes and a validation profile
         shell: bash
         run: |
           consumer="$RUNNER_TEMP/consumer"
@@ -184,7 +184,9 @@ jobs:
             organization: [full, compare]
             fail-on: medium
             all-files: true
+            validation-profiles: [smoke]
           YAML
+          printf 'profiles:\n  smoke:\n    - python -c "print(1)"\n' > .embraion/validation.yaml
           printf 'filenames:\n  roots: [docs]\n  extensions: [.md]\n' > .embraion/organization.yaml
           echo hello > docs/note.md
           git add -A
@@ -196,6 +198,7 @@ jobs:
         with:
           project-path: ${{ env.CONSUMER }}
           base-ref: HEAD
+          upload-evidence: "true"
 
   compatibility:
     name: Compatibility / ${{ matrix.os }} / Python ${{ matrix.python }}
