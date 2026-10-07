@@ -41,7 +41,7 @@ class GitBoundaryTests(unittest.TestCase):
                 self.assertIn("(git.md)", text)
                 self.assertIn("Git is a stated prerequisite", text)
         worktree = (WORKFLOWS / "worktree.md").read_text(encoding="utf-8")
-        for moved in ("Git common directory", "create-only lease", "squash\nmerge", "merge commit\nancestry"):
+        for moved in ("create-only lease", "squash\nmerge", "merge commit\nancestry"):
             self.assertNotIn(moved, worktree)
         for kept in (
             "Cleanup is fail-closed",

@@ -48,9 +48,9 @@ files and unsupported filesystem state. Host-managed resources require a support
 archive operation; lack of it is a preservation reason, not a raw filesystem fallback.
 
 Before destructive operations, retain verified commit and local-state recovery evidence
-outside the removable checkout. Serialize mutation per repository and repeat
-eligibility checks before each operation, as defined in [repository scope](git.md#repository-scope).
-Delete a remote ref only when its expected state still matches, and a local ref only after associated
+outside the removable checkout. Serialize mutation per repository (the Git common directory; see [repository scope](git.md#repository-scope)) and repeat
+eligibility checks before each operation.
+Delete a remote ref only when its expected SHA still matches, and a local ref only after associated
 worktrees are released; [refs](git.md#refs) gives the Git conditions and the one squash-merge exception. Retain operation journals
 and backups on partial failure; never overwrite conflicting paths or refs during restore.
 
@@ -59,4 +59,4 @@ Report candidates, removals, preservation reasons, failures, and recovery identi
 Automatic deletion and remote deletion require explicit project enablement and never
 expand execution permissions or integration access. Unknown integration state fails closed.
 
-Git LFS hydration is an opt-in project setting (`worktree.lfs`) of the worktree tool, not universal Core policy.
+Repository-specific requirements such as Git LFS hydration remain project or tool configuration, not universal Core policy.
