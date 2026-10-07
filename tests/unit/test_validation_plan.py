@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import copy
+import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +12,13 @@ from typing import Any
 from embraion.common import read_yaml, write_yaml
 from embraion.policy import read_validation_config
 from embraion.project import init_project
+from embraion.project_validation import validation_profile_specs
+from embraion.validation_plan import (
+    build_plan,
+    collect_changed_paths,
+    compute_plan,
+    explain_plan,
+)
 
 
 def plan_config() -> dict[str, Any]:
@@ -100,6 +110,214 @@ class PlanConfigTests(unittest.TestCase):
         self._rejected(lambda c: c["areas"]["library"].update(extra=1), "Additional properties")
         self._rejected(lambda c: c["areas"]["library"].pop("commands"), "is not valid under any")
         self._rejected(lambda c: c["impact"][0].pop("areas") and c["impact"][0].pop("full"), "is not valid under any")
+
+
+INPUTS = {"base-ref": "main", "base-sha": "a" * 40, "head-ref": "HEAD", "head-sha": "b" * 40,
+          "merge-base-sha": "a" * 40, "include-worktree": False}
+
+
+def plan_for(profile: str, paths: list[str], config: dict[str, Any] | None = None,
+             justification: str | None = None) -> dict[str, Any]:
+    config = config or plan_config()
+    with tempfile.TemporaryDirectory() as temporary:
+        project = Path(temporary)
+        init_project(project, name="Consumer")
+        write_config(project, config)
+        specs = validation_profile_specs(project)
+        config = read_validation_config(project)
+    return compute_plan(config, specs, profile, paths, INPUTS, justification)
+
+
+def commands_of(plan: dict[str, Any]) -> list[str]:
+    return [item["command"] for item in plan["selected-commands"]]
+
+
+class PlanRuleTests(unittest.TestCase):
+    def test_area_paths_select_area_commands(self) -> None:
+        plan = plan_for("affected", ["src/core/a.py"])
+        self.assertEqual(["echo unit"], commands_of(plan))
+        self.assertEqual(["library"], [item["area"] for item in plan["selected-areas"]])
+        self.assertEqual(["docs", "build"], [item["area"] for item in plan["skipped-areas"]])
+        self.assertEqual("selected", plan["status"])
+        self.assertIsNone(plan["escalation"])
+        self.assertIsNone(plan["fallback"])
+        self.assertEqual(["echo affected"], [item["command"] for item in plan["skipped-commands"]])
+
+    def test_area_profiles_expand_to_profile_commands(self) -> None:
+        plan = plan_for("affected", ["tools/build/make.py"])
+        self.assertEqual(["echo lint", "echo unit", "echo package"], commands_of(plan))
+        self.assertEqual(["area:build"], plan["selected-commands"][0]["sources"])
+
+    def test_commands_are_deduplicated_in_area_order(self) -> None:
+        plan = plan_for("affected", ["tools/build/make.py", "src/a.py", "README.md"])
+        self.assertEqual(["echo unit", "echo docs", "echo lint", "echo package"], commands_of(plan))
+        self.assertEqual(["area:library", "area:build"], plan["selected-commands"][0]["sources"])
+
+    def test_rule_adds_areas_and_records_matches_in_declared_order(self) -> None:
+        plan = plan_for("affected", ["pyproject.toml", "src/schema/x.sql"], justification=None)
+        self.assertEqual(["schema-change", "build-files"], [item["rule"] for item in plan["matched-rules"]])
+        self.assertEqual(["library", "docs", "build"], [item["area"] for item in plan["selected-areas"]])
+        self.assertEqual(["schema-change"], plan["selected-areas"][1]["rules"])
+
+    def test_rule_order_decides_the_escalation_reason(self) -> None:
+        config = plan_config()
+        config["impact"].insert(0, {"id": "release-files", "paths": ["VERSION"], "full": "release-gate"})
+        plan = plan_for("affected", ["src/schema/x.sql", "VERSION"], config)
+        self.assertEqual({"reason": "release-gate", "source": "rule:release-files"}, plan["escalation"])
+        self.assertEqual(["echo lint", "echo unit", "echo package", "echo docs"], commands_of(plan))
+        self.assertEqual([], plan["skipped-areas"])
+
+    def test_rule_escalation_selects_the_full_profile(self) -> None:
+        plan = plan_for("affected", ["src/schema/x.sql"])
+        self.assertEqual({"reason": "data-migration", "source": "rule:schema-change"}, plan["escalation"])
+        self.assertEqual(["echo lint", "echo unit", "echo package", "echo docs"], commands_of(plan))
+
+    def test_justification_escalates_and_must_be_in_the_closed_list(self) -> None:
+        plan = plan_for("affected", ["src/a.py"], justification="release-gate")
+        self.assertEqual({"reason": "release-gate", "source": "justification"}, plan["escalation"])
+        self.assertIn("echo package", commands_of(plan))
+        with self.assertRaises(RuntimeError) as caught:
+            plan_for("affected", ["src/a.py"], justification="because")
+        self.assertIn("not in full-reasons", str(caught.exception))
+
+    def test_full_profile_requires_a_listed_justification(self) -> None:
+        with self.assertRaises(RuntimeError) as caught:
+            plan_for("full", ["src/a.py"])
+        self.assertIn("--full-justification", str(caught.exception))
+        plan = plan_for("full", ["src/a.py"], justification="release-gate")
+        self.assertEqual(["echo lint", "echo unit", "echo package"], commands_of(plan))
+
+    def test_unmatched_path_falls_back_to_the_whole_profile(self) -> None:
+        plan = plan_for("affected", ["misc/unknown.bin", "src/a.py"])
+        self.assertEqual({"reason": "unmatched-paths", "paths": ["misc/unknown.bin"]}, plan["fallback"])
+        self.assertEqual(["echo affected", "echo unit"], commands_of(plan))
+        self.assertEqual([], plan["skipped-areas"])
+
+    def test_default_area_replaces_the_fallback(self) -> None:
+        config = plan_config()
+        config["default-area"] = "library"
+        plan = plan_for("affected", ["misc/unknown.bin"], config)
+        self.assertIsNone(plan["fallback"])
+        self.assertEqual(["echo unit"], commands_of(plan))
+        self.assertEqual(["misc/unknown.bin"], plan["selected-areas"][0]["paths"])
+
+    def test_empty_change_is_skipped_never_a_pass(self) -> None:
+        plan = plan_for("affected", [])
+        self.assertEqual("skipped", plan["status"])
+        self.assertEqual("no changed paths", plan["skip-reason"])
+        self.assertEqual([], plan["selected-commands"])
+
+    def test_selected_areas_without_commands_are_skipped(self) -> None:
+        config = plan_config()
+        config["profiles"]["empty"] = []
+        config["areas"]["docs"] = {"paths": ["docs/**"], "profiles": ["empty"]}
+        plan = plan_for("affected", ["docs/a.md"], config)
+        self.assertEqual("skipped", plan["status"])
+        self.assertIn("no commands", plan["skip-reason"])
+
+    def test_plan_is_deterministic_and_independent_of_input_order(self) -> None:
+        first = plan_for("affected", ["src/b.py", "docs/a.md", "src/a.py"])
+        second = plan_for("affected", ["src/a.py", "src/b.py", "docs/a.md", "src/a.py"])
+        self.assertEqual(json.dumps(first, indent=2), json.dumps(second, indent=2))
+        self.assertEqual(1, first["schema-version"])
+        self.assertEqual(["docs/a.md", "src/a.py", "src/b.py"], first["changed-paths"])
+
+    def test_explain_states_why_each_decision_was_made(self) -> None:
+        text = explain_plan(plan_for("affected", ["src/schema/x.sql"]))
+        for fragment in (
+            "Validation plan for profile 'affected'",
+            "src/schema/x.sql",
+            "schema-change: 1 path(s) -> areas docs; full escalation (data-migration)",
+            "library: selected by 1 changed path(s)",
+            "Escalation: full profile because 'data-migration' (rule:schema-change)",
+            "echo package  [profile:full]",
+            "Result: run the selected commands",
+        ):
+            self.assertIn(fragment, text)
+        skipped = explain_plan(plan_for("affected", ["docs/a.md"]))
+        self.assertIn("library: no changed path matched its paths or an impact rule", skipped)
+        self.assertIn("echo affected: no selected area proves it", skipped)
+        self.assertIn("Result: skipped - ", explain_plan(plan_for("affected", [])))
+
+
+def git(repo: Path, *arguments: str) -> str:
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    return subprocess.run(
+        ["git", "-C", str(repo), "-c", "user.name=T", "-c", "user.email=t@example.invalid", *arguments],
+        check=True, capture_output=True, text=True, env=environment,
+    ).stdout.strip()
+
+
+class PlanGitTests(unittest.TestCase):
+    def _repo(self) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        repo = Path(temporary.name)
+        git(repo, "init", "-q", "-b", "main")
+        git(repo, "config", "commit.gpgsign", "false")
+        init_project(repo, name="Consumer")
+        write_config(repo, plan_config())
+        (repo / ".gitignore").write_text(".embraion/state/\n", encoding="utf-8")
+        (repo / "src").mkdir()
+        (repo / "src" / "a.py").write_text("a\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "base")
+        git(repo, "checkout", "-qb", "topic")
+        return repo
+
+    def test_changed_paths_cover_commits_renames_deletions_and_worktree(self) -> None:
+        repo = self._repo()
+        (repo / "docs").mkdir()
+        (repo / "docs" / "guide.md").write_text("g\n", encoding="utf-8")
+        git(repo, "mv", "src/a.py", "src/b.py")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "change")
+        (repo / "src" / "c.py").write_text("c\n", encoding="utf-8")
+        state = repo / ".embraion" / "state"
+        state.mkdir(parents=True, exist_ok=True)
+        (state / "noise.json").write_text("{}", encoding="utf-8")
+
+        committed, inputs = collect_changed_paths(repo, base_ref="main", head_ref=None, include_worktree=False)
+        self.assertEqual(["docs/guide.md", "src/a.py", "src/b.py"], committed)
+        self.assertEqual(git(repo, "rev-parse", "main"), inputs["base-sha"])
+        self.assertEqual(git(repo, "rev-parse", "HEAD"), inputs["head-sha"])
+
+        with_worktree, _ = collect_changed_paths(repo, base_ref="main", head_ref=None, include_worktree=True)
+        self.assertEqual(["docs/guide.md", "src/a.py", "src/b.py", "src/c.py"], with_worktree)
+
+        only_local, _ = collect_changed_paths(repo, base_ref=None, head_ref=None, include_worktree=True)
+        self.assertEqual(["src/c.py"], only_local)
+
+    def test_merge_base_ignores_changes_made_on_the_base_branch(self) -> None:
+        repo = self._repo()
+        (repo / "src" / "topic.py").write_text("t\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "topic")
+        git(repo, "checkout", "-q", "main")
+        (repo / "src" / "main-only.py").write_text("m\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "-qm", "main moves")
+        git(repo, "checkout", "-q", "topic")
+        paths, _ = collect_changed_paths(repo, base_ref="main", head_ref="HEAD", include_worktree=False)
+        self.assertEqual(["src/topic.py"], paths)
+
+    def test_unknown_ref_and_missing_base_fail_closed(self) -> None:
+        repo = self._repo()
+        with self.assertRaises(RuntimeError):
+            collect_changed_paths(repo, base_ref="no-such-ref", head_ref=None, include_worktree=False)
+        with self.assertRaises(RuntimeError) as caught:
+            collect_changed_paths(repo, base_ref=None, head_ref=None, include_worktree=False)
+        self.assertIn("--base-ref or --include-worktree", str(caught.exception))
+
+    def test_build_plan_end_to_end_is_reproducible(self) -> None:
+        repo = self._repo()
+        (repo / "src" / "a.py").write_text("changed\n", encoding="utf-8")
+        git(repo, "commit", "-qam", "edit")
+        first = build_plan("affected", project=repo, base_ref="main")
+        second = build_plan("affected", project=repo, base_ref="main")
+        self.assertEqual(json.dumps(first, sort_keys=True), json.dumps(second, sort_keys=True))
+        self.assertEqual(["echo unit"], commands_of(first))
+        self.assertEqual(["src/a.py"], first["changed-paths"])
 
 
 if __name__ == "__main__":

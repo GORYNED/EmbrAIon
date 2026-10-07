@@ -1007,20 +1007,24 @@ def _named_values(
 
 
 def _cmd_validation_list(args: argparse.Namespace) -> int:
+    from .policy import read_validation_config
+
     specs = validation_profile_specs()
+    areas = read_validation_config().get("areas") or {}
     if args.json:
-        _print_json(
-            {
-                "profiles": {
-                    name: {
-                        "commands": list(spec["commands"]),
-                        "command-count": len(spec["commands"]),
-                        "parameters": spec.get("parameters") or {},
-                    }
-                    for name, spec in specs.items()
+        listing: dict[str, Any] = {
+            "profiles": {
+                name: {
+                    "commands": list(spec["commands"]),
+                    "command-count": len(spec["commands"]),
+                    "parameters": spec.get("parameters") or {},
                 }
+                for name, spec in specs.items()
             }
-        )
+        }
+        if areas:
+            listing["areas"] = areas
+        _print_json(listing)
         return 0
 
     print("EmbrAIon Project Validation Profiles")
@@ -1046,6 +1050,49 @@ def _cmd_validation_list(args: argparse.Namespace) -> int:
             )
             required = "required" if definition.get("required") else "optional"
             print(f"  param {parameter}: {target} ({required})")
+    if areas:
+        print()
+        print("Areas:")
+        for name, area in areas.items():
+            print(f"{name}: paths {', '.join(area['paths'])}")
+            for command in area.get("commands") or []:
+                print(f"  {command}")
+            for profile in area.get("profiles") or []:
+                print(f"  profile {profile}")
+    return 0
+
+
+def _plan_for_cli(args: argparse.Namespace) -> dict[str, Any]:
+    from .validation_plan import build_plan
+
+    return build_plan(
+        args.profile,
+        base_ref=args.base_ref,
+        head_ref=args.head_ref,
+        include_worktree=args.include_worktree,
+        full_justification=args.full_justification,
+    )
+
+
+def _cmd_validation_plan(args: argparse.Namespace) -> int:
+    from .common import project_root
+    from .validation_plan import default_plan_path, explain_plan, write_plan
+
+    plan = _plan_for_cli(args)
+    output = Path(args.output) if args.output else default_plan_path(project_root())
+    write_plan(plan, output)
+    if args.json:
+        _print_json(plan)
+    else:
+        print(explain_plan(plan))
+        print(f"Plan: {output}")
+    return 0
+
+
+def _cmd_validation_explain(args: argparse.Namespace) -> int:
+    from .validation_plan import explain_plan
+
+    print(explain_plan(_plan_for_cli(args)))
     return 0
 
 
@@ -2024,6 +2071,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validation_list.add_argument("--json", action="store_true")
     validation_list.set_defaults(func=_cmd_validation_list)
+
+    def add_plan_options(command: argparse.ArgumentParser) -> None:
+        command.add_argument("--base-ref", help="Compare changes since the merge base with this Git ref")
+        command.add_argument("--head-ref", help="Compare up to this Git ref (default: HEAD)")
+        command.add_argument("--include-worktree", action="store_true", help="Also include uncommitted and untracked changes")
+        command.add_argument("--full-justification", help="Escalate to the full profile with one reason from full-reasons")
+
+    validation_plan = validation_sub.add_parser(
+        "plan",
+        help="Compute which areas and commands a change needs",
+        description=(
+            "Apply the areas and impact rules from .embraion/validation.yaml to the paths "
+            "changed in Git and write a deterministic plan file."
+        ),
+    )
+    validation_plan.add_argument("profile")
+    add_plan_options(validation_plan)
+    validation_plan.add_argument("--output", help="Plan file (default: .embraion/state/validation/plan.json)")
+    validation_plan.add_argument("--json", action="store_true")
+    validation_plan.set_defaults(func=_cmd_validation_plan)
+
+    validation_explain = validation_sub.add_parser(
+        "explain",
+        help="Explain in plain language why areas and commands are selected",
+        description="Print the validation plan decision without writing a file.",
+    )
+    validation_explain.add_argument("profile")
+    add_plan_options(validation_explain)
+    validation_explain.set_defaults(func=_cmd_validation_explain)
 
     validation_run = validation_sub.add_parser(
         "run",
