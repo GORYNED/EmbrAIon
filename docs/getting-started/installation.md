@@ -10,6 +10,15 @@ EmbrAIon uses one global launcher per machine. Each project pins the exact frame
 - Windows, macOS, or Linux
 - Python 3.11 or newer
 - `pipx` for the recommended isolated CLI installation
+- Git on your `PATH`
+
+### Git and GitHub
+
+Git is a stated prerequisite of EmbrAIon. Project checks, worktrees, and the decision records read and change Git state. The worktree commands need Git 2.36 or newer, because they read `git worktree list --porcelain -z`. The CLI does not check the Git version for you.
+
+GitHub is the supported hosting and delivery surface. The GitHub CLI `gh`, signed in, is needed only when `embraion worktree gc` verifies merged pull requests. Without it, cleanup keeps the resources it cannot prove.
+
+The universal rules stay in the [worktree](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) and [delivery](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/delivery.md) workflows. Their Git and GitHub mechanics are in [one place](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/git.md). The decision is recorded in [ADR 0001](../architecture/decisions/0001-git-is-a-prerequisite-git-mechanics-live-in-one-place.md).
 
 ## Install the launcher
 
