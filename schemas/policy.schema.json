@@ -93,6 +93,13 @@
         },
         "require-review": {
           "type": "boolean"
+        },
+        "protected-sources": {
+          "description": "Optional. 'name' (default) matches changed file names; 'base-tree' compares protected paths with the merge base by Git object ID.",
+          "enum": [
+            "name",
+            "base-tree"
+          ]
         }
       },
       "additionalProperties": false

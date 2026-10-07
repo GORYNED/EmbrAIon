@@ -1181,6 +1181,8 @@ def _cmd_enforcement_status(args: argparse.Namespace) -> int:
         print(f"Enabled: {policy['enabled']}")
         print(f"Validation profile: {policy['validation-profile']}")
         print(f"Review required: {policy['require-review']}")
+        if "protected-sources" in policy:
+            print(f"Protected sources: {policy['protected-sources']}")
         print(
             "GitHub Actions gate: "
             + ("present" if surface["present"] else "not installed")
@@ -1193,6 +1195,7 @@ def _cmd_enforcement_check(args: argparse.Namespace) -> int:
         base_ref=args.base_ref,
         run_id=args.run_id,
         external_review_gate=args.external_review_gate,
+        protected_sources=args.protected_sources,
     )
     if args.json:
         _print_json(record)
@@ -1205,6 +1208,8 @@ def _cmd_enforcement_check(args: argparse.Namespace) -> int:
             print(f"{item['id']}: {item['status']}")
             for path in item.get("changed-paths") or []:
                 print(f"  {path}")
+            for finding in item.get("findings") or []:
+                print(f"  {finding}")
         print(f"Evidence: {record['evidence-path']}")
         print("PASS" if record["passed"] else "FAIL")
     return 0 if record["passed"] else 1
@@ -2616,6 +2621,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Delegate required review enforcement to an explicit external "
             "surface such as the generated GitHub Actions approval gate."
+        ),
+    )
+    enforcement_check_parser.add_argument(
+        "--protected-sources",
+        choices=["name", "base-tree"],
+        help=(
+            "Override the protected-sources mode of the policy. 'base-tree' compares "
+            "protected paths with the merge base by Git object ID."
         ),
     )
     enforcement_check_parser.add_argument("--json", action="store_true")

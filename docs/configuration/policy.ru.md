@@ -96,6 +96,16 @@ enforcement:
   require-review: false
 ```
 
+Необязательный ключ `protected-sources` выбирает способ проверки protected paths:
+
+```yaml
+enforcement:
+  protected-sources: base-tree
+```
+
+- `name` (по умолчанию, если ключ опущен): сопоставлять имена изменённых файлов со списком protected из политики текущего дерева.
+- `base-tree`: читать список protected с merge base и сравнивать защищённые пути по ID объектов Git. Любое другое значение не проходит validation. См. [Защита источников по идентичности объектов Git](../guides/enforcement.ru.md#защита-источников-по-идентичности-объектов-git).
+
 Не меняйте этот block вручную в надежде, что CI появится сам. Когда готовы установить GitHub Actions surface, используйте явную команду:
 
 ```bash
