@@ -4,7 +4,7 @@ After `embraion init` and installing your host projection, ask:
 
 > Configure EmbrAIon for this project.
 
-Lead uses the canonical Core [Project Bootstrap](bootstrap.md) skill: inspect the repository, bind existing sources of truth, preserve safety policy, and discover real validation commands. You do not need to know every YAML file manually. Routing and custom agents stay optional.
+Lead uses the canonical Core [Project Bootstrap](bootstrap.md) skill: inspect the repository, bind existing sources of truth, preserve safety policy, and discover real validation commands. You do not need to know every YAML file manually. [Configure by asking](configure-by-asking.md) maps each kind of request to the file it fills and the check that proves it. Routing and custom agents stay optional.
 
 For explicit model tuning, use the full request on the Bootstrap page. Manual editing remains available; the table below is an ownership reference.
 

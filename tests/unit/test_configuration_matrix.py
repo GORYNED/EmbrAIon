@@ -184,6 +184,13 @@ class ConfigurationMatrixTests(unittest.TestCase):
             with self.subTest(skill=skill):
                 self.assertLessEqual(len(description), 1024)
 
+    def test_both_documentation_pages_list_every_entry(self) -> None:
+        for suffix in (".md", ".ru.md"):
+            page = (ROOT / "docs/configuration" / f"configure-by-asking{suffix}").read_text(encoding="utf-8")
+            for entry in self.entries:
+                with self.subTest(page=suffix, entry=entry["id"]):
+                    self.assertIn(f"| `{entry['id']}` |", page)
+
     def test_intent_phrases_never_contain_a_consumer_name(self) -> None:
         text = MATRIX.read_text(encoding="utf-8")
         for forbidden in ("SensorEdge", "Unity-SDK", "MeasureX", "/home/", "/tmp/"):
