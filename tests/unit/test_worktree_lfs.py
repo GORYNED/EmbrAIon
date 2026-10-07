@@ -10,10 +10,11 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from unittest.mock import Mock
 
 from jsonschema import Draft202012Validator
 
-from embraion import worktree_lfs
+from embraion import worktree, worktree_lfs
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTENT = b"synthetic large asset\n"
@@ -92,6 +93,15 @@ class LfsModeTests(unittest.TestCase):
         for bad in ({"lfs": "pull"}, {"lfs": True}, {"other": 1}):
             self.assertTrue(list(validator.iter_errors(base | {"worktree": bad})), bad)
 
+    def test_git_timeout_requires_confirmed_descendant_termination(self) -> None:
+        process = Mock()
+        process.communicate.side_effect = subprocess.TimeoutExpired(["git", "lfs", "fetch"], 1)
+        with patch.object(worktree_lfs.subprocess, "Popen", return_value=process), \
+             patch.object(worktree_lfs, "terminate_tree", return_value=False) as terminate:
+            with self.assertRaisesRegex(RuntimeError, "termination is unconfirmed"):
+                worktree_lfs._run(["git", "lfs", "fetch"], self.repo, timeout=1)
+        terminate.assert_called_once_with(process)
+
 
 class HydrationDetectionTests(unittest.TestCase):
     """Pointer versus content detection with a stubbed Git LFS client."""
@@ -102,6 +112,7 @@ class HydrationDetectionTests(unittest.TestCase):
         self.sandbox = Path(temporary.name).resolve()
         self.calls: list[list[str]] = []
         self.lfs_available = True
+        self.filter_available = True
         self.fetch_stderr = b""
         self.fetch_code = 0
         self.checkout_content: bytes | None = CONTENT
@@ -111,6 +122,9 @@ class HydrationDetectionTests(unittest.TestCase):
         words = list(args[1:])
         while words[:1] == ["-c"]:
             words = words[2:]  # Per-command configuration is not part of the subcommand.
+        if words == ["config", "--get", "filter.lfs.process"]:
+            return subprocess.CompletedProcess(args, 0 if self.filter_available else 1,
+                                               b"git-lfs filter-process\n" if self.filter_available else b"", b"")
         if words[:1] == ["lfs"]:
             if words[1] == "version":
                 return subprocess.CompletedProcess(args, 0 if self.lfs_available else 1, b"git-lfs/3\n", b"")
@@ -284,6 +298,137 @@ class HydrationDetectionTests(unittest.TestCase):
         self.assertEqual("hydrated", result["state"])
         self.assertEqual(0, result["missing"])
 
+    def _preflight_worktree(self) -> tuple[Path, str]:
+        repo = self.sandbox / "repo"
+        repo.mkdir()
+        git(repo, "init", "-q", "-b", "main")
+        git(repo, "lfs", "install", "--local")
+        (repo / ".gitattributes").write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n", encoding="utf-8")
+        (repo / "assets").mkdir()
+        (repo / "assets" / "model.bin").write_bytes(CONTENT)
+        git(repo, "add", "-A")
+        git(repo, "commit", "-q", "-m", "fixture")
+        git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
+        target = self.sandbox / "validation-worktree"
+        git(repo, "worktree", "add", "--detach", str(target), "HEAD")
+        (target / "assets" / "model.bin").write_bytes(pointer())
+        return target, git(repo, "rev-parse", "HEAD").stdout.strip()
+
+    def preflight(self, target: Path, head: str) -> dict:
+        resource = {"kind": "worktree", "path": str(target), "resource-id": "fixture", "state": "active"}
+        with patch.object(worktree_lfs, "_run", self.runner), \
+             patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {"fixture": resource}}), \
+             patch.object(worktree_lfs.registry, "verify_resource", return_value=True):
+            return worktree_lfs.preflight_lfs(target, head)
+
+    def test_preflight_hydrates_and_verifies_exact_registered_worktree(self) -> None:
+        target, head = self._preflight_worktree()
+        result = self.preflight(target, head)
+        self.assertEqual("passed", result["state"], (result, git(target, "status", "--porcelain").stdout))
+        self.assertEqual(1, result["lfs"]["verified"])
+        self.assertEqual(head, result["head"])
+
+    def test_preflight_rejects_dirty_locked_or_wrong_head_before_hydration(self) -> None:
+        target, head = self._preflight_worktree()
+        (target / "scratch.txt").write_text("dirty", encoding="utf-8")
+        self.assertIn("dirty", self.preflight(target, head)["reason"])
+        (target / "scratch.txt").unlink()
+        git(target, "worktree", "lock", str(target))
+        self.assertIn("locked", self.preflight(target, head)["reason"])
+        git(target, "worktree", "unlock", str(target))
+        lock = git(target, "rev-parse", "--path-format=absolute", "--git-path", "index.lock").stdout.strip()
+        Path(lock).write_text("", encoding="utf-8")
+        self.assertIn("index is locked", self.preflight(target, head)["reason"])
+        Path(lock).unlink()
+        self.assertIn("HEAD differs", self.preflight(target, "0" * len(head))["reason"])
+        self.assertEqual(pointer(), (target / "assets/model.bin").read_bytes())
+
+    def test_preflight_rejects_unverified_lfs_content(self) -> None:
+        target, head = self._preflight_worktree()
+        self.checkout_content = b"wrong data"
+        result = self.preflight(target, head)
+        self.assertEqual("failed", result["state"])
+        self.assertEqual("failed", result["lfs"]["state"])
+
+    def test_preflight_rejects_linked_or_oversized_pointer_without_reading_it(self) -> None:
+        target, head = self._preflight_worktree()
+        path = target / "assets/model.bin"
+        path.write_bytes(b"x" * 4096)
+        self.assertIn("dirty", self.preflight(target, head)["reason"])
+        path.unlink()
+        outside = self.sandbox / "outside-pointer"
+        outside.write_bytes(pointer())
+        try:
+            path.symlink_to(outside)
+        except OSError:
+            self.skipTest("symlinks unavailable")
+        self.assertIn("dirty", self.preflight(target, head)["reason"])
+
+    def test_preflight_rejects_git_location_override(self) -> None:
+        target, head = self._preflight_worktree()
+        with patch.dict(os.environ, {"GIT_DIR": str(self.sandbox / "unrelated.git")}):
+            result = self.preflight(target, head)
+        self.assertEqual("failed", result["state"])
+        self.assertIn("overridden", result["reason"])
+
+    def test_preflight_rejects_assume_unchanged_and_skipped_index_entries(self) -> None:
+        target, head = self._preflight_worktree()
+        git(target, "update-index", "--assume-unchanged", ".gitattributes")
+        (target / ".gitattributes").write_text("*.bin -filter\n", encoding="utf-8")
+        self.assertIn("hidden or skipped", self.preflight(target, head)["reason"])
+        git(target, "update-index", "--no-assume-unchanged", ".gitattributes")
+        (target / ".gitattributes").write_text("*.bin filter=lfs diff=lfs merge=lfs -text\n", encoding="utf-8")
+        git(target, "update-index", "--skip-worktree", "assets/model.bin")
+        (target / "assets/model.bin").unlink()
+        self.assertIn("hidden or skipped", self.preflight(target, head)["reason"])
+
+    def test_committed_attributes_ignore_info_override_for_all_pointers(self) -> None:
+        repo = make_repo(self.sandbox, {
+            "assets/one.bin": pointer(b"one"), "assets/two.bin": pointer(b"two"),
+        }, "*.bin filter=lfs -text\n")
+        (repo / ".git/info/attributes").write_text("assets/two.bin -filter\n", encoding="utf-8")
+        self.assertEqual({"assets/one.bin", "assets/two.bin"},
+                         {path for path, _, _ in worktree_lfs._tracked_lfs_files(repo)})
+
+    def test_preflight_rejects_unregistered_worktree(self) -> None:
+        target, head = self._preflight_worktree()
+        with patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
+            result = worktree_lfs.preflight_lfs(target, head)
+        self.assertEqual("failed", result["state"])
+        self.assertIn("registration", result["reason"])
+
+    def test_preflight_requires_installed_filter_and_executable(self) -> None:
+        target, head = self._preflight_worktree()
+        self.filter_available = False
+        self.assertIn("filter is not installed", self.preflight(target, head)["reason"])
+        self.filter_available = True
+        self.lfs_available = False
+        self.assertIn("executable is unavailable", self.preflight(target, head)["reason"])
+
+    def test_preflight_requires_the_named_remote(self) -> None:
+        target, head = self._preflight_worktree()
+        with patch.object(worktree_lfs, "_run", self.runner), \
+             patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {
+                 "fixture": {"kind": "worktree", "path": str(target), "resource-id": "fixture", "state": "active"}}}), \
+             patch.object(worktree_lfs.registry, "verify_resource", return_value=True):
+            result = worktree_lfs.preflight_lfs(target, head, remote="missing")
+        self.assertEqual("failed", result["state"])
+        self.assertIn("remote is unavailable", result["reason"])
+
+    def test_preflight_rechecks_head_after_hydration(self) -> None:
+        target, head = self._preflight_worktree()
+        hydrate = worktree_lfs.hydrate_lfs
+
+        def advance(path: Path, remote: str | None = None) -> dict:
+            result = hydrate(path, remote=remote)
+            git(path, "commit", "--allow-empty", "-q", "-m", "advance")
+            return result
+
+        with patch.object(worktree_lfs, "hydrate_lfs", side_effect=advance):
+            result = self.preflight(target, head)
+        self.assertEqual("failed", result["state"])
+        self.assertIn("HEAD differs", result["reason"])
+
 
 @unittest.skipUnless(shutil.which("git-lfs"), "git-lfs is not installed")
 class RealGitLfsTests(unittest.TestCase):
@@ -327,6 +472,20 @@ class RealGitLfsTests(unittest.TestCase):
         result = worktree_lfs.hydrate_lfs(target)
         self.assertEqual({"state": "hydrated", "files": 1, "verified": 1, "missing": 0, "reason": "verified"},
                          result)
+        self.assertEqual(CONTENT, (target / "model.bin").read_bytes())
+
+    def test_registered_preflight_hydrates_and_leaves_exact_head_clean(self) -> None:
+        git(self.clone, "lfs", "install", "--local")
+        expected = git(self.clone, "rev-parse", "origin/main").stdout.strip()
+        target = self.sandbox / "registered-task"
+        with patch.dict(os.environ, {"GIT_LFS_SKIP_SMUDGE": "1"}):
+            worktree.create_detached_worktree(target, base="origin/main", task_id="fixture-task",
+                                              host="codex", repo=self.clone)
+        self.assertEqual(pointer(), (target / "model.bin").read_bytes())
+        result = worktree_lfs.preflight_lfs(target, expected)
+        self.assertEqual("passed", result["state"], result)
+        self.assertEqual(expected, git(target, "rev-parse", "HEAD").stdout.strip())
+        self.assertEqual("", git(target, "status", "--porcelain", "--untracked-files=all").stdout.strip())
         self.assertEqual(CONTENT, (target / "model.bin").read_bytes())
 
     def test_unreachable_lfs_remote_fails_but_keeps_the_worktree(self) -> None:

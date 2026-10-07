@@ -618,6 +618,7 @@ embraion mcp inventory
 ```bash
 embraion worktree list
 embraion worktree create ai/my-task
+embraion worktree lfs-preflight --path /path/to/worktree --expected-head <full-commit> --remote origin
 embraion worktree gc
 embraion worktree gc --apply
 embraion worktree salvage /path/to/worktree
@@ -626,6 +627,8 @@ embraion worktree salvage /path/to/worktree
 GC удаляет только worktrees, созданные через `embraion worktree create`, с соответствующей записью ownership в Git-каталоге worktree. Требуются завершённые локальные run/session evidence, чистый интегрированный checkout, отсутствие блокировок и незавершённых Git-операций. Отсутствующее, повреждённое, активное, blocked или иное недоказанное состояние сохраняется. Старые и созданные вручную worktrees не удаляются.
 
 Hydration Git LFS по умолчанию выключена. При `worktree.lfs: hydrate` в `.embraion/project.yaml` команды `worktree create` (checkout и `--detach`) и `worktree register` загружают LFS-содержимое точного HEAD нового worktree из собственного LFS-remote репозитория, делают checkout и проверяют каждый LFS-файл по размеру и SHA-256. `create` печатает `LFS hydrated: <n> of <n> files verified`; `register` добавляет в JSON объект `lfs` (`state`, `files`, `verified`, `missing`, `reason`, а также `modified`, если LFS-файлы изменены локально). Локально изменённые LFS-файлы только отражаются в отчёте, не перезаписываются и не считаются ошибкой. Использование LFS определяется только по файлам `.gitattributes`, закоммиченным в HEAD; `.git/info/attributes` и глобальные атрибуты не читаются. Репозиторий без remote даёт понятную ошибку, а fetch и checkout прерываются по таймауту через 1800 секунд. Неудачная hydration, включая отсутствие `git lfs` при наличии LFS-файлов, завершает команду с кодом 1 и сохраняет worktree. `prepare` выполняется до появления checkout и не делает hydration. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
+`worktree lfs-preflight` — более строгая проверка перед зависимой валидацией. Она требует одного активного отдельного worktree, зарегистрированного EmbrAIon и не заблокированного, точного полного HEAD, чистого индекса и дерева (до hydration допускаются только закоммиченные LFS pointers), установленных обязательных LFS filters, настроенного remote и проверенного содержимого каждого LFS-файла. После hydration повторно проверяются identity, HEAD и чистота. Команда выводит JSON и возвращает ненулевой код при неопределённом состоянии. `--remote` задаёт конкретный remote; без него используется tracking remote ветки или `origin`. Вызывайте команду непосредственно перед зависимой проверкой: результат не удерживает блокировку дерева.
 
 ### `embraion learning`
 
