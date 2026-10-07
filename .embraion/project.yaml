@@ -1,12 +1,12 @@
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.29.0
+  version: 0.30.0
   artifact:
     schema: 1
     source: github-release
-    release: v0.29.0
-    asset: embraion-0.29.0-py3-none-any.whl
-    digest: sha256:8288b625cedcbe4ca7f3a0009b806206504ea2ab7a1dbbb0384928cd6a53e6e4
+    release: v0.30.0
+    asset: embraion-0.30.0-py3-none-any.whl
+    digest: sha256:a1f00ee39215cf07d1242582a00dcf544eb914fc60c377bf9ccb81371c88e0cf
 project:
   name: EmbrAIon
 capabilities: {}
