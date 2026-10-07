@@ -91,6 +91,10 @@ Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
+## New in 0.30
+
+- The optional `check` section of [policy](docs/configuration/policy.md#check-options) declares which organization-check modes (`full`, `compare` or both), security threshold and scan scope [`embraion check`](docs/reference/cli.md#embraion-check) uses, and the reusable `actions/check` action runs it after the setup action, so [consumer CI](docs/reference/runtime-version-resolution.md#consumer-ci) carries no project flags.
+
 ## New in 0.29
 
 - [Architecture decision records](docs/configuration/decisions.md) are part of the workflow: the optional `decisions` contract slot and `.embraion/decisions.yaml` declare which changes are architectural, `embraion decisions check` (also run by `embraion check --base-ref`) requires a record or a `Decision-Waiver`, and `embraion adr new` scaffolds the next numbered record.
@@ -139,4 +143,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-07 02:00 UTC</sub>
+<sub>Last updated: 2026-10-07 03:20 UTC</sub>
