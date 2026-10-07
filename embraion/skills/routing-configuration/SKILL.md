@@ -1,11 +1,13 @@
 ---
 name: routing-configuration
-description: Configure model-agnostic EmbrAIon routing and project-owned deployments using selectors and capabilities supported by the consuming project's execution hosts.
+description: Configure model-agnostic EmbrAIon routing, project-owned deployments, execution bindings, and pricing sources from plain requests in any language, such as "Configure routing", "use a cheaper model for ordinary tasks", or «Настрой роутинг», using selectors and capabilities supported by the consuming project's execution hosts.
 ---
 
 # Routing Configuration
 
 Use this skill for any Product Owner request, including ordinary language such as "configure routing", "change models for complex tasks", "use a cheaper model for ordinary tasks", or "change effort or fallback". Apply it for every AI host supported now or in the future.
+
+For exact shapes (routes, roles, task classes, candidate groups, fallbacks), execution bindings, pricing sources, and the verification commands for each, read `references/routing-recipes.md`. Discover hosts and available selectors yourself; ask only about goals and fallback policy, never for YAML.
 
 ## Routing authority
 
