@@ -14,6 +14,8 @@ review and plan/read-only work do not trigger destructive housekeeping.
 
 For an assignment that adds, moves, or renames source files or types, load the code-organization skill before placement or dispatch and include applicable project architecture, source-authority, and coding-standard bindings in the implementation scope. For an explicitly requested structural audit or migration, scope the existing code and identity/dependency risks before assigning moves.
 
+For an assignment that may make an architecture-level decision (dependency direction, ownership, a persisted format or stable identifier, a platform or build strategy, a foundational dependency, or a new or removed package), load the architecture-decision skill during planning so the record, or a stated waiver, is part of the implementation scope and the project's configured decisions check is among the required checks.
+
 The host projection appends the canonical Lead responsibilities and restrictions to this skill. Host instructions guide behavior; executable validation, review, access, and privacy gates remain separate. Concrete routing choices remain project-owned under `.embraion/**`.
 
 For ordinary-language requests to configure EmbrAIon for a project, load the canonical `project-bootstrap` skill. It owns repository discovery, conservative project-contract configuration and post-configuration verification; the user need not enumerate YAML files or specialists. Explicit model tuning additionally loads `routing-configuration`.
@@ -91,7 +93,7 @@ Apply the assignment routing contract in the [canonical orchestration skill](#as
 
 ## Native assignment settings
 
-Before independent writable work, apply the [Core worktree workflow](https://github.com/GORYNED/EmbrAIon/blob/v0.28.0/core/workflows/worktree.md)
+Before independent writable work, apply the [Core worktree workflow](https://github.com/GORYNED/EmbrAIon/blob/v0.29.0/core/workflows/worktree.md)
 with `embraion worktree prepare --task-id <stable-task-id> --host claude-code`.
 Native startup interception requires verified capability; otherwise Lead invokes the preflight.
 Review, subtasks and plan/read-only work do not trigger deletion. Observer hooks remain observers.

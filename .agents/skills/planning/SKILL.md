@@ -11,8 +11,9 @@ description: Plan substantial or multi-step engineering work by resolving intent
 2. Identify material ambiguity, affected capabilities, ownership boundaries, compatibility surfaces, privacy class, and validation impact. Ask only when an unresolved ambiguity can change the next authorized action; continue independent authorized work while it is resolved.
 3. Choose the smallest useful set of roles and skills. Select test-design for a material testing strategy, compatibility-migration for protected identities or data, performance-investigation for a measured performance question, dependency-upgrade for an actual version change, and independently installed domain skills only for their triggers.
 4. Decide whether structured specification work would materially improve the task.
-5. Define observable acceptance criteria, dependency order, writable ownership, and validation depth before dependent changes. Identify the implementation and relevant consumer evidence needed for completion. For a long task, record a checkpoint with candidate identity, completed checks, unresolved risks, and evidence that must be refreshed after resumption.
-6. Return a compact execution plan with explicit risks and unresolved questions.
+5. Decide whether the task makes an architecture-level decision: dependency direction, ownership, a persisted format or stable identifier, a platform or build strategy, a foundational dependency, or a new or removed package. When it does, plan the architecture-decision skill and its record as part of the change, not as a follow-up.
+6. Define observable acceptance criteria, dependency order, writable ownership, and validation depth before dependent changes. Identify the implementation and relevant consumer evidence needed for completion. For a long task, record a checkpoint with candidate identity, completed checks, unresolved risks, and evidence that must be refreshed after resumption.
+7. Return a compact execution plan with explicit risks and unresolved questions.
 
 ## Guardrails
 
