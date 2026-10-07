@@ -20,13 +20,16 @@ from .security import redact_text
 LFS_MODES = ("none", "hydrate")
 _POINTER_VERSION = "version https://git-lfs.github.com/spec/v1"
 _POINTER_LIMIT = 1024  # Git LFS pointer files are always smaller than this.
+# Seconds allowed for one network or checkout step; a stalled transfer fails closed.
+LFS_STEP_TIMEOUT = 1800
+_GIT_TIMEOUT = 300
 _OID = re.compile(r"sha256:([0-9a-f]{64})")
 # `git lfs checkout` refuses to run unless the LFS filter is configured. A fresh
 # machine or an isolated Git configuration may lack it, so supply it for this one
 # command only; nothing is written to any Git configuration.
 _FILTER_CONFIG = ("-c", "filter.lfs.clean=git-lfs clean -- %f", "-c", "filter.lfs.smudge=git-lfs smudge -- %f",
                   "-c", "filter.lfs.process=git-lfs filter-process", "-c", "filter.lfs.required=true")
-_URL_USERINFO = re.compile(r"(://)[^/\s@]*@")
+_URL_USERINFO = re.compile(r"(://)[^/\s]*@")  # Greedy: user info may contain "@".
 _URL_PARAMETERS = re.compile(r"(://[^\s?#]*)[?#]\S*")
 
 
@@ -50,19 +53,27 @@ def lfs_mode(repo: Path | None = None) -> str:
     return mode
 
 
-def _run(args: list[str], cwd: Path, data: bytes | None = None) -> subprocess.CompletedProcess[bytes]:
+def _run(args: list[str], cwd: Path, data: bytes | None = None,
+         timeout: int = _GIT_TIMEOUT) -> subprocess.CompletedProcess[bytes]:
     environment = child_environment()
-    environment["GIT_TERMINAL_PROMPT"] = "0"  # Never wait for a credential prompt.
-    return subprocess.run(args, cwd=str(cwd), env=environment, input=data,
+    # Git does not prompt on the terminal for credentials; a credential helper or an
+    # askpass program that the user configured can still run.
+    environment["GIT_TERMINAL_PROMPT"] = "0"
+    return subprocess.run(args, cwd=str(cwd), env=environment, input=data, timeout=timeout,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
 
 
-def _git(worktree: Path, *args: str, data: bytes | None = None) -> subprocess.CompletedProcess[bytes]:
-    return _run(["git", *args], worktree, data)
+def _git(worktree: Path, *args: str, data: bytes | None = None,
+         timeout: int = _GIT_TIMEOUT) -> subprocess.CompletedProcess[bytes]:
+    return _run(["git", *args], worktree, data, timeout)
 
 
-def _result(state: str, reason: str, files: int = 0, missing: int = 0) -> dict[str, Any]:
-    return {"state": state, "files": files, "verified": files - missing, "missing": missing, "reason": reason}
+def _result(state: str, reason: str, files: int = 0, missing: int = 0, modified: int = 0) -> dict[str, Any]:
+    result = {"state": state, "files": files, "verified": files - missing - modified,
+              "missing": missing, "reason": reason}
+    if modified:
+        result["modified"] = modified  # Additive: only present when local edits were found.
+    return result
 
 
 def _safe_reason(prefix: str, process: subprocess.CompletedProcess[bytes] | None = None) -> str:
@@ -153,6 +164,18 @@ def _excluded_by_sparse_checkout(worktree: Path) -> set[str]:
             for entry in listing.stdout.split(b"\0") if entry[:2] == b"S "}
 
 
+def _is_modified_locally(path: Path) -> bool:
+    """A regular file that is neither the expected content nor a pointer was edited locally."""
+    try:
+        if path.is_symlink() or not path.is_file():
+            return False
+        if path.stat().st_size < _POINTER_LIMIT:
+            return _parse_pointer(path.read_bytes()) is None
+        return True
+    except OSError:
+        return False
+
+
 def _has_content(path: Path, oid: str, size: int) -> bool:
     try:
         status = path.lstat()
@@ -167,26 +190,41 @@ def _has_content(path: Path, oid: str, size: int) -> bool:
         return False
 
 
-def _missing(worktree: Path, files: list[tuple[str, str, int]]) -> int:
+def _check(worktree: Path, files: list[tuple[str, str, int]],
+           allowed: set[str] | None = None) -> tuple[int, set[str]]:
+    """Return (missing count, locally modified paths).
+
+    A file that differs from its pointer but is not a pointer is "modified", not
+    missing. After hydration `allowed` holds the paths already modified before it,
+    so content that hydration itself left wrong still counts as missing.
+    """
     skipped = _excluded_by_sparse_checkout(worktree)
-    return sum(1 for path, oid, size in files
-               if path not in skipped and not _has_content(worktree / path, oid, size))
+    missing, modified = 0, set()
+    for path, oid, size in files:
+        if path in skipped or _has_content(worktree / path, oid, size):
+            continue
+        if _is_modified_locally(worktree / path) and (allowed is None or path in allowed):
+            modified.add(path)
+        else:
+            missing += 1
+    return missing, modified
 
 
-def _fetch_remote(worktree: Path) -> list[str]:
+def _fetch_remote(worktree: Path) -> str | None:
     remotes = _git(worktree, "remote").stdout.decode("utf-8", "replace").split()
     if not remotes:
-        return []
+        return None
     branch = _git(worktree, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.decode("utf-8", "replace").strip()
     tracked = _git(worktree, "config", "--get", f"branch.{branch}.remote").stdout.decode("utf-8", "replace").strip() if branch else ""
-    return [tracked if tracked in remotes else ("origin" if "origin" in remotes else remotes[0])]
+    return tracked if tracked in remotes else ("origin" if "origin" in remotes else remotes[0])
 
 
 def hydrate_lfs(worktree: Path) -> dict[str, Any]:
     """Fetch and check out LFS content for the worktree's HEAD, then verify it.
 
-    Returns `{state, files, verified, missing, reason}`. `state` is `hydrated`,
-    `failed` or `not-applicable`. Nothing is removed on failure.
+    Returns `{state, files, verified, missing, reason}` plus `modified` when LFS
+    files were edited locally (reported, never a failure, never overwritten).
+    `state` is `hydrated`, `failed` or `not-applicable`. Nothing is removed on failure.
     """
     worktree = Path(worktree)
     try:
@@ -196,22 +234,37 @@ def hydrate_lfs(worktree: Path) -> dict[str, Any]:
         if not files:
             return _result("not-applicable", "no-lfs-files-at-head")
         total = len(files)
-        missing = _missing(worktree, files)
+        missing, modified = _check(worktree, files)
+        note = f" ({len(modified)} modified locally, not checked)" if modified else ""
         if missing == 0:
-            return _result("hydrated", "already-present", total)
+            return _result("hydrated", "already-present" + note, total, 0, len(modified))
+
+        def failed(reason: str, count: int | None = None) -> dict[str, Any]:
+            return _result("failed", reason, total, _check(worktree, files, modified)[0] if count is None else count,
+                           len(modified))
+
         if _git(worktree, "lfs", "version").returncode:
-            return _result("failed", "git-lfs-unavailable: install Git LFS (https://git-lfs.com), "
-                           "then run `git lfs pull` in the worktree", total, missing)
+            return failed("git-lfs-unavailable: install Git LFS (https://git-lfs.com), "
+                          "then run `git lfs pull` in the worktree", missing)
+        remote = _fetch_remote(worktree)
+        if remote is None:
+            return failed("no remote to fetch LFS content from", missing)
         head = _git(worktree, "rev-parse", "--verify", "HEAD").stdout.decode("ascii", "replace").strip()
-        fetch = _git(worktree, "lfs", "fetch", *_fetch_remote(worktree), head)
+        try:
+            fetch = _git(worktree, "lfs", "fetch", remote, head, timeout=LFS_STEP_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            return failed(f"git-lfs-fetch-failed: timed out after {LFS_STEP_TIMEOUT} seconds")
         if fetch.returncode:
-            return _result("failed", _safe_reason("git-lfs-fetch-failed", fetch), total, _missing(worktree, files))
-        checkout = _git(worktree, *_FILTER_CONFIG, "lfs", "checkout")
+            return failed(_safe_reason("git-lfs-fetch-failed", fetch))
+        try:
+            checkout = _git(worktree, *_FILTER_CONFIG, "lfs", "checkout", timeout=LFS_STEP_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            return failed(f"git-lfs-checkout-failed: timed out after {LFS_STEP_TIMEOUT} seconds")
         if checkout.returncode:
-            return _result("failed", _safe_reason("git-lfs-checkout-failed", checkout), total, _missing(worktree, files))
-        missing = _missing(worktree, files)
+            return failed(_safe_reason("git-lfs-checkout-failed", checkout))
+        missing, _ = _check(worktree, files, modified)
         if missing:
-            return _result("failed", "lfs-content-missing-after-checkout", total, missing)
-        return _result("hydrated", "verified", total)
-    except (OSError, RuntimeError, ValueError) as error:
+            return failed("lfs-content-missing-after-checkout", missing)
+        return _result("hydrated", "verified" + note, total, 0, len(modified))
+    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as error:
         return _result("failed", _safe_reason(f"lfs-check-failed ({type(error).__name__})"))

@@ -101,6 +101,7 @@ class WorktreeLfsCliTests(unittest.TestCase):
         self.assertEqual(0, created.returncode, created.stderr)
         self.assertEqual(CONTENT, (target / "model.bin").read_bytes())
 
+    @unittest.skipUnless(os.name == "posix", "hiding git-lfs through PATH needs a POSIX layout")
     def test_missing_git_lfs_fails_the_command_but_keeps_the_worktree(self) -> None:
         self.settings("worktree:\n  lfs: hydrate\n")
         bin_dir = self.sandbox / "bin"

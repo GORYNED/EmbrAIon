@@ -106,7 +106,7 @@ class HydrationDetectionTests(unittest.TestCase):
         self.fetch_code = 0
         self.checkout_content: bytes | None = CONTENT
 
-    def runner(self, args, cwd, data=None):  # noqa: ANN001 - mirrors worktree_lfs._run
+    def runner(self, args, cwd, data=None, timeout=300):  # noqa: ANN001 - mirrors worktree_lfs._run
         self.calls.append(list(args))
         words = list(args[1:])
         while words[:1] == ["-c"]:
@@ -122,9 +122,12 @@ class HydrationDetectionTests(unittest.TestCase):
                 return subprocess.CompletedProcess(args, 0, b"", b"")
         return subprocess.run(args, cwd=str(cwd), input=data, capture_output=True, check=False, env=isolated())
 
-    def lfs_repo(self) -> Path:
-        return make_repo(self.sandbox, {"assets/model.bin": pointer(), "notes.txt": b"plain\n"},
+    def lfs_repo(self, remote: bool = True) -> Path:
+        repo = make_repo(self.sandbox, {"assets/model.bin": pointer(), "notes.txt": b"plain\n"},
                          "*.bin filter=lfs diff=lfs merge=lfs -text\n")
+        if remote:
+            git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
+        return repo
 
     def hydrate(self, repo: Path) -> dict:
         with patch.object(worktree_lfs, "_run", self.runner):
@@ -156,6 +159,7 @@ class HydrationDetectionTests(unittest.TestCase):
         self.assertIn("git-lfs-unavailable", result["reason"])
         self.assertIn("git lfs pull", result["reason"])
 
+    @unittest.skipUnless(os.name == "posix", "hiding git-lfs through PATH needs a POSIX layout; the stubbed test covers Windows")
     def test_missing_git_lfs_is_detected_through_the_path(self) -> None:
         repo = self.lfs_repo()
         empty = self.sandbox / "bin"
@@ -194,6 +198,7 @@ class HydrationDetectionTests(unittest.TestCase):
                 self.checkout_content = content
                 with tempfile.TemporaryDirectory(prefix="worktree-lfs-wrong-") as scratch:
                     repo = make_repo(Path(scratch), {"assets/model.bin": pointer()}, "*.bin filter=lfs -text\n")
+                    git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
                     result = self.hydrate(repo)
                 self.assertEqual("failed", result["state"])
                 self.assertEqual(1, result["missing"])
@@ -210,9 +215,60 @@ class HydrationDetectionTests(unittest.TestCase):
         for secret in ("s3cretpass", "user:", "abcd1234efgh5678", "ken="):
             self.assertNotIn(secret, result["reason"])
 
+    def test_repository_without_a_remote_fails_before_fetching(self) -> None:
+        result = self.hydrate(self.lfs_repo(remote=False))
+        self.assertEqual("failed", result["state"])
+        self.assertEqual("no remote to fetch LFS content from", result["reason"])
+        self.assertEqual(1, result["missing"])
+        self.assertFalse([call for call in self.calls if "fetch" in call])
+
+    def test_password_containing_an_at_sign_is_fully_removed(self) -> None:
+        self.fetch_code = 2
+        self.fetch_stderr = b"cannot reach https://person:pa@ss@example.invalid/org/repo.git/info/lfs\n"
+        result = self.hydrate(self.lfs_repo())
+        for secret in ("person", "pa@ss", "@"):
+            self.assertNotIn(secret, result["reason"])
+        self.assertIn("https://example.invalid/org/repo.git/info/lfs", result["reason"])
+
+    def test_fetch_timeout_fails_closed_and_keeps_the_pointer(self) -> None:
+        repo = self.lfs_repo()
+        original = self.runner
+
+        def slow(args, cwd, data=None, timeout=300):  # noqa: ANN001
+            if "fetch" in args:
+                raise subprocess.TimeoutExpired(args, timeout)
+            return original(args, cwd, data, timeout)
+
+        with patch.object(worktree_lfs, "_run", slow):
+            result = worktree_lfs.hydrate_lfs(repo)
+        self.assertEqual("failed", result["state"])
+        self.assertIn("timed out after", result["reason"])
+        self.assertEqual(1, result["missing"])
+        self.assertEqual(pointer(), (repo / "assets/model.bin").read_bytes())
+
+    def test_locally_modified_lfs_file_is_reported_not_failed(self) -> None:
+        repo = make_repo(self.sandbox, {"assets/model.bin": pointer(), "assets/other.bin": pointer(b"other\n")},
+                         "*.bin filter=lfs -text\n")
+        (repo / "assets/other.bin").write_bytes(b"edited by hand\n")
+        git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
+        result = self.hydrate(repo)
+        self.assertEqual("hydrated", result["state"])
+        self.assertEqual((2, 1, 0, 1), (result["files"], result["verified"], result["missing"], result["modified"]))
+        self.assertIn("modified locally", result["reason"])
+        self.assertEqual(b"edited by hand\n", (repo / "assets/other.bin").read_bytes())
+
+    def test_content_that_hydration_left_wrong_is_still_a_failure_when_other_files_are_modified(self) -> None:
+        repo = make_repo(self.sandbox, {"assets/model.bin": pointer(), "assets/other.bin": pointer(b"other\n")},
+                         "*.bin filter=lfs -text\n")
+        (repo / "assets/other.bin").write_bytes(b"edited by hand\n")
+        git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
+        self.checkout_content = b"wrong content, wrong size\n"
+        result = self.hydrate(repo)
+        self.assertEqual("failed", result["state"])
+        self.assertEqual((1, 1), (result["missing"], result["modified"]))
+
     def test_fetch_uses_the_tracking_remote_only(self) -> None:
         repo = self.lfs_repo()
-        git(repo, "remote", "add", "origin", "https://example.invalid/org/repo.git")
         git(repo, "remote", "add", "mirror", "https://example.invalid/org/mirror.git")
         git(repo, "config", "branch.main.remote", "mirror")
         self.hydrate(repo)
