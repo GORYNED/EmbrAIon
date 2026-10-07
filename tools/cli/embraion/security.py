@@ -8,7 +8,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .common import SKIP_PARTS, framework_root, iter_text_files, read_json, read_yaml, state_root, write_json
+from .common import SKIP_PARTS, TEXT_SUFFIXES, framework_root, read_json, read_yaml, state_root, write_json
 from .policy import path_matches
 
 SEVERITY_ORDER = {
@@ -132,8 +132,8 @@ def _policy_skips(relative: str, sources: dict[str, list[str]] | None, categorie
     return any(path_matches(relative, sources[category]) for category in categories)
 
 
-def _other_text_files(root: Path, seen: set[str]) -> Iterable[tuple[Path, str]]:
-    for name in sorted(_inventory(root)):
+def _other_text_files(root: Path, names: list[str], seen: set[str]) -> Iterable[tuple[Path, str]]:
+    for name in names:
         if _path_key(name) in seen or Path(name).parts[:2] == (".embraion", "state"):
             continue
         path = root / name
@@ -254,10 +254,22 @@ def collect_findings(root: Path, all_files: bool = False,
     sources = _policy_sources(root) if all_files else None
     local_paths = _local_source_paths(root)
 
-    for path in iter_text_files(root):
-        relative = str(path.relative_to(root))
+    # Use the same Git-aware inventory for both passes. Filtering after rglob/read would
+    # expose ignored validation artifacts to the configuration/documentation scan.
+    names = sorted(_inventory(root))
+    for relative in names:
+        if Path(relative).parts[:2] == (".embraion", "state"):
+            continue
+        path = root / relative
+        if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in {".gitignore", ".editorconfig"}:
+            continue
+        if path.is_symlink() or not path.is_file():
+            continue
         seen.add(_path_key(relative))
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
 
         categories = None
         if _policy_skips(relative, sources, ("external",)):
@@ -280,7 +292,7 @@ def collect_findings(root: Path, all_files: bool = False,
             )
 
     if all_files:
-        for path, text in _other_text_files(root, seen):
+        for path, text in _other_text_files(root, names, seen):
             relative = str(path.relative_to(root))
             categories = PRECISE_CATEGORIES
             if _policy_skips(relative, sources, ("external", "generated")):

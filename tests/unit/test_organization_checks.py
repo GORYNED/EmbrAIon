@@ -6,6 +6,7 @@ import tempfile
 import traceback
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -226,6 +227,40 @@ class OrganizationTests(unittest.TestCase):
         result = check_organization(self.root)
         self.assertEqual(["Assets/Project/Temp/Bad.cs"], [finding["path"] for finding in result["findings"]])
         self.assertFalse(result["passed"])
+
+    def test_clean_checkout_and_filled_tree_count_only_declared_unignored_sources(self) -> None:
+        self.config({"namespaces": {"rules": [{"path": "Assets/Project", "namespace": "Demo"}]}})
+        self.write(".gitignore", "Builds/Validation/\nLibrary/\n")
+        self.write("Assets/Project/Good.cs", "namespace Demo;")
+        self.write("Assets/Other/Wrong.cs", "namespace Wrong;")
+        base = self.commit()
+        with patch("embraion.organization.MAX_FILES", 1):
+            clean = check_organization(self.root, base_ref=base, head_ref=base)
+            self.assertTrue(clean["passed"])
+            self.assertTrue(check_organization(self.root)["passed"])
+            for index in range(4):
+                self.write(f"Builds/Validation/result-{index}.cs", "namespace Wrong;")
+                self.write(f"Library/cache-{index}.cs", "namespace Wrong;")
+                self.write(f"Assets/Other/extra-{index}.cs", "namespace Wrong;")
+            self.assertTrue(check_organization(self.root)["passed"])
+            self.write("Assets/Project/Bad.cs", "namespace Wrong;")
+            with self.assertRaisesRegex(RuntimeError, "exceeds 1 files"):
+                check_organization(self.root)
+
+    def test_non_git_scopes_inside_conventional_cache_names_are_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / ".embraion").mkdir()
+            (root / ".embraion/organization.yaml").write_text(yaml.safe_dump({
+                "namespaces": {"rules": [{"path": "Assets/Temp", "namespace": "Demo"}]}
+            }), encoding="utf-8")
+            (root / "Assets/Temp").mkdir(parents=True)
+            (root / "Assets/Temp/Bad.cs").write_text("namespace Wrong;", encoding="utf-8")
+            (root / "Library").mkdir()
+            (root / "Library/Cache.cs").write_text("namespace Wrong;", encoding="utf-8")
+            with patch("embraion.organization.MAX_FILES", 1):
+                result = check_organization(root)
+            self.assertEqual(["Assets/Temp/Bad.cs"], [item["path"] for item in result["findings"]])
 
     def test_filenames_follow_style_with_canonical_host_and_configured_exemptions(self) -> None:
         self.config({"filenames": {"roots": ["docs", "tools", ".github", ".claude"],

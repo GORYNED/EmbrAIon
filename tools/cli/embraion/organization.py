@@ -92,14 +92,19 @@ def _symlink_in_scope(path: str, config: dict[str, Any]) -> bool:
 def _selected(path: str, config: dict[str, Any]) -> bool:
     if _excluded(path, config):
         return False
-    if path.endswith(".cs") and config.get("namespaces") and config["namespaces"].get("enabled", True):
+    namespaces = config.get("namespaces") or {}
+    assemblies = config.get("assemblies") or {}
+    meta = config.get("unity_meta") or {}
+    if (path.endswith(".cs") and namespaces and namespaces.get("enabled", True)
+            and _in_roots(path, [rule["path"] for rule in namespaces["rules"]])):
         return True
-    if path.endswith((".asmdef", ".asmdef.meta")) and config.get("assemblies") and config["assemblies"].get("enabled", True):
+    if (path.endswith((".asmdef", ".asmdef.meta")) and assemblies
+            and assemblies.get("enabled", True) and _in_roots(path, assemblies["roots"])):
         return True
-    if config.get("unity_meta") and config["unity_meta"].get("enabled", True):
+    if meta and meta.get("enabled", True) and _in_roots(path, meta["roots"]):
         if path.endswith(".meta"):
             return True
-        return PurePosixPath(path).suffix in config["unity_meta"].get("require_for_extensions", [])
+        return PurePosixPath(path).suffix in meta.get("require_for_extensions", [])
     return False
 
 
@@ -174,40 +179,27 @@ def _snapshot_tree(root: Path, commit: str, config: dict[str, Any]) -> tuple[dic
 def _snapshot_worktree(root: Path, config: dict[str, Any]) -> tuple[dict[str, bytes], list[dict[str, str]]]:
     files: dict[str, bytes] = {}
     issues: list[dict[str, str]] = []
-    for directory, dirs, names in os.walk(root, followlinks=False):
-        retained: list[str] = []
-        for name in dirs:
-            candidate = Path(directory) / name
-            rel = candidate.relative_to(root).as_posix()
-            if name == ".git" or (name in {".venv", "node_modules", "Library", "Temp"}
-                                  and not _scope_overlap(rel, config)):
-                continue
-            if candidate.is_symlink():
-                if _symlink_in_scope(rel, config):
-                    issues.append(_finding("unsafe_path", rel, "Symbolic link overlaps a configured source scope"))
-                continue
-            retained.append(name)
-        dirs[:] = retained
-        for name in names:
-            path = (Path(directory) / name)
-            rel = path.relative_to(root).as_posix()
-            if path.is_symlink():
-                if _symlink_in_scope(rel, config):
-                    issues.append(_finding("unsafe_path", rel, "Symbolic link overlaps a configured source scope"))
-                continue
-            if not _selected(rel, config):
-                continue
-            if not _safe(rel):
-                issues.append(_finding("unsafe_path", rel, "Unsafe path is not scanned"))
-                continue
-            if not path.is_file():
-                continue
-            if len(files) >= MAX_FILES:
-                raise RuntimeError(f"Organization scan exceeds {MAX_FILES} files")
-            if path.stat().st_size > MAX_BYTES:
-                issues.append(_finding("oversize", rel, f"File exceeds {MAX_BYTES} bytes"))
-                continue
-            files[rel] = path.read_bytes()
+    # The inventory excludes Git-ignored build and validation artifacts before they can
+    # consume the source-file limit. Scope selection happens before stat/read as well.
+    for rel in sorted(_names_worktree(root, config)):
+        path = root / rel
+        if path.is_symlink():
+            if _symlink_in_scope(rel, config):
+                issues.append(_finding("unsafe_path", rel, "Symbolic link overlaps a configured source scope"))
+            continue
+        if not _selected(rel, config):
+            continue
+        if not _safe(rel):
+            issues.append(_finding("unsafe_path", rel, "Unsafe path is not scanned"))
+            continue
+        if not path.is_file():
+            continue
+        if len(files) >= MAX_FILES:
+            raise RuntimeError(f"Organization scan exceeds {MAX_FILES} files")
+        if path.stat().st_size > MAX_BYTES:
+            issues.append(_finding("oversize", rel, f"File exceeds {MAX_BYTES} bytes"))
+            continue
+        files[rel] = path.read_bytes()
     return files, issues
 
 
@@ -223,18 +215,32 @@ def _names_tree(root: Path, commit: str) -> set[str]:
     return {path for path in raw.decode("utf-8", "surrogateescape").split("\x00") if _safe(path)}
 
 
-def _names_worktree(root: Path) -> set[str]:
+def _names_worktree(root: Path, config: dict[str, Any] | None = None) -> set[str]:
     """Return tracked and unignored untracked files that exist in the working tree."""
     try:
         raw = _git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard")
     except (RuntimeError, OSError):
-        # Outside Git there is no ignore information; skip the same tool trees as the source scan.
+        # Outside Git there is no ignore information. Preserve configured scopes even
+        # under conventional cache folder names, and retain symlinks for safety checks.
         names: set[str] = set()
         for directory, dirs, files in os.walk(root, followlinks=False):
-            dirs[:] = [name for name in dirs if name not in {".git", ".venv", "node_modules", "Library", "Temp"}]
+            retained: list[str] = []
+            for name in dirs:
+                candidate = Path(directory) / name
+                relative = candidate.relative_to(root).as_posix()
+                if name == ".git":
+                    continue
+                if candidate.is_symlink():
+                    names.add(relative)
+                    continue
+                roots = ((config or {}).get("filenames") or {}).get("roots", [])
+                relevant = bool(config and (_scope_overlap(relative, config) or
+                                 any(_under(relative, scope) or _under(scope, relative) for scope in roots)))
+                if name in {".venv", "node_modules", "Library", "Temp"} and not relevant:
+                    continue
+                retained.append(name)
+            dirs[:] = retained
             names.update((Path(directory) / name).relative_to(root).as_posix() for name in files)
-            if len(names) > MAX_FILES:
-                raise RuntimeError(f"Organization scan exceeds {MAX_FILES} files")
         return {path for path in names if _safe(path)}
     return {path for path in raw.decode("utf-8", "surrogateescape").split("\x00")
             if _safe(path) and os.path.lexists(root / path)}
@@ -623,7 +629,7 @@ def check_organization(project: Path | None = None, *, base_ref: str | None = No
         return {"status": "skipped", "passed": True, "reason": "No .embraion/organization.yaml", "findings": [], "counts": {"new": 0, "preexisting": 0}}
     if base_ref is None:
         files, seed = _snapshot_worktree(root, config)
-        names = _names_worktree(root) if _needs_names(config) else None
+        names = _names_worktree(root, config) if _needs_names(config) else None
         findings = [{**item, "status": "new"} for item in _checks(files, config, seed, names)]
         return {"status": "failed" if findings else "passed", "passed": not findings,
                 "mode": "full", "base_commit": None, "head_commit": None,
@@ -635,7 +641,7 @@ def check_organization(project: Path | None = None, *, base_ref: str | None = No
     base_names = _names_tree(root, base) if wants_names else None
     current_names = None
     if wants_names:
-        current_names = _names_worktree(root) if include_worktree else _names_tree(root, head)
+        current_names = _names_worktree(root, config) if include_worktree else _names_tree(root, head)
     before = _checks(base_files, config, base_seed, base_names)
     after = _checks(current, config, seed, current_names)
     _moves(root, base, head, current, base_files, config, after, include_worktree)
