@@ -45,14 +45,23 @@ At this point, **no repository has been modified**.
 
 You only installed the launcher command.
 
-A repository becomes an EmbrAIon project only when you explicitly run:
+A repository becomes an EmbrAIon project when you ask your agent to configure
+it. The agent checks the launcher and repository, runs the supported setup and
+host installation steps, then verifies the result in a fresh host session where
+available. A shared machine installation may require your permission; you do
+not need to type commands or edit YAML. If the host has not yet loaded the
+`project-bootstrap` skill, it must first discover the official installation
+procedure. File checks alone do not prove that a host loaded the new skill.
+
+The equivalent manual command remains available:
 
 ```bash
 cd MyProject
 embraion init
 ```
 
-Then install your host projection, open the repository in that host, and ask “Configure EmbrAIon for this project.” See [Project Bootstrap](../configuration/bootstrap.md).
+Then install your host projection and open a new session in that host. See
+[Project Bootstrap](../configuration/bootstrap.md).
 
 ## Why one launcher is enough
 

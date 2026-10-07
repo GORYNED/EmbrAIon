@@ -2,6 +2,13 @@
 
 You do not need to know the `.embraion/` files, their keys, or the `embraion` commands. Ask your AI client in plain words, in any language, and it fills the right file.
 
+For a first setup, the agent also checks whether the launcher and project contract
+exist, installs the launcher when authorized, initializes the repository, and
+installs the requested host projection. A shared machine installation may need
+your permission, but the agent runs the commands. A fresh host session is needed
+to test that new skills actually load. Repeating an unchanged request should
+leave the project untouched.
+
 > Set up EmbrAIon for this project.
 >
 > Protect the `vendor/` folder.
