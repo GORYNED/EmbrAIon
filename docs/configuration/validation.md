@@ -124,10 +124,13 @@ Without the key, nothing is checked, as before. With `clean-tree: true`, EmbrAIo
 - A tree that was already dirty is allowed. Its state is the baseline, and only new differences fail. A file that was already modified and is edited again counts as a difference, because the content is compared too.
 - The `.embraion/state/` directory is ignored, because validation writes its own evidence there.
 - A failure names up to 20 changed paths and the profile fails with a `failure-reasons` entry that starts with `clean-tree guard failed`.
-- Outside a Git work tree, or when `git` is missing, the guard is `blocked` and the profile fails. The commands still run, and their results stay in the evidence. The reason also says so when Git refuses the directory (for example, because of its ownership) and gives Git's first message line.
+- Outside a Git work tree, with a locked index, or when `git` cannot establish the tree state, the guard is `blocked` and the profile fails before starting commands. The reason also says so when Git refuses the directory (for example, because of its ownership) and gives Git's first message line.
+- The guard also compares the exact HEAD before and after the run. A changed HEAD fails even when the file snapshot is unchanged.
 - A file larger than 64 MiB is compared by its size only, not by its content.
 
 The record gets a `clean-tree` object with `status` (`passed`, `failed`, or `blocked`), `baseline-dirty`, `changed-count`, and `changed-paths`. A profile without commands is `skipped` and is not checked.
+
+Validation starts each command inside a process container. On Windows the target is held until a kill-on-close Job Object is assigned; on POSIX it starts in a new process group. A timeout, a root that exits with live members of that container, failed containment, or output streams that do not close produce failure evidence. If termination or output drain cannot be confirmed, later commands do not start, including when the affected command is optional. POSIX commands must keep their children in the assigned process group: a child that deliberately starts a new session (or daemonizes) leaves that group and cannot be detected or terminated by this mechanism. The Windows Job Object contains such children unless they are explicitly allowed to break away; EmbrAIon does not grant breakaway permission.
 
 ## Output limit
 

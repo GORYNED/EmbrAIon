@@ -342,13 +342,13 @@ A profile command can be a mapping with `required: false` and `requires` (`execu
 
 Output longer than the 8000-character tail adds `stdout-head`/`stderr-head` and an `output` object with total bytes and lines; `output-limit-bytes` bounds the full log to a head and a tail with a truncation marker. See [output limit](../configuration/validation.md#output-limit).
 
-After a timeout the whole tree is ended and checked; the command row records `termination: confirmed` or `unconfirmed`, and `unconfirmed` fails the profile and stops later commands. See [Validation & Evidence](../validation.md#evidence-behavior).
+After a timeout the Windows job or POSIX group is ended and checked; the command row records `termination: confirmed` or `unconfirmed`, and `unconfirmed` fails the profile and stops later commands. A root that exits with live container members also fails. See [Validation & Evidence](../validation.md#evidence-behavior).
 
 A structured profile with `clean-tree: true` compares `git status` before the first and after the last command. A new difference, or a guard that cannot run (no Git work tree), fails the profile with a reason in `failure-reasons`; see [clean-tree guard](../configuration/validation.md#clean-tree-guard).
 
 Unknown parameters and missing required parameters fail closed. Parameters can be projected into a command-line argument or into the validation child process environment according to `.embraion/validation.yaml`.
 
-`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in its own process group; a timeout or interrupt terminates the whole tree. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
+`--run-id` attaches the profile result to an active structured execution record, so validation evidence does not have to be re-entered manually, and passes the run ID to each command as `EMBRAION_RUN_ID`. Each command runs in a Windows Job Object or POSIX process group; a timeout or interrupt terminates that container. POSIX commands must not detach children into a new session. `--timeout` overrides a profile's `timeout-seconds`. Each command's full redacted output is kept in `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
 Plan options for projects that declare `areas` in `.embraion/validation.yaml` (see [Validation plan](../configuration/validation.md#validation-plan)):
 

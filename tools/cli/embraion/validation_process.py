@@ -1,4 +1,4 @@
-"""Ending a validation command's process tree and confirming that it is gone."""
+"""Contain validation commands in a Windows job or a POSIX process group."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import ctypes
 import os
 import signal
 import subprocess
+import sys
 import time
 from ctypes import wintypes
 from pathlib import Path
@@ -13,6 +14,186 @@ from pathlib import Path
 GRACE_SECONDS = 2.0
 VERIFY_SECONDS = 5.0
 POLL_SECONDS = 0.05
+
+
+class ContainmentUnavailable(RuntimeError):
+    """The target command was not released into a proven process container."""
+
+    def __init__(self, message: str, *, termination_confirmed: bool = True) -> None:
+        super().__init__(message)
+        self.termination_confirmed = termination_confirmed
+
+
+class _JobBasicLimits(ctypes.Structure):
+    _fields_ = [("process_time", ctypes.c_int64), ("job_time", ctypes.c_int64),
+                ("flags", wintypes.DWORD), ("minimum", ctypes.c_size_t),
+                ("maximum", ctypes.c_size_t), ("active_limit", wintypes.DWORD),
+                ("affinity", ctypes.c_size_t), ("priority", wintypes.DWORD),
+                ("scheduling", wintypes.DWORD)]
+
+
+class _JobIoCounters(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_uint64) for name in
+                ("read_operations", "write_operations", "other_operations", "read_bytes",
+                 "write_bytes", "other_bytes")]
+
+
+class _JobExtendedLimits(ctypes.Structure):
+    _fields_ = [("basic", _JobBasicLimits), ("io", _JobIoCounters),
+                ("process_memory", ctypes.c_size_t), ("job_memory", ctypes.c_size_t),
+                ("peak_process_memory", ctypes.c_size_t), ("peak_job_memory", ctypes.c_size_t)]
+
+
+class _JobAccounting(ctypes.Structure):
+    _fields_ = [(name, ctypes.c_int64) for name in
+                ("user_time", "kernel_time", "period_user_time", "period_kernel_time")] + [
+                    (name, wintypes.DWORD) for name in
+                    ("page_faults", "total", "active", "terminated")]
+
+
+class _WindowsJob:
+    """Kill-on-close containment assigned before the bootstrap releases its child."""
+
+    def __init__(self) -> None:
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        self._close = kernel.CloseHandle
+        self._close.argtypes = [wintypes.HANDLE]
+        self._close.restype = wintypes.BOOL
+        create = kernel.CreateJobObjectW
+        create.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        create.restype = wintypes.HANDLE
+        self.handle = create(None, None)
+        if not self.handle:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            configure = kernel.SetInformationJobObject
+            configure.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+            configure.restype = wintypes.BOOL
+            limits = _JobExtendedLimits()
+            limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            if not configure(self.handle, 9, ctypes.byref(limits), ctypes.sizeof(limits)):
+                raise ctypes.WinError(ctypes.get_last_error())
+        except BaseException:
+            self.close()
+            raise
+        self._assign = kernel.AssignProcessToJobObject
+        self._assign.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        self._assign.restype = wintypes.BOOL
+        self._query = kernel.QueryInformationJobObject
+        self._query.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p,
+                                wintypes.DWORD, ctypes.c_void_p]
+        self._query.restype = wintypes.BOOL
+        self._terminate = kernel.TerminateJobObject
+        self._terminate.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        self._terminate.restype = wintypes.BOOL
+
+    def assign(self, process: subprocess.Popen) -> None:
+        if not self._assign(self.handle, process._handle):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def active(self) -> int:
+        accounting = _JobAccounting()
+        if not self._query(self.handle, 1, ctypes.byref(accounting), ctypes.sizeof(accounting), None):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return accounting.active
+
+    def terminate(self) -> None:
+        if not self._terminate(self.handle, 137):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def close(self) -> None:
+        if self.handle:
+            handle, self.handle = self.handle, None
+            if not self._close(handle):
+                raise ctypes.WinError(ctypes.get_last_error())
+
+
+_BOOTSTRAP = (
+    "import subprocess,sys; "
+    "permit=sys.stdin.buffer.read(1); "
+    "sys.exit(125) if permit!=b'1' else None; "
+    "child=subprocess.Popen(sys.argv[1],shell=True,stdin=subprocess.DEVNULL); "
+    "sys.exit(child.wait())"
+)
+
+
+def spawn_contained(command: str, cwd: Path, environment: dict[str, str],
+                    stdout: object, stderr: object) -> subprocess.Popen:
+    """Start the target only after containment is established."""
+    if os.name != "nt":
+        try:
+            return subprocess.Popen(command, cwd=str(cwd), env=environment, shell=True,
+                                    stdout=stdout, stderr=stderr, start_new_session=True)
+        except OSError as error:
+            raise ContainmentUnavailable("process group could not be created") from error
+    try:
+        job = _WindowsJob()
+    except OSError as error:
+        raise ContainmentUnavailable("Windows Job Object could not be created") from error
+    process = None
+    try:
+        process = subprocess.Popen([sys.executable, "-I", "-S", "-c", _BOOTSTRAP, command],
+                                   cwd=str(cwd), env=environment, stdin=subprocess.PIPE,
+                                   stdout=stdout, stderr=stderr,
+                                   creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+        job.assign(process)
+        process._embraion_job = job
+        process.stdin.write(b"1")
+        process.stdin.close()
+        return process
+    except (OSError, subprocess.SubprocessError) as error:
+        confirmed = True
+        if process is not None:
+            if process.stdin and not process.stdin.closed:
+                try:
+                    process.stdin.close()  # EOF keeps the target behind its launch gate.
+                except OSError:
+                    confirmed = False
+            if getattr(process, "_embraion_job", None) is job:
+                confirmed = _terminate_windows_job(process) and confirmed
+            else:
+                try:
+                    if process.poll() is None:
+                        process.kill()
+                    process.wait(timeout=VERIFY_SECONDS)
+                except (OSError, subprocess.SubprocessError):
+                    confirmed = False
+            for stream in (process.stdout, process.stderr):
+                if stream is not None:
+                    try:
+                        stream.close()
+                    except OSError:
+                        confirmed = False
+        try:
+            job.close()
+        except OSError:
+            confirmed = False
+        raise ContainmentUnavailable("Windows process containment could not be established",
+                                     termination_confirmed=confirmed) from error
+
+
+def containment_has_live_members(process: subprocess.Popen) -> bool:
+    job = getattr(process, "_embraion_job", None)
+    if job is not None:
+        return job.active() != 0
+    return group_has_live_members(process.pid)
+
+
+def containment_quiescent(process: subprocess.Popen, timeout: float = 0.25) -> bool:
+    """Allow job members or same-group children a brief bounded exit window."""
+    deadline = time.monotonic() + timeout
+    while True:
+        if not containment_has_live_members(process):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(min(POLL_SECONDS, max(deadline - time.monotonic(), 0)))
+
+
+def close_containment(process: subprocess.Popen) -> None:
+    job = getattr(process, "_embraion_job", None)
+    if job is not None:
+        job.close()
 
 class _ProcessEntry(ctypes.Structure):
     _fields_ = [
@@ -98,10 +279,28 @@ class _WindowsProcesses:
 
 
 def terminate_tree(process: subprocess.Popen) -> bool:
-    """End the command and its descendants; return whether the tree is confirmed gone."""
+    """End the Windows job or POSIX group; confirm that container is gone."""
     if os.name == "nt":
+        if getattr(process, "_embraion_job", None) is not None:
+            return _terminate_windows_job(process)
         return _terminate_windows(process)
     return _terminate_posix(process)
+
+
+def _terminate_windows_job(process: subprocess.Popen) -> bool:
+    job = process._embraion_job
+    deadline = time.monotonic() + VERIFY_SECONDS
+    try:
+        if job.active():
+            job.terminate()
+        process.wait(timeout=max(deadline - time.monotonic(), 0))
+        while job.active():
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(POLL_SECONDS)
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 def _terminate_posix(process: subprocess.Popen) -> bool:
@@ -116,7 +315,10 @@ def _terminate_posix(process: subprocess.Popen) -> bool:
         pass
     # Descendants that ignore SIGTERM or outlive the leader are killed as well.
     _kill_group(group)
-    process.wait()
+    try:
+        process.wait(timeout=VERIFY_SECONDS)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
     return _wait_until_group_gone(group)
 
 

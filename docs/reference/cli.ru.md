@@ -327,13 +327,13 @@ embraion validation run affected   --param base-ref=origin/main   --param head-r
 
 Вывод длиннее tail в 8000 символов добавляет `stdout-head`/`stderr-head` и объект `output` с общим числом байт и строк; `output-limit-bytes` ограничивает полный log головой и хвостом с маркером обрезки. См. [output limit](../configuration/validation.ru.md#output-limit).
 
-После timeout всё дерево завершается и проверяется; строка команды получает `termination: confirmed` или `unconfirmed`, а `unconfirmed` проваливает profile и останавливает следующие команды. См. [Валидация и evidence](../validation.ru.md).
+После timeout Windows Job Object или POSIX-группа завершается и проверяется; строка команды получает `termination: confirmed` или `unconfirmed`, а `unconfirmed` проваливает profile и останавливает следующие команды. Root, который завершился с живыми участниками container, также приводит к ошибке. См. [Валидация и evidence](../validation.ru.md).
 
 Structured profile с `clean-tree: true` сравнивает `git status` перед первой и после последней команды. Новое различие или guard, который не может выполниться (нет Git work tree), проваливает profile с причиной в `failure-reasons`; см. [clean-tree guard](../configuration/validation.ru.md#clean-tree-guard).
 
 Unknown parameters и missing required parameters fail-closed. Parameters могут проецироваться в command-line argument или environment child validation process согласно `.embraion/validation.yaml`.
 
-`--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в собственной process group; timeout или прерывание завершают всё дерево. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
+`--run-id` прикрепляет profile result к active structured execution record, поэтому validation evidence не нужно вводить вручную повторно, и передаёт ID run каждой command как `EMBRAION_RUN_ID`. Каждая command выполняется в Windows Job Object или POSIX process group; timeout или прерывание завершают этот container. POSIX-команды не должны выводить дочерние процессы в новую session. `--timeout` заменяет `timeout-seconds` profile. Полный redacted output каждой command хранится в `.embraion/state/validation/<evidence-id>/command-<index>.log`.
 
 Plan options для проектов, которые объявляют `areas` в `.embraion/validation.yaml` (см. [План validation](../configuration/validation.ru.md#validation-plan)):
 
