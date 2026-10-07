@@ -106,6 +106,7 @@ plugins:
             Security & data flow: Безопасность и поток данных
             Security model: Модель безопасности
             Architecture: Архитектура
+            Architecture decisions: Архитектурные решения
             Capability model: Модель возможностей
             Updating safely: Безопасное обновление
             Project: Проект
@@ -208,6 +209,7 @@ nav:
       - Security & data flow: security-data-flow.md
       - Security model: security.md
       - Architecture: architecture.md
+      - Architecture decisions: architecture/decisions/README.md
       - Capability model: capability-model.md
       - Updating safely: getting-started/updating.md
       - Spec Kit: spec-kit.md
