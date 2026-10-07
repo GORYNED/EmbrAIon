@@ -19,6 +19,7 @@ from .policy import (
     read_policy_config,
 )
 from .project_validation import run_validation_profile
+from .protected_sources import BASE_TREE_MODE, NAME_MODE, PROTECTED_SOURCE_MODES, check_base_tree
 from .runtime import _append_event
 from .security import redact_value
 
@@ -133,10 +134,18 @@ def check_enforcement(
     project: Path | None = None,
     run_id: str | None = None,
     external_review_gate: bool = False,
+    protected_sources: str | None = None,
 ) -> dict[str, Any]:
     root = project_root(project)
     policy = effective_policy(root)
     config = policy["enforcement"]
+    # An explicit argument wins so CI can pin the mode independently of the checked-out policy.
+    protected_mode = protected_sources or str(config.get("protected-sources") or NAME_MODE)
+    if protected_mode not in PROTECTED_SOURCE_MODES:
+        raise RuntimeError(
+            "Unknown protected-sources mode: "
+            f"{protected_mode}. Supported: {', '.join(PROTECTED_SOURCE_MODES)}."
+        )
 
     if not config.get("enabled", False):
         raise RuntimeError(
@@ -155,16 +164,18 @@ def check_enforcement(
     checks: list[dict[str, Any]] = []
 
     protected = list(policy["sources"].get("protected") or [])
-    protected_changes = [
-        path for path in changed_paths if path_matches(path, protected)
-    ]
-    checks.append(
-        {
+
+    def protected_check(paths: list[str]) -> dict[str, Any]:
+        if protected_mode == BASE_TREE_MODE:
+            return check_base_tree(root, base_ref, protected)
+        changes = [path for path in paths if path_matches(path, protected)]
+        return {
             "id": "protected-sources",
-            "status": "failed" if protected_changes else "passed",
-            "changed-paths": protected_changes,
+            "status": "failed" if changes else "passed",
+            "changed-paths": changes,
         }
-    )
+
+    checks.append(protected_check(changed_paths))
 
     profile = str(config.get("validation-profile") or "").strip()
     if not profile:
@@ -197,9 +208,7 @@ def check_enforcement(
 
     final_snapshot = review_snapshot(root)
     changed_paths = sorted(set(changed_paths) | set(_git_changed_paths(root, base_ref)))
-    protected_changes = [path for path in changed_paths if path_matches(path, protected)]
-    checks[0].update({"status": "failed" if protected_changes else "passed",
-                      "changed-paths": protected_changes})
+    checks[0] = protected_check(changed_paths)
     checks.append({
         "id": "workspace-stability",
         "status": "passed" if initial_snapshot and initial_snapshot == final_snapshot else "failed",
@@ -368,11 +377,14 @@ def install_enforcement_surface(
 
     policy_path = root / ".embraion" / "policy.yaml"
     policy = read_policy_config(root)
+    kept_mode = (policy.get("enforcement") or {}).get("protected-sources")
     policy["enforcement"] = {
         "enabled": True,
         "validation-profile": validation_profile,
         "require-review": require_review,
     }
+    if kept_mode is not None:
+        policy["enforcement"]["protected-sources"] = kept_mode
 
     workflow = root / GITHUB_ACTIONS_PATH
     content = _github_actions_content(
