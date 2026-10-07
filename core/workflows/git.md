@@ -4,7 +4,7 @@ This page is the one place for the Git and GitHub mechanics behind the [worktree
 
 ## Prerequisite
 
-Git is a stated prerequisite of EmbrAIon, and GitHub is the supported hosting and delivery surface. The requirement is stated once, in the [installation requirements](https://embraion.goryned.com/getting-started/installation/#requirements). Do not restate it elsewhere; link to it.
+Git is a stated prerequisite of EmbrAIon, and GitHub is the supported hosting and delivery surface. The canonical statement is the Requirements section of the installation page of the EmbrAIon documentation (`docs/getting-started/installation.md` in the source repository). Here and in the workflows there is only a reference to it.
 
 ## Repository scope
 
