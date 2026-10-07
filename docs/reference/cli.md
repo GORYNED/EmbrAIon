@@ -672,6 +672,7 @@ embraion worktree gc --apply
 embraion worktree gc --json
 embraion worktree prepare --task-id task-001 --host codex --json
 embraion worktree create ai/my-task --task-id task-001 --independent-task
+embraion worktree lfs-preflight --path /path/to/worktree --expected-head <full-commit> --remote origin
 embraion worktree publish --task-id task-001 --branch ai/my-task
 embraion worktree restore --cleanup-id <cleanup-id>
 embraion worktree salvage /path/to/worktree
@@ -680,6 +681,8 @@ embraion worktree salvage /path/to/worktree
 See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md) and [canonical workflow](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; subsequent task commits use the same command with an exact prior-SHA lease and verified update receipt. External pushes do not register ownership or updates. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
 
 Git LFS hydration is off by default. With `worktree.lfs: hydrate` in `.embraion/project.yaml`, `worktree create` (checkout and `--detach`) and `worktree register` fetch the LFS content of the new worktree's exact HEAD from the repository's own LFS remote, check it out, and verify every LFS file by size and SHA-256. `create` prints `LFS hydrated: <n> of <n> files verified`; `register` adds an `lfs` object (`state`, `files`, `verified`, `missing`, `reason`, and `modified` when LFS files were edited locally) to its JSON. Locally edited LFS files are reported, never overwritten, and are not a failure. LFS use is detected only from `.gitattributes` files committed at HEAD; `.git/info/attributes` and global attributes are not read. A repository without a remote fails with a clear reason, and fetch and checkout time out after 1800 seconds. A failed hydration, including a missing `git lfs` when LFS files exist, exits with code 1 and keeps the worktree. `prepare` runs before any checkout exists and does not hydrate. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
+`worktree lfs-preflight` is the stricter gate for a dependent validation. It requires one active EmbrAIon-registered, unlocked separate worktree, its exact full HEAD, a clean index and tree (allowing only committed LFS pointers before hydration), installed required LFS filters, a configured remote, and verified content for every committed LFS pointer. It rechecks identity, HEAD and cleanliness afterwards, prints JSON, and exits nonzero on uncertainty. `--remote` requires a named remote; without it, the branch's tracking remote or `origin` is used. Run it immediately before the dependent check; the result does not lock the tree against later changes.
 
 ### `embraion learning`
 

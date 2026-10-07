@@ -68,7 +68,7 @@ from .worktree import (
     create_branch, create_detached_worktree, create_worktree, gc_report, list_worktrees, prepare_task,
     publish_branch, register_worktree, restore_cleanup, salvage_worktree,
 )
-from .worktree_lfs import hydrate_lfs, lfs_mode
+from .worktree_lfs import hydrate_lfs, lfs_mode, preflight_lfs
 from .versioning import (
     cache_home,
     find_project_manifest,
@@ -1437,6 +1437,12 @@ def _cmd_worktree_register(args: argparse.Namespace) -> int:
         "state": "skipped", "files": 0, "verified": 0, "missing": 0, "reason": "no-checkout"}
     _print_json(resource | {"lfs": lfs})
     return int(lfs["state"] == "failed")
+
+
+def _cmd_worktree_lfs_preflight(args: argparse.Namespace) -> int:
+    result = preflight_lfs(Path(args.path), args.expected_head, remote=args.remote)
+    _print_json(result)
+    return int(result["state"] != "passed")
 
 
 def _cmd_worktree_publish(args: argparse.Namespace) -> int:
@@ -2849,6 +2855,13 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_register.add_argument("--receipt-id", required=True)
     worktree_register.add_argument("--path")
     worktree_register.set_defaults(func=_cmd_worktree_register)
+
+    worktree_lfs_preflight = worktree_sub.add_parser(
+        "lfs-preflight", help="Verify a registered worktree and its exact LFS content")
+    worktree_lfs_preflight.add_argument("--path", required=True)
+    worktree_lfs_preflight.add_argument("--expected-head", required=True)
+    worktree_lfs_preflight.add_argument("--remote", help="Require and fetch from this configured LFS remote")
+    worktree_lfs_preflight.set_defaults(func=_cmd_worktree_lfs_preflight)
 
     worktree_publish = worktree_sub.add_parser("publish", help="Create or update a remote branch with verified agent provenance")
     worktree_publish.add_argument("--task-id", required=True)

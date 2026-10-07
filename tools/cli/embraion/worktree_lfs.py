@@ -8,7 +8,9 @@ LFS-tracked file by size and SHA-256. It never deletes the worktree.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -16,6 +18,9 @@ from typing import Any
 from .common import project_root, read_yaml
 from .environment import child_environment
 from .security import redact_text
+from . import worktree_registry as registry
+from .worktree import parse_worktrees
+from .validation_process import terminate_tree
 
 LFS_MODES = ("none", "hydrate")
 _POINTER_VERSION = "version https://git-lfs.github.com/spec/v1"
@@ -24,6 +29,12 @@ _POINTER_LIMIT = 1024  # Git LFS pointer files are always smaller than this.
 LFS_STEP_TIMEOUT = 1800
 _GIT_TIMEOUT = 300
 _OID = re.compile(r"sha256:([0-9a-f]{64})")
+_HEAD = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
+_GIT_LOCATION_VARIABLES = frozenset({
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+    "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_NAMESPACE", "GIT_PREFIX",
+})
 # `git lfs checkout` refuses to run unless the LFS filter is configured. A fresh
 # machine or an isolated Git configuration may lack it, so supply it for this one
 # command only; nothing is written to any Git configuration.
@@ -59,8 +70,20 @@ def _run(args: list[str], cwd: Path, data: bytes | None = None,
     # Git does not prompt on the terminal for credentials; a credential helper or an
     # askpass program that the user configured can still run.
     environment["GIT_TERMINAL_PROMPT"] = "0"
-    return subprocess.run(args, cwd=str(cwd), env=environment, input=data, timeout=timeout,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    options = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt"
+               else {"start_new_session": True})
+    process = subprocess.Popen(args, cwd=str(cwd), env=environment, stdin=subprocess.PIPE if data is not None else subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, **options)
+    try:
+        stdout, stderr = process.communicate(input=data, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        if not terminate_tree(process):
+            raise RuntimeError("Git command timed out and descendant termination is unconfirmed") from None
+        raise
+    except BaseException:
+        terminate_tree(process)
+        raise
+    return subprocess.CompletedProcess(args, process.returncode, stdout, stderr)
 
 
 def _git(worktree: Path, *args: str, data: bytes | None = None,
@@ -219,7 +242,7 @@ def _fetch_remote(worktree: Path) -> str | None:
     return tracked if tracked in remotes else ("origin" if "origin" in remotes else remotes[0])
 
 
-def hydrate_lfs(worktree: Path) -> dict[str, Any]:
+def hydrate_lfs(worktree: Path, remote: str | None = None) -> dict[str, Any]:
     """Fetch and check out LFS content for the worktree's HEAD, then verify it.
 
     Returns `{state, files, verified, missing, reason}` plus `modified` when LFS
@@ -246,12 +269,12 @@ def hydrate_lfs(worktree: Path) -> dict[str, Any]:
         if _git(worktree, "lfs", "version").returncode:
             return failed("git-lfs-unavailable: install Git LFS (https://git-lfs.com), "
                           "then run `git lfs pull` in the worktree", missing)
-        remote = _fetch_remote(worktree)
-        if remote is None:
+        fetch_remote = remote or _fetch_remote(worktree)
+        if fetch_remote is None:
             return failed("no remote to fetch LFS content from", missing)
         head = _git(worktree, "rev-parse", "--verify", "HEAD").stdout.decode("ascii", "replace").strip()
         try:
-            fetch = _git(worktree, "lfs", "fetch", remote, head, timeout=LFS_STEP_TIMEOUT)
+            fetch = _git(worktree, "lfs", "fetch", fetch_remote, head, timeout=LFS_STEP_TIMEOUT)
         except subprocess.TimeoutExpired:
             return failed(f"git-lfs-fetch-failed: timed out after {LFS_STEP_TIMEOUT} seconds")
         if fetch.returncode:
@@ -268,3 +291,119 @@ def hydrate_lfs(worktree: Path) -> dict[str, Any]:
         return _result("hydrated", "verified" + note, total, 0, len(modified))
     except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as error:
         return _result("failed", _safe_reason(f"lfs-check-failed ({type(error).__name__})"))
+
+
+def _is_expected_pointer(path: Path, expected: tuple[str, int]) -> bool:
+    """Read only a small, regular, unlinked pointer at the expected path."""
+    try:
+        before = path.lstat()
+        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                or before.st_size >= _POINTER_LIMIT
+                or getattr(before, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)):
+            return False
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            opened = os.fstat(descriptor)
+            if (not stat.S_ISREG(opened.st_mode) or opened.st_ino != before.st_ino
+                    or opened.st_dev != before.st_dev or opened.st_size != before.st_size):
+                return False
+            with os.fdopen(descriptor, "rb") as stream:
+                descriptor = -1
+                return _parse_pointer(stream.read(_POINTER_LIMIT)) == expected
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+    except OSError:
+        return False
+
+
+def _preflight_state(worktree: Path, expected_head: str,
+                     allowed_pointers: dict[str, tuple[str, int]] | None = None) -> dict[str, Any]:
+    """Observe identity and safety gates without changing Git state."""
+    common = registry.common_dir(worktree)
+    rows = parse_worktrees(worktree)
+    matching = [row for row in rows if Path(row["path"]).resolve() == worktree]
+    if len(matching) != 1 or matching[0].get("locked"):
+        raise ValueError("worktree is absent, ambiguous, or locked")
+    primary = [row for row in rows if registry.gitdir(Path(row["path"])) == common]
+    if len(primary) != 1 or Path(primary[0]["path"]).resolve() == worktree:
+        raise ValueError("a unique separate primary worktree was not proven")
+    resources = [resource for resource in registry.load_registry(worktree)["resources"].values()
+                 if resource.get("kind") == "worktree" and resource.get("path")
+                 and Path(resource["path"]).resolve() == worktree]
+    if len(resources) != 1 or not registry.verify_resource(worktree, resources[0]):
+        raise ValueError("worktree registration could not be verified")
+    if resources[0].get("state") != "active":
+        raise ValueError("registered worktree is not active")
+    head = _git(worktree, "--no-optional-locks", "rev-parse", "--verify", "HEAD")
+    if head.returncode or head.stdout.decode("ascii", "replace").strip() != expected_head:
+        raise ValueError("worktree HEAD differs from the expected commit")
+    lock = _git(worktree, "--no-optional-locks", "rev-parse", "--path-format=absolute", "--git-path", "index.lock")
+    if lock.returncode or not lock.stdout.strip():
+        raise ValueError("worktree index lock state could not be read")
+    if Path(lock.stdout.decode("utf-8", "surrogateescape").strip()).exists():
+        raise ValueError("worktree index is locked")
+    status = _git(worktree, "--no-optional-locks", "-c", "core.fsmonitor=false", "status",
+                  "--porcelain=v1", "-z", "--untracked-files=all")
+    if status.returncode:
+        raise ValueError("worktree clean state could not be read")
+    if status.stdout:
+        observed = [item for item in status.stdout.split(b"\0") if item]
+        allowed = allowed_pointers or {}
+        permitted = {b" M " + path.encode("utf-8", "surrogateescape"): (path, pointer)
+                     for path, pointer in allowed.items()}
+        if (len(observed) != len(set(observed)) or not set(observed) <= permitted.keys()
+                or any(not _is_expected_pointer(worktree / permitted[item][0], permitted[item][1])
+                       for item in observed)):
+            raise ValueError("worktree is dirty")
+    return {"head": expected_head, "path": str(worktree), "primary": primary[0]["path"],
+            "resource-id": resources[0]["resource-id"]}
+
+
+def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None) -> dict[str, Any]:
+    """Hydrate and verify one registered checkout, failing on every uncertain gate.
+
+    The caller must run this immediately before the dependent validation. The
+    result is evidence of this observation, not a lock held during that command.
+    """
+    result: dict[str, Any] = {"state": "failed", "reason": "preflight incomplete"}
+    if not _HEAD.fullmatch(expected_head):
+        result["reason"] = "expected HEAD must be a full hexadecimal commit ID"
+        return result
+    if any(name in os.environ for name in _GIT_LOCATION_VARIABLES):
+        result["reason"] = "Git repository location is overridden by the environment"
+        return result
+    try:
+        worktree = Path(worktree).resolve()
+        head = _git(worktree, "--no-optional-locks", "rev-parse", "--verify", "HEAD")
+        if head.returncode or head.stdout.decode("ascii", "replace").strip() != expected_head:
+            raise ValueError("worktree HEAD differs from the expected commit")
+        files = _tracked_lfs_files(worktree)
+        if not files:
+            raise ValueError("no LFS pointer files at expected HEAD")
+        before = _preflight_state(worktree, expected_head,
+                                  {path: (oid, size) for path, oid, size in files})
+        filter_process = _git(worktree, "config", "--get", "filter.lfs.process")
+        filter_required = _git(worktree, "config", "--bool", "--get", "filter.lfs.required")
+        if (filter_process.returncode or not filter_process.stdout.strip()
+                or filter_required.returncode or filter_required.stdout.strip() != b"true"):
+            raise ValueError("Git LFS filter is not installed")
+        if _git(worktree, "lfs", "version").returncode:
+            raise ValueError("Git LFS executable is unavailable")
+        selected_remote = remote if remote is not None else _fetch_remote(worktree)
+        if (not selected_remote or selected_remote.startswith("-")
+                or not selected_remote.strip()
+                or _git(worktree, "remote", "get-url", selected_remote).returncode):
+            raise ValueError("Git LFS remote is unavailable")
+        lfs = hydrate_lfs(worktree, remote=selected_remote)
+        result["lfs"] = lfs
+        if lfs["state"] != "hydrated" or lfs.get("modified") or lfs["verified"] != len(files):
+            raise ValueError("LFS content could not be fully verified")
+        after = _preflight_state(worktree, expected_head)
+        if after != before:
+            raise ValueError("worktree identity changed during preflight")
+        result.update(state="passed", reason="verified", **after)
+    except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        # Details from Git or registry may contain private paths or remote URLs.
+        result["reason"] = str(error) if isinstance(error, ValueError) else f"preflight unavailable ({type(error).__name__})"
+    return result
