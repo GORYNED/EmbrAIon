@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import io
 import os
 import shutil
@@ -568,10 +569,12 @@ class BoundedOutputTests(unittest.TestCase):
 
 class FakeProcess:
     pid = 4242
+    _handle = 100
 
     def __init__(self) -> None:
         self.killed = False
         self.returncode = None
+        self.wait_timeout = None
 
     def poll(self):
         return self.returncode
@@ -581,69 +584,143 @@ class FakeProcess:
         self.returncode = 1
 
     def wait(self, timeout=None):
+        self.wait_timeout = timeout
         self.returncode = 1 if self.returncode is None else self.returncode
         return self.returncode
 
 
 class WindowsTerminationLogicTests(unittest.TestCase):
-    """The Windows branch is exercised with fake process tables on every platform."""
+    """Native observations are modeled without depending on the test host OS."""
 
-    def _completed(self, output: str, returncode: int = 0) -> subprocess.CompletedProcess:
-        return subprocess.CompletedProcess([], returncode, stdout=output.encode("utf-8"))
+    class Api:
+        def __init__(self, table=None, created=None, alive=None):
+            self.table = table if table is not None else {4242: 1, 11: 4242, 12: 11}
+            self.births = created if created is not None else {100: 10, 4242: 10, 11: 11, 12: 12}
+            self.answers = iter(alive if alive is not None else [False, False])
+            self.opened = []
+            self.closed = []
 
-    def test_descendants_are_found_from_the_process_table(self) -> None:
-        table = "10,1\n11,10\n12,11\n13,1\nnoise\n4242,1\n"
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(table)):
-            self.assertEqual([11, 12], validation_process.windows_descendants(10))
-            self.assertEqual([], validation_process.windows_descendants(12))
+        def snapshot(self):
+            return self.table
 
-    def test_unreadable_process_table_is_none(self) -> None:
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("", 1)):
-            self.assertIsNone(validation_process.windows_descendants(10))
-        with mock.patch.object(validation_process.subprocess, "run", side_effect=FileNotFoundError):
-            self.assertIsNone(validation_process.windows_descendants(10))
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("garbage\n")):
-            self.assertIsNone(validation_process.windows_descendants(10))
+        def open(self, pid):
+            self.opened.append(pid)
+            return pid
 
-    def test_tasklist_answer_decides_whether_a_pid_is_alive(self) -> None:
-        listed = '"python.exe","11","Console","1","10,000 K"\n'
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(listed)):
-            self.assertTrue(validation_process.windows_pid_alive(11))
-            self.assertFalse(validation_process.windows_pid_alive(12))
-        none = "INFO: No tasks are running which match the specified criteria.\n"
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed(none)):
-            self.assertFalse(validation_process.windows_pid_alive(11))
-        with mock.patch.object(validation_process.subprocess, "run", return_value=self._completed("", 1)):
-            self.assertTrue(validation_process.windows_pid_alive(11))
-        with mock.patch.object(validation_process.subprocess, "run", side_effect=OSError):
-            self.assertTrue(validation_process.windows_pid_alive(11))
+        def created(self, handle):
+            return self.births[handle]
 
-    def _terminate(self, descendants, alive_answers) -> bool:
-        answers = iter(alive_answers)
-        calls: list[list[str]] = []
+        def alive(self, handle):
+            return next(self.answers, False)
 
-        def run(command, **options):
-            calls.append(command)
-            return self._completed("")
+        def close(self, handle):
+            self.closed.append(handle)
 
+    def _terminate(self, api, run=None, clock=None, root_exited=False):
         process = FakeProcess()
-        with mock.patch.object(validation_process, "windows_descendants", return_value=descendants), \
-             mock.patch.object(validation_process, "windows_pid_alive", side_effect=lambda pid: next(answers, False)), \
-             mock.patch.object(validation_process.subprocess, "run", side_effect=run), \
-             mock.patch.object(validation_process, "POLL_SECONDS", 0.01), \
-             mock.patch.object(validation_process, "VERIFY_SECONDS", 0.2):
+        if root_exited:
+            process.returncode = 0
+        command = []
+
+        def taskkill(args, **options):
+            command.append((args, options))
+            if run is not None:
+                return run(args, **options)
+            return subprocess.CompletedProcess(args, 0)
+
+        clock_patch = (mock.patch.object(validation_process.time, "monotonic", side_effect=clock)
+                       if clock else contextlib.nullcontext())
+        with mock.patch.object(validation_process, "_WindowsProcesses", return_value=api), \
+             mock.patch.object(validation_process.subprocess, "run", side_effect=taskkill), \
+             mock.patch.object(validation_process, "POLL_SECONDS", 0.001), \
+             mock.patch.object(validation_process, "VERIFY_SECONDS", 0.02), \
+             clock_patch:
             confirmed = validation_process._terminate_windows(process)
-        self.assertEqual(["taskkill", "/T", "/F", "/PID", "4242"], calls[0])
-        self.assertTrue(process.killed)
+        self.assertEqual(["taskkill", "/T", "/F", "/PID", "4242"], command[0][0])
+        self.assertLessEqual(command[0][1]["timeout"], 0.020001)
+        self.assertLessEqual(process.wait_timeout, 0.020001)
+        self.assertEqual(not root_exited, process.killed)
+        self.assertEqual(sorted(api.opened), sorted(api.closed))
+        self.wait_timeout = process.wait_timeout
         return confirmed
 
-    def test_termination_is_confirmed_when_every_descendant_is_gone(self) -> None:
-        self.assertTrue(self._terminate([11, 12], [True, True, False, False]))
-        self.assertTrue(self._terminate([], []))
+    def test_native_snapshot_and_held_handles_confirm_exited_tree(self) -> None:
+        api = self.Api(alive=[True, False, False])
+        self.assertTrue(self._terminate(api))
+        self.assertEqual([11, 12], api.opened)
+        self.assertTrue(self._terminate(self.Api(table={4242: 1}, created={100: 10, 4242: 10})))
 
-    def test_termination_is_unconfirmed_for_a_surviving_or_unlisted_tree(self) -> None:
-        self.assertFalse(self._terminate([11], [True] * 1000))
-        self.assertFalse(self._terminate(None, []))
+    def test_snapshot_failure_is_unconfirmed_but_exited_root_can_be_confirmed(self) -> None:
+        api = self.Api(table={11: 4242})
+        self.assertTrue(self._terminate(api, root_exited=True))
+        self.assertFalse(self._terminate(self.Api(table={})))
+        api = self.Api()
+        api.snapshot = mock.Mock(side_effect=OSError("snapshot failed"))
+        self.assertFalse(self._terminate(api))
+
+    def test_stale_parent_pid_is_rejected(self) -> None:
+        stale = self.Api(created={100: 10, 4242: 10, 11: 9, 12: 12})
+        self.assertTrue(self._terminate(stale))
+        self.assertEqual([11], stale.opened)
+
+    def test_pid_reuse_after_capture_does_not_change_held_handle_result(self) -> None:
+        api = self.Api()
+        api.snapshot = mock.Mock(side_effect=lambda: api.table)
+
+        def reuse_pid(args, **options):
+            api.table = {4242: 1, 11: 999, 12: 11}
+            api.births[11] = 99
+            return subprocess.CompletedProcess(args, 0)
+
+        self.assertTrue(self._terminate(api, run=reuse_pid))
+        api.snapshot.assert_called_once()
+
+    def test_survivor_and_failed_wait_are_unconfirmed_with_handles_closed(self) -> None:
+        self.assertFalse(self._terminate(self.Api(alive=[True] * 1000)))
+        api = self.Api()
+        api.alive = mock.Mock(side_effect=OSError("wait failed"))
+        self.assertFalse(self._terminate(api))
+
+    def test_failed_open_and_creation_probe_are_unconfirmed(self) -> None:
+        api = self.Api()
+
+        def denied(pid):
+            if pid == 11:
+                raise OSError("denied")
+            api.opened.append(pid)
+            return pid
+
+        api.open = denied
+        self.assertFalse(self._terminate(api))
+        api = self.Api()
+
+        def failed_creation(handle):
+            if handle == 11:
+                raise OSError("times failed")
+            return api.births[handle]
+
+        api.created = failed_creation
+        self.assertFalse(self._terminate(api))
+
+    def test_taskkill_timeout_still_kills_and_reaps_root(self) -> None:
+        def timeout(args, **options):
+            raise subprocess.TimeoutExpired(args, options["timeout"])
+
+        self.assertFalse(self._terminate(self.Api(), run=timeout))
+
+    def test_one_deadline_covers_taskkill_root_wait_and_descendants(self) -> None:
+        seen = []
+
+        def taskkill(args, **options):
+            seen.append(options["timeout"])
+            return subprocess.CompletedProcess(args, 1)
+
+        self.assertTrue(self._terminate(self.Api(table={4242: 1}), run=taskkill,
+                                        clock=iter([100.0, 100.01, 100.015]), root_exited=True))
+        self.assertAlmostEqual(0.01, seen[0])
+        self.assertAlmostEqual(0.005, self.wait_timeout)
+        self.assertFalse(self._terminate(self.Api(), run=taskkill))
+        self.assertFalse(self._terminate(self.Api(), run=taskkill, root_exited=True))
 
 
 @unittest.skipUnless(os.name == "posix", "process groups are checked with POSIX signals")
