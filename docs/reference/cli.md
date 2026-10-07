@@ -670,6 +670,8 @@ embraion worktree salvage /path/to/worktree
 
 See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md) and [canonical workflow](https://github.com/GORYNED/EmbrAIon/blob/main/core/workflows/worktree.md) for opt-in housekeeping, shared creation receipts, lifecycle gates, recovery, and preservation reasons. `gc` defaults to dry-run. `publish` explicitly creates a new remote branch and records creation evidence; subsequent task commits use the same command with an exact prior-SHA lease and verified update receipt. External pushes do not register ownership or updates. Legacy markers retain worktree-only cleanup rights. Existing user branches cannot be adopted.
 
+Git LFS hydration is off by default. With `worktree.lfs: hydrate` in `.embraion/project.yaml`, `worktree create` (checkout and `--detach`) and `worktree register` fetch the LFS content of the new worktree's exact HEAD from the repository's own LFS remote, check it out, and verify every LFS file by size and SHA-256. `create` prints `LFS hydrated: <n> of <n> files verified`; `register` adds an `lfs` object (`state`, `files`, `verified`, `missing`, `reason`) to its JSON. A failed hydration, including a missing `git lfs` when LFS files exist, exits with code 1 and keeps the worktree. `prepare` runs before any checkout exists and does not hydrate. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ### `embraion learning`
 
 Record evidence and manage gated learning candidates.

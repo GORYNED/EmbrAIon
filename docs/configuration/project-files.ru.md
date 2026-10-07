@@ -44,6 +44,17 @@ capabilities:
 
 Эти metadata отличаются от необязательного [инвентаря внешних возможностей](capabilities.md) со строгой schema. Декларация в нём не устанавливает интеграцию и не доказывает загрузку возможности хостом.
 
+### `worktree`
+
+`worktree.lfs` необязателен. Значение по умолчанию — `none`: новые worktrees создаются как раньше. Для репозитория с Git LFS задайте `hydrate`:
+
+```yaml
+worktree:
+  lfs: hydrate
+```
+
+Новый checkout такого репозитория содержит текстовые pointer-файлы, пока содержимое не загружено. При `hydrate` команда `embraion worktree create` (и `worktree register` для worktree, созданного вашим host) загружает LFS-содержимое точного HEAD из собственного LFS-remote репозитория, делает checkout и проверяет каждый LFS-файл по размеру и SHA-256. Если проверка не прошла, команда завершается с ненулевым кодом, но worktree сохраняется. Любое другое значение и неизвестный ключ в `worktree` — ошибка. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ## `.embraion/knowledge.yaml`
 
 Указывает EmbrAIon на project-owned knowledge.

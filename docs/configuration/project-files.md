@@ -44,6 +44,17 @@ At the current contract level, EmbrAIon does not use arbitrary `capabilities` va
 
 This metadata is separate from the optional, schema-checked [external capability inventory](capabilities.md). A declaration there records requirements and lifecycle evidence; it does not install an integration or prove that a host loaded it.
 
+### `worktree`
+
+`worktree.lfs` is optional. The default is `none`: new worktrees are created exactly as before. Set it to `hydrate` for a repository that uses Git LFS:
+
+```yaml
+worktree:
+  lfs: hydrate
+```
+
+A new checkout of such a repository holds pointer text files until the content is fetched. With `hydrate`, `embraion worktree create` (and `worktree register` for a worktree your host created) fetches the LFS content of the exact worktree HEAD from the repository's own LFS remote, checks it out, and verifies every LFS file by size and SHA-256. A failed check makes the command exit non-zero, but the worktree is kept. Any other value, or an unknown key under `worktree`, is an error. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ## `.embraion/knowledge.yaml`
 
 This file points EmbrAIon at project-owned knowledge.

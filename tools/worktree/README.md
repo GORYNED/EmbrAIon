@@ -87,8 +87,53 @@ After verified remote deletion, cleanup removes only the matching direct
 other cached refs are never pruned. Local ownership checks reject symbolic refs and
 filesystem aliases before deletion, and compare-and-delete never dereferences them.
 
+## Git LFS hydration
+
+A new worktree of a repository that uses Git LFS holds pointer text files until the content is
+fetched. Hydration is opt-in and off by default. Enable it in `.embraion/project.yaml`:
+
+```yaml
+worktree:
+  lfs: hydrate
+```
+
+The only values are `none` (default) and `hydrate`. Any other value, or an unknown key under
+`worktree`, is an error and stops the command before anything is created.
+
+With `hydrate`, `worktree create` (named branch or `--detach`) and `worktree register` check
+the new worktree after it exists. `prepare` does not hydrate because it runs before a
+checkout exists. The check works in this order:
+
+1. No `filter=lfs` in a `.gitattributes` file at HEAD, or no committed LFS pointer under such
+   an attribute: state `not-applicable`. `git lfs` is not needed.
+2. Every LFS file in the working tree already matches its pointer size and SHA-256 (for
+   example because Git smudged it): state `hydrated`, reason `already-present`.
+3. Otherwise `git lfs` must be available. If it is missing, hydration fails with an
+   actionable message. This is the only case where a missing `git lfs` is an error.
+4. `git lfs fetch <remote> <HEAD-sha>` fetches the content of the exact worktree HEAD. The
+   remote is the branch's tracking remote, else `origin`. Nothing is downloaded from any other
+   location, and the command never prompts for credentials.
+5. `git lfs checkout` writes the content. It receives the LFS filter settings for that one
+   command only, so a machine without `git lfs install` works, and no Git configuration is
+   changed.
+6. Every LFS file at HEAD is verified by size and SHA-256 against its pointer. Files
+   excluded by sparse checkout are not counted.
+
+`create` prints `LFS hydrated: <verified> of <files> files verified`. `register` adds an
+`lfs` object to its JSON output only when the setting is on:
+
+```json
+{"lfs": {"state": "hydrated", "files": 3, "verified": 3, "missing": 0, "reason": "verified"}}
+```
+
+`state` is `hydrated`, `failed`, `not-applicable`, or `skipped` (a branch-only resource with
+no checkout). A failure exits with code 1 and keeps the worktree, so you can fix the cause
+and run `git lfs pull` there. Failure reasons never contain credentials: URL user info and
+query parameters are removed from Git LFS error text. With the setting off or absent, these
+commands behave exactly as before and print no LFS output.
+
 Applied operations preserve exact commits and required local state before deletion and
 repeat eligibility checks. Unknown ignored files preserve the candidate. `salvage` remains
 a manual patch/untracked-file helper and is not a substitute for the cleanup recovery snapshot.
 
-<sub>Last updated: 2026-10-04 04:51 UTC</sub>
+<sub>Last updated: 2026-10-07 11:05 UTC</sub>

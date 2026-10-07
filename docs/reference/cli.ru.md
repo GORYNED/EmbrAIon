@@ -625,6 +625,8 @@ embraion worktree salvage /path/to/worktree
 
 GC удаляет только worktrees, созданные через `embraion worktree create`, с соответствующей записью ownership в Git-каталоге worktree. Требуются завершённые локальные run/session evidence, чистый интегрированный checkout, отсутствие блокировок и незавершённых Git-операций. Отсутствующее, повреждённое, активное, blocked или иное недоказанное состояние сохраняется. Старые и созданные вручную worktrees не удаляются.
 
+Hydration Git LFS по умолчанию выключена. При `worktree.lfs: hydrate` в `.embraion/project.yaml` команды `worktree create` (checkout и `--detach`) и `worktree register` загружают LFS-содержимое точного HEAD нового worktree из собственного LFS-remote репозитория, делают checkout и проверяют каждый LFS-файл по размеру и SHA-256. `create` печатает `LFS hydrated: <n> of <n> files verified`; `register` добавляет в JSON объект `lfs` (`state`, `files`, `verified`, `missing`, `reason`). Неудачная hydration, включая отсутствие `git lfs` при наличии LFS-файлов, завершает команду с кодом 1 и сохраняет worktree. `prepare` выполняется до появления checkout и не делает hydration. См. [руководство по инструменту worktree](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md#git-lfs-hydration).
+
 ### `embraion learning`
 
 Записать evidence и управлять gated learning candidates.
