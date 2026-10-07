@@ -26,6 +26,7 @@ For explicit model tuning, use the full request on the Bootstrap page. Manual ed
 | Which MCP servers should the project's host configuration contain? | optional `integrations.yaml` |
 | Which files should trigger knowledge review when changed? | optional `knowledge-maintenance.yaml` |
 | Which incremental code structure limits apply? | optional `organization.yaml` |
+| Which architectural changes need a decision record? | optional `decisions.yaml` |
 
 ![Project configuration map](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
 
@@ -88,4 +89,5 @@ embraion projection diff --host codex --destination .
 - [Conversational configuration](ai-hosts.md)
 - [External capabilities](capabilities.md)
 - [Code organization](organization.md)
+- [Architecture decision records](decisions.md)
 - [Knowledge maintenance](../guides/knowledge-maintenance.md)

@@ -104,6 +104,25 @@ class CheckTests(unittest.TestCase):
             self.assertEqual(0, main(["check"]))
         self.assertIn("Check: passed", output.getvalue())
 
+    def test_decisions_check_is_reported_as_not_run_without_a_base_ref(self) -> None:
+        (self.project / ".embraion/decisions.yaml").write_text("{}\n", encoding="utf-8")
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", return_value=(0, "ok\n")), redirect_stdout(output):
+            self.assertEqual(0, main(["check"]))
+        self.assertIn("NOT RUN  decisions", output.getvalue())
+        self.assertIn("needs --base-ref", output.getvalue())
+        self.assertIn("Check: passed", output.getvalue())
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", return_value=(0, "ok\n")), redirect_stdout(output):
+            main(["check", "--json"])
+        entry = next(item for item in json.loads(output.getvalue())["checks"] if item["id"] == "decisions")
+        self.assertIsNone(entry["passed"])
+
     def test_command_runs_real_checks_from_the_project_root(self) -> None:
         nested = self.project / "nested"
         nested.mkdir()

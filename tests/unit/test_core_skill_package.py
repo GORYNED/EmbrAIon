@@ -28,6 +28,25 @@ LATER_FILE_EDITS = {
     "core/skills/orchestration/SKILL.md": (
         ("No hosted bot review or cross-host external review is required by default.",
          "No Copilot Review or cross-host external review is required by default."),
+        ("For an assignment that may make an architecture-level decision (dependency direction, ownership, "
+         "a persisted format or stable identifier, a platform or build strategy, a foundational dependency, "
+         "or a new or removed package), load the architecture-decision skill during planning so the record, "
+         "or a stated waiver, is part of the implementation scope and the project's configured decisions "
+         "check is among the required checks.\n\n", ""),
+    ),
+    "core/skills/planning/SKILL.md": (
+        ("5. Decide whether the task makes an architecture-level decision: dependency direction, ownership, "
+         "a persisted format or stable identifier, a platform or build strategy, a foundational dependency, "
+         "or a new or removed package. When it does, plan the architecture-decision skill and its record as "
+         "part of the change, not as a follow-up.\n6. Define observable", "5. Define observable"),
+        ("7. Return a compact execution plan", "6. Return a compact execution plan"),
+    ),
+    "core/skills/review/SKILL.md": (
+        ("especially architecture, decisions, source authority,", "especially architecture, source authority,"),
+        ("For a change that makes an architecture-level decision, check that the decision is recorded in the "
+         "project's decisions folder, or that its waiver states a reason you accept, that any record it "
+         "supersedes is linked both ways, and that no accepted record's decision text was rewritten; use "
+         "architecture-decision. ", ""),
     ),
 }
 

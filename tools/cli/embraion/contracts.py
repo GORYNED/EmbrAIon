@@ -91,6 +91,18 @@ PROJECT_CONTRACT_SLOTS: dict[str, dict[str, Any]] = {
             "planning",
         ],
     },
+    "decisions": {
+        "description": "Folder of architecture decision records, with its index and template.",
+        "triggers": [
+            "decision",
+            "adr",
+            "architecture",
+            "dependency",
+            "ownership",
+            "package",
+            "platform",
+        ],
+    },
     "deferred-tasks": {
         "description": "Project list of deferred tasks and follow-ups to recall when a task touches their area.",
         "triggers": [
@@ -141,7 +153,7 @@ def project_contract_status(
             except ValueError:
                 inside_project = False
 
-        exists = bool(target and inside_project and target.is_file())
+        exists = bool(target and inside_project and (target.is_dir() if slot == "decisions" else target.is_file()))
 
         rows.append(
             {

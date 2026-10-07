@@ -49,6 +49,12 @@ def planned_checks(
         if base_ref:
             argv += ["--base-ref", base_ref]
         checks.append({"id": "organization", "argv": argv})
+    if (root / ".embraion" / "decisions.yaml").is_file():
+        if base_ref:
+            checks.append({"id": "decisions", "argv": ["decisions", "check", "--require-config", "--path", ".",
+                                                       "--base-ref", base_ref, "--json"]})
+        else:
+            checks.append({"id": "decisions", "argv": None, "not-run": "needs --base-ref"})
     argv = ["security", "scan", "--path", ".", "--fail-on", fail_on]
     if all_files:
         argv.append("--all-files")

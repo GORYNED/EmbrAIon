@@ -173,6 +173,9 @@ def build_context(
         if not _is_inside(root, target):
             excluded.append({"id": item["id"], "reason": "outside-project"})
             continue
+        if target.is_dir():
+            excluded.append({"id": item["id"], "reason": "directory"})
+            continue
         if not target.is_file():
             excluded.append({"id": item["id"], "reason": "missing"})
             continue

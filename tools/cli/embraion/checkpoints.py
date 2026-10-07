@@ -111,7 +111,8 @@ def _anchors(root: Path, *, context_id: str | None, run_id: str | None,
     slots = knowledge.get("slots") or {}
     if not isinstance(slots, dict):
         raise RuntimeError("Invalid project contract slots.")
-    entries.extend(value for value in slots.values() if value is not None)
+    # The decisions slot binds a folder, which has no single content hash to anchor.
+    entries.extend(value for slot, value in slots.items() if value is not None and slot != "decisions")
     for entry in entries:
         relative = entry if isinstance(entry, str) else entry.get("path") if isinstance(entry, dict) else None
         if not isinstance(relative, str):
