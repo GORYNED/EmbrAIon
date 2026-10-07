@@ -65,6 +65,10 @@ Lead читает контракт проекта, автоматически в
 
 Для подробной инженерной модели см. [Engineering Model Deep Dive](docs/reference/engineering-model.ru.md).
 
+## Новое в 0.29
+
+- [Записи архитектурных решений](docs/configuration/decisions.ru.md) стали частью процесса: необязательный слот `decisions` и `.embraion/decisions.yaml` описывают, какие изменения архитектурные; `embraion decisions check` (его запускает и `embraion check --base-ref`) требует запись или `Decision-Waiver`, а `embraion adr new` создаёт следующую пронумерованную запись.
+
 ## Новое в 0.28
 
 - [`embraion check`](docs/reference/cli.ru.md#embraion-check) запускает все проверки, которые выбирает конфигурация проекта, поэтому [CI проекта](docs/reference/runtime-version-resolution.ru.md) обходится одним шагом; `projection.<host>.components` в [policy](docs/configuration/policy.ru.md) объявляют проверяемые проекции.
@@ -95,4 +99,4 @@ Lead читает контракт проекта, автоматически в
 
 ---
 
-<sub>Последнее обновление: 2026-10-07 00:14 UTC</sub>
+<sub>Последнее обновление: 2026-10-07 02:00 UTC</sub>
