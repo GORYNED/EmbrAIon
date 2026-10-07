@@ -272,7 +272,7 @@ def run_parallel(suite_name: str, suite_dir: Path, jobs: int) -> int:
     suite_path = str(suite_dir)
     if suite_path not in sys.path:
         sys.path.insert(0, suite_path)
-    suite = unittest.defaultTestLoader.discover(suite_path)
+    suite = unittest.TestLoader().discover(suite_path)
     counts = count_by_module(suite)
     expected = sum(counts.values())
     sizes = {module: module_size(suite_dir, module) for module in counts}
