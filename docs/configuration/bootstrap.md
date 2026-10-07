@@ -1,10 +1,18 @@
 # Project Bootstrap
 
-After `embraion init` and installing your host projection, ask:
+Ask your agent:
 
 > Configure EmbrAIon for this project.
 
 Lead loads the canonical Core `project-bootstrap` skill. This reusable procedure is projected to Codex, GitHub Copilot, Claude Code, and Portable. It is an AI-host procedure, not a new CLI command or a promise that static files execute onboarding automatically. Host trust, permissions, skill loading, and native capabilities still apply. Portable carries the procedure for a consuming integration; it cannot run an AI session itself.
+
+When the skill is already available, the agent can perform launcher setup, `init`,
+and host projection installation for a new repository. It checks an existing or
+partial installation first and preserves unrelated configuration. If the host has
+not loaded this skill, it must discover the official installation instructions;
+that discovery and a fresh host session are separate from file verification.
+The agent asks for permission only where a shared machine installation needs it,
+then executes the commands itself.
 
 ## Discover before changing
 
