@@ -239,6 +239,49 @@ class CliIntegrationTests(unittest.TestCase):
                 record["commands"][0]["stdout"],
             )
 
+    def test_check_runs_declared_validation_profiles_with_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary) / "project"
+            project.mkdir()
+            self._run("init", ".", "--name", "CheckProfiles", cwd=project)
+            policy_path = project / ".embraion" / "policy.yaml"
+            policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+            policy["check"] = {"validation-profiles": ["smoke", "empty"]}
+            policy_path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
+            validation_path = project / ".embraion" / "validation.yaml"
+            validation_path.write_text(
+                yaml.safe_dump({"profiles": {
+                    "smoke": [f'"{sys.executable}" -c "print(1)"'],
+                    "empty": [],
+                }}, sort_keys=False),
+                encoding="utf-8",
+            )
+
+            result = self._run("check", "--json", cwd=project, check=False)
+            report = json.loads(result.stdout)
+            steps = {item["id"]: item for item in report["checks"]}
+            self.assertEqual(1, result.returncode)
+            self.assertEqual(["validation-empty"], report["failed"])
+            self.assertEqual("passed", steps["validation-smoke"]["evidence"]["status"])
+            self.assertEqual("skipped", steps["validation-empty"]["evidence"]["status"])
+            evidence = project / steps["validation-smoke"]["evidence"]["evidence-path"]
+            self.assertEqual("passed", json.loads(evidence.read_text(encoding="utf-8"))["status"])
+
+            policy["check"] = {"validation-profiles": ["smoke"]}
+            policy_path.write_text(yaml.safe_dump(policy, sort_keys=False), encoding="utf-8")
+            result = self._run("check", cwd=project, check=False)
+            self.assertEqual(0, result.returncode, result.stdout)
+            self.assertIn("PASS  validation-smoke", result.stdout)
+
+            validation_path.write_text(
+                yaml.safe_dump({"profiles": {"smoke": [f'"{sys.executable}" -c "raise SystemExit(3)"']}}),
+                encoding="utf-8",
+            )
+            result = self._run("check", cwd=project, check=False)
+            self.assertEqual(1, result.returncode)
+            self.assertIn("FAIL  validation-smoke", result.stdout)
+            self.assertIn("Check: failed (validation-smoke)", result.stdout)
+
     def test_projection_verify_supports_codex_config_merge_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary) / "project"

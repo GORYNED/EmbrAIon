@@ -44,13 +44,39 @@ def read_decisions_config(root: Path) -> dict[str, Any] | None:
         return None
     config = _validated_config_mapping(path, schema_name="decisions.schema.json",
                                        label=".embraion/decisions.yaml")
-    for trigger in config.get("triggers", []):
+    for trigger in [*config.get("triggers", []), *config.get("extra-triggers", [])]:
         for pattern in trigger.get("patterns", []):
             try:
                 re.compile(pattern)
             except re.error:
                 raise RuntimeError("Invalid .embraion/decisions.yaml: a trigger pattern is not a regular expression") from None
+    resolved_triggers(config)
     return config
+
+
+def resolved_triggers(config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return the effective triggers: `triggers` (the default when absent) followed by `extra-triggers`.
+
+    Without `extra-triggers` the result is exactly what `triggers` alone selected. With it, trigger
+    ids must be unique across the whole list.
+    """
+    triggers = DEFAULT_TRIGGERS if config.get("triggers") is None else config["triggers"]
+    extra = config.get("extra-triggers")
+    if not extra:
+        return list(triggers)
+    combined = [*triggers, *extra]
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for trigger in combined:
+        name = trigger.get("id")
+        if name is not None and name in seen and name not in duplicates:
+            duplicates.append(name)
+        if name is not None:
+            seen.add(name)
+    if duplicates:
+        raise RuntimeError("Invalid .embraion/decisions.yaml: trigger ids must be unique across "
+                           "triggers, extra-triggers, and the default trigger: " + ", ".join(duplicates))
+    return combined
 
 
 def decisions_folder(root: Path) -> str:
@@ -130,7 +156,7 @@ def check_decisions(project: Path | None = None, *, base_ref: str, head_ref: str
     head = _git(root, "rev-parse", "--verify", "--end-of-options", f"{head_ref}^{{commit}}").strip()
     origin = _git(root, "merge-base", base, head).strip()
     changes = _changes(root, origin, head)
-    fired = _fired(root, origin, head, changes, DEFAULT_TRIGGERS if config.get("triggers") is None else config["triggers"])
+    fired = _fired(root, origin, head, changes, resolved_triggers(config))
     excluded = {config.get("index", DEFAULT_INDEX), config.get("template", DEFAULT_TEMPLATE)}
     records = sorted(item["path"] for item in changes
                      if item["change"] != "deleted" and item["path"].endswith(".md")

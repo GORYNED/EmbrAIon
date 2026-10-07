@@ -1388,7 +1388,7 @@ def _cmd_adr_new(args: argparse.Namespace) -> int:
 
 
 def _cmd_check(args: argparse.Namespace) -> int:
-    from .check import planned_checks, run_check
+    from .check import planned_checks, run_check, run_validation_step
 
     project = project_root()
     checks = planned_checks(project, base_ref=args.base_ref, fail_on=args.fail_on, all_files=args.all_files)
@@ -1398,6 +1398,11 @@ def _cmd_check(args: argparse.Namespace) -> int:
         for check in checks:
             if check["argv"] is None:
                 results.append({**check, "exit": None, "passed": None, "output": check["not-run"]})
+                continue
+            if check.get("validation-profile"):
+                code, output, evidence = run_validation_step(project, check["validation-profile"])
+                results.append({**check, "exit": code, "passed": code == 0, "output": output,
+                                "evidence": evidence})
                 continue
             code, output = run_check(parser, check["argv"])
             results.append({**check, "exit": code, "passed": code == 0, "output": output})
@@ -2731,7 +2736,8 @@ def build_parser() -> argparse.ArgumentParser:
         "check",
         help="Run every check the project configuration selects",
         description="Run, from the project root, the configuration, routing, declared projection, Claude native, "
-        "organization, and security checks that the project configuration selects, and fail if any fails.",
+        "organization, security, and declared validation profile checks that the project configuration selects, "
+        "and fail if any fails.",
     )
     check_parser.add_argument("--base-ref", help="Base ref for the organization check, for example origin/main")
     check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER),
