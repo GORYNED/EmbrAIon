@@ -291,6 +291,8 @@ Inside a project, `validate` also checks the project's `.embraion/*.yaml` struct
 - knowledge `roles` that match no Core role or agent declared in `.embraion/agents.yaml` (`config-role`);
 - empty files, empty sections that expect a value, and `.embraion` YAML files EmbrAIon does not read (`config-inert`), plus unreadable YAML (`config-parse`).
 
+When `.embraion/sources.yaml` exists, `validate` also checks it and reports each problem as an error (`sources-invalid`), whether or not `--strict` is set. See [Source registry](../configuration/sources.md).
+
 Warnings keep the exit code at 0; `--strict` reports them as errors. Without findings the output stays `PASS: no validation issues.`. Full schema conformance remains with the commands that load each file, and the policy-ceiling check stays an error.
 
 ### `embraion check`
@@ -492,6 +494,18 @@ embraion organization check --path . --require-config --json
 ```
 
 The base reference identifies existing debt; it is not a waiver for violations added by the change. Without a configuration the check is `skipped`; `--require-config` makes it fail. See [Code organization](../configuration/organization.md).
+
+### `embraion sources`
+
+Inspect the optional source registry and record where a source lives on this machine:
+
+```bash
+embraion sources list [--path .] [--json]
+embraion sources status [--path .] [--json]
+embraion sources set <id> <path> [--path .] [--json]
+```
+
+`list` shows each source's `id`, `role`, `write` policy, and `description`. `status` shows `id`, `role`, `write`, and `availability`: `available` when the recorded local path exists, `missing` when it does not, and `unset` when none is recorded. `set` records the absolute path of a declared source in the ignored `.embraion/state/sources-local.yaml`; the path must exist. No command prints a local path. The commands exit 2 when `.embraion/sources.yaml` is missing or invalid, or when `set` names an unknown ID. See [Source registry](../configuration/sources.md).
 
 ### `embraion decisions`
 

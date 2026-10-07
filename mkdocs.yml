@@ -79,6 +79,7 @@ plugins:
             Project agents: Агенты проекта
             External capabilities: Внешние возможности
             Code organization: Организация кода
+            Source registry: Реестр источников
             Architecture decision records: Записи об архитектурных решениях
             Conversational configuration: Разговорная настройка
             Advanced: Расширенная настройка
@@ -171,6 +172,7 @@ nav:
           - Project agents: configuration/agents.md
           - External capabilities: configuration/capabilities.md
           - Code organization: configuration/organization.md
+          - Source registry: configuration/sources.md
           - Architecture decision records: configuration/decisions.md
           - Conversational configuration: configuration/ai-hosts.md
       - Advanced:
