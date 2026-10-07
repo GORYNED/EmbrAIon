@@ -562,7 +562,7 @@ embraion enforcement check --base-ref origin/main --run-id task-001 --json
 embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
 
-`--protected-sources {name,base-tree}` переопределяет `enforcement.protected-sources` из policy для этого запуска. Без флага решает policy, по умолчанию `name`. В режиме `base-tree` список protected читается на merge base, а защищённые пути сравниваются по ID объектов Git; если policy base или merge base недоступны, проверка не проходит (fail-closed). См. [Enforcement](../guides/enforcement.ru.md#защита-источников-по-идентичности-объектов-git).
+`--protected-sources {name,base-tree}` переопределяет `enforcement.protected-sources` из policy для этого запуска. Без флага решает более строгий режим из policy head и policy merge base, по умолчанию `name`. В режиме `base-tree` список protected читается на merge base, а защищённые пути сравниваются по ID объектов Git; если policy base или merge base недоступны, проверка не проходит (fail-closed). См. [Enforcement](../guides/enforcement.ru.md#защита-источников-по-идентичности-объектов-git).
 
 С `--run-id` active runs получают validation evidence. Завершение run с passed review фиксирует HEAD, index и содержимое, modes и symlink targets tracked/nonignored untracked файлов. Gate требует совпадения снимка до и после validation; новый commit, staging или working edit требуют нового reviewed run. Legacy review без снимка не проходит gate. Нечитаемое состояние, submodules и неоднозначные directory aliases приводят к отказу. Завершённый run не изменяется и не завершается повторно. Все gates, включая external-review, отклоняют изменения Git-снимка во время validation; ignored runtime/build output в него не входит.
 

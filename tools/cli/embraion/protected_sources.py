@@ -55,35 +55,27 @@ def _merge_base(root: Path, base_ref: str) -> str:
     head = _git(root, "rev-parse", "--verify", "--quiet", "HEAD^{commit}")
     if head.returncode != 0:
         raise _Failure("Cannot resolve HEAD to a commit.")
-    shallow = _git(root, "rev-parse", "--is-shallow-repository").stdout.strip() == b"true"
-    found = _git(root, "merge-base", base_commit, "HEAD")
-    lines = found.stdout.decode().split()
-    if found.returncode != 0 or len(lines) != 1:
-        hint = (
-            " The repository is shallow; fetch the full history (for example "
-            "'fetch-depth: 0') so the merge base is available."
-            if shallow
-            else ""
-        )
+    # A shallow clone cannot prove which commit is the real merge base: a merge base found
+    # above the cut-off may still be older than the true one. Fail closed on any shallow repository.
+    if _git(root, "rev-parse", "--is-shallow-repository").stdout.strip() == b"true":
         raise _Failure(
-            f"No single merge base exists between '{base_ref}' and HEAD.{hint}"
+            "The repository is shallow, so the merge base cannot be proven. Fetch the full "
+            "history (for example 'fetch-depth: 0' in CI)."
         )
-    merge_base = lines[0]
-    if shallow:
-        # A shallow boundary commit is not proof of the real merge base.
-        shallow_file = _git(root, "rev-parse", "--git-path", "shallow").stdout.decode().strip()
-        if shallow_file:
-            path = Path(shallow_file)
-            path = path if path.is_absolute() else root / path
-            if path.is_file() and merge_base in path.read_text(encoding="utf-8").split():
-                raise _Failure(
-                    "The merge base is a shallow-history boundary, so the real merge base "
-                    "is unavailable. Fetch the full history (for example 'fetch-depth: 0')."
-                )
-    return merge_base
+    found = _git(root, "merge-base", "--all", base_commit, "HEAD")
+    lines = found.stdout.decode().split()
+    if found.returncode != 0 or not lines:
+        raise _Failure(f"No single merge base exists between '{base_ref}' and HEAD.")
+    if len(lines) > 1:
+        raise _Failure(
+            f"No single merge base exists between '{base_ref}' and HEAD: the history has "
+            f"{len(lines)} equally good merge bases (a criss-cross merge). Merge the base "
+            "ref into the branch first."
+        )
+    return lines[0]
 
 
-def _base_protected_list(root: Path, merge_base: str) -> list[str]:
+def _base_policy(root: Path, merge_base: str) -> dict[str, Any]:
     result = _git(root, "show", f"{merge_base}:./{_POLICY_PATH}")
     if result.returncode != 0:
         raise _Failure(
@@ -96,6 +88,25 @@ def _base_protected_list(root: Path, merge_base: str) -> list[str]:
         raise _Failure(f"The policy at the merge base cannot be parsed: {error}") from error
     if not isinstance(data, dict):
         raise _Failure("The policy at the merge base is not a mapping.")
+    return data
+
+
+def base_policy_mode(root: Path, base_ref: str) -> str | None:
+    """Return `enforcement.protected-sources` from the policy at the merge base, if usable.
+
+    Any problem returns None: the default mode must not start failing because of this lookup.
+    """
+    try:
+        data = _base_policy(root, _merge_base(root, base_ref))
+    except _Failure:
+        return None
+    enforcement = data.get("enforcement")
+    mode = enforcement.get("protected-sources") if isinstance(enforcement, dict) else None
+    return mode if mode in PROTECTED_SOURCE_MODES else None
+
+
+def _base_protected_list(root: Path, merge_base: str) -> list[str]:
+    data = _base_policy(root, merge_base)
     sources = data.get("sources")
     if sources is None:
         return []
@@ -175,10 +186,16 @@ def _relocation_target(
 ) -> str | None:
     """Return the new location of a directory whose tree object ID is unchanged, if protected."""
     tree = base_trees.get(directory)
-    if tree is None:
+    if tree is None or directory in head_trees:
         return None
     relative = [path[len(directory) + 1:] for path in base_files if path.startswith(directory + "/")]
-    for target in sorted(path for path, oid in head_trees.items() if oid == tree and path != directory):
+    # The target must be new: an identical directory that already existed elsewhere at the
+    # merge base would make a plain deletion look like a move.
+    candidates = sorted(
+        path for path, oid in head_trees.items()
+        if oid == tree and path != directory and path not in base_trees
+    )
+    for target in candidates:
         if all(path_matches(f"{target}/{item}", head_patterns) for item in relative):
             return target
     return None

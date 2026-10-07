@@ -19,7 +19,13 @@ from .policy import (
     read_policy_config,
 )
 from .project_validation import run_validation_profile
-from .protected_sources import BASE_TREE_MODE, NAME_MODE, PROTECTED_SOURCE_MODES, check_base_tree
+from .protected_sources import (
+    BASE_TREE_MODE,
+    NAME_MODE,
+    PROTECTED_SOURCE_MODES,
+    base_policy_mode,
+    check_base_tree,
+)
 from .runtime import _append_event
 from .security import redact_value
 
@@ -153,6 +159,13 @@ def check_enforcement(
             "surface before using the gate."
         )
 
+    mode_source = None
+    if protected_sources is None and protected_mode != BASE_TREE_MODE:
+        # The policy at the merge base pins the stricter mode: a change cannot turn it off.
+        if base_policy_mode(root, base_ref) == BASE_TREE_MODE:
+            protected_mode = BASE_TREE_MODE
+            mode_source = "merge-base-policy"
+
     run_record = read_run(run_id, root) if run_id else None
     if run_record is not None and run_record.get("state") not in {"active", "completed", "blocked", "failed", "cancelled"}:
         raise RuntimeError("Unknown execution run state for enforcement.")
@@ -167,7 +180,10 @@ def check_enforcement(
 
     def protected_check(paths: list[str]) -> dict[str, Any]:
         if protected_mode == BASE_TREE_MODE:
-            return check_base_tree(root, base_ref, protected)
+            result = check_base_tree(root, base_ref, protected)
+            if mode_source:
+                result["mode-source"] = mode_source
+            return result
         changes = [path for path in paths if path_matches(path, protected)]
         return {
             "id": "protected-sources",
@@ -292,6 +308,7 @@ def _github_actions_content(
     *,
     action_version: str,
     require_review: bool,
+    protected_sources: str | None = None,
 ) -> str:
     """Reference the setup action; it reads and installs the pin, so pin updates need no edit."""
     review_step = ""
@@ -312,6 +329,13 @@ def _github_actions_content(
             exit 1
           fi
 """
+
+    # Only a non-default mode adds a flag, so the default workflow text is unchanged.
+    protected_flag = (
+        f"\n          --protected-sources {protected_sources}"
+        if protected_sources == BASE_TREE_MODE
+        else ""
+    )
 
     return f"""name: EmbrAIon Enforcement
 
@@ -348,7 +372,7 @@ jobs:
         run: >-
           embraion enforcement check
           --base-ref "${{{{ github.event.pull_request.base.sha }}}}"
-          {"--external-review-gate" if require_review else ""}
+          {"--external-review-gate" if require_review else ""}{protected_flag}
 {review_step}"""
 
 
@@ -390,6 +414,7 @@ def install_enforcement_surface(
     content = _github_actions_content(
         action_version=__version__,
         require_review=require_review,
+        protected_sources=kept_mode,
     )
     if workflow.exists():
         existing = workflow.read_text(encoding="utf-8")

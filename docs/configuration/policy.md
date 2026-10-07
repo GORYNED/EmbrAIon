@@ -106,7 +106,7 @@ enforcement:
 ```
 
 - `name` (the default when the key is omitted): match the names of changed files against the protected list of the checked-out policy.
-- `base-tree`: read the protected list from the merge base and compare protected paths by Git object ID. Any other value fails validation. See [Protect sources by Git object identity](../guides/enforcement.md#protect-sources-by-git-object-identity).
+- `base-tree`: read the protected list from the merge base and compare protected paths by Git object ID. Any other value fails validation. The stricter mode of the head policy and the merge-base policy wins, so a change cannot turn `base-tree` off once the base has it; the first pull request that enables it relies on the head policy. See [Protect sources by Git object identity](../guides/enforcement.md#protect-sources-by-git-object-identity).
 
 Do not manually flip this block and assume CI is installed. Use the explicit command when you are ready to add the GitHub Actions surface:
 
