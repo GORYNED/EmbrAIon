@@ -552,7 +552,10 @@ Evaluate the enabled gate against a Git base ref:
 ```bash
 embraion enforcement check --base-ref origin/main
 embraion enforcement check --base-ref origin/main --run-id task-001 --json
+embraion enforcement check --base-ref origin/main --protected-sources base-tree
 ```
+
+`--protected-sources {name,base-tree}` overrides `enforcement.protected-sources` of the policy for this run. Without it, the policy decides and the default is `name`. In `base-tree` mode the protected list is read at the merge base and protected paths are compared by Git object ID; the check fails closed when the base policy or merge base is unavailable. See [Enforcement](../guides/enforcement.md#protect-sources-by-git-object-identity).
 
 With `--run-id`, active runs receive validation evidence. Completing a run with passed review binds it to HEAD, index entries, and tracked/nonignored untracked file contents, modes and symlink targets. Enforcement requires that snapshot to match both before and after validation; commits, staging changes and working edits require a new reviewed run. Legacy review records without a snapshot cannot satisfy the gate. Unreadable state, submodules and ambiguous directory aliases fail closed. Completed runs are not modified or recompleted. All gates, including external-review gates, reject validation-time changes to the inspected Git snapshot. Ignored runtime/build output is outside that snapshot.
 

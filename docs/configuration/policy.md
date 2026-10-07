@@ -96,6 +96,16 @@ enforcement:
   require-review: false
 ```
 
+The optional `protected-sources` key selects how protected paths are checked:
+
+```yaml
+enforcement:
+  protected-sources: base-tree
+```
+
+- `name` (the default when the key is omitted): match the names of changed files against the protected list of the checked-out policy.
+- `base-tree`: read the protected list from the merge base and compare protected paths by Git object ID. Any other value fails validation. See [Protect sources by Git object identity](../guides/enforcement.md#protect-sources-by-git-object-identity).
+
 Do not manually flip this block and assume CI is installed. Use the explicit command when you are ready to add the GitHub Actions surface:
 
 ```bash
