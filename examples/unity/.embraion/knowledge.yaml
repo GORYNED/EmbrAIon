@@ -6,5 +6,6 @@ slots:
   persistence:
   engineering-workflow:
   specification:
+  decisions:
   deferred-tasks:
 project: knowledge/project.md

@@ -6,4 +6,5 @@ slots:
   persistence:
   engineering-workflow:
   specification:
+  decisions:
   deferred-tasks:

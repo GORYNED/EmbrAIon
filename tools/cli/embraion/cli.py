@@ -12,6 +12,7 @@ from . import __version__
 from .capabilities import diagnose_external_capabilities
 from .checkpoints import create_checkpoint, resume_checkpoint
 from .knowledge_audit import audit_knowledge, snapshot_knowledge
+from .decisions import check_decisions, new_decision
 from .organization import check_organization
 from .skill_evals import run_suite
 from .artifacts import read_framework_pin, read_project_artifact_lock, verify_project_artifact
@@ -139,6 +140,8 @@ def _print_main_help(file: object | None = None) -> None:
         "  harness    Audit host agents, skills, and native enforcement surfaces",
         "  capabilities Diagnose declared external and selected built-in capabilities",
         "  organization Check configured namespace, assembly, and Unity metadata rules",
+        "  decisions  Check that architectural changes carry a decision record or waiver",
+        "  adr        Create the next numbered architecture decision record",
         "  checkpoint Record or inspect local task continuity anchors",
         "  knowledge  Snapshot or audit declared documentation/source relationships",
         "  claude-native Inspect scoped Claude agents and install guard/observer hooks",
@@ -1355,6 +1358,35 @@ def _cmd_organization_check(args: argparse.Namespace) -> int:
     return 0 if report["passed"] else 1
 
 
+def _cmd_decisions_check(args: argparse.Namespace) -> int:
+    report = check_decisions(Path(args.path), base_ref=args.base_ref, head_ref=args.head_ref,
+                             waiver=args.waiver, require_config=args.require_config)
+    if args.json:
+        _print_json(report)
+    else:
+        print(f"Decisions: {report['status']}" + (f" ({report['outcome']})" if report.get("outcome") else "")
+              + (f": {report['reason']}" if report.get("reason") else ""))
+        for item in report["triggers"]:
+            print(f"trigger: {item['path']}: {item['change']}: {item['trigger']}")
+        for path in report["records"]:
+            print(f"record: {path}")
+        for text in report["waivers"]:
+            print(f"waiver: {text}")
+    return 0 if report["passed"] else 1
+
+
+def _cmd_adr_new(args: argparse.Namespace) -> int:
+    report = new_decision(args.title, Path(args.path), locales=args.locale, slug=args.slug,
+                          status=args.status, day=args.date)
+    if args.json:
+        _print_json(report)
+    else:
+        for path in report["created"] + report["paths"]:
+            print(path)
+        print(f"Record {report['number']} added to {report['index']} with status {report['status']}.")
+    return 0
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
     from .check import planned_checks, run_check
 
@@ -1364,13 +1396,19 @@ def _cmd_check(args: argparse.Namespace) -> int:
     results = []
     with contextlib.chdir(project):
         for check in checks:
+            if check["argv"] is None:
+                results.append({**check, "exit": None, "passed": None, "output": check["not-run"]})
+                continue
             code, output = run_check(parser, check["argv"])
             results.append({**check, "exit": code, "passed": code == 0, "output": output})
-    failed = [item["id"] for item in results if not item["passed"]]
+    failed = [item["id"] for item in results if item["passed"] is False]
     if args.json:
         _print_json({"passed": not failed, "failed": failed, "checks": results})
     else:
         for item in results:
+            if item["passed"] is None:
+                print(f"NOT RUN  {item['id']:18} {item['output']}")
+                continue
             print(f"{'PASS' if item['passed'] else 'FAIL'}  {item['id']:18} embraion {' '.join(item['argv'])}")
             if not item["passed"]:
                 for line in item["output"].rstrip().splitlines():
@@ -2664,6 +2702,30 @@ def build_parser() -> argparse.ArgumentParser:
                                     help="Fail instead of skipping when the organization configuration is missing")
     organization_check.add_argument("--json", action="store_true")
     organization_check.set_defaults(func=_cmd_organization_check)
+
+    decisions_parser = sub.add_parser("decisions", help="Check that architectural changes carry a decision record")
+    decisions_sub = decisions_parser.add_subparsers(dest="decisions_command", required=True)
+    decisions_check = decisions_sub.add_parser("check")
+    decisions_check.add_argument("--path", default=".")
+    decisions_check.add_argument("--base-ref", required=True)
+    decisions_check.add_argument("--head-ref", default="HEAD")
+    decisions_check.add_argument("--waiver", help="Reason no decision record is needed, for example from the pull request body")
+    decisions_check.add_argument("--require-config", action="store_true",
+                                 help="Fail instead of skipping when the decisions configuration is missing")
+    decisions_check.add_argument("--json", action="store_true")
+    decisions_check.set_defaults(func=_cmd_decisions_check)
+
+    adr_parser = sub.add_parser("adr", help="Scaffold architecture decision records")
+    adr_sub = adr_parser.add_subparsers(dest="adr_command", required=True)
+    adr_new = adr_sub.add_parser("new")
+    adr_new.add_argument("title")
+    adr_new.add_argument("--path", default=".")
+    adr_new.add_argument("--locale", action="append", default=[], help="Also create a localized copy, for example ru; repeatable")
+    adr_new.add_argument("--slug", help="File name words in lowercase kebab-case when the title has no ASCII words")
+    adr_new.add_argument("--status", default="Proposed")
+    adr_new.add_argument("--date", help="Record date as YYYY-MM-DD (default: today, UTC)")
+    adr_new.add_argument("--json", action="store_true")
+    adr_new.set_defaults(func=_cmd_adr_new)
 
     check_parser = sub.add_parser(
         "check",

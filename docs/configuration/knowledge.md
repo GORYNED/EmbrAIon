@@ -30,7 +30,7 @@ Reusable engineering procedures and universal EmbrAIon safety rules belong in Co
 
 ## Project Contract Slots
 
-EmbrAIon provides eight canonical semantic slots for project-specific truth:
+EmbrAIon provides nine canonical semantic slots for project-specific truth:
 
 | Slot | Project-owned meaning |
 | --- | --- |
@@ -41,9 +41,10 @@ EmbrAIon provides eight canonical semantic slots for project-specific truth:
 | `persistence` | persisted identities, serialization, storage, and recovery semantics |
 | `engineering-workflow` | project-specific execution gates and delivery workflow |
 | `specification` | requirements/specification system and artifact lifecycle |
+| `decisions` | folder of architecture decision records; see [Architecture decision records](decisions.md) |
 | `deferred-tasks` | list of deferred tasks and follow-ups; the [owner interaction rule](https://github.com/GORYNED/EmbrAIon/blob/main/core/rules/owner-interaction.md) reads it at the start of a task |
 
-The slots are built into EmbrAIon; the project supplies only its own file references.
+The slots are built into EmbrAIon; the project supplies only its own file references. The `decisions` slot is the exception: it binds a folder, which `embraion context` does not load as text.
 
 Starting with EmbrAIon v0.10.0, the top-level `slots` key in `.embraion/knowledge.yaml` is framework-reserved for this contract. This is an intentional pre-1.0 breaking cleanup; do not use `slots` as an arbitrary custom knowledge ID.
 
@@ -56,6 +57,7 @@ slots:
   persistence: docs/persistence.md
   engineering-workflow: .agents/skills/engineering-workflow/SKILL.md
   specification: .specify/integration.md
+  decisions: docs/architecture/decisions
   deferred-tasks: docs/engineering/follow-ups.md
 ```
 

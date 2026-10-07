@@ -250,6 +250,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
         "external-capabilities.yaml": root / "schemas/external-capabilities.schema.json",
         "integrations.yaml": root / "schemas/integrations.schema.json",
         "organization.yaml": root / "schemas/organization.schema.json",
+        "decisions.yaml": root / "schemas/decisions.schema.json",
         "knowledge-maintenance.yaml": root / "schemas/knowledge-audit.schema.json",
     }
     policy_schema = root / "schemas/policy.schema.json"
@@ -466,7 +467,7 @@ def collect_issues(root: Path) -> list[dict[str, str]]:
                     )
                     continue
 
-                if not target.is_file():
+                if not (target.is_dir() if knowledge_id == "slot:decisions" else target.is_file()):
                     add(
                         "project-knowledge",
                         str(knowledge_manifest.relative_to(root)),
@@ -638,6 +639,7 @@ PROJECT_CONFIG_SCHEMAS = {
     "pricing.yaml": "pricing-config",
     "external-capabilities.yaml": "external-capabilities",
     "organization.yaml": "organization",
+    "decisions.yaml": "decisions",
     "knowledge-maintenance.yaml": "knowledge-audit",
     "claude-native.yaml": "claude-native",
     "report.yaml": "report",
@@ -726,7 +728,10 @@ def _knowledge_findings(project: Path, data: dict[str, Any], known_roles: set[st
         except ValueError:
             findings.append(("config-path", f"knowledge '{name}' points outside the project"))
             continue
-        if not target.is_file():
+        if name == "slots.decisions":
+            if not target.is_dir():
+                findings.append(("config-path", f"knowledge '{name}' points to a missing folder: {relative}"))
+        elif not target.is_file():
             findings.append(("config-path", f"knowledge '{name}' points to a missing file: {relative}"))
     return findings
 
@@ -789,7 +794,7 @@ def collect_project_config_issues(project: Path, root: Path) -> list[dict[str, s
         except Exception:
             add("config-parse", name, "File is not valid YAML")
             continue
-        if data is None or data == {}:
+        if (data is None or data == {}) and name != "decisions.yaml":  # an empty decisions file selects the defaults
             add("config-inert", name, "File is empty and has no effect")
             continue
         if not isinstance(data, dict):

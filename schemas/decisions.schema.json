@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GORYNED/EmbrAIon/schemas/decisions.schema.json",
+  "title": "EmbrAIon Decision Record Configuration",
+  "type": "object",
+  "$defs": {
+    "file-name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[^/\\\\\\x00]+$",
+      "not": {"enum": [".", ".."]}
+    }
+  },
+  "properties": {
+    "index": {"$ref": "#/$defs/file-name"},
+    "template": {"$ref": "#/$defs/file-name"},
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["paths"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1, "maxLength": 80},
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1, "maxLength": 512}
+          },
+          "changes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"enum": ["added", "deleted", "modified", "renamed"]}
+          },
+          "patterns": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1, "maxLength": 512}
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -303,7 +303,7 @@ embraion check --base-ref origin/main --fail-on medium --all-files
 embraion check --json
 ```
 
-It always runs `validate --strict`, `route --validate`, `route --audit-authority` and `security scan` (with `--fail-on`, default `high`, and `--all-files` passed through). It adds `projection verify` for each host whose components `.embraion/policy.yaml` declares under `projection`, `claude-native status --require` when Claude Code `scoped-agents` or `hooks` are declared, and `organization check --require-config` when `.embraion/organization.yaml` exists. Without `--base-ref` the organization check audits the whole structure; with it, the check compares against that ref, so only findings the ref does not have fail, together with moves and GUID changes. The ref must be fetched, so a CI checkout needs its history. Each check prints `PASS` or `FAIL`, a failed check also prints its output, and an error in one check fails only that check. The command exits 1 when any check fails, and 2 when `.embraion/policy.yaml` cannot be read. See [Policy](../configuration/policy.md#projection-root-checks).
+It always runs `validate --strict`, `route --validate`, `route --audit-authority` and `security scan` (with `--fail-on`, default `high`, and `--all-files` passed through). It adds `projection verify` for each host whose components `.embraion/policy.yaml` declares under `projection`, `claude-native status --require` when Claude Code `scoped-agents` or `hooks` are declared, `organization check --require-config` when `.embraion/organization.yaml` exists, and `decisions check --require-config` when `.embraion/decisions.yaml` exists and `--base-ref` is given; without `--base-ref` that check is reported as `NOT RUN` and does not fail the command. Without `--base-ref` the organization check audits the whole structure; with it, the check compares against that ref, so only findings the ref does not have fail, together with moves and GUID changes. The ref must be fetched, so a CI checkout needs its history. Each check prints `PASS` or `FAIL`, a failed check also prints its output, and an error in one check fails only that check. The command exits 1 when any check fails, and 2 when `.embraion/policy.yaml` cannot be read. See [Policy](../configuration/policy.md#projection-root-checks).
 
 ### `embraion validation`
 
@@ -492,6 +492,29 @@ embraion organization check --path . --require-config --json
 ```
 
 The base reference identifies existing debt; it is not a waiver for violations added by the change. Without a configuration the check is `skipped`; `--require-config` makes it fail. See [Code organization](../configuration/organization.md).
+
+### `embraion decisions`
+
+Check that a change that makes an architecture-level decision carries a decision record:
+
+```bash
+embraion decisions check --base-ref origin/main
+embraion decisions check --base-ref origin/main --waiver "vendored copy, no ownership change" --json
+embraion decisions check --base-ref origin/main --require-config
+```
+
+The check compares the merge base of the base ref and the head (`HEAD` by default) with the head. It fails with `missing-record` when a trigger declared in `.embraion/decisions.yaml` (by default, an added or deleted package manifest) fires and the change adds or modifies no record in the folder bound to the `decisions` slot, unless a `Decision-Waiver: <reason>` commit trailer or `--waiver` states why none is needed. Without a configuration the check is `skipped`; `--require-config` makes it fail. See [Architecture decision records](../configuration/decisions.md).
+
+### `embraion adr`
+
+Create the next numbered architecture decision record:
+
+```bash
+embraion adr new "Move parsing into its own package"
+embraion adr new "Move parsing into its own package" --locale ru --status Proposed --date 2026-10-07 --json
+```
+
+`adr new` writes the record from the project template, adds the index row, and with `--locale <code>` (repeatable) writes a localized copy next to it. It creates the folder, template, and index when the project has none. `--slug` names the file when the title has no ASCII words. See [Architecture decision records](../configuration/decisions.md#scaffold).
 
 ### `embraion checkpoint`
 

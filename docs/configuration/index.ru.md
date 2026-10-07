@@ -26,6 +26,7 @@ Lead использует канонический Core skill [Project Bootstrap
 | Какие MCP servers должна содержать host configuration проекта? | опциональный `integrations.yaml` |
 | Какие изменения источников требуют проверки документа? | опциональный `knowledge-maintenance.yaml` |
 | Какие ограничения структуры кода проверяются постепенно? | опциональный `organization.yaml` |
+| Какие архитектурные изменения требуют записи о решении? | опциональный `decisions.yaml` |
 
 ![Карта конфигурации проекта](../assets/diagrams/en/04-configuration-map.svg){ loading=lazy }
 
@@ -88,4 +89,5 @@ embraion projection diff --host codex --destination .
 - [Разговорная настройка](ai-hosts.md)
 - [Внешние возможности](capabilities.md)
 - [Организация кода](organization.md)
+- [Записи об архитектурных решениях](decisions.md)
 - [Поддержка знаний](../guides/knowledge-maintenance.md)

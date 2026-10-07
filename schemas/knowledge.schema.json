@@ -91,6 +91,9 @@
         "specification": {
           "$ref": "#/$defs/slot-binding"
         },
+        "decisions": {
+          "$ref": "#/$defs/slot-binding"
+        },
         "deferred-tasks": {
           "$ref": "#/$defs/slot-binding"
         }

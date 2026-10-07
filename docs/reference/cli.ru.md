@@ -299,7 +299,7 @@ embraion check --base-ref origin/main --fail-on medium --all-files
 embraion check --json
 ```
 
-Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on`, по умолчанию `high`, и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, и `organization check --require-config`, когда есть `.embraion/organization.yaml`. Без `--base-ref` organization check проверяет всю структуру; с ним проверка сравнивает с этим ref, поэтому падают только findings, которых нет в ref, а также перемещения и смена GUID. Ref должен быть получен, поэтому checkout в CI нужен с историей. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, а ошибка в одной проверке роняет только её. Команда завершается с кодом 1, если упала хотя бы одна проверка, и с кодом 2, если `.embraion/policy.yaml` не читается. См. [Policy](../configuration/policy.md#projection-root-checks).
+Всегда запускаются `validate --strict`, `route --validate`, `route --audit-authority` и `security scan` (`--fail-on`, по умолчанию `high`, и `--all-files` передаются ему). Добавляются `projection verify` для каждого host, чьи components объявлены в `.embraion/policy.yaml` в секции `projection`, `claude-native status --require`, когда объявлены Claude Code `scoped-agents` или `hooks`, `organization check --require-config`, когда есть `.embraion/organization.yaml`, и `decisions check --require-config`, когда есть `.embraion/decisions.yaml` и передан `--base-ref`; без `--base-ref` эта проверка отмечается как `NOT RUN` и не роняет команду. Без `--base-ref` organization check проверяет всю структуру; с ним проверка сравнивает с этим ref, поэтому падают только findings, которых нет в ref, а также перемещения и смена GUID. Ref должен быть получен, поэтому checkout в CI нужен с историей. Каждая проверка печатает `PASS` или `FAIL`, у упавшей печатается её вывод, а ошибка в одной проверке роняет только её. Команда завершается с кодом 1, если упала хотя бы одна проверка, и с кодом 2, если `.embraion/policy.yaml` не читается. См. [Policy](../configuration/policy.md#projection-root-checks).
 
 ### `embraion validation`
 
@@ -455,6 +455,29 @@ embraion organization check --path . --require-config --json
 ```
 
 Базовая ссылка отделяет старый долг и не освобождает новый код от правил. Без конфигурации проверка возвращает `skipped`; с `--require-config` она завершается ошибкой. См. [Организация кода](../configuration/organization.md).
+
+### `embraion decisions`
+
+Проверить, что изменение, принимающее решение уровня архитектуры, содержит запись о решении:
+
+```bash
+embraion decisions check --base-ref origin/main
+embraion decisions check --base-ref origin/main --waiver "vendored copy, no ownership change" --json
+embraion decisions check --base-ref origin/main --require-config
+```
+
+Проверка сравнивает общего предка базового ref и head (по умолчанию `HEAD`) с head. Она падает с `missing-record`, когда срабатывает триггер из `.embraion/decisions.yaml` (по умолчанию добавленный или удалённый манифест пакета), а изменение не добавляет и не меняет запись в папке, связанной со slot `decisions`, если только trailer коммита `Decision-Waiver: <причина>` или `--waiver` не объясняет, почему запись не нужна. Без конфигурации проверка возвращает `skipped`; с `--require-config` она завершается ошибкой. См. [Записи об архитектурных решениях](../configuration/decisions.md).
+
+### `embraion adr`
+
+Создать следующую по номеру запись об архитектурном решении:
+
+```bash
+embraion adr new "Move parsing into its own package"
+embraion adr new "Move parsing into its own package" --locale ru --status Proposed --date 2026-10-07 --json
+```
+
+`adr new` пишет запись из шаблона проекта, добавляет строку в индекс, а с `--locale <код>` (можно повторять) пишет рядом локализованную копию. Если в проекте нет папки, шаблона и индекса, команда их создаёт. `--slug` задаёт имя файла, когда в заголовке нет ASCII-слов. См. [Записи об архитектурных решениях](../configuration/decisions.md).
 
 ### `embraion checkpoint`
 
