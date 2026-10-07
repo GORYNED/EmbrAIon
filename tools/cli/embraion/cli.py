@@ -231,6 +231,10 @@ def _cmd_validate(args: argparse.Namespace) -> int:
              "message": f"{item['code']}: {item['message']}"}
             for item in findings
         ]
+    if project is not None and (project / ".embraion" / "sources.yaml").exists():
+        from .sources import registry_errors
+        issues += [{"severity": "error", "code": "sources-invalid", "path": ".embraion/sources.yaml",
+                    "message": message} for message in registry_errors(project)]
     if project is not None:
         from .project import ignored_projection_outputs
 
