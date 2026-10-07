@@ -1091,6 +1091,8 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
                 print(item["stdout"].rstrip())
             if item["stderr"]:
                 print(item["stderr"].rstrip(), file=sys.stderr)
+        if record.get("clean-tree"):
+            print(f"Clean tree: {record['clean-tree']['status']}")
         for reason in record.get("failure-reasons") or []:
             print(f"Failure: {reason}")
         if record.get("warnings"):

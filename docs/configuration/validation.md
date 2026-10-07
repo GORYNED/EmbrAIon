@@ -107,6 +107,27 @@ A command whose prerequisite is missing is not started. It is reported as `block
 
 A command with `required: false` still runs, and its failure or timeout is recorded in the evidence. It does not fail the profile. The profile stays `passed` and the record gets a `warnings` count. A command that was never given `required` or `requires` behaves exactly as before. Unknown keys, a non-boolean `required`, an unknown platform, or an empty name fail closed.
 
+## Clean-tree guard
+
+A structured profile can require that validation does not change the working tree:
+
+```yaml
+profiles:
+  gate:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    clean-tree: true
+```
+
+Without the key, nothing is checked, as before. With `clean-tree: true`, EmbrAIon reads `git status --porcelain=v1 -z --untracked-files=all` before the first command and again after the last one, and compares the two.
+
+- A tree that was already dirty is allowed. Its state is the baseline, and only new differences fail. A file that was already modified and is edited again counts as a difference, because the content is compared too.
+- The `.embraion/state/` directory is ignored, because validation writes its own evidence there.
+- A failure names up to 20 changed paths and the profile fails with a `failure-reasons` entry that starts with `clean-tree guard failed`.
+- Outside a Git work tree, or when `git` is missing, the guard is `blocked` and the profile fails. The commands still run, and their results stay in the evidence.
+
+The record gets a `clean-tree` object with `status` (`passed`, `failed`, or `blocked`), `baseline-dirty`, `changed-count`, and `changed-paths`. A profile without commands is `skipped` and is not checked.
+
 ## Choosing profiles
 
 A useful convention:

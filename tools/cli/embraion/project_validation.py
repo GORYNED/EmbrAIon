@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import locale
 import os
 import re
@@ -24,6 +25,8 @@ from .security import redact_child_output, redact_text, redact_value
 
 
 MAX_CAPTURE_CHARS = 8000
+MAX_CLEAN_TREE_PATHS = 20
+MAX_FINGERPRINT_BYTES = 64 * 1024 * 1024
 RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
 TERMINATION_GRACE_SECONDS = 2.0
 
@@ -80,6 +83,7 @@ def _normalize_validation_profile(
             "entries": [entry for _, entry in parsed],
             "parameters": {},
             "timeouts": [None] * len(value),
+            "clean-tree": False,
         }
     if not isinstance(value, dict):
         raise RuntimeError(
@@ -90,9 +94,13 @@ def _normalize_validation_profile(
         for index, item in enumerate(value.get("commands") or [], start=1)
     ]
     commands = [command for command, _ in parsed]
+    clean_tree = value.get("clean-tree", False)
+    if not isinstance(clean_tree, bool):
+        raise RuntimeError(f"Invalid validation profile '{name}': clean-tree must be true or false.")
     return {
         "commands": commands,
         "entries": [entry for _, entry in parsed],
+        "clean-tree": clean_tree,
         "parameters": {
             str(parameter): dict(definition or {})
             for parameter, definition in (value.get("parameters") or {}).items()
@@ -291,6 +299,123 @@ def _blocked_reason(
     return "; ".join(reasons) if reasons else None
 
 
+def _git_output(root: Path, *arguments: str) -> bytes:
+    environment = child_environment()
+    # A read-only status must not take the index lock or rewrite the index.
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    try:
+        completed = subprocess.run(
+            ["git", *arguments],
+            cwd=str(root),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=120,
+            check=False,
+        )
+    except FileNotFoundError as error:
+        raise _TreeUnavailable("the git executable was not found") from error
+    except subprocess.TimeoutExpired as error:
+        raise _TreeUnavailable("git status did not finish within 120 seconds") from error
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip().splitlines()
+        raise _TreeUnavailable(
+            "the project is not inside a Git work tree"
+            if arguments[:1] == ("rev-parse",)
+            else "git status failed" + (f": {detail[0]}" if detail else "")
+        )
+    return completed.stdout
+
+
+class _TreeUnavailable(Exception):
+    """The clean-tree guard cannot observe the working tree."""
+
+
+def _path_fingerprint(path: Path) -> str:
+    """Return a stable content fingerprint so a re-edit of a dirty file is still seen."""
+    try:
+        if path.is_symlink():
+            return "link:" + os.readlink(path)
+        if path.is_dir():
+            return "dir"
+        size = path.stat().st_size
+        if size > MAX_FINGERPRINT_BYTES:
+            return f"size:{size}"
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return "sha256:" + digest.hexdigest()
+    except OSError:
+        return "absent"
+
+
+def _tree_snapshot(root: Path) -> dict[str, str]:
+    """Map every path that Git reports as changed or untracked to its status and content."""
+    top = Path(
+        _git_output(root, "rev-parse", "--show-toplevel").decode("utf-8", errors="replace").strip()
+    )
+    try:
+        # Validation writes its own evidence here, so that state is not a tree change.
+        ignored = state_root(root).resolve().relative_to(top.resolve()).as_posix() + "/"
+    except ValueError:
+        ignored = None
+    output = _git_output(
+        root, "status", "--porcelain=v1", "-z", "--untracked-files=all"
+    )
+    tokens = output.decode("utf-8", errors="replace").split("\0")
+    snapshot: dict[str, str] = {}
+    position = 0
+    while position < len(tokens):
+        token = tokens[position]
+        position += 1
+        if len(token) < 4:
+            continue
+        code, relative = token[:2], token[3:]
+        origin = ""
+        if "R" in code or "C" in code:
+            origin = tokens[position] if position < len(tokens) else ""
+            position += 1
+        if ignored and (relative + "/").startswith(ignored):
+            continue
+        snapshot[relative] = f"{code}|{origin}|{_path_fingerprint(top / relative)}"
+    return snapshot
+
+
+def _evaluate_clean_tree(
+    root: Path,
+    baseline: dict[str, str] | None,
+    baseline_reason: str | None,
+) -> tuple[dict[str, Any], str | None]:
+    """Compare the tree after the run with the baseline; return the record block and a failure."""
+    if baseline is None:
+        reason = baseline_reason or "the working tree could not be read"
+        return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
+    try:
+        after = _tree_snapshot(root)
+    except _TreeUnavailable as error:
+        reason = f"the working tree could not be read after the run: {error}"
+        return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
+    changed = sorted(
+        path for path in set(baseline) | set(after) if baseline.get(path) != after.get(path)
+    )
+    block: dict[str, Any] = {
+        "status": "failed" if changed else "passed",
+        "baseline-dirty": bool(baseline),
+        "changed-count": len(changed),
+        "changed-paths": changed[:MAX_CLEAN_TREE_PATHS],
+    }
+    if not changed:
+        return block, None
+    named = ", ".join(changed[:MAX_CLEAN_TREE_PATHS])
+    more = len(changed) - MAX_CLEAN_TREE_PATHS
+    return block, (
+        f"clean-tree guard failed: {len(changed)} path(s) changed during validation: {named}"
+        + (f" (and {more} more)" if more > 0 else "")
+    )
+
+
 def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
     """Start a shell command as the leader of its own process group."""
     options: dict[str, Any] = {}
@@ -445,7 +570,8 @@ def run_validation_profile(
     spec = specs[profile]
     commands = list(spec["commands"])
     entries = list(spec["entries"])
-    extended = any(not entry["required"] or entry["requires"] for entry in entries)
+    clean_tree = bool(spec.get("clean-tree"))
+    extended = clean_tree or any(not entry["required"] or entry["requires"] for entry in entries)
     resolved_parameters, parameter_definitions = _resolve_validation_parameters(
         profile,
         spec,
@@ -456,6 +582,13 @@ def run_validation_profile(
     command_results: list[dict[str, Any]] = []
     failure_reasons: list[str] = []
     warnings = 0
+    baseline: dict[str, str] | None = None
+    baseline_reason: str | None = None
+    if clean_tree and commands:
+        try:
+            baseline = _tree_snapshot(root)
+        except _TreeUnavailable as error:
+            baseline_reason = str(error)
 
     for index, command in enumerate(commands, start=1):
         prepared_command, command_environment = _prepare_validation_command(
@@ -526,6 +659,12 @@ def run_validation_profile(
             else:
                 warnings += 1
 
+    clean_tree_block: dict[str, Any] | None = None
+    if clean_tree and commands:
+        clean_tree_block, clean_tree_failure = _evaluate_clean_tree(root, baseline, baseline_reason)
+        if clean_tree_failure:
+            failure_reasons.append(clean_tree_failure)
+
     if not commands:
         status = "skipped"
     elif len(command_results) == len(commands) and all(
@@ -540,6 +679,8 @@ def run_validation_profile(
     extra: dict[str, Any] = {}
     if extended:
         extra["warnings"] = warnings
+    if clean_tree_block is not None:
+        extra["clean-tree"] = clean_tree_block
     if failure_reasons:
         extra["failure-reasons"] = failure_reasons
     record = redact_value(

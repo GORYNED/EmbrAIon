@@ -29,6 +29,9 @@
                   "$ref": "#/$defs/command"
                 }
               },
+              "clean-tree": {
+                "type": "boolean"
+              },
               "timeout-seconds": {
                 "oneOf": [
                   {

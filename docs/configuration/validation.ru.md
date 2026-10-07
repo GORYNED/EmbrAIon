@@ -106,6 +106,27 @@ profiles:
 
 Команда с `required: false` всё равно запускается, её сбой или timeout записываются в evidence. Profile из-за них не падает: он остаётся `passed`, а в записи появляется счётчик `warnings`. Команда без `required` и `requires` ведёт себя как раньше. Неизвестные ключи, не-boolean `required`, неизвестная платформа или пустое имя fail-closed.
 
+## Clean-tree guard
+
+Structured profile может требовать, чтобы validation не меняла рабочее дерево:
+
+```yaml
+profiles:
+  gate:
+    commands:
+      - python -m unittest discover -s tests -p "test_*.py"
+    clean-tree: true
+```
+
+Без ключа ничего не проверяется, как раньше. При `clean-tree: true` EmbrAIon читает `git status --porcelain=v1 -z --untracked-files=all` перед первой командой и после последней и сравнивает результаты.
+
+- Дерево, которое уже было грязным, допустимо. Его состояние становится baseline, и падают только новые различия. Файл, который уже был изменён и правится снова, считается различием, потому что сравнивается и содержимое.
+- Каталог `.embraion/state/` игнорируется, потому что validation пишет туда собственное evidence.
+- При сбое называются до 20 изменённых путей, а profile падает с записью в `failure-reasons`, которая начинается с `clean-tree guard failed`.
+- Вне Git work tree или без `git` guard получает статус `blocked`, и profile падает. Команды всё равно запускаются, их результаты остаются в evidence.
+
+В записи появляется объект `clean-tree` с полями `status` (`passed`, `failed` или `blocked`), `baseline-dirty`, `changed-count` и `changed-paths`. Profile без команд получает `skipped` и не проверяется.
+
 ## Выбор profiles
 
 Полезная конвенция:
