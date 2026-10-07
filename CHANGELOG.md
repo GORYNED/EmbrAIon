@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.29.0 - 2026-10-07
+
 ### Added
 
 - Architecture decision records are part of the workflow. A `decisions` project contract slot binds the folder of records (`docs/architecture/decisions/` when unbound); unlike the other slots it names a folder, and `embraion validate` and `embraion context slots` accept it as one.
