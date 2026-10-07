@@ -450,9 +450,13 @@ class CoreTests(unittest.TestCase):
             root = Path(temporary)
             environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
             subprocess.run(["git", "init", "-q", str(root)], check=True, capture_output=True, env=environment)
-            (root / ".gitignore").write_text("Temp/\n", encoding="utf-8")
+            (root / ".gitignore").write_text("Temp/\nBuilds/Validation/\n", encoding="utf-8")
             (root / "Temp").mkdir()
             (root / "Temp" / "Build.cs").write_text(token, encoding="utf-8")
+            (root / "Builds" / "Validation").mkdir(parents=True)
+            (root / "Builds" / "Validation" / "results.json").write_text(
+                '{"workspace": "C:/Users/' + 'owner/project/", "token": "' + token + '"}', encoding="utf-8"
+            )
             (root / "Tracked.cs").write_text(token, encoding="utf-8")
             # Inside Git, .gitignore decides; tool folder names only apply without Git.
             (root / "build").mkdir()
@@ -460,7 +464,11 @@ class CoreTests(unittest.TestCase):
             findings = {
                 item["path"].replace("\\", "/") for item in collect_findings(root, all_files=True)
             }
+            default_findings = {
+                item["path"].replace("\\", "/") for item in collect_findings(root)
+            }
         self.assertEqual({"Tracked.cs", "build/Step.cs"}, findings)
+        self.assertEqual(set(), default_findings)
 
     def test_security_scanner_all_files_waives_machine_paths_only_for_external_and_generated(self) -> None:
         token = "gh" + "p_" + "A1b2" * 9
