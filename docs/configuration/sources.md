@@ -58,11 +58,11 @@ Write policies:
 - a `doc` that is absolute, leaves the project, or does not exist;
 - a `data-class` below the class declared for the source. The base is `privacy.sources` for that ID, or `privacy.default-class` when the map is not declared.
 
-A raised `data-class` is the effective class of the source. An execution request must use a data class at least that high.
+A raised `data-class` is the effective class of the source. An execution request must use a data class at least that high. This also applies when `privacy.sources` is not declared; then only IDs with a raised `data-class` are checked and other IDs stay unchecked.
 
 ## Write policy in execution
 
-When the file exists, a request with `access: workspace-write` may name only sources whose `write` is `workspace-write`. A request that names a `read-only`, `forbidden`, or unregistered source is refused before any provider is selected. Read-only requests are not affected. An invalid registry also refuses write requests. Without the file the request checks are unchanged.
+When the file exists, a request with `access: workspace-write` may name only sources whose `write` is `workspace-write`. A request that names a `read-only`, `forbidden`, or unregistered source is refused before any provider is selected. Read-only requests are not checked for write policy. An invalid registry fails closed: it refuses every execution request, including read-only ones, until the file is fixed. Without the file the request checks are unchanged.
 
 ## Local availability
 
@@ -73,6 +73,8 @@ App: /absolute/path/on/this/machine
 ```
 
 Write it by hand or run `embraion sources set <id> <path>`. It is never committed. Commands print only the ID and `available`, `missing`, or `unset`. They never print the path. `embraion security scan` reports a medium `machine-path` finding for tracked content that contains a recorded path. It skips paths with fewer than two segments.
+
+`embraion sources set` takes no lock, so run it once at a time. It refuses a symbolic-link `.embraion` or state folder.
 
 The local file is discovery data. It cannot change a role or a write policy.
 

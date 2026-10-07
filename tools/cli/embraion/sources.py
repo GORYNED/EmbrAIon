@@ -21,6 +21,14 @@ LOCAL_SOURCES = Path(".embraion") / "state" / "sources-local.yaml"
 WRITABLE = "workspace-write"
 
 
+def _exists(path: Path) -> bool:
+    """Path.exists() that treats an unreadable location as not present (it can raise before Python 3.12)."""
+    try:
+        return path.exists()
+    except OSError:
+        return False
+
+
 def _location(error: Any) -> str:
     return ".".join(str(part) for part in error.absolute_path) or "<root>"
 
@@ -132,6 +140,12 @@ def effective_data_classes(root: Path, declared: dict[str, str]) -> dict[str, st
     return result
 
 
+def registry_data_classes(root: Path) -> dict[str, str]:
+    """Raised `data-class` values of the registry; empty when there is no registry or no raise."""
+    registry = load_registry(root)
+    return {entry["id"]: entry["data-class"] for entry in registry or [] if entry.get("data-class")}
+
+
 def check_source_writes(access: str, source_ids: list[str], root: Path) -> None:
     """Fail closed when a write request names a source that is not writable.
 
@@ -179,7 +193,7 @@ def source_status(root: Path) -> list[dict[str, Any]]:
     rows = []
     for entry in registry:
         raw = local.get(entry["id"])
-        availability = "unset" if raw is None else ("available" if Path(raw).exists() else "missing")
+        availability = "unset" if raw is None else ("available" if _exists(Path(raw)) else "missing")
         rows.append({"id": entry["id"], "role": entry["role"], "write": entry["write"],
                      "availability": availability})
     return rows
@@ -191,13 +205,13 @@ def set_local_path(root: Path, source_id: str, raw_path: str) -> str:
     if source_id not in {entry["id"] for entry in registry}:
         raise RuntimeError(f"Unknown source id '{source_id}'; declare it in {SOURCES_CONFIG} first.")
     resolved = Path(raw_path).expanduser().resolve()
-    if not resolved.exists():
+    if not _exists(resolved):
         raise RuntimeError(f"The path for source '{source_id}' does not exist.")
     local = read_local_paths(root)
     local[source_id] = str(resolved)
     target = root / LOCAL_SOURCES
-    if target.parent.is_symlink():
-        raise RuntimeError(f"Invalid {LOCAL_SOURCES}: the state folder must not be a symbolic link.")
+    if any((root / folder).is_symlink() for folder in (".embraion", LOCAL_SOURCES.parent)):
+        raise RuntimeError(f"Invalid {LOCAL_SOURCES}: the .embraion and state folders must not be symbolic links.")
     atomic_write_bytes(target, yaml.safe_dump(local, sort_keys=True, allow_unicode=True).encode("utf-8"), mode=0o600)
     return source_id
 
@@ -212,6 +226,6 @@ def local_path_values(root: Path) -> dict[str, str]:
 
 __all__ = [
     "LOCAL_SOURCES", "SOURCES_CONFIG", "check_source_writes", "effective_data_classes", "list_sources",
-    "load_registry", "local_path_values", "read_local_paths", "registry_errors",
+    "load_registry", "local_path_values", "read_local_paths", "registry_data_classes", "registry_errors",
     "set_local_path", "source_status",
 ]

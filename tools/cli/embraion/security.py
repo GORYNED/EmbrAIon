@@ -195,7 +195,7 @@ def _local_source_paths(root: Path) -> dict[str, re.Pattern[str]]:
             continue
         variants = {value.rstrip("/\\"), normalized}
         patterns[source_id] = re.compile(
-            "(?:" + "|".join(re.escape(item) for item in sorted(variants, key=len, reverse=True)) + r")(?![A-Za-z0-9_.-])"
+            "(?:" + "|".join(re.escape(item) for item in sorted(variants, key=len, reverse=True)) + r")(?![A-Za-z0-9_-]|\.[A-Za-z0-9_-])"
         )
     return patterns
 
