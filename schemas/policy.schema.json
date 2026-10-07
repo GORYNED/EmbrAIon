@@ -225,7 +225,7 @@
         },
         "all-files": {
           "type": "boolean",
-          "description": "Scan all files in the security scan instead of changed files; defaults to false."
+          "description": "Also scan every other text file in the security scan, as `security scan --all-files`; defaults to false."
         }
       },
       "additionalProperties": false

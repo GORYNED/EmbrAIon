@@ -211,9 +211,9 @@ check:
 
 - `organization` lists the organization-check modes. `full` audits the whole structure. `compare` compares against `--base-ref`, so only new findings, moves and GUID changes fail, and it is reported as `NOT RUN` without a base ref. Omitted, `embraion check` runs `full` without `--base-ref` and `compare` with it. Declared modes appear as `organization-full` and `organization-compare` and apply only when `.embraion/organization.yaml` exists.
 - `fail-on` is the lowest security finding severity that fails the check (`info`, `low`, `medium`, `high` or `critical`); the default is `high`.
-- `all-files` scans all files instead of changed files; the default is `false`.
+- `all-files` also scans every other text file for private keys, tokens and machine paths, as `--all-files` does in [`security scan`](../security.md#scan-findings); the default is `false`.
 
-The `--fail-on` flag overrides `fail-on`, and `--all-files` turns the full scan on; the other values have no flag. A project without the section behaves as before.
+The `--fail-on` flag overrides `fail-on`, and `--all-files` turns the full scan on; the other values have no flag. A project without the section behaves as before. Pass a `base-ref` (or declare `full`) for runs without a pull request base, such as a push, where `compare` is not run. Only a release that contains the section accepts it, so move the project pin to such a release first.
 
 ## Inspect the effective policy
 
