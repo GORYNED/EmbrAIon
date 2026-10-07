@@ -91,6 +91,10 @@ Need a term or a direct answer? See the [Glossary](docs/glossary.md), [FAQ](docs
 
 For engineers, see [Engineering Model Deep Dive](docs/reference/engineering-model.md).
 
+## New in 0.31
+
+- The optional `litellm` extra and the LiteLLM execution adapter move to LiteLLM 1.88.6, which fixes CVE-2026-84377. The adapter still accepts only that exact version: reinstall `embraion[litellm]` after upgrading, and re-record usage evidence that names an older `adapterVersion` (see the [CLI reference](docs/reference/cli.md)).
+
 ## New in 0.30
 
 - The optional `check` section of [policy](docs/configuration/policy.md#check-options) declares which organization-check modes (`full`, `compare` or both), security threshold and scan scope [`embraion check`](docs/reference/cli.md#embraion-check) uses, and the reusable `actions/check` action runs it after the setup action, so [consumer CI](docs/reference/runtime-version-resolution.md#consumer-ci) carries no project flags.
@@ -143,4 +147,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-07 03:45 UTC</sub>
+<sub>Last updated: 2026-10-07 04:49 UTC</sub>

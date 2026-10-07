@@ -65,6 +65,10 @@ Lead читает контракт проекта, автоматически в
 
 Для подробной инженерной модели см. [Engineering Model Deep Dive](docs/reference/engineering-model.ru.md).
 
+## Новое в 0.31
+
+- Необязательный набор `litellm` и LiteLLM-адаптер исполнения переходят на LiteLLM 1.88.6, где исправлена CVE-2026-84377. Адаптер по-прежнему принимает только эту точную версию: после обновления переустановите `embraion[litellm]` и заново запишите usage evidence с прежним `adapterVersion` (см. [справочник CLI](docs/reference/cli.ru.md)).
+
 ## Новое в 0.30
 
 - Необязательная секция `check` в [policy](docs/configuration/policy.ru.md) объявляет, какие режимы organization check (`full`, `compare` или оба), порог security и область сканирования использует [`embraion check`](docs/reference/cli.ru.md#embraion-check), а переиспользуемый action `actions/check` запускает его после setup action, поэтому [CI проекта](docs/reference/runtime-version-resolution.ru.md) обходится без флагов проекта.
@@ -103,4 +107,4 @@ Lead читает контракт проекта, автоматически в
 
 ---
 
-<sub>Последнее обновление: 2026-10-07 03:45 UTC</sub>
+<sub>Последнее обновление: 2026-10-07 04:49 UTC</sub>
