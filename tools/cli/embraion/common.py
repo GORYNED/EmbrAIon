@@ -74,7 +74,20 @@ def find_project_root(start: Path | None = None) -> Path | None:
     current = (start or Path.cwd()).resolve()
 
     try:
-        result = run(["git", "-C", str(current), "rev-parse", "--show-toplevel"])
+        # Git's location variables override -C and could redirect project
+        # discovery to an unrelated repository before any policy is loaded.
+        environment = child_environment()
+        for name in (
+            "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+            "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+            "GIT_NAMESPACE", "GIT_PREFIX",
+        ):
+            environment.pop(name, None)
+        result = subprocess.run(
+            ["git", "-C", str(current), "rev-parse", "--show-toplevel"],
+            env=environment, text=True, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, check=True,
+        )
         return Path(result.stdout.strip()).resolve()
     except Exception:
         pass

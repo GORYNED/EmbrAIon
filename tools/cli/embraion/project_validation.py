@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -22,7 +23,10 @@ from .environment import child_environment
 from .policy import read_validation_config
 from .runtime import _append_event
 from .security import redact_text, redact_value
-from .validation_process import GRACE_SECONDS, terminate_tree
+from .validation_process import (
+    GRACE_SECONDS, VERIFY_SECONDS, ContainmentUnavailable, close_containment,
+    containment_quiescent, spawn_contained, terminate_tree,
+)
 from .validation_output import CapturedOutput, capture_stream, render_output
 
 
@@ -32,6 +36,10 @@ MIN_OUTPUT_LIMIT_BYTES = 1024
 MAX_FINGERPRINT_BYTES = 64 * 1024 * 1024
 RUN_ID_ENVIRONMENT = "EMBRAION_RUN_ID"
 TERMINATION_GRACE_SECONDS = GRACE_SECONDS
+_GIT_LOCATION_VARIABLES = frozenset({
+    "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+    "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE", "GIT_PREFIX",
+})
 
 
 _PLATFORMS = ("linux", "macos", "windows")
@@ -314,6 +322,8 @@ def _blocked_reason(
 
 def _git_output(root: Path, *arguments: str) -> bytes:
     environment = child_environment()
+    for name in _GIT_LOCATION_VARIABLES:
+        environment.pop(name, None)
     # A read-only status must not take the index lock or rewrite the index.
     environment["GIT_OPTIONAL_LOCKS"] = "0"
     try:
@@ -367,6 +377,12 @@ def _path_fingerprint(path: Path) -> str:
 
 def _tree_snapshot(root: Path) -> dict[str, str]:
     """Map every path that Git reports as changed or untracked to its status and content."""
+    lock = _git_output(root, "rev-parse", "--path-format=absolute", "--git-path", "index.lock")
+    lock_path = lock.decode("utf-8", errors="replace").strip()
+    if not lock_path:
+        raise _TreeUnavailable("the worktree index lock state could not be read")
+    if Path(lock_path).exists():
+        raise _TreeUnavailable("the worktree index is locked")
     top = Path(
         _git_output(root, "rev-parse", "--show-toplevel").decode("utf-8", errors="replace").strip()
     )
@@ -401,6 +417,7 @@ def _evaluate_clean_tree(
     root: Path,
     baseline: dict[str, str] | None,
     baseline_reason: str | None,
+    baseline_head: str | None,
 ) -> tuple[dict[str, Any], str | None]:
     """Compare the tree after the run with the baseline; return the record block and a failure."""
     if baseline is None:
@@ -408,6 +425,7 @@ def _evaluate_clean_tree(
         return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
     try:
         after = _tree_snapshot(root)
+        after_head = _git_output(root, "rev-parse", "--verify", "HEAD").decode("ascii", "replace").strip()
     except _TreeUnavailable as error:
         reason = f"the working tree could not be read after the run: {error}"
         return {"status": "blocked", "reason": reason}, f"clean-tree guard is blocked: {reason}"
@@ -420,32 +438,26 @@ def _evaluate_clean_tree(
         "changed-count": len(changed),
         "changed-paths": changed[:MAX_CLEAN_TREE_PATHS],
     }
+    head_changed = baseline_head != after_head
+    if head_changed:
+        block["status"] = "failed"
+        block["head-changed"] = True
     if not changed:
+        if head_changed:
+            return block, "clean-tree guard failed: HEAD changed during validation"
         return block, None
     named = ", ".join(changed[:MAX_CLEAN_TREE_PATHS])
     more = len(changed) - MAX_CLEAN_TREE_PATHS
     return block, (
         f"clean-tree guard failed: {len(changed)} path(s) changed during validation: {named}"
         + (f" (and {more} more)" if more > 0 else "")
+        + ("; HEAD changed" if head_changed else "")
     )
 
 
 def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
-    """Start a shell command as the leader of its own process group."""
-    options: dict[str, Any] = {}
-    if os.name == "nt":
-        options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
-    else:
-        options["start_new_session"] = True
-    return subprocess.Popen(
-        command,
-        cwd=str(cwd),
-        env=environment,
-        shell=True,
-        stdout=stdout,
-        stderr=stderr,
-        **options,
-    )
+    """Start only after the process container is established."""
+    return spawn_contained(command, cwd, environment, stdout, stderr)
 
 
 def _wait_for(process: subprocess.Popen, timeout: float | None) -> int:
@@ -463,32 +475,97 @@ def _run_contained(
     environment: dict[str, str],
     timeout: float | None,
     output_limit: int | None = None,
-) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None]:
+) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None, str | None]:
     """Run one command; return its exit code (``None`` after a timeout) and its output.
 
-    The last item is ``None`` unless the command timed out; then it is ``confirmed`` or
-    ``unconfirmed``, telling whether the whole process tree was shown to be gone.
+    Termination is recorded after a timeout or a root exit with surviving descendants.
+    The final item identifies a containment or supervisor failure separately.
 
     Without an ``output_limit`` the output is kept whole; with one, only a head and a
     tail of at most that many bytes per stream are read into memory.
     """
-    # Anonymous temporary files keep raw output out of the project state and do
-    # not block when a descendant keeps an inherited output handle open.
+    # Drain both pipes while the command runs, so a child cannot block on a full
+    # pipe. EOF also proves no escaped descendant retains an output handle.
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        process = _spawn_contained(command, cwd, environment, stdout, stderr)
         try:
-            returncode: int | None = _wait_for(process, timeout)
-            termination: str | None = None
-        except subprocess.TimeoutExpired:
-            termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
-            returncode = None
-        except BaseException:
-            _terminate_tree(process)
-            raise
+            process = _spawn_contained(command, cwd, environment, subprocess.PIPE, subprocess.PIPE)
+        except ContainmentUnavailable as error:
+            termination = None if error.termination_confirmed else "unconfirmed"
+            return None, CapturedOutput(), CapturedOutput(), termination, "containment-unavailable"
+        stream_errors: list[OSError] = []
+
+        def drain(source: Any, destination: Any) -> None:
+            try:
+                shutil.copyfileobj(source, destination, 1 << 16)
+            except (OSError, ValueError) as error:
+                stream_errors.append(error)
+
+        sources = (process.stdout, process.stderr)
+        streams = [threading.Thread(target=drain, args=(source, destination), daemon=True)
+                   for source, destination in zip(sources, (stdout, stderr))]
+        try:
+            for stream in streams:
+                stream.start()
+        except RuntimeError:
+            try:
+                _terminate_tree(process)
+            finally:
+                close_containment(process)
+            return None, CapturedOutput(), CapturedOutput(), "unconfirmed", "containment-unavailable"
+        termination: str | None = None
+        failure_kind: str | None = None
+        try:
+            try:
+                returncode: int | None = _wait_for(process, timeout)
+                try:
+                    descendants = not containment_quiescent(process)
+                except (OSError, RuntimeError):
+                    descendants = True
+                    failure_kind = "containment-unavailable"
+                if descendants:
+                    failure_kind = failure_kind or "descendant-process"
+                    try:
+                        termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
+                    except Exception:
+                        termination = "unconfirmed"
+            except subprocess.TimeoutExpired:
+                try:
+                    termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
+                except Exception:
+                    termination = "unconfirmed"
+                returncode = None
+            except (OSError, subprocess.SubprocessError):
+                failure_kind = "supervisor-failure"
+                try:
+                    termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
+                except Exception:
+                    termination = "unconfirmed"
+                returncode = None
+            except BaseException:
+                _terminate_tree(process)
+                raise
+        finally:
+            try:
+                close_containment(process)
+            except OSError:
+                termination = "unconfirmed"
+                failure_kind = "containment-unavailable"
+        for stream in streams:
+            stream.join(timeout=VERIFY_SECONDS)
+        for source, stream in zip(sources, streams):
+            if not stream.is_alive():
+                try:
+                    source.close()
+                except OSError as error:
+                    stream_errors.append(error)
+        if stream_errors or any(stream.is_alive() for stream in streams):
+            termination = "unconfirmed"
+            failure_kind = "stream-drain-failure"
+            return returncode, CapturedOutput(), CapturedOutput(), termination, failure_kind
         # Text-mode subprocess output used the locale encoding; keep that decoding.
         encoding = locale.getpreferredencoding(False)
         captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
-    return returncode, captured[0], captured[1], termination
+    return returncode, captured[0], captured[1], termination, failure_kind
 
 
 def _log_path(project: Path, evidence_id: str, index: int) -> Path:
@@ -610,13 +687,18 @@ def run_validation_profile(
     warnings = 0
     baseline: dict[str, str] | None = None
     baseline_reason: str | None = None
+    baseline_head: str | None = None
     if clean_tree and commands:
         try:
             baseline = _tree_snapshot(root)
+            baseline_head = _git_output(root, "rev-parse", "--verify", "HEAD").decode("ascii", "replace").strip()
         except _TreeUnavailable as error:
+            baseline = None
             baseline_reason = str(error)
 
     for index, command in enumerate(commands, start=1):
+        if clean_tree and baseline is None:
+            break  # Unknown tree state cannot authorize even the first command.
         prepared_command, command_environment = _prepare_validation_command(
             command,
             index,
@@ -647,7 +729,7 @@ def run_validation_profile(
             }
         else:
             began = time.monotonic()
-            exit_code, raw_stdout, raw_stderr, termination = _run_contained(
+            exit_code, raw_stdout, raw_stderr, termination, failure_kind = _run_contained(
                 prepared_command,
                 root,
                 command_environment,
@@ -662,7 +744,11 @@ def run_validation_profile(
             stdout = render_output(raw_stdout, scrub)
             stderr = render_output(raw_stderr, scrub)
             _write_command_log(log_path, command, stdout, stderr)
-            if exit_code is None:
+            if failure_kind in {"containment-unavailable", "stream-drain-failure"}:
+                status = "blocked"
+            elif failure_kind in {"descendant-process", "supervisor-failure"}:
+                status = "failed"
+            elif exit_code is None:
                 status = "timed-out"
             else:
                 status = "passed" if exit_code == 0 else "failed"
@@ -680,15 +766,29 @@ def run_validation_profile(
             row.update(_output_details(stdout, stderr, raw_stdout, raw_stderr))
             if termination is not None:
                 row["termination"] = termination
+            if failure_kind is not None:
+                row["reason"] = {
+                    "containment-unavailable": "process containment could not be confirmed",
+                    "descendant-process": "root exited while descendants remained alive",
+                    "supervisor-failure": "process wait failed",
+                    "stream-drain-failure": "redirected output streams did not close",
+                }[failure_kind]
         if not entry["required"]:
             row["required"] = False
         command_results.append(row)
         if row.get("termination") == "unconfirmed":
             # Stray processes may still run, so the profile fails and nothing else starts.
             failure_reasons.append(
-                f"command {index} timed out and its process tree could not be confirmed "
+                f"command {index} ended and its process tree could not be confirmed "
                 "terminated; processes may still be running"
             )
+            break
+        if row.get("reason") in {"process containment could not be confirmed", "process wait failed",
+                                 "redirected output streams did not close"}:
+            failure_reasons.append(f"command {index} is blocked: {row['reason']}")
+            break
+        if row.get("reason") == "root exited while descendants remained alive":
+            failure_reasons.append(f"command {index} left descendants after its root exited")
             break
         if row["status"] != "passed":
             if entry["required"]:
@@ -701,7 +801,7 @@ def run_validation_profile(
 
     clean_tree_block: dict[str, Any] | None = None
     if clean_tree and commands:
-        clean_tree_block, clean_tree_failure = _evaluate_clean_tree(root, baseline, baseline_reason)
+        clean_tree_block, clean_tree_failure = _evaluate_clean_tree(root, baseline, baseline_reason, baseline_head)
         if clean_tree_failure:
             failure_reasons.append(clean_tree_failure)
 

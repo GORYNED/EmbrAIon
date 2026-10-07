@@ -8,6 +8,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -395,8 +396,47 @@ class CleanTreeGuardTests(unittest.TestCase):
                 record = run_validation_profile("gate", project=project)
             self.assertEqual("blocked", record["clean-tree"]["status"])
             self.assertEqual("failed", record["status"])
-            self.assertEqual("passed", record["commands"][0]["status"])
+            self.assertEqual([], record["commands"])
             self.assertIn("clean-tree guard is blocked", record["failure-reasons"][0])
+
+    def test_index_lock_blocks_before_running_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._repository(temporary, "open('generated.txt', 'w').write('x')")
+            (project / ".git" / "index.lock").write_text("", encoding="utf-8")
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual([], record["commands"])
+            self.assertEqual("blocked", record["clean-tree"]["status"])
+            self.assertFalse((project / "generated.txt").exists())
+
+    def test_head_change_is_detected_with_a_clean_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._repository(temporary, "import subprocess; subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'advance'], check=True)")
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertTrue(record["clean-tree"]["head-changed"])
+            self.assertIn("HEAD changed", record["failure-reasons"][0])
+
+    def test_inherited_git_dir_cannot_redirect_clean_tree_observation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = self._repository(temporary, "open('tracked.txt', 'w').write('changed again')")
+            other = Path(temporary) / "other"
+            other.mkdir()
+            _git(other, "init", "-q")
+            (other / "other.txt").write_text("other", encoding="utf-8")
+            _git(other, "add", "-A")
+            _git(other, "commit", "-q", "-m", "other")
+            (project / "tracked.txt").write_text("changed", encoding="utf-8")
+            expected_head = project_validation._git_output(project, "rev-parse", "--verify", "HEAD").strip()
+            with mock.patch.dict(os.environ, {"GIT_DIR": str(other / ".git"),
+                                              "GIT_WORK_TREE": str(other)}):
+                snapshot = project_validation._tree_snapshot(project)
+                head = project_validation._git_output(project, "rev-parse", "--verify", "HEAD").strip()
+                record = run_validation_profile("gate", project=project)
+            self.assertIn("tracked.txt", snapshot)
+            self.assertEqual(expected_head, head)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual(["tracked.txt"], record["clean-tree"]["changed-paths"])
 
     def test_guard_is_off_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -426,6 +466,8 @@ class StatusParsingTests(unittest.TestCase):
             )
 
             def fake(root: Path, *arguments: str) -> bytes:
+                if arguments[-1] == "index.lock":
+                    return str(project / ".git" / "index.lock").encode("utf-8")
                 return top if arguments[0] == "rev-parse" else status
 
             with mock.patch.object(project_validation, "_git_output", side_effect=fake):
@@ -792,6 +834,144 @@ class TerminationRecordTests(unittest.TestCase):
             self.assertEqual(2, record["command-count"])
             self.assertIn("could not be confirmed terminated", record["failure-reasons"][0])
             self.assertIn("command 1", record["failure-reasons"][0])
+
+    def test_termination_observation_error_records_incomplete_result_and_stops(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, {
+                "commands": [self._slow(), _python("print('later')")],
+                "timeout-seconds": [0.2, None],
+            })
+
+            def raised_after_cleanup(process: object) -> bool:
+                validation_process.terminate_tree(process)
+                raise OSError("observation failed")
+
+            with mock.patch.object(project_validation, "_terminate_tree", side_effect=raised_after_cleanup):
+                record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("unconfirmed", record["commands"][0]["termination"])
+            self.assertEqual(1, record["executed-command-count"])
+            self.assertEqual(2, record["command-count"])
+
+    def test_normal_exit_with_unknown_containment_stops_before_the_next_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, {
+                "commands": [{"command": _python("print('first')"), "required": False},
+                             _python("print('later')")],
+            })
+            with mock.patch.object(project_validation, "containment_quiescent",
+                                   side_effect=OSError("query failed")):
+                record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual(1, record["executed-command-count"])
+            self.assertEqual("blocked", record["commands"][0]["status"])
+            self.assertEqual("confirmed", record["commands"][0]["termination"])
+
+    def test_normal_root_exit_with_child_fails_after_confirmed_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            command = _python(
+                "import subprocess,sys; "
+                "subprocess.Popen([sys.executable,'-c','import time; time.sleep(5)'],"
+                "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)"
+            )
+            project = _project(temporary, [command])
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("failed", record["commands"][0]["status"])
+            self.assertEqual("confirmed", record["commands"][0]["termination"])
+            self.assertIn("descendants remained", record["commands"][0]["reason"])
+
+    def test_optional_command_with_descendant_is_fail_stop(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            command = _python(
+                "import subprocess,sys; "
+                "subprocess.Popen([sys.executable,'-c','import time; time.sleep(5)'],"
+                "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)"
+            )
+            project = _project(temporary, {"commands": [
+                {"command": command, "required": False}, _python("print('later')"),
+            ]})
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual(1, record["executed-command-count"])
+            self.assertEqual("confirmed", record["commands"][0]["termination"])
+            self.assertIn("left descendants", record["failure-reasons"][0])
+
+    def test_output_handle_that_does_not_close_stops_the_profile(self) -> None:
+        released = threading.Event()
+
+        class HeldStream:
+            def read(self, _size: int) -> bytes:
+                released.wait(5)
+                return b""
+
+            def close(self) -> None:
+                pass
+
+        process = FakeProcess()
+        process.stdout = HeldStream()
+        process.stderr = io.BytesIO()
+        process.wait = lambda timeout=None: 0
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                project = _project(temporary, [_python("print('first')"), _python("print('later')")])
+                with mock.patch.object(project_validation, "_spawn_contained", return_value=process), \
+                     mock.patch.object(project_validation, "containment_quiescent", return_value=True), \
+                     mock.patch.object(project_validation, "close_containment"), \
+                     mock.patch.object(project_validation, "VERIFY_SECONDS", 0.05):
+                    record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual(1, record["executed-command-count"])
+            self.assertEqual("unconfirmed", record["commands"][0]["termination"])
+            self.assertIn("output streams did not close", record["commands"][0]["reason"])
+        finally:
+            released.set()
+
+
+@unittest.skipUnless(os.name == "nt", "Windows Job Object containment is Windows-specific")
+class WindowsContainmentTests(unittest.TestCase):
+    def test_assignment_failure_never_releases_the_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, [_python("open('launched.txt','w').write('x')")])
+            with mock.patch.object(validation_process._WindowsJob, "assign", side_effect=OSError("denied")):
+                record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("blocked", record["commands"][0]["status"])
+            self.assertFalse((project / "launched.txt").exists())
+
+    def test_assignment_failure_with_unreaped_bootstrap_records_unconfirmed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = _project(temporary, [_python("print('never released')")])
+            process = mock.Mock()
+            process.stdin = io.BytesIO()
+            process.stdout = io.BytesIO()
+            process.stderr = io.BytesIO()
+            process.poll.return_value = None
+            process.kill.side_effect = OSError("cannot kill")
+            job = mock.Mock()
+            job.assign.side_effect = OSError("cannot assign")
+            with mock.patch.object(validation_process, "_WindowsJob", return_value=job), \
+                 mock.patch.object(validation_process.subprocess, "Popen", return_value=process):
+                record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("unconfirmed", record["commands"][0]["termination"])
+            self.assertEqual("blocked", record["commands"][0]["status"])
+
+    def test_root_exit_with_detached_descendant_is_recovered_and_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            child = "import time; time.sleep(60)"
+            command = _python(
+                "import subprocess,sys; "
+                f"subprocess.Popen([sys.executable,'-c','{child}'],"
+                "creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,"
+                "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)"
+            )
+            project = _project(temporary, [command])
+            record = run_validation_profile("gate", project=project)
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("failed", record["commands"][0]["status"])
+            self.assertEqual("confirmed", record["commands"][0]["termination"])
+            self.assertIn("descendants remained", record["commands"][0]["reason"])
 
 
 if __name__ == "__main__":
