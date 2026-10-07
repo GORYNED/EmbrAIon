@@ -51,11 +51,14 @@ jobs:
               [sys.executable, "-m", "pip", "install", "--force-reinstall", str(wheel)]
           )
 
-      - name: Compatibility tests
-        run: |
-          python tools/source.py validate
-          python tools/source.py test unit
-          python tools/source.py test integration
+      - name: Framework validation
+        run: python tools/source.py validate
+
+      - name: Unit tests
+        run: python tools/source.py test unit --jobs auto
+
+      - name: Integration tests
+        run: python tools/source.py test integration --jobs auto
 
       - name: Project resolver E2E
         if: matrix.python == '3.14'

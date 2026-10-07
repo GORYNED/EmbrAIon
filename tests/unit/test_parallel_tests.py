@@ -75,7 +75,7 @@ class ResolveJobsTests(unittest.TestCase):
 class PlanningTests(SuiteFixture):
     def test_counts_group_tests_by_module_and_name_broken_imports(self) -> None:
         directory = self.make_suite("test_plan")
-        suite = unittest.defaultTestLoader.discover(str(directory))
+        suite = unittest.TestLoader().discover(str(directory))
         counts = parallel.count_by_module(suite)
         self.assertEqual({"test_plan_alpha": 3, "test_plan_beta": 3, "test_plan_broken": 1, "test_plan_optional": 1}, counts)
         self.assertEqual(suite.countTestCases(), sum(counts.values()))
