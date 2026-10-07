@@ -118,6 +118,90 @@ def _normalized(patterns: list[str]) -> list[str]:
     return [normalize_project_path(item) for item in patterns]
 
 
+def _read_tree(root: Path, revision: str) -> tuple[dict[str, tuple[str, str]], dict[str, str]]:
+    """Return (files, trees) of a revision: path -> (mode, object ID) and path -> tree object ID."""
+    result = _git(root, "ls-tree", "-r", "-t", "-z", revision)
+    if result.returncode != 0:
+        detail = (result.stderr or b"").decode("utf-8", "replace").strip()
+        raise _Failure(f"Cannot list the tree of {revision[:12]}: {detail}")
+    files: dict[str, tuple[str, str]] = {}
+    trees: dict[str, str] = {}
+    for record in result.stdout.split(b"\0"):
+        if not record:
+            continue
+        meta, _, name = record.partition(b"\t")
+        try:
+            mode, kind, oid = meta.decode("ascii").split(" ")
+        except ValueError as error:
+            raise _Failure(f"Unreadable tree entry at {revision[:12]}.") from error
+        path = os.fsdecode(name)
+        if kind == "tree":
+            trees[path] = oid
+        else:
+            files[path] = (mode, oid)
+    return files, trees
+
+
+def _literal_prefix(pattern: str) -> str:
+    cut = min((pattern.find(char) for char in _GLOB_CHARACTERS if char in pattern), default=len(pattern))
+    return pattern[:cut]
+
+
+def _matching(files: dict[str, tuple[str, str]], pattern: str) -> dict[str, tuple[str, str]]:
+    prefix = _literal_prefix(pattern)
+    return {
+        path: value
+        for path, value in files.items()
+        if path.startswith(prefix) and path_matches(path, [pattern])
+    }
+
+
+def _directory_root(pattern: str) -> str | None:
+    """Return the literal directory of a `<directory>/**` pattern, else None."""
+    if not pattern.endswith("/**"):
+        return None
+    directory = pattern[:-3]
+    if not directory or any(char in directory for char in _GLOB_CHARACTERS):
+        return None
+    return directory.rstrip("/") or None
+
+
+def _relocation_target(
+    directory: str,
+    base_files: dict[str, tuple[str, str]],
+    base_trees: dict[str, str],
+    head_trees: dict[str, str],
+    head_patterns: list[str],
+) -> str | None:
+    """Return the new location of a directory whose tree object ID is unchanged, if protected."""
+    tree = base_trees.get(directory)
+    if tree is None:
+        return None
+    relative = [path[len(directory) + 1:] for path in base_files if path.startswith(directory + "/")]
+    for target in sorted(path for path, oid in head_trees.items() if oid == tree and path != directory):
+        if all(path_matches(f"{target}/{item}", head_patterns) for item in relative):
+            return target
+    return None
+
+
+def _summarize(base: dict[str, tuple[str, str]], head: dict[str, tuple[str, str]]) -> tuple[list[str], str]:
+    modified = sorted(path for path in base.keys() & head.keys() if base[path] != head[path])
+    added = sorted(head.keys() - base.keys())
+    deleted = sorted(base.keys() - head.keys())
+    summary = f"{len(modified)} modified, {len(added)} added, {len(deleted)} deleted"
+    return sorted({*modified, *added, *deleted}), summary
+
+
+def _uncommitted_paths(root: Path) -> list[str]:
+    tracked = _git(root, "diff", "--name-only", "-z", "--no-renames", "--relative", "HEAD")
+    untracked = _git(root, "ls-files", "-z", "--others", "--exclude-standard")
+    if tracked.returncode != 0 or untracked.returncode != 0:
+        raise _Failure("Cannot inspect uncommitted changes in the working tree.")
+    return sorted(
+        {os.fsdecode(item) for item in tracked.stdout.split(b"\0") + untracked.stdout.split(b"\0") if item}
+    )
+
+
 def check_base_tree(root: Path, base_ref: str, head_protected: list[str]) -> dict[str, Any]:
     """Return the `protected-sources` gate check for the base-tree mode.
 
@@ -125,21 +209,56 @@ def check_base_tree(root: Path, base_ref: str, head_protected: list[str]) -> dic
     """
     findings: list[str] = []
     changed: set[str] = set()
+    relocated: list[dict[str, str]] = []
     check: dict[str, Any] = {"id": "protected-sources", "mode": BASE_TREE_MODE}
     try:
         merge_base = _merge_base(root, base_ref)
         check["merge-base"] = merge_base
         base_patterns = _normalized(_base_protected_list(root, merge_base))
         head_patterns = _normalized(head_protected)
+        base_files, base_trees = _read_tree(root, merge_base)
+        head_files, head_trees = _read_tree(root, "HEAD")
+        moved_entries: set[str] = set()
         for pattern in base_patterns:
-            if pattern not in head_patterns:
+            before = _matching(base_files, pattern)
+            after = _matching(head_files, pattern)
+            if before == after:
+                continue
+            paths, summary = _summarize(before, after)
+            directory = _directory_root(pattern)
+            target = None
+            if directory is not None and before and not after:
+                target = _relocation_target(directory, before, base_trees, head_trees, head_patterns)
+            if target is not None:
+                relocated.append({"from": directory, "to": target})
+                moved_entries.add(pattern)
+                continue
+            changed.update(paths)
+            findings.append(
+                f"Protected entry '{pattern}' differs from the merge base ({summary}). "
+                "Only a complete, byte-identical move of a whole directory to another "
+                "protected location is allowed."
+            )
+        for pattern in base_patterns:
+            if pattern not in head_patterns and pattern not in moved_entries:
                 findings.append(
                     f"Protected entry '{pattern}' was removed or narrowed in the head "
                     "policy. Keep the base entry and add a new entry beside it."
                 )
-    except _Failure as failure:
+        # Uncommitted edits are not part of HEAD, so they are matched by name.
+        union = list(dict.fromkeys(base_patterns + head_patterns))
+        for path in _uncommitted_paths(root):
+            if path_matches(path, union):
+                changed.add(path)
+                findings.append(
+                    f"Uncommitted change to protected path '{path}'. Commit it so its "
+                    "content can be compared with the merge base."
+                )
+    except (_Failure, RuntimeError) as failure:
         findings.append(str(failure))
     check["status"] = "failed" if findings else "passed"
     check["changed-paths"] = sorted(changed)
     check["findings"] = findings
+    if relocated:
+        check["relocated"] = relocated
     return check
