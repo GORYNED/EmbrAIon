@@ -54,6 +54,55 @@ profiles:
 
 Verify: `embraion validation list` (loads the full shape), then `embraion validation run <profile>` for a profile you confirmed is safe. Report the real outcome. Never claim a command you did not run.
 
+## validation-guards
+
+Fills per-command and per-profile options of `validation.yaml` `profiles`: optional commands, prerequisites, a clean-tree guard, and a log size limit. These need the structured form (`commands:` list).
+
+- A command is a string or a mapping: `command`, `required` (default `true`), `requires` with `executables`, `env` (names only), `platforms` (`linux`, `macos`, `windows`). A missing prerequisite reports `blocked`, not `failed`; a blocked required command fails the profile, an optional one does not. A failing `required: false` command is recorded as a warning.
+- `clean-tree: true` fails the profile when validation changes the working tree (a tree that was already dirty is the baseline). `output-limit-bytes` (at least 1024) keeps only the head and tail of a very large log.
+- Ask which commands are optional when the request does not say. Never mark a command optional only to make a failing profile pass.
+
+```yaml
+profiles:
+  affected:
+    commands:
+      - python -m unittest discover -s tests
+      - command: ./tools/lint.sh
+        required: false
+      - command: ./tools/device-check.sh
+        requires: {executables: [adb], env: [DEVICE_ID], platforms: [linux, macos]}
+    clean-tree: true
+    output-limit-bytes: 1048576
+```
+
+Verify: `embraion validation list`, then `embraion validation run <profile>` for a profile you confirmed is safe.
+
+## plan-validation
+
+Fills `validation.yaml` `areas`, `impact`, `full-reasons`, `default-area`, so a change runs only the checks that prove what it touched. Optional; without these keys nothing changes.
+
+- Discover which folders each existing check proves (CI path filters help) and which paths are risky enough to need the whole `full` profile.
+- `areas.<name>` has `paths` (globs) and `commands` (command lines) and/or `profiles` (every command of those profiles). `impact` is an ordered list of rules with `id`, `paths`, and `areas` and/or `full: <reason>`. `full-reasons` is the closed list of reasons; declaring one needs a `full` profile. `default-area` handles a path that matches nothing; without it the whole planned profile runs.
+- Ask which paths must force the full profile, and the default area, only when the request leaves them open.
+
+```yaml
+areas:
+  library:
+    paths: [src/**]
+    commands: [python -m unittest discover -s tests]
+  docs:
+    paths: [docs/**]
+    profiles: [fast]
+impact:
+  - id: data-format
+    paths: [src/schema/**]
+    full: data-migration
+full-reasons: [data-migration, release-gate]
+default-area: library
+```
+
+Verify: `embraion validation list` (loads the full shape), then `embraion validation explain <profile> --base-ref <base>` (read-only; says why each area and command was selected). `embraion validation plan` writes a plan file; use it only when asked.
+
 ## project-agents
 
 Fills `agents.yaml` `agents`. Prefer `agents: []`: Core roles (Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, Steward) cover most work. Add a specialist only for a stable project responsibility that no Core role covers.
@@ -87,6 +136,10 @@ Fills `project.yaml` `framework.repository`, `framework.version`, `framework.art
 - Run `embraion update --check` (read-only) and report the result.
 - Move the pin only when the user asks to: `embraion update`. It needs a launcher at the target version. When the launcher is older, tell the user to upgrade it; installing software is their decision.
 - Afterwards run `embraion install --host <host> --destination .` for each installed host, then `embraion doctor` and `embraion status`.
+
+## hydrate-lfs-worktrees
+
+Fills `project.yaml` `worktree.lfs`: `none` (default) or `hydrate`. With `hydrate`, `embraion worktree create` and `worktree register` fetch and verify the Git LFS content of the new worktree. Set it only for a repository that uses LFS (`.gitattributes` with `filter=lfs`). Any other value is an error. Verify: `embraion policy show` (it loads `project.yaml`; `embraion validate --strict` does not check the value).
 
 ## task-housekeeping
 

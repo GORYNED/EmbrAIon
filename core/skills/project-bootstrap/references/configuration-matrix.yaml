@@ -51,6 +51,32 @@ requests:
       - embraion validation list
       - embraion validation run fast
 
+  - id: validation-guards
+    intents:
+      en: ["Fail validation if the tests modify the working tree", "Make the lint step optional", "Skip the device check when the tool is missing", "Limit the size of validation logs"]
+      ru: ["Падай, если тесты меняют рабочее дерево", "Сделай шаг линтера необязательным", "Пропускай проверку на устройстве, если нет нужного инструмента", "Ограничь размер логов проверок"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [validation.yaml:profiles]
+    discover: [the existing profile and its commands, the tool or variable a command needs]
+    ask: [which commands are optional, the log size limit when it is not stated]
+    verify:
+      - embraion validation list
+      - embraion validation run <profile>
+
+  - id: plan-validation
+    intents:
+      en: ["Run only the checks that match what changed", "Run the full profile when the data format changes"]
+      ru: ["Запускай только проверки, относящиеся к изменённым файлам", "Запускай полный профиль, когда меняется формат данных"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [validation.yaml:areas, validation.yaml:impact, validation.yaml:full-reasons, validation.yaml:default-area]
+    discover: [which folders each existing check proves, CI path filters]
+    ask: [which paths force the full profile, the area for unmatched paths]
+    verify:
+      - embraion validation list
+      - embraion validation explain <profile> --base-ref <base>
+
   - id: project-agents
     intents:
       en: [Add a read-only reviewer for our API, Create a project specialist]
@@ -104,6 +130,45 @@ requests:
     verify:
       - embraion worktree gc
 
+  - id: declare-sources
+    intents:
+      en: ["Register our repositories and say which ones you may write", "Record that the vendor SDK is read-only", "Tell EmbrAIon where the shared library lives on this machine"]
+      ru: ["Зарегистрируй наши репозитории и укажи, какие можно изменять", "Запиши, что вендорный SDK только для чтения", "Укажи EmbrAIon, где на этой машине лежит общая библиотека"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    fields: [sources.yaml:schema-version, sources.yaml:sources]
+    discover: [repositories and data folders the project uses, their governing documents, source ids already in policy.yaml privacy.sources]
+    ask: [the role and write policy of each source, the local path on this machine, never committed]
+    owner-decision: true
+    verify:
+      - embraion sources list
+      - embraion sources status
+      - embraion validate --strict
+
+  - id: hydrate-lfs-worktrees
+    intents:
+      en: ["Fetch Git LFS files in new worktrees", "Stop fetching LFS content in new worktrees"]
+      ru: ["Подтягивай файлы Git LFS в новых рабочих деревьях", "Больше не подтягивай содержимое LFS в новых рабочих деревьях"]
+    skill: project-bootstrap
+    recipe: references/contract-recipes.md
+    fields: [project.yaml:worktree.*]
+    discover: [whether the repository uses Git LFS, .gitattributes with filter=lfs]
+    ask: []
+    verify:
+      - embraion policy show
+
+  - id: add-pr-template
+    intents:
+      en: ["Add a pull request template", "Give the project the standard PR checklist"]
+      ru: ["Добавь шаблон pull request", "Дай проекту стандартный чек-лист для PR"]
+    skill: project-bootstrap
+    recipe: references/optional-recipes.md
+    generates: [.github/pull_request_template.md]
+    discover: [an existing pull request template in the root, docs, or .github]
+    ask: []
+    verify:
+      - embraion pr-template
+
   - id: protect-paths
     intents:
       en: [Protect these folders, Mark vendor code as third-party, Treat build output as generated]
@@ -152,11 +217,12 @@ requests:
     recipe: references/policy-recipes.md
     fields: [policy.yaml:enforcement.*]
     discover: [validation profiles that are not empty, the CI system in use]
-    ask: [which profile CI runs, whether an approved review is required, permission to add the workflow file]
+    ask: [which profile CI runs, whether an approved review is required, whether protected paths are compared by Git object identity, permission to add the workflow file]
     owner-decision: true
     verify:
       - embraion enforcement status
       - embraion policy show
+      - embraion enforcement check --base-ref <base>
 
   - id: set-merge-mode
     intents:
@@ -288,7 +354,7 @@ requests:
       ru: [Требуй запись решения при изменении зависимостей, Заведи записи архитектурных решений]
     skill: architecture-decision
     recipe: references/decisions-recipes.md
-    fields: [decisions.yaml:index, decisions.yaml:template, decisions.yaml:triggers, knowledge.yaml:slots.decisions]
+    fields: [decisions.yaml:index, decisions.yaml:template, decisions.yaml:triggers, decisions.yaml:extra-triggers, knowledge.yaml:slots.decisions]
     discover: [the existing decisions folder, its index and template, dependency manifests]
     ask: [which kinds of change need a record when the request is broad]
     verify:

@@ -40,9 +40,8 @@ next to the skill it names: `references/contract-recipes.md`,
   `embraion projection verify`. Never edit generated files or use `--force`.
 - Report the changed files and fields, what was discovered or asked, and each
   verification as passed, failed or not run.
-- During whole-project setup, when `embraion --help` lists `pr-template`, optionally
-  offer to run `embraion pr-template` to add the shipped, project-neutral pull request
-  template; it never overwrites an existing one.
+- During whole-project setup, optionally offer to run `embraion pr-template` to add the
+  shipped, project-neutral pull request template; it never overwrites an existing one.
 
 ## Authority and outcome
 

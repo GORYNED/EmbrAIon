@@ -44,6 +44,25 @@ At the current contract level, EmbrAIon does not use arbitrary `capabilities` va
 
 This metadata is separate from the optional, schema-checked [external capability inventory](capabilities.md). A declaration there records requirements and lifecycle evidence; it does not install an integration or prove that a host loaded it.
 
+### `housekeeping`
+
+`housekeeping` is optional. It controls automatic cleanup of the branches and worktrees that agents created. Every switch defaults to the previous behavior:
+
+```yaml
+housekeeping:
+  on-task-start: false
+  local-branches: true
+  remote-branches: false
+  worktrees: true
+  preserve-branches: []
+```
+
+- `on-task-start` (default `false`) runs cleanup before an independent writable task. Nothing is removed unless it is `true`.
+- `local-branches`, `remote-branches`, and `worktrees` choose what cleanup may remove. Remote deletion is off by default.
+- `preserve-branches` lists branch names or patterns that are never removed, such as `main` or `release/*`.
+
+Only resources that EmbrAIon recorded as agent-created, and that pass the completion and integration checks, are removed. Unknown branches and worktrees are reported and kept. The switches must be booleans and `preserve-branches` a list of names; anything else is an error. See the [worktree tool guide](https://github.com/GORYNED/EmbrAIon/blob/main/tools/worktree/README.md).
+
 ### `worktree`
 
 `worktree.lfs` is optional. The default is `none`: new worktrees are created exactly as before. Set it to `hydrate` for a repository that uses Git LFS:

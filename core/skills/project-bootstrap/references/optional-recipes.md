@@ -9,6 +9,7 @@ Creates `integrations.yaml`: the MCP servers the host configuration must contain
 - Discover: read the host configuration the servers live in: `.mcp.json` (`generic`), `.vscode/mcp.json` (`vscode`), `.claude/settings.json` and `.claude/settings.local.json` (`claude-code`), `.codex/config.toml` (`codex`). `embraion mcp inventory` lists them. Declare only servers that are already configured. Adding a new server to the host is a separate, explicit action.
 - Ask for each server's `access` (`read-only`, `workspace-write`, `external-execution`); host configuration does not reveal it. Ask whether a server is machine-local.
 - Write names only: `env-vars` lists variable names, never values. Omit `command` for a URL server. A machine-absolute path in `command` or `args` is a finding unless `portable: false` is set for a deliberately machine-local server.
+- Only `host: codex` entries may also set `cwd` (the server's working directory, compared with the Codex `cwd` string) and `required` (boolean; a missing key counts as `false`). Declare them only when the Codex config sets them; other hosts reject both keys. A portable entry must not use a machine-absolute `cwd`.
 
 ```yaml
 schema-version: 1
@@ -23,6 +24,31 @@ servers:
 ```
 
 Verify: `embraion security scan --path . --fail-on high` (it loads the full shape), then `embraion doctor`.
+
+## declare-sources
+
+Creates `sources.yaml`: the stable source ids the project uses (repositories, libraries, data), what each is for, and whether agents may write it. The file is committed and never holds a machine path.
+
+- Discover the repositories and data folders the project touches, the document that governs each, and the ids already named in `policy.yaml` `privacy.sources` and `execution.yaml` `sourceIds`. When `privacy.sources` is declared, every id here must be listed there.
+- Ask the `role` (`canonical-code`, `shared-library`, `reference`, `external-upstream`, `application-data`) and `write` policy (`read-only`, `workspace-write`, `forbidden`) of each source. `write` is an owner decision: never grant `workspace-write` unasked.
+- Optional per source: `description`, `doc` (an existing repository-relative file), `data-class` (may only raise the class declared in `privacy.sources`, or the privacy default).
+- With the file present, a `workspace-write` execution request may name only `workspace-write` sources.
+- Where a source lives on this machine is local data: ask for the absolute path and run `embraion sources set <id> <path>`. It goes to the ignored `.embraion/state/sources-local.yaml`; never write a machine path into `sources.yaml`.
+
+```yaml
+schema-version: 1
+sources:
+  - id: App
+    role: canonical-code
+    write: workspace-write
+    doc: docs/sources.md
+  - id: VendorSdk
+    role: external-upstream
+    write: forbidden
+    data-class: CONFIDENTIAL
+```
+
+Verify: `embraion sources list`, `embraion sources status` (`available`, `missing`, or `unset`; they never print paths), `embraion validate --strict` (it reports an invalid registry as an error).
 
 ## declare-external-capability
 
@@ -127,6 +153,15 @@ read-policy:
 ```
 
 Verify: `embraion route --validate`, `embraion claude-native status`. Then install the component with `embraion install --host claude-code --destination . --component scoped-agents`. Installing hooks (`embraion claude-native install-hooks`) edits `.claude/settings.json`; run it only after the user agrees. A new Thread is needed before the host sees the agents.
+
+## add-pr-template
+
+Adds the shipped, project-neutral pull request template at `.github/pull_request_template.md`. It is optional; offer it during whole-project setup or when the user asks for a PR template or checklist.
+
+- Run `embraion pr-template`. It never overwrites: when the project already has a template (root, `docs/`, `.github/`, or a `PULL_REQUEST_TEMPLATE/` folder) it reports that and changes nothing. `--path <dir>` selects another project directory; `--json` prints the status.
+- Commit nothing yourself unless asked. Tell the user the file was created or already existed.
+
+Verify: the command's own output (`created` or `exists`).
 
 ## project-skill
 

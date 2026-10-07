@@ -21,7 +21,7 @@ SKILLS = ROOT / "core/skills"
 MATRIX = SKILLS / "project-bootstrap/references/configuration-matrix.yaml"
 SKILLS_FIELD = "skills/"
 ENTRY_KEYS = {"id", "intents", "skill", "recipe", "fields", "composes", "discover", "ask",
-              "owner-decision", "verify"}
+              "owner-decision", "verify", "generates"}
 LANGUAGES = {"en", "ru"}
 
 
@@ -104,7 +104,9 @@ class ConfigurationMatrixTests(unittest.TestCase):
                       "policy.yaml:merge.mode", "policy.yaml:privacy.sources", "policy.yaml:ceilings",
                       "decisions.yaml:triggers", "project.yaml:housekeeping", "knowledge.yaml:slots.decisions",
                       "integrations.yaml:servers", "report.yaml:sections", "claude-native.yaml:assignments",
-                      "organization.yaml:filenames", "knowledge-maintenance.yaml:documents", SKILLS_FIELD):
+                      "organization.yaml:filenames", "knowledge-maintenance.yaml:documents", SKILLS_FIELD,
+                      "sources.yaml:sources", "validation.yaml:areas", "decisions.yaml:extra-triggers",
+                      "project.yaml:worktree.lfs"):
             self.assertIn(field, surface)
 
     def test_gap_detection_fails_for_a_new_key(self) -> None:
@@ -129,7 +131,7 @@ class ConfigurationMatrixTests(unittest.TestCase):
                     self.assertTrue(phrases and all(isinstance(text, str) and text.strip() for text in phrases))
                 # An unquoted comma splits one phrase into two list items; the languages stay aligned.
                 self.assertEqual(len(entry["intents"]["en"]), len(entry["intents"]["ru"]))
-                self.assertTrue(entry.get("fields") or entry.get("composes"))
+                self.assertTrue(entry.get("fields") or entry.get("composes") or entry.get("generates"))
                 self.assertTrue(entry["verify"])
                 self.assertIsInstance(entry.get("owner-decision", False), bool)
                 for key in ("discover", "ask"):

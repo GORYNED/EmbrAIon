@@ -24,7 +24,7 @@
 
 ## Настройки, которые решаете только вы
 
-Строки с ● расширяют доступ или ослабляют защиту: уборка, которая удаляет ветки, классы приватности, правила ревью, enforcement, режим merge, потолки политики, execution-привязки, интеграции и внешние возможности. Агент меняет их, только если ваш запрос это говорит. Иначе он сначала спрашивает.
+Строки с ● расширяют доступ или ослабляют защиту: уборка, которая удаляет ветки, классы приватности, правила ревью, enforcement, режим merge, потолки политики, execution-привязки, интеграции, внешние возможности и политику записи зарегистрированных источников. Агент меняет их, только если ваш запрос это говорит. Иначе он сначала спрашивает.
 
 `merge.mode: owner-permission` не даёт постоянного разрешения на merge. Агент может смержить pull request, только если вы разрешили именно этот pull request, обязательные проверки прошли на его финальном head, а независимый ревьюер подтвердил этот head. Auto-merge остаётся выключенным.
 
@@ -35,14 +35,19 @@
 | `set-up` | Настрой EmbrAIon для этого проекта | набор: `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, `project-identity` |  | `embraion doctor`<br>`embraion validate --strict`<br>`embraion check` |
 | `bind-knowledge` | Зарегистрируй документ с архитектурой | `knowledge.yaml`: slots, свои записи |  | `embraion context slots`<br>`embraion validate --strict` |
 | `project-validation` | Добавь нашу команду тестов в проверки | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run fast` |
+| `validation-guards` | Падай, если тесты меняют рабочее дерево | `validation.yaml`: profiles |  | `embraion validation list`<br>`embraion validation run <profile>` |
+| `plan-validation` | Запускай только проверки, относящиеся к изменённым файлам | `validation.yaml`: areas, impact, full-reasons, default-area |  | `embraion validation list`<br>`embraion validation explain <profile> --base-ref <base>` |
 | `project-agents` | Добавь специалиста только для чтения по нашему API | `agents.yaml`: agents |  | `embraion projection diff --host <installed-host> --destination .`<br>`embraion install --host <installed-host> --destination .` |
 | `project-identity` | Переименуй проект в EmbrAIon | `project.yaml`: project, capabilities |  | `embraion status`<br>`embraion validate --strict` |
 | `update-framework` | Обнови EmbrAIon до последнего релиза | `project.yaml`: framework |  | `embraion update --check`<br>`embraion doctor`<br>`embraion status` |
 | `task-housekeeping` | Автоматически чисти старые ветки и рабочие деревья агентов | `project.yaml`: housekeeping | ● | `embraion worktree gc` |
+| `declare-sources` | Зарегистрируй наши репозитории и укажи, какие можно изменять | `sources.yaml`: schema-version, sources | ● | `embraion sources list`<br>`embraion sources status`<br>`embraion validate --strict` |
+| `hydrate-lfs-worktrees` | Подтягивай файлы Git LFS в новых рабочих деревьях | `project.yaml`: worktree |  | `embraion policy show` |
+| `add-pr-template` | Добавь шаблон pull request | создаёт `.github/pull_request_template.md` |  | `embraion pr-template` |
 | `protect-paths` | Защити эти папки | `policy.yaml`: sources |  | `embraion policy show`<br>`embraion check` |
 | `classify-privacy` | Считай этот источник конфиденциальным | `policy.yaml`: privacy | ● | `embraion policy show`<br>`embraion policy check` |
 | `set-review-rule` | Требуй ревью для существенных изменений | `policy.yaml`: review | ● | `embraion policy show` |
-| `enable-enforcement` | Проверяй правила в CI | `policy.yaml`: enforcement | ● | `embraion enforcement status`<br>`embraion policy show` |
+| `enable-enforcement` | Проверяй правила в CI | `policy.yaml`: enforcement | ● | `embraion enforcement status`<br>`embraion policy show`<br>`embraion enforcement check --base-ref <base>` |
 | `set-merge-mode` | Разреши тебе мержить после зелёных проверок | `policy.yaml`: merge | ● | `embraion policy show`<br>`embraion install --host <installed-host> --destination .`<br>`embraion projection verify --host <installed-host> --destination .` |
 | `set-policy-ceilings` | Никогда не отправляй конфиденциальные данные этому провайдеру | `policy.yaml`: ceilings | ● | `embraion policy check`<br>`embraion route --validate` |
 | `configure-check` | Сделай одну команду со всеми проверками проекта для CI | `policy.yaml`: check |  | `embraion check`<br>`embraion policy show` |
@@ -52,7 +57,7 @@
 | `declare-pricing` | Считай стоимость вызовов провайдера | `pricing.yaml`: schemaVersion, sources |  | `embraion pricing status` |
 | `declare-integration` | Объяви наш MCP-сервер | `integrations.yaml`: schema-version, servers | ● | `embraion security scan --path . --fail-on high`<br>`embraion doctor` |
 | `declare-external-capability` | Запиши, что этот плагин установлен у команды | `external-capabilities.yaml`: schema-version, capabilities | ● | `embraion capabilities --path . --host <installed-host>` |
-| `bind-decisions` | Требуй запись решения при изменении зависимостей | `decisions.yaml`: index, template, triggers; `knowledge.yaml`: slots.decisions |  | `embraion decisions check --require-config --path . --base-ref <base>`<br>`embraion context slots`<br>`embraion check --base-ref <base>` |
+| `bind-decisions` | Требуй запись решения при изменении зависимостей | `decisions.yaml`: index, template, triggers, extra-triggers; `knowledge.yaml`: slots.decisions |  | `embraion decisions check --require-config --path . --base-ref <base>`<br>`embraion context slots`<br>`embraion check --base-ref <base>` |
 | `limit-code-structure` | Требуй имена файлов строчными буквами в docs | `organization.yaml`: exclude, namespaces, assemblies, unity_meta, filenames |  | `embraion organization check --require-config --path .` |
 | `track-doc-sources` | Предупреждай, когда документ об архитектуре устарел относительно кода | `knowledge-maintenance.yaml`: documents |  | `embraion knowledge audit --path .` |
 | `shape-final-report` | Используй такие разделы в итоговых отчётах | `report.yaml`: schema-version, sections, workers, pull-request, guidance |  | `embraion report template`<br>`embraion install --host <installed-host> --destination .`<br>`embraion projection verify --host <installed-host> --destination .` |
