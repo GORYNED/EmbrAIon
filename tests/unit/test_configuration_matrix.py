@@ -195,10 +195,27 @@ class ConfigurationMatrixTests(unittest.TestCase):
                 with self.subTest(page=suffix, entry=entry["id"]):
                     self.assertIn(f"| `{entry['id']}` |", page)
 
-    def test_intent_phrases_never_contain_a_consumer_name(self) -> None:
-        text = MATRIX.read_text(encoding="utf-8")
-        for forbidden in ("SensorEdge", "Unity-SDK", "MeasureX", "/home/", "/tmp/"):
-            self.assertNotIn(forbidden, text)
+    def test_matrix_and_recipes_contain_no_machine_paths(self) -> None:
+        # Consumer and product names are kept out of Core by review; machine paths are checkable.
+        for path in [MATRIX, *SKILLS.glob("*/references/*")]:
+            text = path.read_text(encoding="utf-8")
+            for marker in ("/home/", "/tmp/", "/Users/", "C:\\Users"):
+                with self.subTest(path=path.name, marker=marker):
+                    self.assertNotIn(marker, text)
+
+    def test_widening_entries_are_owner_decisions(self) -> None:
+        owner = {entry["id"] for entry in self.entries if entry.get("owner-decision")}
+        for identifier in ("validation-guards", "plan-validation", "project-agents", "set-merge-mode",
+                           "enable-enforcement", "declare-integration", "declare-sources"):
+            self.assertIn(identifier, owner)
+
+    def test_localized_pages_link_to_ascii_anchors(self) -> None:
+        # The site slugifies headings without Unicode support, so a non-ASCII anchor breaks.
+        link = re.compile(r"\]\([^)#\s]*#([^)\s]+)\)")
+        for path in (ROOT / "docs").rglob("*.md"):
+            for anchor in link.findall(path.read_text(encoding="utf-8")):
+                with self.subTest(path=path.relative_to(ROOT).as_posix(), anchor=anchor):
+                    self.assertTrue(anchor.isascii())
 
     def test_behavioral_case_rejects_each_violated_property(self) -> None:
         case = read_yaml(ROOT / "evals/cases/configure-by-request.yaml")

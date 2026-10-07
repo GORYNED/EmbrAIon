@@ -119,12 +119,15 @@ Verify: `embraion knowledge audit --path .` (`current`, `needs-review`, `missing
 
 Creates `report.yaml`: the sections of the final report of substantial work. EmbrAIon renders it into the projected orchestration skill and checks report text against it.
 
-- Ask the section names and their order when the request does not give them. Keep Core's own report expectations: do not drop `Validation` or `Risks` unless the user asks.
-- Required: `schema-version: 1` and `sections`. Optional: `workers` (`section`, `task-status`, `columns`, `summary`), `pull-request` (`section`), `guidance` (free text lines).
+- Ask the section names and their order when the request does not give them. Discover the sections the project's current reports use (project instructions, past reports) and keep them; the list replaces the current format, so drop a section only when the user asks, and say which sections the new list omits.
+- Required: `schema-version: 1` and `sections`. Optional: `workers`, `pull-request`, `guidance` (free text lines). When `workers` is present it needs `section` (one of `sections`) and `columns`; `task-status` and `summary` are optional. `pull-request` needs `section`.
 
 ```yaml
 schema-version: 1
-sections: [Changed, Validation, Risks]
+sections: [Changed, Architecture, Validation, Risks, Workers]
+workers:
+  section: Workers
+  columns: [Status, Worker, Role, Validation]
 pull-request:
   section: Changed
 ```

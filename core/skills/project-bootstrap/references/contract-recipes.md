@@ -60,7 +60,7 @@ Fills per-command and per-profile options of `validation.yaml` `profiles`: optio
 
 - A command is a string or a mapping: `command`, `required` (default `true`), `requires` with `executables`, `env` (names only), `platforms` (`linux`, `macos`, `windows`). A missing prerequisite reports `blocked`, not `failed`; a blocked required command fails the profile, an optional one does not. A failing `required: false` command is recorded as a warning.
 - `clean-tree: true` fails the profile when validation changes the working tree (a tree that was already dirty is the baseline). `output-limit-bytes` (at least 1024) keeps only the head and tail of a very large log.
-- Ask which commands are optional when the request does not say. Never mark a command optional only to make a failing profile pass.
+- Owner decision: the request must say which commands become optional, which prerequisites to add, or that the tree must stay clean. Do not infer it. Never mark a command optional or add a prerequisite to make a failing profile pass; making checks weaker or skippable lowers validation.
 
 ```yaml
 profiles:
@@ -69,8 +69,8 @@ profiles:
       - python -m unittest discover -s tests
       - command: ./tools/lint.sh
         required: false
-      - command: ./tools/device-check.sh
-        requires: {executables: [adb], env: [DEVICE_ID], platforms: [linux, macos]}
+      - command: ./tools/extra-check.sh
+        requires: {executables: [example-tool], env: [EXAMPLE_TARGET], platforms: [linux, macos]}
     clean-tree: true
     output-limit-bytes: 1048576
 ```
@@ -83,7 +83,7 @@ Fills `validation.yaml` `areas`, `impact`, `full-reasons`, `default-area`, so a 
 
 - Discover which folders each existing check proves (CI path filters help) and which paths are risky enough to need the whole `full` profile.
 - `areas.<name>` has `paths` (globs) and `commands` (command lines) and/or `profiles` (every command of those profiles). `impact` is an ordered list of rules with `id`, `paths`, and `areas` and/or `full: <reason>`. `full-reasons` is the closed list of reasons; declaring one needs a `full` profile. `default-area` handles a path that matches nothing; without it the whole planned profile runs.
-- Ask which paths must force the full profile, and the default area, only when the request leaves them open.
+- Owner decision: a plan can make a change run fewer checks, and `default-area` decides what an unmatched path runs. Write them only when the request asks for change-based validation, and ask which paths must force the full profile and what the default area is when the request leaves them open. Never narrow a profile to make a failing check go away.
 
 ```yaml
 areas:
@@ -108,7 +108,7 @@ Verify: `embraion validation list` (loads the full shape), then `embraion valida
 Fills `agents.yaml` `agents`. Prefer `agents: []`: Core roles (Lead, Worker, Reviewer, Architect, Analyst, Validator, Researcher, Steward) cover most work. Add a specialist only for a stable project responsibility that no Core role covers.
 
 - Required: `id` (kebab-case, not a Core id), `purpose`, `access` (`read-only` or `workspace-write`), `responsibilities` (list). Optional: `title`, `extends` (a non-Lead Core role; access must not widen it), `restrictions`, `triggers`, `outputs`.
-- Prefer `access: read-only`. Never `extends: lead`.
+- Owner decision for access: prefer `access: read-only`. Create a `workspace-write` specialist only when the request says it must write. Never `extends: lead`.
 
 ```yaml
 agents:

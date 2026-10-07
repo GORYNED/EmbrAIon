@@ -44,8 +44,8 @@ LATER_FILE_EDITS = {
     "core/skills/compatibility-migration/SKILL.md": (
         ("   - Never reuse a retired identifier, number, or name for a different meaning. A rename is a removal "
          "plus an addition.\n   - Deprecate before removing: mark the old surface, name its replacement, and "
-         "state how long it keeps working.\n   - Readers tolerate unknown fields, so a newer writer does not "
-         "break an older reader.\n", ""),
+         "state how long it keeps working.\n   - Readers of persisted data formats tolerate unknown fields, so a newer writer "
+         "does not break an older reader.\n", ""),
         (" A failed migration must leave the source data intact and recoverable: keep the original until the "
          "new form is verified.", ""),
     ),
