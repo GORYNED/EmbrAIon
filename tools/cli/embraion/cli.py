@@ -1440,7 +1440,8 @@ def _cmd_worktree_register(args: argparse.Namespace) -> int:
 
 
 def _cmd_worktree_lfs_preflight(args: argparse.Namespace) -> int:
-    result = preflight_lfs(Path(args.path), args.expected_head, remote=args.remote)
+    result = preflight_lfs(Path(args.path), args.expected_head, remote=args.remote,
+                           allow_unmanaged=args.allow_unmanaged, primary_branch=args.primary_branch)
     _print_json(result)
     return int(result["state"] != "passed")
 
@@ -2861,6 +2862,10 @@ def build_parser() -> argparse.ArgumentParser:
     worktree_lfs_preflight.add_argument("--path", required=True)
     worktree_lfs_preflight.add_argument("--expected-head", required=True)
     worktree_lfs_preflight.add_argument("--remote", help="Require and fetch from this configured LFS remote")
+    worktree_lfs_preflight.add_argument("--allow-unmanaged", action="store_true",
+                                        help="Allow a Git-registered worktree without EmbrAIon lifecycle ownership")
+    worktree_lfs_preflight.add_argument("--primary-branch",
+                                        help="Require this branch on the unique primary worktree")
     worktree_lfs_preflight.set_defaults(func=_cmd_worktree_lfs_preflight)
 
     worktree_publish = worktree_sub.add_parser("publish", help="Create or update a remote branch with verified agent provenance")

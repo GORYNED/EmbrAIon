@@ -358,7 +358,9 @@ def _is_expected_pointer(path: Path, expected: tuple[str, int]) -> bool:
 
 
 def _preflight_state(worktree: Path, expected_head: str,
-                     allowed_pointers: dict[str, tuple[str, int]] | None = None) -> dict[str, Any]:
+                     allowed_pointers: dict[str, tuple[str, int]] | None = None,
+                     *, allow_unmanaged: bool = False,
+                     primary_branch: str | None = None) -> dict[str, Any]:
     """Observe identity and safety gates without changing Git state."""
     common = registry.common_dir(worktree)
     rows = parse_worktrees(worktree)
@@ -368,20 +370,48 @@ def _preflight_state(worktree: Path, expected_head: str,
     primary = [row for row in rows if registry.gitdir(Path(row["path"])) == common]
     if len(primary) != 1 or Path(primary[0]["path"]).resolve() == worktree:
         raise ValueError("a unique separate primary worktree was not proven")
+    if primary_branch is not None:
+        stable = [row for row in rows if row.get("branch") == primary_branch]
+        if len(stable) != 1 or stable[0] != primary[0]:
+            raise ValueError("the required primary branch was not uniquely proven")
     resources = [resource for resource in registry.load_registry(worktree)["resources"].values()
-                 if resource.get("kind") == "worktree" and resource.get("path")
+                 if resource.get("path")
                  and Path(resource["path"]).resolve() == worktree]
-    if len(resources) != 1 or not registry.verify_resource(worktree, resources[0]):
-        raise ValueError("worktree registration could not be verified")
-    if resources[0].get("state") != "active":
-        raise ValueError("registered worktree is not active")
+    if resources:
+        if (len(resources) != 1 or resources[0].get("kind") != "worktree"
+                or not registry.verify_resource(worktree, resources[0])):
+            raise ValueError("worktree registration could not be verified")
+        if resources[0].get("state") != "active":
+            raise ValueError("registered worktree is not active")
+        ownership, resource_id = "managed", resources[0]["resource-id"]
+    else:
+        if not allow_unmanaged:
+            raise ValueError("worktree registration could not be verified")
+        if matching[0].get("branch") in {"main", "master"}:
+            raise ValueError("unmanaged stable-branch worktree is protected")
+        # A missing registry row with a surviving marker is an orphan, not an
+        # unmanaged checkout. Never grant it cleanup or lifecycle authority.
+        marker = registry.gitdir(worktree) / "embraion-resource.json"
+        try:
+            marker.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            raise ValueError("worktree has an orphan EmbrAIon resource marker")
+        ownership, resource_id = "unmanaged", None
     head = _git(worktree, "--no-optional-locks", "rev-parse", "--verify", "HEAD")
     if head.returncode or head.stdout.decode("ascii", "replace").strip() != expected_head:
         raise ValueError("worktree HEAD differs from the expected commit")
-    lock = _git(worktree, "--no-optional-locks", "rev-parse", "--path-format=absolute", "--git-path", "index.lock")
-    if lock.returncode or not lock.stdout.strip():
-        raise ValueError("worktree index lock state could not be read")
-    if Path(lock.stdout.decode("utf-8", "surrogateescape").strip()).exists():
+    # Git's `rev-parse --git-path index.lock` can resolve a dangling symlink
+    # to its absent target. Inspect the direct per-worktree metadata path.
+    index_lock = registry.gitdir(worktree) / "index.lock"
+    try:
+        index_lock.lstat()
+    except FileNotFoundError:
+        pass
+    else:
+        # A dangling link is still an occupied lock path and must not be
+        # treated as a clean, unlocked index.
         raise ValueError("worktree index is locked")
     index_flags = _git(worktree, "--no-optional-locks", "ls-files", "-v", "-z")
     if index_flags.returncode:
@@ -391,7 +421,7 @@ def _preflight_state(worktree: Path, expected_head: str,
         # hide local edits from both status and diff. Neither is clean proof.
         raise ValueError("worktree has hidden or skipped index entries")
     status = _git(worktree, "--no-optional-locks", "-c", "core.fsmonitor=false", "status",
-                  "--porcelain=v1", "-z", "--untracked-files=all")
+                  "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none")
     if status.returncode:
         raise ValueError("worktree clean state could not be read")
     if status.stdout:
@@ -404,11 +434,13 @@ def _preflight_state(worktree: Path, expected_head: str,
                        for item in observed)):
             raise ValueError("worktree is dirty")
     return {"head": expected_head, "path": str(worktree), "primary": primary[0]["path"],
-            "resource-id": resources[0]["resource-id"]}
+            "ownership": ownership, "resource-id": resource_id}
 
 
-def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None) -> dict[str, Any]:
-    """Hydrate and verify one registered checkout, failing on every uncertain gate.
+def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None,
+                  *, allow_unmanaged: bool = False,
+                  primary_branch: str | None = None) -> dict[str, Any]:
+    """Hydrate and verify one separate checkout, failing on every uncertain gate.
 
     The caller must run this immediately before the dependent validation. The
     result is evidence of this observation, not a lock held during that command.
@@ -416,6 +448,12 @@ def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None)
     result: dict[str, Any] = {"state": "failed", "reason": "preflight incomplete"}
     if not _HEAD.fullmatch(expected_head):
         result["reason"] = "expected HEAD must be a full hexadecimal commit ID"
+        return result
+    if primary_branch is not None and (not primary_branch or primary_branch.startswith("-")
+                                       or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", primary_branch)
+                                       or ".." in primary_branch or "//" in primary_branch
+                                       or primary_branch.endswith(".lock")):
+        result["reason"] = "primary branch name is invalid"
         return result
     if any(name in os.environ for name in _GIT_LOCATION_VARIABLES):
         result["reason"] = "Git repository location is overridden by the environment"
@@ -426,10 +464,9 @@ def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None)
         if head.returncode or head.stdout.decode("ascii", "replace").strip() != expected_head:
             raise ValueError("worktree HEAD differs from the expected commit")
         files = _tracked_lfs_files(worktree)
-        if not files:
-            raise ValueError("no LFS pointer files at expected HEAD")
         before = _preflight_state(worktree, expected_head,
-                                  {path: (oid, size) for path, oid, size in files})
+                                  {path: (oid, size) for path, oid, size in files},
+                                  allow_unmanaged=allow_unmanaged, primary_branch=primary_branch)
         filter_process = _git(worktree, "config", "--get", "filter.lfs.process")
         filter_required = _git(worktree, "config", "--bool", "--get", "filter.lfs.required")
         if (filter_process.returncode or not filter_process.stdout.strip()
@@ -442,11 +479,13 @@ def preflight_lfs(worktree: Path, expected_head: str, remote: str | None = None)
                 or not selected_remote.strip()
                 or _git(worktree, "remote", "get-url", selected_remote).returncode):
             raise ValueError("Git LFS remote is unavailable")
-        lfs = hydrate_lfs(worktree, remote=selected_remote)
+        lfs = (hydrate_lfs(worktree, remote=selected_remote) if files
+               else _result("not-applicable", "no-lfs-files-at-head"))
         result["lfs"] = lfs
-        if lfs["state"] != "hydrated" or lfs.get("modified") or lfs["verified"] != len(files):
+        if (files and lfs["state"] != "hydrated") or lfs.get("modified") or lfs["verified"] != len(files):
             raise ValueError("LFS content could not be fully verified")
-        after = _preflight_state(worktree, expected_head)
+        after = _preflight_state(worktree, expected_head,
+                                 allow_unmanaged=allow_unmanaged, primary_branch=primary_branch)
         if after != before:
             raise ValueError("worktree identity changed during preflight")
         result.update(state="passed", reason="verified", **after)
