@@ -450,6 +450,7 @@ class HydrationDetectionTests(unittest.TestCase):
             lock.symlink_to(self.sandbox / "missing-lock")
         except OSError:
             self.skipTest("symlinks unavailable")
+        self.assertTrue(lock.is_symlink())
         self.assertIn("index is locked", self.preflight(target, head)["reason"])
 
     def test_preflight_with_no_lfs_files_still_checks_filters_and_identity(self) -> None:

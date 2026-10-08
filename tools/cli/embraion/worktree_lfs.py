@@ -402,10 +402,9 @@ def _preflight_state(worktree: Path, expected_head: str,
     head = _git(worktree, "--no-optional-locks", "rev-parse", "--verify", "HEAD")
     if head.returncode or head.stdout.decode("ascii", "replace").strip() != expected_head:
         raise ValueError("worktree HEAD differs from the expected commit")
-    lock = _git(worktree, "--no-optional-locks", "rev-parse", "--path-format=absolute", "--git-path", "index.lock")
-    if lock.returncode or not lock.stdout.strip():
-        raise ValueError("worktree index lock state could not be read")
-    index_lock = Path(lock.stdout.decode("utf-8", "surrogateescape").strip())
+    # Git's `rev-parse --git-path index.lock` can resolve a dangling symlink
+    # to its absent target. Inspect the direct per-worktree metadata path.
+    index_lock = registry.gitdir(worktree) / "index.lock"
     try:
         index_lock.lstat()
     except FileNotFoundError:
