@@ -947,6 +947,7 @@ class TerminationRecordTests(unittest.TestCase):
             self.assertEqual(1, record["executed-command-count"])
             self.assertEqual("confirmed", record["commands"][0]["termination"])
             self.assertIn("left descendants", record["failure-reasons"][0])
+            _remove_terminated_child_project(project)
 
     def test_output_handle_that_does_not_close_stops_the_profile(self) -> None:
         released = threading.Event()
