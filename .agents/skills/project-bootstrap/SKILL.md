@@ -11,6 +11,15 @@ Use this capability when the user asks "Configure EmbrAIon for this project",
 The user does not need to name YAML files, roles, commands, or routing mechanics.
 An ordinary engineering request after onboarding uses the orchestration skill.
 
+When the project has not been initialized, the same request includes the necessary
+launcher setup, `init`, host projection installation, and a fresh host activation
+check. Use the official installation method for the detected environment; run the
+technical commands yourself. A machine-wide launcher install may require explicit
+permission as a shared-software change. Ask for that permission only when the
+request has not already authorized it, never ask the user to type commands.
+If this skill is not yet available to the host, the host must discover the official
+installation procedure before it can claim to be following this skill.
+
 ## Targeted requests
 
 The same skill handles a request to change one part of the configuration, in any
@@ -40,6 +49,8 @@ next to the skill it names: `references/contract-recipes.md`,
   `embraion projection verify`. Never edit generated files or use `--force`.
 - Report the changed files and fields, what was discovered or asked, and each
   verification as passed, failed or not run.
+- Repeat an unchanged request as a no-op: compare project configuration,
+  projection ownership and host activation before installing or writing again.
 - During whole-project setup, optionally offer to run `embraion pr-template` to add the
   shipped, project-neutral pull request template; it never overwrites an existing one.
 
@@ -81,6 +92,19 @@ empty routing can still orchestrate and delegate through host-default.
    metadata and environment-variable names only. Do not collect secret values.
    Respect excluded, generated, external and confidential boundaries. Read files
    needed for the concern rather than ingesting a whole repository indiscriminately.
+
+For first setup, check whether `embraion` is available and whether its version is
+supported, then inspect for a complete, partial, or absent `.embraion/` contract.
+If the launcher is missing, follow the official installation page for the observed
+platform and package manager; verify the installed version and release identity.
+Do not invent a download URL, bypass an artifact lock, or copy a guessed YAML
+template. Run `embraion init` only after confirming that existing project files
+will be preserved, then install the projection for each requested available host.
+Open a fresh host session to check loading when the host supports it; file
+verification alone proves only projection. If the host cannot be exercised, report
+that limit. A partially initialized project is repaired using `status`, `doctor`,
+the loaders for affected files, and the official install/update operations. Never
+reset it wholesale to make diagnostics pass.
 
 `embraion bootstrap plan --output <local-report.json>` provides read-only
 inventory, candidate bindings and command provenance. It is a discovery aid,
@@ -221,6 +245,12 @@ never manually edit generated files or overwrite foreign/modified projection
 ownership. An empty/default route or unused host does not require fabricated
 execution evidence. Portable verifies transported content only. Obtain
 independent review of substantial changes according to Core/project policy.
+For each host distinguish projected files, native host loading, and a fresh
+ordinary-language execution. Codex and Claude Code may require a new session
+after an installation; checking a running old session is not activation evidence.
+On a failed install, inspect the partial state and rerun the idempotent official
+operation after fixing its cause. Do not use `--force` or replace user-owned files
+as a generic recovery step.
 
 Report knowledge bindings/unbound slots, policy decisions, real validation
 profiles, agents decision, routing decision and capability limits, changed

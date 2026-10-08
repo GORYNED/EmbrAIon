@@ -4,7 +4,7 @@ Recipes for the files `embraion init` creates: knowledge, validation, agents, pr
 
 ## set-up
 
-Whole-project request: follow the Project Bootstrap procedure in SKILL.md. It composes `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, and `project-identity`. Leave routing and every optional file alone unless the user asks for them. Finish with `embraion doctor`, `embraion validate --strict`, and `embraion check`; report each outcome as passed, failed, or not run.
+Whole-project request: follow the Project Bootstrap procedure in SKILL.md. It composes `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, and `project-identity`. If the launcher or project contract is absent, the agent completes the official launcher installation (subject to required permission), `init`, and requested host projection itself before applying the recipes. If setup is partial, inspect and repair the existing contract instead of resetting it. Leave routing and every optional file alone unless the user asks for them. Finish with `embraion doctor`, `embraion validate --strict`, `embraion check`, projection verification, and a fresh host loading check when available; report each outcome as passed, failed, or not run. An unchanged second request must not alter the project.
 
 ## bind-knowledge
 
@@ -133,9 +133,21 @@ Fills `project.yaml` `project.name` and the open `capabilities` mapping. `capabi
 
 Fills `project.yaml` `framework.repository`, `framework.version`, `framework.artifact`. Never edit them by hand: the artifact lock must match the release.
 
-- Run `embraion update --check` (read-only) and report the result.
-- Move the pin only when the user asks to: `embraion update`. It needs a launcher at the target version. When the launcher is older, tell the user to upgrade it; installing software is their decision.
-- Afterwards run `embraion install --host <host> --destination .` for each installed host, then `embraion doctor` and `embraion status`.
+- Run `embraion update --check` (read-only), inspect the current pin, artifact lock,
+  launcher origin, available release and existing projections. Do not move the pin
+  unless the user requested an update.
+- When the launcher is older than the intended release, use its observed install
+  method to upgrade it yourself. Treat a machine-wide install as a shared-software
+  change: obtain explicit permission if the request did not authorize it. Never
+  send the user a command to copy. Verify the resulting launcher version and
+  official artifact before running `embraion update`; an unknown install method
+  or failed verification blocks the pin change.
+- Run `embraion update` to record the exact release artifact lock. Preserve
+  unrelated project values, then run `embraion install --host <host> --destination .`
+  for each installed host, `embraion projection verify`, `embraion doctor`, and
+  `embraion status`. Use a fresh host session to test loading when available.
+  After a partial failure, inspect state and retry only the failed idempotent
+  step. A repeated unchanged request makes no project or projection changes.
 
 ## hydrate-lfs-worktrees
 
