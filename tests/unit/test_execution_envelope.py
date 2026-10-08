@@ -265,6 +265,7 @@ class EnvelopeTests(unittest.TestCase):
                      "Read /home/张三/秘密.txt", "Read /opt/私有/config",
                      "Read /opt/📁/config", "Read /opt/[private]/config",
                      "Read /opt/<private>/config",
+                     "path:/opt/private/config", "Use `/opt/private/config`",
                      "Read " + r"D:\Secrets\token.txt", "Read " + r"\\server\private\token.txt",
                      "Read /Volumes/Private/notes.txt",
                      "Read " + str(self.project.resolve() / "x"), " "):
