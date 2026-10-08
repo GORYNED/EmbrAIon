@@ -60,10 +60,12 @@ def _manual_files(root: Path) -> Iterable[Path]:
             ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
             capture_output=True, text=True, timeout=30, check=False,
         )
-    except FileNotFoundError as error:
-        if (root / ".git").exists():
+    except (OSError, subprocess.TimeoutExpired) as error:
+        if os.path.lexists(root / ".git"):
             raise RuntimeError("Git is required to audit repository routing authority") from error
         repository = None
+    if repository is not None and repository.returncode != 0 and os.path.lexists(root / ".git"):
+        raise RuntimeError("Could not determine repository status for routing authority audit")
     if repository is not None and repository.returncode == 0 and repository.stdout.strip() == "true":
         try:
             listed = subprocess.run(

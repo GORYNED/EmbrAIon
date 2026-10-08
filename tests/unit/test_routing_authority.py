@@ -155,6 +155,11 @@ class RoutingAuthorityTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(self.project), "add", str(manual)], check=True)
         self.assertIn("docs/current-route.yaml", {item["path"] for item in audit_routing_authority(self.project)})
 
+    def test_authority_lint_fails_closed_when_repository_probe_fails(self) -> None:
+        (self.project / ".git").mkdir()
+        with self.assertRaisesRegex(RuntimeError, "Could not determine repository status"):
+            audit_routing_authority(self.project)
+
     def test_realistic_schema_code_and_historical_prose_are_not_authority(self) -> None:
         self.assertEqual([], audit_routing_authority(self.project))
         self._write_case("tools/property-names.py", "model = request.model\nprovider: Provider\neffort = selection.effort\n")
