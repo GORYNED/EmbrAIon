@@ -144,6 +144,17 @@ class RoutingAuthorityTests(unittest.TestCase):
                 self.assertIn(relative, {finding["path"] for finding in findings})
                 path.write_text(original, encoding="utf-8")
 
+    def test_authority_lint_skips_git_ignored_host_worktrees(self) -> None:
+        subprocess.run(["git", "init", "-q", str(self.project)], check=True)
+        self._write_case(".gitignore", "/.claude/worktrees/\n")
+        self._write_case(".claude/worktrees/other-checkout/settings.yaml", "model: example-basic-v1\n")
+        self.assertEqual([], audit_routing_authority(self.project))
+
+        manual = self._write_case("docs/current-route.yaml", "model: example-basic-v1\n")
+        self.assertIn("docs/current-route.yaml", {item["path"] for item in audit_routing_authority(self.project)})
+        subprocess.run(["git", "-C", str(self.project), "add", str(manual)], check=True)
+        self.assertIn("docs/current-route.yaml", {item["path"] for item in audit_routing_authority(self.project)})
+
     def test_realistic_schema_code_and_historical_prose_are_not_authority(self) -> None:
         self.assertEqual([], audit_routing_authority(self.project))
         self._write_case("tools/property-names.py", "model = request.model\nprovider: Provider\neffort = selection.effort\n")
