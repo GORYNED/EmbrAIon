@@ -314,12 +314,12 @@ class HydrationDetectionTests(unittest.TestCase):
         (target / "assets" / "model.bin").write_bytes(pointer())
         return target, git(repo, "rev-parse", "HEAD").stdout.strip()
 
-    def preflight(self, target: Path, head: str) -> dict:
+    def preflight(self, target: Path, head: str, **options: object) -> dict:
         resource = {"kind": "worktree", "path": str(target), "resource-id": "fixture", "state": "active"}
         with patch.object(worktree_lfs, "_run", self.runner), \
              patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {"fixture": resource}}), \
              patch.object(worktree_lfs.registry, "verify_resource", return_value=True):
-            return worktree_lfs.preflight_lfs(target, head)
+            return worktree_lfs.preflight_lfs(target, head, **options)
 
     def test_preflight_hydrates_and_verifies_exact_registered_worktree(self) -> None:
         target, head = self._preflight_worktree()
@@ -396,6 +396,64 @@ class HydrationDetectionTests(unittest.TestCase):
             result = worktree_lfs.preflight_lfs(target, head)
         self.assertEqual("failed", result["state"])
         self.assertIn("registration", result["reason"])
+
+    def test_unmanaged_preflight_is_explicit_and_has_no_lifecycle_authority(self) -> None:
+        target, head = self._preflight_worktree()
+        with patch.object(worktree_lfs, "_run", self.runner), \
+             patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
+            result = worktree_lfs.preflight_lfs(
+                target, head, allow_unmanaged=True, primary_branch="main",
+            )
+        self.assertEqual("passed", result["state"], result)
+        self.assertEqual("unmanaged", result["ownership"])
+        self.assertIsNone(result["resource-id"])
+        self.assertEqual(head, result["head"])
+
+    def test_unmanaged_preflight_cli_requires_an_explicit_flag(self) -> None:
+        from embraion.cli import build_parser
+
+        base = ["worktree", "lfs-preflight", "--path", str(self.sandbox), "--expected-head", "a" * 40]
+        self.assertFalse(build_parser().parse_args(base).allow_unmanaged)
+        requested = build_parser().parse_args(base + ["--allow-unmanaged", "--primary-branch", "main"])
+        self.assertTrue(requested.allow_unmanaged)
+        self.assertEqual("main", requested.primary_branch)
+
+    def test_unmanaged_preflight_rejects_orphan_marker_and_wrong_primary_branch(self) -> None:
+        target, head = self._preflight_worktree()
+        marker = worktree_lfs.registry.gitdir(target) / "embraion-resource.json"
+        marker.write_text("{}", encoding="utf-8")
+        with patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
+            orphan = worktree_lfs.preflight_lfs(target, head, allow_unmanaged=True)
+        self.assertIn("orphan", orphan["reason"])
+        marker.unlink()
+        with patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
+            wrong = worktree_lfs.preflight_lfs(target, head, allow_unmanaged=True, primary_branch="other")
+        self.assertIn("primary branch", wrong["reason"])
+
+    def test_unmanaged_preflight_keeps_clean_lock_and_head_gates(self) -> None:
+        target, head = self._preflight_worktree()
+        with patch.object(worktree_lfs.registry, "load_registry", return_value={"resources": {}}):
+            (target / "scratch.txt").write_text("dirty", encoding="utf-8")
+            self.assertIn("dirty", worktree_lfs.preflight_lfs(target, head, allow_unmanaged=True)["reason"])
+            (target / "scratch.txt").unlink()
+            git(target, "worktree", "lock", str(target))
+            self.assertIn("locked", worktree_lfs.preflight_lfs(target, head, allow_unmanaged=True)["reason"])
+            git(target, "worktree", "unlock", str(target))
+            self.assertIn("HEAD differs", worktree_lfs.preflight_lfs(
+                target, "0" * len(head), allow_unmanaged=True,
+            )["reason"])
+
+    def test_preflight_with_no_lfs_files_still_checks_filters_and_identity(self) -> None:
+        target, _ = self._preflight_worktree()
+        git(target, "rm", "-f", "assets/model.bin")
+        git(target, "commit", "-q", "-m", "no lfs files")
+        head = git(target, "rev-parse", "HEAD").stdout.strip()
+        result = self.preflight(target, head)
+        self.assertEqual("passed", result["state"], result)
+        self.assertEqual("not-applicable", result["lfs"]["state"])
+        self.assertEqual(0, result["lfs"]["files"])
+        self.filter_available = False
+        self.assertIn("filter is not installed", self.preflight(target, head)["reason"])
 
     def test_preflight_requires_installed_filter_and_executable(self) -> None:
         target, head = self._preflight_worktree()
@@ -487,6 +545,17 @@ class RealGitLfsTests(unittest.TestCase):
         self.assertEqual(expected, git(target, "rev-parse", "HEAD").stdout.strip())
         self.assertEqual("", git(target, "status", "--porcelain", "--untracked-files=all").stdout.strip())
         self.assertEqual(CONTENT, (target / "model.bin").read_bytes())
+
+    def test_unmanaged_git_worktree_preflight_hydrates_without_registering(self) -> None:
+        git(self.clone, "lfs", "install", "--local")
+        target = self.new_worktree()
+        expected = git(target, "rev-parse", "HEAD").stdout.strip()
+        result = worktree_lfs.preflight_lfs(target, expected, allow_unmanaged=True, primary_branch="main")
+        self.assertEqual("passed", result["state"], result)
+        self.assertEqual("unmanaged", result["ownership"])
+        self.assertIsNone(result["resource-id"])
+        self.assertEqual(CONTENT, (target / "model.bin").read_bytes())
+        self.assertEqual("", git(target, "status", "--porcelain", "--untracked-files=all").stdout.strip())
 
     def test_unreachable_lfs_remote_fails_but_keeps_the_worktree(self) -> None:
         target = self.new_worktree()
