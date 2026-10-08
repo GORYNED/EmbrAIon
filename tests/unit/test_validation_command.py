@@ -128,13 +128,18 @@ class ValidationCommandTests(unittest.TestCase):
             self.assertTrue(result["process-tree-termination-confirmed"], result)
 
     def test_live_descendant_fails_even_after_root_exit(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            statement = "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(20)'])"
-            result = run_validation_command(_request(Path(temporary), statement))
-            self.assertFalse(result["succeeded"])
-            self.assertEqual("descendant-process", result["failure-kind"])
-            self.assertTrue(result["descendant-processes-detected"])
-            self.assertTrue(result["recovery-attempted"])
+        # Windows can release a terminated child process's cwd handle just after
+        # Job Object quiescence; use a stable directory so fixture cleanup does
+        # not race that handle release.
+        statement = "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(20)'])"
+        result = run_validation_command(_request(Path.cwd(), statement))
+        self.assertFalse(result["succeeded"])
+        self.assertEqual("descendant-process", result["failure-kind"])
+        self.assertTrue(result["descendant-processes-detected"])
+        self.assertTrue(result["recovery-attempted"])
+        self.assertTrue(result["process-tree-termination-confirmed"])
+        self.assertTrue(result["streams-drained"])
+        self.assertTrue(result["safe-to-continue"])
 
     def test_containment_uncertainty_fails_stop(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
