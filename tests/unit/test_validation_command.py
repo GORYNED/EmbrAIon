@@ -162,7 +162,7 @@ class ValidationCommandTests(unittest.TestCase):
     def test_truncated_secret_prefix_is_redacted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            secret = "sensitive-value-" + "with-tail"
+            secret = "sensitive-" + "value-" + "with-tail"
             log = root / "out.log"
             result = run_validation_command(_request(
                 root, "import os,sys; sys.stdout.write(os.environ['CHECK_SECRET'])",
