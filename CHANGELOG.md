@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.33.1 - 2026-10-08
+
+### Fixed
+
+- Routing-authority audit enumerates tracked and non-ignored untracked files in Git projects, so an ignored host worktree cannot create a false duplicate-route finding. Git repository probes fail closed when their state cannot be established.
+- The Windows descendant-supervision test fixture waits for confirmed terminated child handles before temporary-directory cleanup, avoiding a cleanup race without changing production supervision.
+
 ## 0.33.0 - 2026-10-07
 
 ### Fixed
