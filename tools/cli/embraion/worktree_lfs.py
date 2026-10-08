@@ -405,7 +405,14 @@ def _preflight_state(worktree: Path, expected_head: str,
     lock = _git(worktree, "--no-optional-locks", "rev-parse", "--path-format=absolute", "--git-path", "index.lock")
     if lock.returncode or not lock.stdout.strip():
         raise ValueError("worktree index lock state could not be read")
-    if Path(lock.stdout.decode("utf-8", "surrogateescape").strip()).exists():
+    index_lock = Path(lock.stdout.decode("utf-8", "surrogateescape").strip())
+    try:
+        index_lock.lstat()
+    except FileNotFoundError:
+        pass
+    else:
+        # A dangling link is still an occupied lock path and must not be
+        # treated as a clean, unlocked index.
         raise ValueError("worktree index is locked")
     index_flags = _git(worktree, "--no-optional-locks", "ls-files", "-v", "-z")
     if index_flags.returncode:

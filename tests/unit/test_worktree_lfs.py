@@ -443,6 +443,15 @@ class HydrationDetectionTests(unittest.TestCase):
                 target, "0" * len(head), allow_unmanaged=True,
             )["reason"])
 
+    def test_dangling_index_lock_is_not_treated_as_unlocked(self) -> None:
+        target, head = self._preflight_worktree()
+        lock = Path(git(target, "rev-parse", "--path-format=absolute", "--git-path", "index.lock").stdout.strip())
+        try:
+            lock.symlink_to(self.sandbox / "missing-lock")
+        except OSError:
+            self.skipTest("symlinks unavailable")
+        self.assertIn("index is locked", self.preflight(target, head)["reason"])
+
     def test_preflight_with_no_lfs_files_still_checks_filters_and_identity(self) -> None:
         target, _ = self._preflight_worktree()
         git(target, "rm", "-f", "assets/model.bin")
