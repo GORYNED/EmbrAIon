@@ -60,8 +60,10 @@ Core owns this procedure. Adapters represent it in native skills; Portable
 transports the contract without providing runtime host execution. Project facts
 remain in project documents and `.embraion/**`, never generated host output.
 Use existing schemas and official CLI operations. Bootstrap is additive: it
-does not change the framework pin, artifact lock, runtime isolation, or installed
-projection ownership implicitly. It creates no second configuration authority.
+does not change an existing framework pin, artifact lock, runtime isolation,
+or installed projection ownership implicitly. On first installation, record
+the exact official release artifact lock before projecting hosts; see the
+set-up recipe. It creates no second configuration authority.
 
 Apply the canonical Lead and orchestration contract. Before architectural or
 ownership decisions, obtain bounded Architect analysis; select other specialists
