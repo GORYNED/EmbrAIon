@@ -40,6 +40,17 @@ _LFS_POINTER = b"version https://git-lfs.github.com/spec/"
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _DRIVE = re.compile(r"^[A-Za-z]:")
 _FILE_URL = re.compile(r"(?i)\bfile:/")
+# These are deliberately path-shaped, rather than every slash-separated phrase:
+# a relative repository path or an http(s) URL is ordinary task context.
+_POSIX_ABSOLUTE_PATH = re.compile(
+    r'''(?:^|(?<=[\s("'=:`]))/(?!/)(?:[^\s/\\]+/)+[^\s/\\]+'''
+)
+_DRIVE_ABSOLUTE_PATH = re.compile(
+    r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s\\/:*?\"<>|]+(?:[\\/][^\s\\/:*?\"<>|]+)*"
+)
+_UNC_ABSOLUTE_PATH = re.compile(
+    r"(?<![A-Za-z0-9_\\])\\\\[^\s\\/]+\\[^\s\\/]+(?:\\[^\s\\/]+)*"
+)
 _REVISION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/~^@{}-]{0,255}$")
 
 
@@ -94,7 +105,10 @@ def _contains_credential(text: str, credentials: list[str]) -> bool:
 
 
 def _contains_machine_path(text: str, root: Path) -> bool:
-    if _MACHINE_PATH.search(text) or _FILE_URL.search(text):
+    if any(pattern.search(text) for pattern in (
+        _MACHINE_PATH, _FILE_URL, _POSIX_ABSOLUTE_PATH,
+        _DRIVE_ABSOLUTE_PATH, _UNC_ABSOLUTE_PATH,
+    )):
         return True
     variants = {str(root), root.as_posix(), str(root).replace("/", "\\")}
     lowered = text.lower()

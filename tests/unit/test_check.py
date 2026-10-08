@@ -212,10 +212,70 @@ class CheckTests(unittest.TestCase):
         entry = next(item for item in json.loads(output.getvalue())["checks"] if item["id"] == "decisions")
         self.assertIsNone(entry["passed"])
 
+    def test_required_base_ref_fails_selected_comparisons_without_one(self) -> None:
+        (self.project / ".embraion/organization.yaml").write_text("{}\n", encoding="utf-8")
+        (self.project / ".embraion/decisions.yaml").write_text("{}\n", encoding="utf-8")
+        self.update_policy(check={"organization": ["full", "compare"]})
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", return_value=(0, "ok\n")), redirect_stdout(output):
+            self.assertEqual(1, main(["check", "--require-base-ref", "--json"]))
+        report = json.loads(output.getvalue())
+        self.assertEqual(["organization-compare", "decisions"], report["failed"])
+        entries = {item["id"]: item for item in report["checks"]}
+        self.assertTrue(entries["organization-full"]["passed"])
+        for check_id in report["failed"]:
+            self.assertFalse(entries[check_id]["passed"])
+            self.assertEqual("needs --base-ref", entries[check_id]["output"])
+
+    def test_required_base_ref_allows_checks_without_comparisons(self) -> None:
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), \
+                patch("embraion.check.run_check", return_value=(0, "ok\n")), redirect_stdout(io.StringIO()):
+            self.assertEqual(0, main(["check", "--require-base-ref"]))
+
+    def test_unavailable_explicit_base_fails_selected_comparison(self) -> None:
+        (self.project / ".embraion/decisions.yaml").write_text("{}\n", encoding="utf-8")
+        previous = Path.cwd()
+        os.chdir(self.project)
+        self.addCleanup(os.chdir, previous)
+        output = io.StringIO()
+        with patch("embraion.cli.resolve_project_runtime", return_value=None), redirect_stdout(output):
+            code = main(["check", "--base-ref", "missing-base", "--require-base-ref", "--json"])
+        report = json.loads(output.getvalue())
+        self.assertEqual(1, code)
+        self.assertIn("decisions", report["failed"])
+
+    def test_check_action_uses_verified_push_tip_and_requires_comparison_base(self) -> None:
+        import yaml
+
+        action = yaml.safe_load((Path(__file__).resolve().parents[2] / "actions/check/action.yml")
+                                .read_text(encoding="utf-8"))
+        step = action["runs"]["steps"][0]
+        self.assertEqual("${{ github.event.before }}", step["env"]["EMBRAION_PUSH_BEFORE"])
+        self.assertEqual("${{ github.base_ref }}", step["env"]["EMBRAION_PR_BASE"])
+        script = step["run"]
+        self.assertIn('base="origin/$EMBRAION_PR_BASE"', script)
+        self.assertIn('"$EMBRAION_EVENT_NAME" = "push"', script)
+        self.assertIn('"$before" =~ ^[0-9a-fA-F]{40}$', script)
+        self.assertIn('"$before" =~ ^0+$', script)
+        self.assertIn('git cat-file -e "$before^{commit}"', script)
+        self.assertIn('git merge-base --is-ancestor "$before" HEAD', script)
+        self.assertIn('embraion check --base-ref "$base" --require-base-ref', script)
+        self.assertIn('embraion check --require-base-ref', script)
+
     def test_command_runs_real_checks_from_the_project_root(self) -> None:
         nested = self.project / "nested"
         nested.mkdir()
-        (self.project / "notes.md").write_text("token = ghp_" + "a" * 36 + "\n", encoding="utf-8")
+        (self.project / "notes.md").write_text("token = ghp_" + "a" * 35 + "1\n", encoding="utf-8")
+        from embraion.security import collect_findings
+        self.assertTrue(any(item["category"] == "access-token" for item in
+                            collect_findings(self.project, all_files=True)))
         previous = Path.cwd()
         os.chdir(nested)
         self.addCleanup(os.chdir, previous)

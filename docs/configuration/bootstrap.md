@@ -7,12 +7,19 @@ Ask your agent:
 Lead loads the canonical Core `project-bootstrap` skill. This reusable procedure is projected to Codex, GitHub Copilot, Claude Code, and Portable. It is an AI-host procedure, not a new CLI command or a promise that static files execute onboarding automatically. Host trust, permissions, skill loading, and native capabilities still apply. Portable carries the procedure for a consuming integration; it cannot run an AI session itself.
 
 When the skill is already available, the agent can perform launcher setup, `init`,
-and host projection installation for a new repository. It checks an existing or
+official release artifact locking, project runtime installation, and host
+projection installation for a new repository. It checks an existing or
 partial installation first and preserves unrelated configuration. If the host has
 not loaded this skill, it must discover the official installation instructions;
 that discovery and a fresh host session are separate from file verification.
 The agent asks for permission only where a shared machine installation needs it,
 then executes the commands itself.
+
+For first setup, `init` creates a version-only pin. The agent checks the official
+release and launcher version, runs `embraion update` to record the exact release
+SHA-256 digest, and runs `embraion framework install` before projecting a host.
+If release metadata, the locked wheel, or the runtime is unavailable, it reports
+the blocker and the exact retry step; it cannot call the installation ready.
 
 ## Discover before changing
 
@@ -96,6 +103,8 @@ embraion validation list
 embraion route --validate
 embraion route --audit-authority
 embraion projection diff --host codex --destination .
+embraion validate --strict
+embraion check
 ```
 
 Use the installed host and destination for projection checks, including selected components/config mode for partial adoption. Run real configured validation profiles where safe and appropriate. Inspect generated output before regeneration; do not manually edit it or resolve ownership conflicts with an automatic `--force`.

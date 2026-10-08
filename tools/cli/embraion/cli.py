@@ -1590,7 +1590,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
     with contextlib.chdir(project):
         for check in checks:
             if check["argv"] is None:
-                results.append({**check, "exit": None, "passed": None, "output": check["not-run"]})
+                required = args.require_base_ref and check.get("base-required", False)
+                results.append({**check, "exit": 1 if required else None,
+                                "passed": False if required else None, "output": check["not-run"]})
                 continue
             if check.get("validation-profile"):
                 code, output, evidence = run_validation_step(project, check["validation-profile"])
@@ -1606,6 +1608,9 @@ def _cmd_check(args: argparse.Namespace) -> int:
         for item in results:
             if item["passed"] is None:
                 print(f"NOT RUN  {item['id']:21} {item['output']}")
+                continue
+            if item["argv"] is None:
+                print(f"FAIL  {item['id']:21} {item['output']}")
                 continue
             print(f"{'PASS' if item['passed'] else 'FAIL'}  {item['id']:21} embraion {' '.join(item['argv'])}")
             if not item["passed"]:
@@ -3015,6 +3020,8 @@ def build_parser() -> argparse.ArgumentParser:
         "and fail if any fails.",
     )
     check_parser.add_argument("--base-ref", help="Base ref for the organization check, for example origin/main")
+    check_parser.add_argument("--require-base-ref", action="store_true",
+                              help="Fail selected comparison checks when --base-ref is unavailable")
     check_parser.add_argument("--fail-on", choices=list(SEVERITY_ORDER),
                               help="Lowest security finding severity that fails the check "
                               "(default: policy check.fail-on, else high)")

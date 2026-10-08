@@ -108,6 +108,14 @@ def make_project(directory: Path) -> Path:
         "src/token.txt": "value " + _FAKE_TOKEN + "\n",
         "src/assignment.py": _FAKE_ASSIGNMENT + "\n",
         "src/machine.md": "See " + _FAKE_HOME_PATH + "\n",
+        "src/root-machine.md": "See /root/.ssh/id_rsa\n",
+        "src/opt-machine.md": "See /opt/private/config\n",
+        "src/unicode-machine.md": "See /opt/私有/config\n",
+        "src/symbol-machine.md": "See /opt/📁/config and /opt/[private]/config\n",
+        "src/drive-machine.md": "See " + r"D:\Secrets\token.txt" + "\n",
+        "src/unc-machine.md": "See " + r"\\server\private\token.txt" + "\n",
+        "src/mac-machine.md": "See /Volumes/Private/notes.txt\n",
+        "src/safe-links.md": "Read src/app.py and https://example.com/api/v1.\n",
         "assets/model.bin": "version https://git-lfs.github.com/spec/v1\noid sha256:" + "0" * 64 + "\nsize 12\n",
         ".env": "EMPTY=1\n",
         "config/Server.PEM": "placeholder\n",
@@ -195,6 +203,13 @@ class EnvelopeTests(unittest.TestCase):
             "src/token.txt": "credential",
             "src/assignment.py": "credential",
             "src/machine.md": "machine-local",
+            "src/root-machine.md": "machine-local",
+            "src/opt-machine.md": "machine-local",
+            "src/unicode-machine.md": "machine-local",
+            "src/symbol-machine.md": "machine-local",
+            "src/drive-machine.md": "machine-local",
+            "src/unc-machine.md": "machine-local",
+            "src/mac-machine.md": "machine-local",
             "assets/model.bin": "LFS pointer",
             "src/blob.dat": "binary",
             "src/link.py": "symbolic link",
@@ -245,7 +260,15 @@ class EnvelopeTests(unittest.TestCase):
             self.build([], max_file_bytes=0)
 
     def test_refuses_sensitive_task_text_and_unknown_commit(self) -> None:
-        for task in ("Use " + _FAKE_TOKEN, "Read " + _FAKE_HOME_PATH, "Read " + str(self.project.resolve() / "x"), " "):
+        for task in ("Use " + _FAKE_TOKEN, "Read " + _FAKE_HOME_PATH,
+                     "Read /root/.ssh/id_rsa", "Read /opt/private/config",
+                     "Read /home/张三/秘密.txt", "Read /opt/私有/config",
+                     "Read /opt/📁/config", "Read /opt/[private]/config",
+                     "Read /opt/<private>/config",
+                     "path:/opt/private/config", "Use `/opt/private/config`",
+                     "Read " + r"D:\Secrets\token.txt", "Read " + r"\\server\private\token.txt",
+                     "Read /Volumes/Private/notes.txt",
+                     "Read " + str(self.project.resolve() / "x"), " "):
             with self.subTest(task=task[:12]):
                 with self.assertRaises(EnvelopeRefused):
                     build_payload(make_request(), paths=[], task=task, project=self.project)
@@ -253,6 +276,15 @@ class EnvelopeTests(unittest.TestCase):
             with self.subTest(commit=commit):
                 with self.assertRaisesRegex(EnvelopeRefused, "commit|Git"):
                     self.build([], commit=commit)
+
+    def test_allows_relative_paths_web_urls_and_safe_task_text(self) -> None:
+        for task in ("Read src/app.py", "Open https://example.com/api/v1",
+                     "Open https://example.com/文档/开始",
+                     "Read 📁/opt/config", "Read [draft]/opt/config",
+                     "Open http://example.com/docs/setup.html", "Compare 1/2 with 3/4"):
+            with self.subTest(task=task):
+                build_payload(make_request(), paths=[], task=task, project=self.project)
+        self.build(["src/safe-links.md"])
 
     def test_refuses_configured_credential_value_and_ineligible_requests(self) -> None:
         with patch.dict(os.environ, {_CREDENTIAL_ENV: "def answer"}):

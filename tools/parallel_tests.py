@@ -52,6 +52,10 @@ SEQUENTIAL_MODULES: dict[str, dict[str, str]] = {
                         "run while other processes create and delete directories under build/",
         "test_policy_ceilings": "project validation runs the checkout-wide framework scan, so it must not "
                                 "run while other processes create and delete directories under build/",
+        # Windows Git worktree deletion failed in 11 cases during a parallel unit run,
+        # while the 57-test module completed with one skip when run alone.
+        "test_worktree_housekeeping": "Windows Git worktree cleanup is unreliable alongside concurrent test Git "
+                                      "operations; run this module after the parallel phase",
     },
 }
 
