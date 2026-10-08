@@ -43,7 +43,7 @@ _FILE_URL = re.compile(r"(?i)\bfile:/")
 # These are deliberately path-shaped, rather than every slash-separated phrase:
 # a relative repository path or an http(s) URL is ordinary task context.
 _POSIX_ABSOLUTE_PATH = re.compile(
-    r"(?<![A-Za-z0-9_./:@-])/(?!/)(?:[A-Za-z0-9._~%+-]+/)+[A-Za-z0-9._~%+-]+"
+    r"(?<![\w./:@-])/(?!/)(?:[\w.~%+-]+/)+[\w.~%+-]+"
 )
 _DRIVE_ABSOLUTE_PATH = re.compile(
     r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s\\/:*?\"<>|]+(?:[\\/][^\s\\/:*?\"<>|]+)*"

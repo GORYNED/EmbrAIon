@@ -110,6 +110,7 @@ def make_project(directory: Path) -> Path:
         "src/machine.md": "See " + _FAKE_HOME_PATH + "\n",
         "src/root-machine.md": "See /root/.ssh/id_rsa\n",
         "src/opt-machine.md": "See /opt/private/config\n",
+        "src/unicode-machine.md": "See /opt/私有/config\n",
         "src/drive-machine.md": "See " + r"D:\Secrets\token.txt" + "\n",
         "src/unc-machine.md": "See " + r"\\server\private\token.txt" + "\n",
         "src/mac-machine.md": "See /Volumes/Private/notes.txt\n",
@@ -203,6 +204,7 @@ class EnvelopeTests(unittest.TestCase):
             "src/machine.md": "machine-local",
             "src/root-machine.md": "machine-local",
             "src/opt-machine.md": "machine-local",
+            "src/unicode-machine.md": "machine-local",
             "src/drive-machine.md": "machine-local",
             "src/unc-machine.md": "machine-local",
             "src/mac-machine.md": "machine-local",
@@ -258,6 +260,7 @@ class EnvelopeTests(unittest.TestCase):
     def test_refuses_sensitive_task_text_and_unknown_commit(self) -> None:
         for task in ("Use " + _FAKE_TOKEN, "Read " + _FAKE_HOME_PATH,
                      "Read /root/.ssh/id_rsa", "Read /opt/private/config",
+                     "Read /home/张三/秘密.txt", "Read /opt/私有/config",
                      "Read " + r"D:\Secrets\token.txt", "Read " + r"\\server\private\token.txt",
                      "Read /Volumes/Private/notes.txt",
                      "Read " + str(self.project.resolve() / "x"), " "):
@@ -271,6 +274,7 @@ class EnvelopeTests(unittest.TestCase):
 
     def test_allows_relative_paths_web_urls_and_safe_task_text(self) -> None:
         for task in ("Read src/app.py", "Open https://example.com/api/v1",
+                     "Open https://example.com/文档/开始",
                      "Open http://example.com/docs/setup.html", "Compare 1/2 with 3/4"):
             with self.subTest(task=task):
                 build_payload(make_request(), paths=[], task=task, project=self.project)
