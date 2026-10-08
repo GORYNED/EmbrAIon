@@ -42,6 +42,8 @@ For locked projects, the runtime resolver downloads the exact release asset from
 
 Different repositories can therefore remain on different EmbrAIon releases on the same machine.
 
+On Windows, a long `EMBRAION_CACHE_HOME` can make paths inside the release wheel exceed the common 260-character installation limit. For a locked release, `framework install` checks wheel paths before creating or replacing the runtime and reports the required action. Set `EMBRAION_CACHE_HOME` to a short directory such as `C:\EmbrAIonCache` and retry. A valid cached runtime is reused without reinstalling it.
+
 ## Update, verify, install
 
 Upgrade the global launcher first, then update the project:

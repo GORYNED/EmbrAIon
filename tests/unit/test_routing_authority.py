@@ -144,6 +144,38 @@ class RoutingAuthorityTests(unittest.TestCase):
                 self.assertIn(relative, {finding["path"] for finding in findings})
                 path.write_text(original, encoding="utf-8")
 
+    def test_upstream_examples_are_not_consumer_routing_authority(self) -> None:
+        self._write_case("framework.yaml", "name: EmbrAIon\nsource:\n  repository: GORYNED/EmbrAIon\n")
+        self._write_case("core/catalog.yaml", "schema-version: 1\n")
+        project_manifest = self.project / ".embraion/project.yaml"
+        project = read_yaml(project_manifest)
+        project["project"]["name"] = "EmbrAIon"
+        write_yaml(project_manifest, project)
+        examples = (
+            self._write_case("core/rules/example.md", "```yaml\nmodel: example-basic-v1\n```\n"),
+            self._write_case("docs/example.md", "```json\n{\"model\":\"example-basic-v1\"}\n```\n"),
+            self._write_case("tests/fixture.yaml", "model: example-basic-v1\n"),
+            self._write_case("evals/evidence.json", '{"model":"example-basic-v1"}\n'),
+            self._write_case("mkdocs.yml", "  - Engineering model: reference/engineering-model.md\n"),
+            self._write_case("tools/status.py", 'result = {"model": "unverified", "effort": "unverified"}\n'),
+        )
+        self.assertEqual([], audit_routing_authority(self.project, paths=examples))
+
+        violations = (
+            self._write_case("core/rules/current.md", "model: example-basic-v1\n"),
+            self._write_case("docs/current.md", "model: example-basic-v1\n"),
+            self._write_case("tools/current.py", 'model = "example-basic-v1"\n'),
+            self._write_case("mkdocs.yml", "model: example-basic-v1\n"),
+        )
+        self.assertEqual({path.relative_to(self.project).as_posix() for path in violations},
+                         {item["path"] for item in audit_routing_authority(
+                             self.project, paths=violations)})
+
+    def test_consumer_fenced_routing_example_remains_a_violation(self) -> None:
+        example = self._write_case("docs/route.md", "```yaml\nmodel: example-basic-v1\n```\n")
+        self.assertEqual(["docs/route.md"], [item["path"] for item in
+                         audit_routing_authority(self.project, paths=[example])])
+
     def test_authority_lint_skips_git_ignored_host_worktrees(self) -> None:
         subprocess.run(["git", "init", "-q", str(self.project)], check=True)
         self._write_case(".gitignore", "/.claude/worktrees/\n")
@@ -175,6 +207,10 @@ class RoutingAuthorityTests(unittest.TestCase):
             ("schemas/provider.yaml", "provider: example-provider\n"),
             ("docs/deployment.md", "deployment: native-main\n"),
             ("tools/new-model.py", 'model = "project-new-model"\n'),
+            ("tools/keyword-model.py", 'Deployment(model="project-new-model")\n'),
+            ("tools/keyword-pair.py", 'Deployment(model="project-new-model", effort="high")\n'),
+            ("tools/after-semicolon.py", 'enabled = True; model = "project-new-model"\n'),
+            ("tools/after-colon.py", 'if enabled: model = "project-new-model"\n'),
             ("policy/new-provider.yaml", "provider: project-new-provider\n"),
             ("runtime/new-deployment.json", '{"deployment":"project-new-deployment"}\n'),
             ("tests/selected.py", 'selected_model = "example-main-v1"\n'),

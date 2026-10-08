@@ -25,7 +25,7 @@ _ASSIGNMENT = re.compile(
 )
 _QUOTED = re.compile(r"(?P<quote>['\"])(?P<value>(?:\\.|(?!\1).)*)\1")
 _BARE = re.compile(r"[A-Za-z0-9_./:@+-]+")
-_NON_VALUES = {"null", "none", "true", "false", "str", "string", "object", "array", "number", "integer", "bool", "boolean"}
+_NON_VALUES = {"null", "none", "true", "false", "str", "string", "object", "array", "number", "integer", "bool", "boolean", "unverified"}
 _CAPABILITY_FIELDS = re.compile(r"['\"]?(?:data-classes|access-modes|roles|task-classes)['\"]?\s*:")
 _BILLING_FIELDS = re.compile(r"['\"]?(?:mode|plan)['\"]?\s*:")
 _ANY_ASSIGNMENT = re.compile(r"(?<![\w.-])['\"]?[\w.-]+['\"]?\s*[:=]\s*")
@@ -130,7 +130,7 @@ def _literal(value: str, operator: str, *, allow_bare: bool = True) -> str | Non
             return None
         scalar = bare.group()
         tail = value[bare.end():].lstrip()
-    if tail and tail[0] not in ",]}#;":
+    if tail and tail[0] not in ",]})#;":
         return None
     if not scalar or scalar.lower() in _NON_VALUES or scalar.startswith(("$", "<", "{")):
         return None
@@ -142,6 +142,11 @@ def _is_concrete_assignment(line: str, suffix: str, markers: set[str]) -> bool:
     if not stripped or stripped.startswith(("#", "//", "*", ">")):
         return False
     for match in _ASSIGNMENT.finditer(line):
+        prefix = line[:match.start()].rstrip()
+        # A key must begin an assignment or follow collection punctuation.
+        # This excludes navigation labels such as "Engineering model: ...".
+        if prefix and prefix != "-" and prefix[-1] not in "{[(,;:":
+            continue
         key = match.group("key").strip("'\"")
         value = line[match.end():].lstrip()
         if key in {"capabilities", "billing"}:
@@ -171,6 +176,9 @@ def _is_concrete_assignment(line: str, suffix: str, markers: set[str]) -> bool:
             return True
     # A concrete canonical ID assigned under a project-specific key is authority too.
     for match in _ANY_ASSIGNMENT.finditer(line):
+        prefix = line[:match.start()].rstrip()
+        if prefix and prefix != "-" and prefix[-1] not in "{[(,;:":
+            continue
         if _literal(line[match.end():].lstrip(), match.group().rstrip()[-1],
                     allow_bare=suffix in {".yaml", ".yml", ".md", ".txt"}) in markers:
             return True
@@ -210,12 +218,26 @@ def _verified_projection_files(root: Path) -> set[str]:
     return verified
 
 
+def _is_upstream_checkout(root: Path) -> bool:
+    """Distinguish Core's own examples and fixtures from consumer authority."""
+    try:
+        framework = read_yaml(root / "framework.yaml") or {}
+        project = read_yaml(root / ".embraion/project.yaml") or {}
+    except (OSError, ValueError, TypeError):
+        return False
+    return (framework.get("name") == "EmbrAIon"
+            and (framework.get("source") or {}).get("repository") == "GORYNED/EmbrAIon"
+            and (project.get("project") or {}).get("name") == "EmbrAIon"
+            and (root / "core/catalog.yaml").is_file())
+
+
 def audit_routing_authority(project: Path | None = None, *,
                             paths: Iterable[Path] | None = None) -> list[dict[str, str]]:
     """Report concrete facts; generated projections are exempt only when verified."""
     root = project_root(project)
     markers = _concrete_markers(root)
     verified = _verified_projection_files(root)
+    upstream = _is_upstream_checkout(root)
     files = paths if paths is not None else _manual_files(root)
     findings: list[dict[str, str]] = []
     for path in files:
@@ -230,6 +252,9 @@ def audit_routing_authority(project: Path | None = None, *,
             continue
         if relative.startswith((".embraion/", ".git/")) or relative in verified:
             continue
+        if upstream and relative.split("/", 1)[0] in {"tests", "evals"}:
+            # Upstream test and evaluation data are evidence, not project routing.
+            continue
         if any(part in _SKIP_DIRECTORIES for part in path.relative_to(root).parts):
             continue
         contents = path.read_text(encoding="utf-8", errors="ignore")
@@ -237,6 +262,9 @@ def audit_routing_authority(project: Path | None = None, *,
         for number, line in enumerate(contents.splitlines(), 1):
             if path.suffix.lower() == ".md" and line.lstrip().startswith("```"):
                 in_fence = not in_fence
+                continue
+            if upstream and relative.split("/", 1)[0] in {"core", "docs"} and in_fence:
+                # Canonical documentation may illustrate configurations in fences.
                 continue
             if _is_concrete_line(line, path.suffix.lower(), markers, in_fence):
                 findings.append({"path": relative, "line": str(number),
