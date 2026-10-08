@@ -8,7 +8,8 @@ from unittest import mock
 import yaml
 
 from embraion import __version__
-from embraion.project import update_project
+from embraion.project import init_project, update_project
+from embraion.versioning import install_project_runtime
 
 
 def _artifact(version: str, digest_char: str = "a") -> dict[str, object]:
@@ -22,6 +23,29 @@ def _artifact(version: str, digest_char: str = "a") -> dict[str, object]:
 
 
 class ProjectUpdateArtifactLockTests(unittest.TestCase):
+    def test_fresh_init_requires_release_lock_before_runtime_install(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = init_project(root, name="FreshProject")
+            initial = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(__version__, initial["framework"]["version"])
+            self.assertNotIn("artifact", initial["framework"])
+
+            with self.assertRaisesRegex(RuntimeError, "artifact|lock|digest"):
+                install_project_runtime(manifest)
+
+            artifact = _artifact(__version__)
+            with mock.patch(
+                "embraion.project.resolve_release_artifact",
+                return_value=artifact,
+            ):
+                update_project(root)
+            with mock.patch("embraion.versioning.ensure_cached_runtime") as ensure:
+                install_project_runtime(manifest)
+
+            self.assertEqual(artifact, yaml.safe_load(manifest.read_text(encoding="utf-8"))["framework"]["artifact"])
+            self.assertEqual("sha256:" + "a" * 64, ensure.call_args.kwargs["artifact_lock"].digest)
+
     def _legacy_manifest(self, root: Path, version: str = "0.8.1") -> Path:
         manifest = root / ".embraion" / "project.yaml"
         manifest.parent.mkdir(parents=True, exist_ok=True)

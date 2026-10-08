@@ -36,8 +36,17 @@ pipx install embraion
 
 cd MyProject
 embraion init
+embraion update --check
+embraion update
+embraion framework install
 embraion install --host codex --destination .
 ```
+
+If `update --check` reports an outdated launcher, upgrade that launcher with the
+supported package manager before `update`. The project pin remains the source of
+truth; `update` obtains the official release artifact and records its SHA-256
+digest before the host projection is installed. An unavailable release or runtime
+blocks setup and must be reported, not treated as a ready installation.
 
 Open the repository in your AI client and ask:
 
@@ -147,4 +156,4 @@ Source code and documentation are licensed under the [MIT License](LICENSE) exce
 
 ---
 
-<sub>Last updated: 2026-10-07 04:49 UTC</sub>
+<sub>Last updated: 2026-10-08 14:53 UTC</sub>

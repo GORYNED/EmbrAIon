@@ -12,8 +12,9 @@ inputs:
   base-ref:
     description: >-
       Ref to compare against, for example origin/main. Defaults to the pull request base
-      branch (origin/<base>). Without either, checks that need a base ref are reported as not
-      run. The ref must be fetched, so the checkout needs its history.
+      branch (origin/<base>) or the verified previous commit on a push. Selected comparison
+      checks fail when no usable base is available. The ref must be fetched, so the checkout
+      needs its history.
     required: false
     default: ""
   upload-evidence:
@@ -42,11 +43,24 @@ runs:
       env:
         EMBRAION_BASE_REF: ${{ inputs.base-ref }}
         EMBRAION_PR_BASE: ${{ github.base_ref }}
+        EMBRAION_EVENT_NAME: ${{ github.event_name }}
+        EMBRAION_PUSH_BEFORE: ${{ github.event.before }}
       run: |
         set -euo pipefail
         base="$EMBRAION_BASE_REF"
         if [ -z "$base" ] && [ -n "$EMBRAION_PR_BASE" ]; then
           base="origin/$EMBRAION_PR_BASE"
+        fi
+        if [ -z "$base" ] && [ "$EMBRAION_EVENT_NAME" = "push" ]; then
+          before="$EMBRAION_PUSH_BEFORE"
+          # The event's previous tip is the comparison target. Initial pushes, shallow
+          # checkouts, and rewritten history cannot prove a valid comparison base.
+          if [[ "$before" =~ ^[0-9a-fA-F]{40}$ ]] && \
+             [[ ! "$before" =~ ^0+$ ]] && \
+             git cat-file -e "$before^{commit}" 2>/dev/null && \
+             git merge-base --is-ancestor "$before" HEAD; then
+            base="$before"
+          fi
         fi
         # Commands in a locked project run from the digest-bound runtime cache.
         pin="$(embraion framework pin)"
@@ -54,9 +68,9 @@ runs:
           embraion framework install
         fi
         if [ -n "$base" ]; then
-          embraion check --base-ref "$base"
+          embraion check --base-ref "$base" --require-base-ref
         else
-          embraion check
+          embraion check --require-base-ref
         fi
 
     # This step must never turn a passing check red: it fails soft and the upload then skips.

@@ -46,8 +46,9 @@ At this point, **no repository has been modified**.
 You only installed the launcher command.
 
 A repository becomes an EmbrAIon project when you ask your agent to configure
-it. The agent checks the launcher and repository, runs the supported setup and
-host installation steps, then verifies the result in a fresh host session where
+it. The agent checks the launcher and repository, records the official release
+artifact lock, installs the project runtime and host projection, then verifies
+the result in a fresh host session where
 available. A shared machine installation may require your permission; you do
 not need to type commands or edit YAML. If the host has not yet loaded the
 `project-bootstrap` skill, it must first discover the official installation
@@ -58,9 +59,15 @@ The equivalent manual command remains available:
 ```bash
 cd MyProject
 embraion init
+embraion update --check
+embraion update
+embraion framework install
 ```
 
-Then install your host projection and open a new session in that host. See
+If `update --check` reports an outdated launcher, upgrade it before `update`;
+the project pin never follows a global upgrade automatically. A failed release
+or runtime verification leaves setup incomplete. Then install your host
+projection and open a new session in that host. See
 [Project Bootstrap](../configuration/bootstrap.md).
 
 ## Why one launcher is enough

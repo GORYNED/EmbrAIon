@@ -101,7 +101,14 @@ If the launcher is missing, follow the official installation page for the observ
 platform and package manager; verify the installed version and release identity.
 Do not invent a download URL, bypass an artifact lock, or copy a guessed YAML
 template. Run `embraion init` only after confirming that existing project files
-will be preserved, then install the projection for each requested available host.
+will be preserved. For a new project, run `embraion update --check` against the
+official release; if the launcher is outdated, use the supported launcher upgrade
+procedure before continuing. Run `embraion update` to write the verified official
+release artifact lock, then `embraion framework install` to verify its SHA-256
+digest and prepare the project runtime before installing any host projection.
+If release verification or runtime installation is unavailable, preserve the
+version-only project and report the exact blocker and retry action; do not claim
+setup is ready. Then install the projection for each requested available host.
 Open a fresh host session to check loading when the host supports it; file
 verification alone proves only projection. If the host cannot be exercised, report
 that limit. A partially initialized project is repaired using `status`, `doctor`,

@@ -7,6 +7,22 @@ cd MyProject
 embraion init
 ```
 
+`init` writes a version-only pin. Before installing any host projection, check
+the official release, upgrade an outdated global launcher if reported, and lock
+the exact release artifact for this project:
+
+```bash
+embraion update --check
+embraion update
+embraion framework install
+```
+
+`update` records the official wheel identity and SHA-256 digest atomically with
+the project version. `framework install` verifies the wheel and prepares the
+isolated project runtime. If either step cannot complete, stop and report the
+reason; a version-only `init` is not a finished installation. The bootstrap
+agent can run these commands for you.
+
 This creates the canonical project-owned configuration:
 
 ```text
@@ -80,6 +96,10 @@ Open the repository in your AI host and ask:
 The canonical Core `project-bootstrap` skill inspects the repository first, then binds existing knowledge documents, preserves policy, and configures real validation commands. You do not need to assemble YAML manually. Core roles normally suffice: `agents: []` does not disable them. Routing can remain `overrides: {}` and host-default.
 
 Bootstrap verifies the result and reports skips, infrastructure limitations, and ambiguity. Repeated setup preserves intentional settings and invents neither sources of truth nor commands. Then ask ordinary engineering questions. See [Project Bootstrap](../configuration/bootstrap.md).
+
+After the agent has configured real project checks, run `embraion validate --strict`
+and `embraion check`. File checks establish the project contract and projection;
+a fresh AI-host session is still needed to confirm that the host loaded them.
 
 ## Next
 

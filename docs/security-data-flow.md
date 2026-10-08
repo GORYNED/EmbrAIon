@@ -72,7 +72,7 @@ Validation evidence can include redacted stdout/stderr tails, command identity, 
 
 For provider-neutral execution, attempt records are designed not to persist raw credentials or raw prompt/context bytes. `embraion execute` keeps them in the bounded local ledger `.embraion/state/execution-attempts.jsonl`, which also feeds deployment health.
 
-Known limitation: machine-local path detection in the envelope builder recognizes home directories (`/Users/`, `/home/`, `C:\Users\`), the repository root, and `file:` URLs. Other absolute paths, such as `/root/...`, a WSL mount like `/mnt/c/Users/...`, `/opt/...`, `/var/...`, another drive, or a UNC share, are not detected; review the files you pass with `--path`.
+The envelope builder rejects path-shaped absolute POSIX, Windows drive, and UNC paths, as well as `file:` URLs and the repository root. This is a heuristic for literal text, not a proof that arbitrary content cannot reveal machine details: encoded, fragmented, or otherwise disguised paths may remain. Review the committed files you pass with `--path` before allowing external execution.
 
 ## How are credentials handled?
 
