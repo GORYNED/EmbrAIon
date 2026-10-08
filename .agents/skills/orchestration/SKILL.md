@@ -95,7 +95,7 @@ Apply the assignment routing contract in the [canonical orchestration skill](#as
 
 ## Native assignment settings
 
-Before independent writable task work, apply the [Core worktree workflow](https://github.com/GORYNED/EmbrAIon/blob/v0.32.0/core/workflows/worktree.md)
+Before independent writable task work, apply the [Core worktree workflow](https://github.com/GORYNED/EmbrAIon/blob/v0.33.1/core/workflows/worktree.md)
 with `embraion worktree prepare --task-id <stable-task-id> --host codex`.
 Native task startup interception is not assumed: Lead invokes the CLI when no verified
 startup mechanism exists. Review, subtasks and plan/read-only work do not trigger deletion.
