@@ -190,9 +190,7 @@ class ValidationCommandTests(unittest.TestCase):
             self.assertTrue(unicode_result["stdout-truncated"])
             self.assertEqual("output-truncated", unicode_result["failure-kind"])
             self.assertNotIn("α", unicode_log.read_text(encoding="utf-8"))
-            self.assertIn("content omitted", unicode_log.read_text(encoding="utf-8"))
-            self.assertGreater(len(unicode_log.read_bytes()), 3)  # Short marker is outside the child-byte limit.
-            self.assertLess(len(unicode_log.read_bytes()), 128)
+            self.assertLessEqual(len(unicode_log.read_bytes()), 3)
 
             key_log = root / "key.log"
             begin = "-----BEGIN " + "PRIVATE " + "KEY-----"
@@ -204,6 +202,7 @@ class ValidationCommandTests(unittest.TestCase):
             ))
             self.assertTrue(key_result["stdout-truncated"])
             self.assertNotIn("BEGIN PRIVATE KEY", key_log.read_text(encoding="utf-8"))
+            self.assertLessEqual(len(key_log.read_bytes()), 40)
 
     def test_redaction_expansion_keeps_log_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -215,7 +214,7 @@ class ValidationCommandTests(unittest.TestCase):
             ))
             self.assertEqual("output-truncated", result["failure-kind"])
             self.assertTrue(result["stdout-truncated"])
-            self.assertLess(len(log.read_bytes()), 1200)
+            self.assertLessEqual(len(log.read_bytes()), 1024)
 
     def test_incomplete_stream_drain_is_unsafe(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

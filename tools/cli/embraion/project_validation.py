@@ -733,14 +733,16 @@ def _render_command_log(captured: CapturedOutput, secrets: list[str], limit: int
     if captured.truncated:
         # A byte boundary can bisect a Unicode secret, token, or armored key.
         # No retained prefix is safe to persist without the complete output.
-        return f"[... output truncated: {captured.total_bytes} bytes; content omitted ...]", True
+        marker = f"[... output truncated: {captured.total_bytes} bytes; content omitted ...]"
+        return marker[:limit], True
     content = _scrub_command_output(captured.head, secrets)
     encoded = content.encode("utf-8")
     redaction_clipped = len(encoded) > limit
     if redaction_clipped:
-        content = encoded[:limit].decode("utf-8", "ignore")
-    if redaction_clipped:
-        content += "\n[... redacted output clipped to byte limit ...]"
+        marker = "\n[... redacted output clipped to byte limit ...]"
+        if len(marker) >= limit:
+            return marker.lstrip()[:limit], True
+        content = encoded[:limit - len(marker)].decode("utf-8", "ignore") + marker
     return content, redaction_clipped
 
 
