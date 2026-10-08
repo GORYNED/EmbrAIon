@@ -8,11 +8,14 @@
 
 - Security and organization scans apply declared roots and ignored/generated file boundaries before reading content or applying scan limits. Scans keep reporting findings in retained evidence rather than changing policy or limits to obtain a pass.
 - Validation fails closed when a command's process container or output drain cannot be confirmed or when a root exits with live contained processes. An enabled clean-tree guard also fails when its baseline or exact HEAD cannot be established. Windows commands enter a kill-on-close Job Object before release; POSIX commands are supervised within their process group. POSIX children that deliberately create a new session remain outside that group.
+- LFS preflight checks the direct per-worktree index-lock path, including a dangling symbolic link, and keeps the remote, filter, exact-HEAD and clean-tree gates when HEAD has no LFS pointers.
 
 ### Added
 
 - `embraion worktree lfs-preflight --path ... --expected-head ...` verifies a registered feature worktree's exact commit, clean and unlocked state, installed LFS filter, committed LFS attributes, hydrated file hashes, and unchanged state before and after hydration. It accepts an optional remote.
 - `embraion policy show --ref ... --json` reads a strictly validated project policy from one resolved Git commit, allowing consumers to inspect historical policy without their own YAML parser.
+- `embraion validation command` accepts one exact executable and argument vector as bounded JSON on stdin, reuses contained process supervision, and returns lifecycle JSON. Optional logs redact inherited environment and argument values, and omit child text when capture truncates.
+- `embraion worktree lfs-preflight --allow-unmanaged` permits an existing Git-registered worktree without claiming EmbrAIon lifecycle ownership; `--primary-branch` verifies the stable primary checkout when required by a project.
 
 ### Changed
 
