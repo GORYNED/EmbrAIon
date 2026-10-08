@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.33.4 - 2026-10-08
+
+### Fixed
+
+- Upstream `embraion check` distinguishes canonical routing violations from examples and test evidence without weakening checks in consuming projects.
+- Managed runtime installation on Windows diagnoses long cache paths before replacing an existing runtime, and cached runtime markers must resolve inside the installed wheel.
+
 ## 0.33.3 - 2026-10-08
 
 ### Fixed
