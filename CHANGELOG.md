@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.33.2 - 2026-10-08
+
+### Fixed
+
+- First-project setup now directs agents to verify the current official release and record its exact artifact lock after initialization. Existing project pins remain unchanged during routine setup; partial installations fail closed when their pinned release or launcher cannot be verified.
+
 ## 0.33.1 - 2026-10-08
 
 ### Fixed
