@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.33.3 - 2026-10-08
+
+### Fixed
+
+- Push checks compare against the verified previous commit, while pull requests compare against their target branch. Required comparison checks fail closed when the base is unavailable.
+- API execution envelopes detect common literal absolute POSIX and Windows paths, including Unicode path segments, before external routing.
+- First-project guidance now documents official artifact locking, SHA-256 verified runtime installation, host projections and final strict validation. Host activation is reported separately from installed files.
+- The GitHub token test fixture matches the unchanged secret scanner contract, and Windows parallel unit scheduling avoids a worktree-housekeeping cleanup race.
+
 ## 0.33.2 - 2026-10-08
 
 ### Fixed

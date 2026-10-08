@@ -1,6 +1,6 @@
 framework:
   repository: GORYNED/EmbrAIon
-  version: 0.33.2
+  version: 0.33.3
   # Run `embraion update` after selecting a published release to materialize
   # the framework-owned artifact lock (release, exact wheel, verified SHA-256).
 
