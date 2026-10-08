@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Iterable
 
@@ -54,6 +55,31 @@ def _without_comment(line: str, suffix: str) -> str:
 
 
 def _manual_files(root: Path) -> Iterable[Path]:
+    try:
+        repository = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+            capture_output=True, text=True, timeout=30, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        if os.path.lexists(root / ".git"):
+            raise RuntimeError("Git is required to audit repository routing authority") from error
+        repository = None
+    if repository is not None and repository.returncode != 0 and os.path.lexists(root / ".git"):
+        raise RuntimeError("Could not determine repository status for routing authority audit")
+    if repository is not None and repository.returncode == 0 and repository.stdout.strip() == "true":
+        try:
+            listed = subprocess.run(
+                ["git", "-C", str(root), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                capture_output=True, timeout=30, check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise RuntimeError("Could not enumerate non-ignored repository files") from error
+        if listed.returncode != 0:
+            raise RuntimeError("Could not enumerate non-ignored repository files")
+        for relative in sorted(set(listed.stdout.split(b"\0"))):
+            if relative:
+                yield root / os.fsdecode(relative)
+        return
     for directory, child_directories, filenames in os.walk(root):
         child_directories[:] = sorted(name for name in child_directories
                                       if name not in _SKIP_DIRECTORIES)
