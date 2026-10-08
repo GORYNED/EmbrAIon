@@ -9,6 +9,8 @@ import sys
 import tempfile
 import time
 import venv
+import zipfile
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
@@ -42,6 +44,8 @@ _LEGACY_DEV_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-dev$")
 
 _LOCK_TIMEOUT_SECONDS = 60.0
 _STALE_LOCK_SECONDS = 600.0
+_WINDOWS_PATH_LIMIT = 260
+_WINDOWS_DIRECTORY_LIMIT = 248
 
 
 @dataclass(frozen=True)
@@ -137,6 +141,8 @@ def _load_cached_runtime(
         return None
     if artifact_lock is not None and data.get("artifact") != artifact_lock.marker_mapping():
         return None
+    if framework != (environment / "share" / "embraion").resolve():
+        return None
     if not (framework / "framework.yaml").is_file():
         return None
     if not (framework / "core" / "catalog.yaml").is_file():
@@ -166,10 +172,14 @@ def _remove_stale_lock(lock: Path) -> bool:
 
 def _probe_runtime(python: Path, environment: Path) -> CachedRuntime:
     code = (
-        "from importlib.metadata import version; "
-        "from embraion.common import framework_root; "
-        "print(version('embraion')); "
-        "print(framework_root())"
+        "from importlib.metadata import version\n"
+        "from pathlib import Path\n"
+        "import sysconfig\n"
+        "root = Path(sysconfig.get_path('data')) / 'share' / 'embraion'\n"
+        "if not (root / 'framework.yaml').is_file() or not (root / 'core/catalog.yaml').is_file():\n"
+        "    raise RuntimeError('installed framework data missing')\n"
+        "print(version('embraion'))\n"
+        "print(root.resolve())\n"
     )
     result = subprocess.run(
         [str(python), "-c", code],
@@ -190,6 +200,28 @@ def _probe_runtime(python: Path, environment: Path) -> CachedRuntime:
     )
 
 
+def _check_windows_wheel_paths(environment: Path, wheel: Path) -> None:
+    """Fail before pip on a wheel path that exceeds the common Windows limit."""
+    if sys.platform != "win32":
+        return
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.namelist():
+            if member.endswith("/"):
+                continue
+            data_path = member.partition(".data/data/")
+            if data_path[1]:
+                destination = environment / data_path[2]
+            else:
+                destination = environment / "Lib" / "site-packages" / member
+            if (len(str(destination.parent)) >= _WINDOWS_DIRECTORY_LIMIT
+                    or len(str(destination)) >= _WINDOWS_PATH_LIMIT):
+                raise RuntimeError(
+                    f"EmbrAIon runtime cache path is too long for Windows wheel installation "
+                    f"({len(str(destination))} characters). Set EMBRAION_CACHE_HOME to a "
+                    "shorter directory, for example C:\\EmbrAIonCache, and retry."
+                )
+
+
 def ensure_cached_runtime(
     package_version: str,
     *,
@@ -203,8 +235,6 @@ def ensure_cached_runtime(
         )
 
     versions = cache_home() / "versions"
-    versions.mkdir(parents=True, exist_ok=True)
-
     environment = versions / package_version
     cached = _load_cached_runtime(
         environment,
@@ -216,6 +246,14 @@ def ensure_cached_runtime(
         return cached
 
     lock = versions / f".{package_version}.lock"
+    if sys.platform == "win32" and len(str(lock)) >= _WINDOWS_DIRECTORY_LIMIT:
+        raise RuntimeError(
+            "EmbrAIon runtime cache path is too long for Windows. Set "
+            "EMBRAION_CACHE_HOME to a shorter directory, for example "
+            "C:\\EmbrAIonCache, and retry."
+        )
+    versions.mkdir(parents=True, exist_ok=True)
+
     deadline = time.monotonic() + _LOCK_TIMEOUT_SECONDS
 
     while True:
@@ -241,6 +279,7 @@ def ensure_cached_runtime(
                 )
             time.sleep(0.2)
 
+    started_install = False
     try:
         cached = _load_cached_runtime(
             environment,
@@ -251,18 +290,26 @@ def ensure_cached_runtime(
         if cached is not None:
             return cached
 
-        if environment.exists():
-            shutil.rmtree(environment, ignore_errors=True)
-
-        print(
-            f"EmbrAIon: preparing pinned runtime {package_version} in {environment}",
-            file=sys.stderr,
-        )
-        venv.EnvBuilder(with_pip=True).create(environment)
-        python = _runtime_python(environment)
-
-        if artifact_lock is None:
+        with ExitStack() as resources:
             install_target = f"embraion=={package_version}"
+            if artifact_lock is not None:
+                temporary = resources.enter_context(
+                    tempfile.TemporaryDirectory(prefix="embraion-artifact-")
+                )
+                wheel = Path(temporary) / artifact_lock.asset
+                download_locked_artifact(artifact_lock, wheel)
+                _check_windows_wheel_paths(environment, wheel)
+                install_target = str(wheel)
+
+            started_install = True
+            if environment.exists():
+                shutil.rmtree(environment, ignore_errors=True)
+            print(
+                f"EmbrAIon: preparing pinned runtime {package_version} in {environment}",
+                file=sys.stderr,
+            )
+            venv.EnvBuilder(with_pip=True).create(environment)
+            python = _runtime_python(environment)
             subprocess.run(
                 [
                     str(python),
@@ -279,26 +326,6 @@ def ensure_cached_runtime(
                 stderr=subprocess.PIPE,
                 check=True,
             )
-        else:
-            with tempfile.TemporaryDirectory(prefix="embraion-artifact-") as temporary:
-                wheel = Path(temporary) / artifact_lock.asset
-                download_locked_artifact(artifact_lock, wheel)
-                subprocess.run(
-                    [
-                        str(python),
-                        "-m",
-                        "pip",
-                        "install",
-                        "--disable-pip-version-check",
-                        "--no-input",
-                        str(wheel),
-                    ],
-                    env=_cached_runtime_environment(),
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    check=True,
-                )
 
         runtime = _probe_runtime(python, environment)
         version_probe = subprocess.run(
@@ -337,7 +364,8 @@ def ensure_cached_runtime(
 
         return runtime
     except Exception:
-        shutil.rmtree(environment, ignore_errors=True)
+        if started_install:
+            shutil.rmtree(environment, ignore_errors=True)
         raise
     finally:
         shutil.rmtree(lock, ignore_errors=True)

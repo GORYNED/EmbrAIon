@@ -122,11 +122,17 @@ class ClaudeHookInstallationTests(unittest.TestCase):
         python = runtime / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
         python.parent.mkdir(parents=True)
         python.touch()
-        active_framework = framework_root()
+        active_framework = runtime / "share/embraion"
+        (active_framework / "core").mkdir(parents=True)
+        (active_framework / "framework.yaml").write_bytes((framework_root() / "framework.yaml").read_bytes())
+        (active_framework / "core/catalog.yaml").write_bytes(
+            (framework_root() / "core/catalog.yaml").read_bytes())
         marker = {"version": __version__, "framework-root": str(active_framework),
                   "artifact": {"repository": "GORYNED/EmbrAIon", "version": __version__, **artifact}}
         write_json(runtime / ".embraion-runtime.json", marker)
-        with patch("sys.prefix", str(runtime)):
+        with patch("sys.prefix", str(runtime)), patch(
+            "embraion.common.framework_root", return_value=active_framework.resolve()
+        ):
             self.assertEqual(self.project.resolve(), hook_project(payload))
             data["framework"]["artifact"]["digest"] = "sha256:" + "b" * 64
             write_yaml(manifest, data)

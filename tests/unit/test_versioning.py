@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
 from embraion.artifacts import FrameworkArtifactLock
 from embraion.versioning import (
     CachedRuntime,
+    _check_windows_wheel_paths,
+    _load_cached_runtime,
+    _runtime_python,
+    ensure_cached_runtime,
     find_project_manifest,
     install_project_runtime,
     package_version_for_pin,
@@ -20,6 +26,96 @@ from embraion.versioning import (
 
 
 class VersioningTests(unittest.TestCase):
+    def test_cached_runtime_marker_must_point_inside_installed_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            environment = root / "versions/1.2.3"
+            python = _runtime_python(environment)
+            python.parent.mkdir(parents=True)
+            python.touch()
+            source = root / "source"
+            installed = environment / "share/embraion"
+            for framework in (source, installed):
+                (framework / "core").mkdir(parents=True)
+                (framework / "framework.yaml").write_text("name: EmbrAIon\n", encoding="utf-8")
+                (framework / "core/catalog.yaml").write_text("schema-version: 1\n", encoding="utf-8")
+            marker = environment / ".embraion-runtime.json"
+            marker.write_text(json.dumps({"version": "1.2.3", "framework-root": str(source)}),
+                              encoding="utf-8")
+            self.assertIsNone(_load_cached_runtime(environment, "1.2.3"))
+            marker.write_text(json.dumps({"version": "1.2.3", "framework-root": str(installed)}),
+                              encoding="utf-8")
+            self.assertEqual(installed.resolve(),
+                             _load_cached_runtime(environment, "1.2.3").framework_root)
+
+    def _wheel(self, path: Path) -> None:
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr(
+                "embraion-1.2.3.data/data/share/embraion/" + "nested/" * 24 + "config.json",
+                "{}",
+            )
+
+    def test_windows_wheel_path_preflight_accepts_short_cache_and_rejects_long_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            wheel = Path(temporary) / "release.whl"
+            self._wheel(wheel)
+            with patch("embraion.versioning.sys.platform", "win32"):
+                _check_windows_wheel_paths(Path("C:/EmbrAIonCache/versions/1.2.3"), wheel)
+                with self.assertRaisesRegex(RuntimeError, "EMBRAION_CACHE_HOME"):
+                    _check_windows_wheel_paths(
+                        Path("C:/") / ("x" * 170) / "versions/1.2.3", wheel
+                    )
+
+    def test_windows_cache_lock_path_fails_before_creating_directories(self) -> None:
+        cache = Path("C:/") / ("x" * 230)
+        with patch("embraion.versioning.cache_home", return_value=cache), patch(
+            "embraion.versioning.sys.platform", "win32"
+        ), patch("embraion.versioning.Path.mkdir") as mkdir:
+            with self.assertRaisesRegex(RuntimeError, "EMBRAION_CACHE_HOME"):
+                ensure_cached_runtime("1.2.3")
+        mkdir.assert_not_called()
+
+    def test_existing_runtime_is_reused_before_windows_path_preflight(self) -> None:
+        cache = Path("C:/") / ("x" * 230)
+        cached = CachedRuntime(
+            python=Path("C:/cached/python.exe"), framework_root=Path("C:/cached/framework")
+        )
+        with patch("embraion.versioning.cache_home", return_value=cache), patch(
+            "embraion.versioning.sys.platform", "win32"
+        ), patch("embraion.versioning._load_cached_runtime", return_value=cached), patch(
+            "embraion.versioning.Path.mkdir"
+        ) as mkdir:
+            self.assertEqual(cached, ensure_cached_runtime("1.2.3"))
+        mkdir.assert_not_called()
+
+    def test_long_locked_cache_preserves_partial_runtime_before_install(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            cache = Path(temporary) / ("x" * 75)
+            environment = cache / "versions/1.2.3"
+            environment.mkdir(parents=True)
+            sentinel = environment / "partial.txt"
+            sentinel.write_text("recoverable", encoding="utf-8")
+            lock = FrameworkArtifactLock(
+                repository="GORYNED/EmbrAIon", version="1.2.3", schema=1,
+                source="github-release", release="v1.2.3",
+                asset="embraion-1.2.3-py3-none-any.whl", digest="sha256:" + "a" * 64,
+            )
+
+            def download(_lock: FrameworkArtifactLock, destination: Path) -> None:
+                self._wheel(destination)
+
+            with patch("embraion.versioning.cache_home", return_value=cache), patch(
+                "embraion.versioning.sys.platform", "win32"
+            ), patch("embraion.versioning.download_locked_artifact", side_effect=download) as downloaded, patch(
+                "embraion.versioning.venv.EnvBuilder.create"
+            ) as create:
+                with self.assertRaisesRegex(RuntimeError, "EMBRAION_CACHE_HOME"):
+                    ensure_cached_runtime("1.2.3", artifact_lock=lock)
+            downloaded.assert_called_once()
+            create.assert_not_called()
+            self.assertEqual("recoverable", sentinel.read_text(encoding="utf-8"))
+            self.assertFalse((cache / "versions/.1.2.3.lock").exists())
+
     def _manifest(self, root: Path, version: str = "0.1.0") -> Path:
         manifest = root / ".embraion" / "project.yaml"
         manifest.parent.mkdir(parents=True, exist_ok=True)
