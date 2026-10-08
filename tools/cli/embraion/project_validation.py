@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import locale
 import os
 import re
@@ -455,7 +456,7 @@ def _evaluate_clean_tree(
     )
 
 
-def _spawn_contained(command: str, cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
+def _spawn_contained(command: str | list[str], cwd: Path, environment: dict[str, str], stdout: Any, stderr: Any) -> subprocess.Popen:
     """Start only after the process container is established."""
     return spawn_contained(command, cwd, environment, stdout, stderr)
 
@@ -470,12 +471,13 @@ def _terminate_tree(process: subprocess.Popen) -> bool:
 
 
 def _run_contained(
-    command: str,
+    command: str | list[str],
     cwd: Path,
     environment: dict[str, str],
     timeout: float | None,
     output_limit: int | None = None,
-) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None, str | None]:
+    capture_bytes: int | None = None,
+) -> tuple[int | None, CapturedOutput, CapturedOutput, str | None, str | None, dict[str, Any]]:
     """Run one command; return its exit code (``None`` after a timeout) and its output.
 
     Termination is recorded after a timeout or a root exit with surviving descendants.
@@ -487,48 +489,77 @@ def _run_contained(
     # Drain both pipes while the command runs, so a child cannot block on a full
     # pipe. EOF also proves no escaped descendant retains an output handle.
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        lifecycle: dict[str, Any] = {
+            "process-id": None, "target-process-id": None,
+            "containment-kind": "windows-job" if os.name == "nt" else "posix-process-group",
+            "containment-established": False, "root-exit-confirmed": False,
+            "process-tree-termination-confirmed": False, "streams-drained": False,
+            "recovery-attempted": False, "descendant-processes-detected": None,
+            "timed-out": False, "safe-to-continue": False,
+        }
         try:
             process = _spawn_contained(command, cwd, environment, subprocess.PIPE, subprocess.PIPE)
         except ContainmentUnavailable as error:
             termination = None if error.termination_confirmed else "unconfirmed"
-            return None, CapturedOutput(), CapturedOutput(), termination, "containment-unavailable"
+            lifecycle["process-tree-termination-confirmed"] = error.termination_confirmed
+            return None, CapturedOutput(), CapturedOutput(), termination, "containment-unavailable", lifecycle
+        lifecycle["process-id"] = process.pid
+        lifecycle["target-process-id"] = process.pid if os.name != "nt" and isinstance(command, list) else None
+        lifecycle["containment-established"] = True
         stream_errors: list[OSError] = []
+        totals = [0, 0]
+        newlines = [0, 0]
+        last_bytes = [b"", b""]
 
-        def drain(source: Any, destination: Any) -> None:
+        def drain(source: Any, destination: Any, index: int) -> None:
             try:
-                shutil.copyfileobj(source, destination, 1 << 16)
+                while chunk := source.read(1 << 16):
+                    totals[index] += len(chunk)
+                    newlines[index] += chunk.count(b"\n")
+                    last_bytes[index] = chunk[-1:]
+                    remaining = None if capture_bytes is None else max(capture_bytes - destination.tell(), 0)
+                    if remaining is None or remaining:
+                        destination.write(chunk if remaining is None else chunk[:remaining])
             except (OSError, ValueError) as error:
                 stream_errors.append(error)
 
         sources = (process.stdout, process.stderr)
-        streams = [threading.Thread(target=drain, args=(source, destination), daemon=True)
-                   for source, destination in zip(sources, (stdout, stderr))]
+        streams = [threading.Thread(target=drain, args=(source, destination, index), daemon=True)
+                   for index, (source, destination) in enumerate(zip(sources, (stdout, stderr)))]
         try:
             for stream in streams:
                 stream.start()
         except RuntimeError:
+            lifecycle["recovery-attempted"] = True
             try:
                 _terminate_tree(process)
             finally:
                 close_containment(process)
-            return None, CapturedOutput(), CapturedOutput(), "unconfirmed", "containment-unavailable"
+            return None, CapturedOutput(), CapturedOutput(), "unconfirmed", "containment-unavailable", lifecycle
         termination: str | None = None
         failure_kind: str | None = None
         try:
             try:
                 returncode: int | None = _wait_for(process, timeout)
+                lifecycle["root-exit-confirmed"] = True
                 try:
                     descendants = not containment_quiescent(process)
+                    lifecycle["descendant-processes-detected"] = descendants
                 except (OSError, RuntimeError):
                     descendants = True
                     failure_kind = "containment-unavailable"
                 if descendants:
+                    lifecycle["recovery-attempted"] = True
                     failure_kind = failure_kind or "descendant-process"
                     try:
                         termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
                     except Exception:
                         termination = "unconfirmed"
+                else:
+                    lifecycle["process-tree-termination-confirmed"] = True
             except subprocess.TimeoutExpired:
+                lifecycle["timed-out"] = True
+                lifecycle["recovery-attempted"] = True
                 try:
                     termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
                 except Exception:
@@ -536,6 +567,7 @@ def _run_contained(
                 returncode = None
             except (OSError, subprocess.SubprocessError):
                 failure_kind = "supervisor-failure"
+                lifecycle["recovery-attempted"] = True
                 try:
                     termination = "confirmed" if _terminate_tree(process) else "unconfirmed"
                 except Exception:
@@ -550,6 +582,9 @@ def _run_contained(
             except OSError:
                 termination = "unconfirmed"
                 failure_kind = "containment-unavailable"
+        if termination is not None:
+            lifecycle["root-exit-confirmed"] = process.poll() is not None
+            lifecycle["process-tree-termination-confirmed"] = termination == "confirmed"
         for stream in streams:
             stream.join(timeout=VERIFY_SECONDS)
         for source, stream in zip(sources, streams):
@@ -561,11 +596,242 @@ def _run_contained(
         if stream_errors or any(stream.is_alive() for stream in streams):
             termination = "unconfirmed"
             failure_kind = "stream-drain-failure"
-            return returncode, CapturedOutput(), CapturedOutput(), termination, failure_kind
+            lifecycle["streams-drained"] = False
+            lifecycle["safe-to-continue"] = False
+            return returncode, CapturedOutput(), CapturedOutput(), termination, failure_kind, lifecycle
+        lifecycle["streams-drained"] = True
+        lifecycle["safe-to-continue"] = (
+            lifecycle["containment-established"] and lifecycle["root-exit-confirmed"]
+            and lifecycle["process-tree-termination-confirmed"] and lifecycle["streams-drained"]
+        )
         # Text-mode subprocess output used the locale encoding; keep that decoding.
         encoding = locale.getpreferredencoding(False)
-        captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
-    return returncode, captured[0], captured[1], termination, failure_kind
+        if capture_bytes is None:
+            captured = [capture_stream(handle, output_limit, encoding) for handle in (stdout, stderr)]
+        else:
+            captured = []
+            for index, handle in enumerate((stdout, stderr)):
+                handle.seek(0)
+                retained = handle.read()
+                kept_lines = retained.count(b"\n") + bool(retained and not retained.endswith(b"\n"))
+                total_lines = newlines[index] + bool(totals[index] and last_bytes[index] != b"\n")
+                captured.append(CapturedOutput(
+                    head=retained.decode("utf-8", "replace"), total_bytes=totals[index],
+                    total_lines=total_lines, omitted_bytes=totals[index] - len(retained),
+                    omitted_lines=max(total_lines - kept_lines, 0),
+                ))
+    return returncode, captured[0], captured[1], termination, failure_kind, lifecycle
+
+
+_COMMAND_REQUEST_KEYS = {
+    "executable", "argv", "cwd", "env", "timeout_seconds", "output_limit_bytes",
+    "stdout_path", "stderr_path",
+}
+
+
+def _command_error(kind: str, reason: str) -> dict[str, Any]:
+    return {
+        "schema-version": 1, "succeeded": False, "failure-kind": kind, "reason": reason,
+        "exit-code": None, "duration-ms": 0, "process-id": None,
+        "target-process-id": None, "containment-kind": None,
+        "containment-established": False, "root-exit-confirmed": False,
+        "process-tree-termination-confirmed": False, "streams-drained": False,
+        "recovery-attempted": False, "descendant-processes-detected": None,
+        "timed-out": False, "safe-to-continue": False,
+        "stdout-bytes": 0, "stderr-bytes": 0,
+        "stdout-truncated": False, "stderr-truncated": False,
+    }
+
+
+def _validate_command_request(request: Any) -> tuple[list[str], Path, dict[str, str], float, int, tuple[Path | None, Path | None], list[str]]:
+    if not isinstance(request, dict) or set(request) - _COMMAND_REQUEST_KEYS:
+        raise ValueError("request must be an object with only documented fields")
+    executable = request.get("executable")
+    argv = request.get("argv")
+    cwd_value = request.get("cwd")
+    timeout = request.get("timeout_seconds")
+    limit = request.get("output_limit_bytes", 1024 * 1024)
+    if not isinstance(executable, str) or not executable or "\x00" in executable:
+        raise ValueError("executable must be a nonempty string")
+    if not isinstance(argv, list) or any(not isinstance(arg, str) or "\x00" in arg for arg in argv):
+        raise ValueError("argv must be an array of strings")
+    if not isinstance(cwd_value, str) or not Path(cwd_value).is_absolute():
+        raise ValueError("cwd must be an absolute directory path")
+    cwd = Path(cwd_value)
+    if not cwd.is_dir():
+        raise ValueError("cwd must exist as a directory")
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not 0 < timeout <= 86400 or not math.isfinite(timeout):
+        raise ValueError("timeout_seconds must be greater than zero and at most 86400")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 16 * 1024 * 1024:
+        raise ValueError("output_limit_bytes must be between 1 and 16777216")
+    delta = request.get("env", {})
+    if not isinstance(delta, dict):
+        raise ValueError("env must be an object of environment name to string or null")
+    environment = child_environment()
+    # A child can echo inherited values and argv just as readily as a delta.
+    # Include parent values removed by resolver filtering or an env null delta:
+    # omitting a value from the child environment is not proof it is absent from output.
+    secrets = [value for value in os.environ.values() if value]
+    for name, value in delta.items():
+        if not isinstance(name, str) or not name or "=" in name or "\x00" in name:
+            raise ValueError("env contains an invalid name")
+        if value is None:
+            environment.pop(name, None)
+        elif isinstance(value, str) and "\x00" not in value:
+            environment[name] = value
+            if value:
+                secrets.append(value)
+        else:
+            raise ValueError("env values must be strings or null")
+    paths: list[Path | None] = []
+    for key in ("stdout_path", "stderr_path"):
+        raw = request.get(key)
+        if raw is None:
+            paths.append(None)
+            continue
+        if not isinstance(raw, str) or not Path(raw).is_absolute():
+            raise ValueError(f"{key} must be an absolute path")
+        path = Path(raw)
+        if not path.parent.is_dir() or path.exists() or path.is_symlink():
+            raise ValueError(f"{key} parent must exist and target must not exist")
+        # A system alias such as macOS /var -> /private/var is acceptable only
+        # after resolving its existing parent to a concrete destination.
+        canonical_parent = path.parent.resolve(strict=True)
+        cursor = canonical_parent
+        while True:
+            if cursor.is_symlink() or (hasattr(cursor, "is_junction") and cursor.is_junction()):
+                raise ValueError(f"{key} must not traverse a link")
+            if cursor == cursor.parent:
+                break
+            cursor = cursor.parent
+        path = canonical_parent / path.name
+        if path.exists() or path.is_symlink():
+            raise ValueError(f"{key} target must not exist")
+        paths.append(path)
+    if paths[0] is not None and paths[1] is not None and os.path.normcase(str(paths[0])) == os.path.normcase(str(paths[1])):
+        raise ValueError("stdout_path and stderr_path must differ")
+    resolved = executable if Path(executable).is_absolute() else shutil.which(executable, path=environment.get("PATH"))
+    if not resolved or not Path(resolved).is_file():
+        raise ValueError("executable could not be resolved to a file")
+    # abspath fixes relative PATH entries against the supervisor's cwd without
+    # requiring reparse-point traversal, which may be denied for valid files.
+    resolved = os.path.abspath(resolved)
+    if os.name == "nt" and Path(resolved).suffix.lower() in {".bat", ".cmd"}:
+        raise ValueError("Windows batch files cannot preserve exact argv without a command shell")
+    secrets.extend(value for value in environment.values() if value)
+    secrets.extend(value for value in (executable, str(resolved), *argv) if value)
+    return [str(resolved), *argv], cwd, environment, float(timeout), limit, (paths[0], paths[1]), secrets
+
+
+def _scrub_command_output(value: str, secrets: list[str]) -> str:
+    for secret in sorted(set(secrets), key=len, reverse=True):
+        value = value.replace(secret, "[REDACTED]")
+    return redact_text(value)
+
+
+def _render_command_log(captured: CapturedOutput, secrets: list[str], limit: int) -> tuple[str, bool]:
+    if captured.truncated:
+        # A byte boundary can bisect a Unicode secret, token, or armored key.
+        # No retained prefix is safe to persist without the complete output.
+        marker = f"[... output truncated: {captured.total_bytes} bytes; content omitted ...]"
+        return marker[:limit], True
+    content = _scrub_command_output(captured.head, secrets)
+    encoded = content.encode("utf-8")
+    redaction_clipped = len(encoded) > limit
+    if redaction_clipped:
+        marker = "\n[... redacted output clipped to byte limit ...]"
+        if len(marker) >= limit:
+            return marker.lstrip()[:limit], True
+        content = encoded[:limit - len(marker)].decode("utf-8", "ignore") + marker
+    return content, redaction_clipped
+
+
+def run_validation_command(request: Any) -> dict[str, Any]:
+    """Run exactly one argv command; return a bounded, machine-readable lifecycle."""
+    try:
+        command, cwd, environment, timeout, limit, paths, secrets = _validate_command_request(request)
+    except (OSError, ValueError) as error:
+        return _command_error("invalid-request", str(error))
+
+    handles = []
+    try:
+        for path in paths:
+            if path is None:
+                handles.append(None)
+            else:
+                flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+                descriptor = os.open(path, flags, 0o600)
+                try:
+                    handles.append(os.fdopen(descriptor, "w", encoding="utf-8", newline=""))
+                except OSError:
+                    os.close(descriptor)
+                    path.unlink(missing_ok=True)
+                    raise
+    except OSError:
+        for handle in handles:
+            if handle is not None:
+                try:
+                    handle.close()
+                except OSError:
+                    pass
+        for path, handle in zip(paths, handles):
+            if path is not None and handle is not None:
+                try:
+                    path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+        return _command_error("log-path-unavailable", "output log could not be created exclusively")
+
+    began = time.monotonic()
+    result = _command_error("supervisor-failure", "process supervision failed")
+    try:
+        exit_code, stdout, stderr, termination, failure_kind, lifecycle = _run_contained(
+            command, cwd, environment, timeout, capture_bytes=limit,
+        )
+        result = _command_error("", "")
+        result.update(lifecycle)
+        result.update({
+            "exit-code": exit_code, "duration-ms": int((time.monotonic() - began) * 1000),
+            "stdout-bytes": stdout.total_bytes, "stderr-bytes": stderr.total_bytes,
+            "stdout-truncated": stdout.truncated, "stderr-truncated": stderr.truncated,
+        })
+        rendered = [_render_command_log(item, secrets, limit) for item in (stdout, stderr)]
+        result["stdout-truncated"], result["stderr-truncated"] = rendered[0][1], rendered[1][1]
+        try:
+            for handle, (output, _) in zip(handles, rendered):
+                if handle is not None:
+                    handle.write(output)
+                    handle.flush()
+        except OSError:
+            failure_kind = "log-write-failure"
+        if not result["safe-to-continue"] or termination == "unconfirmed":
+            failure_kind = failure_kind or "unconfirmed-termination"
+        elif failure_kind is None and exit_code is None:
+            failure_kind = "timeout"
+        elif failure_kind is None and exit_code != 0:
+            failure_kind = "nonzero-exit"
+        elif failure_kind is None and (result["stdout-truncated"] or result["stderr-truncated"]):
+            failure_kind = "output-truncated"
+        result["failure-kind"] = failure_kind
+        result["reason"] = failure_kind or ""
+        result["succeeded"] = failure_kind is None and exit_code == 0
+        if failure_kind == "log-write-failure":
+            result["safe-to-continue"] = False
+    except Exception:
+        # Do not infer that a child stopped when supervision itself failed.
+        result = _command_error("supervisor-failure", "process supervision failed")
+        result["duration-ms"] = int((time.monotonic() - began) * 1000)
+    finally:
+        for handle in handles:
+            if handle is not None:
+                try:
+                    handle.close()
+                except OSError:
+                    result["succeeded"] = False
+                    result["safe-to-continue"] = False
+                    result["failure-kind"] = "log-write-failure"
+                    result["reason"] = "log-write-failure"
+    return result
 
 
 def _log_path(project: Path, evidence_id: str, index: int) -> Path:
@@ -729,7 +995,7 @@ def run_validation_profile(
             }
         else:
             began = time.monotonic()
-            exit_code, raw_stdout, raw_stderr, termination, failure_kind = _run_contained(
+            exit_code, raw_stdout, raw_stderr, termination, failure_kind, _lifecycle = _run_contained(
                 prepared_command,
                 root,
                 command_environment,

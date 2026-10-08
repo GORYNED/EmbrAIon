@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -45,6 +46,19 @@ def _remove_tree(path: Path) -> None:
         shutil.rmtree(path, onexc=make_writable_and_retry)
     else:
         shutil.rmtree(path, onerror=make_writable_and_retry)
+
+
+def _remove_terminated_child_project(path: Path) -> None:
+    """Allow Windows to release a terminated child's cwd handle before fixture cleanup."""
+    deadline = time.monotonic() + 5
+    while True:
+        try:
+            _remove_tree(path)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.05)
 
 
 class TreeRemovalTests(unittest.TestCase):
@@ -916,6 +930,7 @@ class TerminationRecordTests(unittest.TestCase):
             self.assertEqual("failed", record["commands"][0]["status"])
             self.assertEqual("confirmed", record["commands"][0]["termination"])
             self.assertIn("descendants remained", record["commands"][0]["reason"])
+            _remove_terminated_child_project(project)
 
     def test_optional_command_with_descendant_is_fail_stop(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1008,6 +1023,7 @@ class WindowsContainmentTests(unittest.TestCase):
             self.assertEqual("failed", record["commands"][0]["status"])
             self.assertEqual("confirmed", record["commands"][0]["termination"])
             self.assertIn("descendants remained", record["commands"][0]["reason"])
+            _remove_terminated_child_project(project)
 
 
 if __name__ == "__main__":

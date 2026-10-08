@@ -109,20 +109,21 @@ class _WindowsJob:
 
 
 _BOOTSTRAP = (
-    "import subprocess,sys; "
-    "permit=sys.stdin.buffer.read(1); "
-    "sys.exit(125) if permit!=b'1' else None; "
-    "child=subprocess.Popen(sys.argv[1],shell=True,stdin=subprocess.DEVNULL); "
-    "sys.exit(child.wait())"
+    "import subprocess,sys\n"
+    "if sys.stdin.buffer.read(1)!=b'1': sys.exit(125)\n"
+    "mode=sys.argv[1]\n"
+    "target=sys.argv[2] if mode=='shell' else sys.argv[2:]\n"
+    "child=subprocess.Popen(target,shell=(mode=='shell'),stdin=subprocess.DEVNULL)\n"
+    "sys.exit(child.wait())\n"
 )
 
 
-def spawn_contained(command: str, cwd: Path, environment: dict[str, str],
+def spawn_contained(command: str | list[str], cwd: Path, environment: dict[str, str],
                     stdout: object, stderr: object) -> subprocess.Popen:
     """Start the target only after containment is established."""
     if os.name != "nt":
         try:
-            return subprocess.Popen(command, cwd=str(cwd), env=environment, shell=True,
+            return subprocess.Popen(command, cwd=str(cwd), env=environment, shell=isinstance(command, str),
                                     stdout=stdout, stderr=stderr, start_new_session=True)
         except OSError as error:
             raise ContainmentUnavailable("process group could not be created") from error
@@ -132,7 +133,8 @@ def spawn_contained(command: str, cwd: Path, environment: dict[str, str],
         raise ContainmentUnavailable("Windows Job Object could not be created") from error
     process = None
     try:
-        process = subprocess.Popen([sys.executable, "-I", "-S", "-c", _BOOTSTRAP, command],
+        target = (["shell", command] if isinstance(command, str) else ["argv", *command])
+        process = subprocess.Popen([sys.executable, "-I", "-S", "-c", _BOOTSTRAP, *target],
                                    cwd=str(cwd), env=environment, stdin=subprocess.PIPE,
                                    stdout=stdout, stderr=stderr,
                                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)

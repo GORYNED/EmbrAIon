@@ -45,6 +45,7 @@ from .project import (
     update_project,
 )
 from .project_validation import (
+    run_validation_command,
     run_validation_profile,
     validation_profile_specs,
 )
@@ -1224,6 +1225,22 @@ def _cmd_validation_run(args: argparse.Namespace) -> int:
     return 1 if record["status"] == "failed" else 0
 
 
+def _cmd_validation_command(args: argparse.Namespace) -> int:
+    """Accept one bounded JSON request on stdin and emit only lifecycle JSON."""
+    try:
+        payload = sys.stdin.buffer.read(65537)
+        if len(payload) > 65536:
+            raise ValueError("request exceeds 65536 bytes")
+        request = json.loads(payload)
+    except (UnicodeError, ValueError, RecursionError):
+        request = None
+    record = run_validation_command(request)
+    _print_json(record)
+    if record["succeeded"]:
+        return 0
+    return 2 if not record["safe-to-continue"] else 1
+
+
 def _cmd_enforcement_status(args: argparse.Namespace) -> int:
     report = enforcement_status()
     if args.json:
@@ -2260,6 +2277,12 @@ def build_parser() -> argparse.ArgumentParser:
     validation_run.add_argument("--plan", help="Run the commands of a stored plan file; it must match the current configuration")
     validation_run.add_argument("--json", action="store_true")
     validation_run.set_defaults(func=_cmd_validation_run)
+
+    validation_command = validation_sub.add_parser(
+        "command", help="Run one exact argv command from a JSON request on stdin",
+        description="Emit one machine-readable process lifecycle without recording the request or child output on stdout.",
+    )
+    validation_command.set_defaults(func=_cmd_validation_command)
 
     policy = sub.add_parser(
         "policy",
