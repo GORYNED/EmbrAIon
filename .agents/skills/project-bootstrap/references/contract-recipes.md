@@ -4,7 +4,31 @@ Recipes for the files `embraion init` creates: knowledge, validation, agents, pr
 
 ## set-up
 
-Whole-project request: follow the Project Bootstrap procedure in SKILL.md. It composes `bind-knowledge`, `protect-paths`, `project-validation`, `project-agents`, and `project-identity`. If the launcher or project contract is absent, the agent completes the official launcher installation (subject to required permission), `init`, and requested host projection itself before applying the recipes. If setup is partial, inspect and repair the existing contract instead of resetting it. Leave routing and every optional file alone unless the user asks for them. Finish with `embraion doctor`, `embraion validate --strict`, `embraion check`, projection verification, and a fresh host loading check when available; report each outcome as passed, failed, or not run. An unchanged second request must not alter the project.
+Whole-project request: follow the Project Bootstrap procedure in SKILL.md.
+It composes `bind-knowledge`, `protect-paths`, `project-validation`,
+`project-agents`, and `project-identity`.
+
+- For a truly new project without `.embraion/project.yaml`, discover the
+  current official release from the authoritative release endpoint. Verify
+  its artifact and launcher origin, then install the launcher yourself
+  (subject to required permission). Do not rely on a stale search result or
+  an unverified package index. Run `init` with that launcher, then
+  `embraion update` to lock the exact official release artifact before
+  projecting hosts. `init` alone writes a version without an artifact lock.
+- For an existing project with a missing or old launcher, inspect its pin
+  and artifact lock first. Restore a compatible verified launcher and
+  preserve the pin. Repair a partial contract instead of resetting it;
+  never run `init` over an existing project. If an artifact lock is missing,
+  use the official update command only with a verified launcher matching
+  the existing pin. If that release cannot be verified or its launcher
+  lacks the command, report the blocker instead of advancing the pin.
+  Follow `update-framework` only when the user requested a version update.
+
+Leave routing and every optional file alone unless the user asks for them.
+Finish with `embraion doctor`, `embraion validate --strict`, `embraion check`,
+projection verification, and a fresh host loading check when available;
+report each outcome as passed, failed, or not run. An unchanged second request
+must not alter the project.
 
 ## bind-knowledge
 
