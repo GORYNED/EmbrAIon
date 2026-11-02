@@ -66,7 +66,7 @@ Generated or AI-assisted contributions are allowed, but the contributor is respo
 
 Unless a file or directory states otherwise, accepted source-code and documentation contributions are provided under the repository's [MIT License](LICENSE).
 
-The EmbrAIon and GORYNED names, logos, wordmarks, visual marks, and files under `brand/assets/` are governed separately by [TRADEMARKS.md](TRADEMARKS.md). Do not assume code-license rights grant brand or trademark rights.
+The EmbrAIon and GORYNED names, logos, wordmarks, visual marks, and files under `publishing/assets/` are governed separately by [TRADEMARKS.md](TRADEMARKS.md). Do not assume code-license rights grant brand or trademark rights.
 
 ## Conduct
 

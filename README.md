@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/assets/readme/hero-dark.png" alt="EmbrAIon — AI-First Engineering System by GORYNED" width="100%">
+  <img src="publishing/assets/embraion-readme-hero-dark.png" alt="EmbrAIon — AI-First Engineering System by GORYNED" width="100%">
 </p>
 
 <p align="center">
@@ -152,8 +152,8 @@ EmbrAIon is pre-1.0. Projects pin exact published framework versions so upgrades
 
 ## License and brand
 
-Source code and documentation are licensed under the [MIT License](LICENSE) except where explicitly stated otherwise. The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and files under `brand/assets/` are governed separately by [TRADEMARKS.md](TRADEMARKS.md).
+Source code and documentation are licensed under the [MIT License](LICENSE) except where explicitly stated otherwise. The **EmbrAIon** and **GORYNED** names, logos, wordmarks, visual marks, and files under `publishing/assets/` are governed separately by [TRADEMARKS.md](TRADEMARKS.md).
 
 ---
 
-<sub>Last updated: 2026-10-08 14:53 UTC</sub>
+<sub>Last updated: 2026-11-02 23:25 UTC</sub>

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "slug": "embraion",
+  "title": "EmbrAIon",
+  "summary": {
+    "en": "An open-source AI-First Engineering System that keeps project instructions, agent roles and validation checks in your repository. Use the same project rules across supported AI coding tools.",
+    "ru": "AI-First инженерная система с открытым исходным кодом. Хранит инструкции проекта, роли ИИ-агентов и проверки в репозитории, чтобы одни и те же правила можно было использовать в разных поддерживаемых инструментах разработки с ИИ."
+  },
+  "category": "Tools",
+  "tags": ["AI", "Python", "CLI", "AI Agents", "Developer Tools"],
+  "ownership": "GORYNED",
+  "relationship": "Personal",
+  "status": "Active",
+  "access": "openSource",
+  "platforms": ["GitHub"],
+  "released": "2026-09",
+  "links": {
+    "github": "https://github.com/GORYNED/EmbrAIon",
+    "external": "https://embraion.goryned.com"
+  },
+  "descriptions": {
+    "en": "descriptions/en.md",
+    "ru": "descriptions/ru.md"
+  },
+  "images": {
+    "icon": {
+      "path": "assets/embraion-icon-dark-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "cover": {
+      "path": "assets/embraion-readme-hero-dark.png",
+      "width": 1600,
+      "height": 500,
+      "alt": {
+        "en": "EmbrAIon: where sparks become AI-built products. AI-First Engineering System by GORYNED.",
+        "ru": "EmbrAIon: где искры становятся продуктами, созданными ИИ. AI-First Engineering System от GORYNED."
+      }
+    },
+    "social": {
+      "path": "assets/embraion-github-social-dark.png",
+      "width": 1280,
+      "height": 640
+    }
+  },
+  "legal": {}
+}

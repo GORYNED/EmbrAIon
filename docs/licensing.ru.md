@@ -4,7 +4,7 @@
 
 MIT License намеренно не предоставляет права на trademarks или brand identity.
 
-Названия EmbrAIon и GORYNED, логотипы, wordmarks, visual marks и файлы в `brand/assets/` исключены из MIT License, если отдельное разрешение не предоставлено.
+Названия EmbrAIon и GORYNED, логотипы, wordmarks, visual marks и файлы в `publishing/assets/` исключены из MIT License, если отдельное разрешение не предоставлено.
 
 Канонические repository policies:
 

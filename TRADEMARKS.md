@@ -14,7 +14,7 @@ The following are excluded from the MIT License unless separately authorized in 
 - the **EmbrAIon** name as a brand identifier;
 - the **GORYNED** name as a brand identifier;
 - EmbrAIon or GORYNED logos, wordmarks, icons, visual marks, and distinctive brand artwork;
-- files under `brand/assets/`.
+- files under `publishing/assets/`.
 
 You may make truthful, nominative references to EmbrAIon or GORYNED to identify the project or its origin. You may not use the protected names or brand assets in a way that implies endorsement, sponsorship, affiliation, or official origin when none exists.
 
