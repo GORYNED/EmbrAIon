@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/assets/readme/hero-dark.png" alt="EmbrAIon — AI-First Engineering System от GORYNED" width="100%">
+  <img src="publishing/assets/embraion-readme-hero-dark.png" alt="EmbrAIon — AI-First Engineering System от GORYNED" width="100%">
 </p>
 
 <p align="center">
@@ -116,4 +116,4 @@ Lead читает контракт проекта, автоматически в
 
 ---
 
-<sub>Последнее обновление: 2026-10-08 14:53 UTC</sub>
+<sub>Последнее обновление: 2026-11-02 23:25 UTC</sub>

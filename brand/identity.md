@@ -30,4 +30,4 @@ Headlines, taglines, and labels are written without terminal periods. Full descr
 
 The identity uses dark neutral surfaces with ember-orange and amber accents. Fire belongs primarily to the brand layer; engineering documentation should use precise technical terminology rather than decorative fire metaphors.
 
-The Figma branding file is the canonical visual workspace. Repository assets are intentionally limited to files required by README rendering.
+The approved logo and banner files live in [`publishing/assets/`](../publishing/assets/) and are limited to what the repository and the project page need.

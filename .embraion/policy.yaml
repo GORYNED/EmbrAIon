@@ -33,7 +33,7 @@ sources:
     - LICENSE
     - TRADEMARKS.md
     - TRADEMARKS.ru.md
-    - brand/assets/**
+    - publishing/assets/**
 
   generated:
     - build/**
